@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Expediente, ItemQueue, FiltrosExpediente } from '../types'
+import type { Actividad, Expediente, ItemQueue, FiltrosExpediente } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE } from '../data/expedientes.mock'
 
 interface ExpedientesState {
@@ -12,6 +12,7 @@ interface ExpedientesState {
   actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => void
   actualizarEstado: (id: string, estado: string) => void
   asignarAbogado: (expedienteId: string, abogadoId: string) => void
+  agregarActividad: (expedienteId: string, actividad: Actividad) => void
   setFiltros: (filtros: FiltrosExpediente) => void
 }
 
@@ -49,6 +50,15 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     expedientes: s.expedientes.map(e =>
       e.id === expedienteId ? { ...e, abogado_id: abogadoId } : e
     ),
+  })),
+
+  agregarActividad: (expedienteId, actividad) => set(s => ({
+    expedientes: s.expedientes.map(e =>
+      e.id === expedienteId ? { ...e, timeline: [...e.timeline, actividad] } : e
+    ),
+    expedienteActivo: s.expedienteActivo?.id === expedienteId
+      ? { ...s.expedienteActivo, timeline: [...s.expedienteActivo.timeline, actividad] }
+      : s.expedienteActivo,
   })),
 
   setFiltros: (filtros) => set({ filtros }),

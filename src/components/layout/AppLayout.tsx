@@ -36,6 +36,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
     activePage = 'bandeja-abogado'
   }
 
+  if (pathname.startsWith('/causa/')) {
+    titulo     = `Causa ${pathname.replace('/causa/', '')}`
+    activePage = 'bandeja-abogado'
+  }
+
   return (
     <div className="min-h-screen bg-surface">
       <Sidebar activePage={activePage} />

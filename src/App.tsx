@@ -1,6 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import { Toast } from './components/ui/Toast'
+import DashboardPage from './pages/Dashboard/Dashboard.page'
+import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
+import BandejaAbogadoPage from './pages/BandejaAbogado/BandejaAbogado.page'
+import BandejaAreaPage from './pages/BandejaArea/BandejaArea.page'
+import GestionPenalPage from './pages/GestionPenal/GestionPenal.page'
+import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 
 function PagePlaceholder({ nombre }: { nombre: string }) {
   return (
@@ -17,13 +23,14 @@ export default function App() {
       <AppLayout>
         <Routes>
           <Route path="/"                  element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard"         element={<PagePlaceholder nombre="Dashboard" />} />
-          <Route path="/mesa"              element={<PagePlaceholder nombre="Mesa SIAJ" />} />
-          <Route path="/mesa/alta"         element={<PagePlaceholder nombre="Alta de Expediente" />} />
-          <Route path="/bandeja/abogado"   element={<PagePlaceholder nombre="Mi Bandeja" />} />
-          <Route path="/bandeja/area"      element={<PagePlaceholder nombre="Bandeja Área" />} />
-          <Route path="/expediente/:id"    element={<PagePlaceholder nombre="Detalle de Expediente" />} />
-          <Route path="/penal"             element={<PagePlaceholder nombre="Gestión Penal" />} />
+          <Route path="/dashboard"         element={<DashboardPage />} />
+          <Route path="/mesa"              element={<MesaSacoPage />} />
+          <Route path="/mesa/alta"         element={<MesaSacoPage />} />
+          <Route path="/bandeja/abogado"   element={<BandejaAbogadoPage />} />
+          <Route path="/bandeja/area"      element={<BandejaAreaPage />} />
+          <Route path="/expediente/*"      element={<PagePlaceholder nombre="Detalle de Expediente" />} />
+          <Route path="/causa/*"           element={<CausaDetallePage />} />
+          <Route path="/penal"             element={<GestionPenalPage />} />
           <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
         </Routes>
       </AppLayout>
