@@ -3,10 +3,12 @@ import { AppLayout } from './components/layout/AppLayout'
 import { Toast } from './components/ui/Toast'
 import DashboardPage from './pages/Dashboard/Dashboard.page'
 import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
+import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
 import BandejaAbogadoPage from './pages/BandejaAbogado/BandejaAbogado.page'
 import BandejaAreaPage from './pages/BandejaArea/BandejaArea.page'
 import GestionPenalPage from './pages/GestionPenal/GestionPenal.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
+import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
 
 function PagePlaceholder({ nombre }: { nombre: string }) {
   return (
@@ -25,10 +27,10 @@ export default function App() {
           <Route path="/"                  element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard"         element={<DashboardPage />} />
           <Route path="/mesa"              element={<MesaSacoPage />} />
-          <Route path="/mesa/alta"         element={<MesaSacoPage />} />
+          <Route path="/mesa/alta"         element={<AltaExpedientePage />} />
           <Route path="/bandeja/abogado"   element={<BandejaAbogadoPage />} />
           <Route path="/bandeja/area"      element={<BandejaAreaPage />} />
-          <Route path="/expediente/*"      element={<PagePlaceholder nombre="Detalle de Expediente" />} />
+          <Route path="/expediente/*"      element={<DetalleExpedientePage />} />
           <Route path="/causa/*"           element={<CausaDetallePage />} />
           <Route path="/penal"             element={<GestionPenalPage />} />
           <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />

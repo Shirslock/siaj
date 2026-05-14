@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Actividad, Expediente, ItemQueue, FiltrosExpediente } from '../types'
+import type { Actividad, Expediente, ItemQueue, FiltrosExpediente, VinculoExpediente, Interviniente, SubActividad } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE } from '../data/expedientes.mock'
 
 interface ExpedientesState {
@@ -8,12 +8,26 @@ interface ExpedientesState {
   expedienteActivo: Expediente | null
   filtros: FiltrosExpediente
   setExpedienteActivo: (id: string) => void
+  actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
   actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
   actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => void
   actualizarEstado: (id: string, estado: string) => void
   asignarAbogado: (expedienteId: string, abogadoId: string) => void
   agregarActividad: (expedienteId: string, actividad: Actividad) => void
+  agregarSubitem: (expedienteId: string, actividadId: string, subitem: SubActividad) => void
+  vincularExpediente: (expedienteId: string, vinculo: VinculoExpediente) => void
+  desvincularExpediente: (expedienteId: string, vinculoId: string) => void
+  agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => void
+  eliminarInterviniente: (expedienteId: string, intervinienteId: string) => void
   setFiltros: (filtros: FiltrosExpediente) => void
+}
+
+function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
+  return exps.map(e => e.id === id ? fn(e) : e)
+}
+
+function applyToActivo(activo: Expediente | null, id: string, fn: (e: Expediente) => Expediente): Expediente | null {
+  return activo?.id === id ? fn(activo) : activo
 }
 
 export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
@@ -27,39 +41,100 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     set({ expedienteActivo: exp })
   },
 
-  actualizarCampoMesa: (id, campo, valor) => set(s => ({
-    expedientes: s.expedientes.map(e =>
-      e.id === id ? { ...e, campos_mesa: { ...e.campos_mesa, [campo]: valor } } : e
-    ),
-  })),
+  actualizarExpediente: (id, patch) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, ...patch })
+    return {
+      expedientes: applyToArr(s.expedientes, id, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
+    }
+  }),
 
-  actualizarCampoAbogado: (id, campo, valor) => set(s => ({
-    expedientes: s.expedientes.map(e =>
-      e.id === id ? { ...e, campos_abogado: { ...e.campos_abogado, [campo]: valor } } : e
-    ),
-  })),
+  actualizarCampoMesa: (id, campo, valor) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, campos_mesa: { ...e.campos_mesa, [campo]: valor } })
+    return {
+      expedientes: applyToArr(s.expedientes, id, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
+    }
+  }),
 
-  actualizarEstado: (id, estado) => set(s => ({
-    expedientes: s.expedientes.map(e => e.id === id ? { ...e, estado } : e),
-    expedienteActivo: s.expedienteActivo && s.expedienteActivo.id === id
-      ? { ...s.expedienteActivo, estado }
-      : s.expedienteActivo,
-  })),
+  actualizarCampoAbogado: (id, campo, valor) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, campos_abogado: { ...e.campos_abogado, [campo]: valor } })
+    return {
+      expedientes: applyToArr(s.expedientes, id, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
+    }
+  }),
 
-  asignarAbogado: (expedienteId, abogadoId) => set(s => ({
-    expedientes: s.expedientes.map(e =>
-      e.id === expedienteId ? { ...e, abogado_id: abogadoId } : e
-    ),
-  })),
+  actualizarEstado: (id, estado) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, estado })
+    return {
+      expedientes: applyToArr(s.expedientes, id, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
+    }
+  }),
 
-  agregarActividad: (expedienteId, actividad) => set(s => ({
-    expedientes: s.expedientes.map(e =>
-      e.id === expedienteId ? { ...e, timeline: [...e.timeline, actividad] } : e
-    ),
-    expedienteActivo: s.expedienteActivo?.id === expedienteId
-      ? { ...s.expedienteActivo, timeline: [...s.expedienteActivo.timeline, actividad] }
-      : s.expedienteActivo,
-  })),
+  asignarAbogado: (expedienteId, abogadoId) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, abogado_id: abogadoId })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  agregarActividad: (expedienteId, actividad) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, timeline: [...e.timeline, actividad] })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  agregarSubitem: (expedienteId, actividadId, subitem) => set(s => {
+    const fn = (e: Expediente) => ({
+      ...e,
+      timeline: e.timeline.map(act =>
+        act.id === actividadId
+          ? { ...act, subitems: [...(act.subitems ?? []), subitem] }
+          : act
+      ),
+    })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  vincularExpediente: (expedienteId, vinculo) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, vinculos: [...e.vinculos, vinculo] })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  desvincularExpediente: (expedienteId, vinculoId) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, vinculos: e.vinculos.filter(v => v.id !== vinculoId) })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  agregarInterviniente: (expedienteId, interviniente) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, intervinientes: [...e.intervinientes, interviniente] })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  eliminarInterviniente: (expedienteId, intervinienteId) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, intervinientes: e.intervinientes.filter(i => i.id !== intervinienteId) })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
 
   setFiltros: (filtros) => set({ filtros }),
 }))
