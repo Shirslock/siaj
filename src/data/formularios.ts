@@ -1,11 +1,12 @@
 import type { CampoFormulario, FormularioSubtipo } from '../types'
 
 export const CAMPOS_COMUNES_MESA: CampoFormulario[] = [
-  { id:'numero_ee_gde',  label:'N° EE / Memo GDE',   type:'text',   required:true, placeholder:'Ej: EE-2026-00001-APN-SOFSA', hint:'Campo obligatorio al alta', mono:true },
-  { id:'area',           label:'Área',                type:'select', required:true, options:['CIVIL','LABORAL','PENAL'] },
-  { id:'tipo_gestion',   label:'Tipo de Gestión',     type:'select', required:true, onchange:'filterByArea' },
-  { id:'caratula',       label:'Carátula',            type:'text',   full:true,     placeholder:'Ej: GOMEZ MARIO C/ SOFSA SA S/ DAÑOS Y PERJUICIOS' },
-  { id:'fecha_recepcion',label:'Fecha de Recepción',  type:'date',   defaultToday:true },
+  { id:'numero_ee_gde',         label:'N° EE / Memo GDE',      type:'text',   required:true, placeholder:'Ej: EE-2026-00001-APN-SOFSA', hint:'Campo obligatorio al alta', mono:true },
+  { id:'area',                  label:'Área',                   type:'select', required:true, options:['CIVIL','LABORAL','PENAL'] },
+  { id:'tipo_gestion',          label:'Tipo de Gestión',        type:'select', required:true, onchange:'filterByArea' },
+  { id:'caratula',              label:'Carátula',               type:'text',   full:true,     placeholder:'Ej: GOMEZ MARIO C/ SOFSA SA S/ DAÑOS Y PERJUICIOS' },
+  { id:'fecha_recepcion',       label:'Fecha de Recepción',     type:'date',   defaultToday:true },
+  { id:'mesa_tipo_intervencion',label:'Tipo de Intervención',   type:'select', options:['Actora','Demandada','Sin Intervención'] },
 ]
 
 export const FORMULARIOS: Record<string, FormularioSubtipo> = {
