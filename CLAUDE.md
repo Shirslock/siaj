@@ -67,6 +67,12 @@ npm run dev     # http://localhost:5173
 | `abogado` / `abogada` | ABOGADO | Bandeja propia + su área. Edita todos los campos del expediente. |
 | `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente de definición). |
 | `adm_mesa` | ADMINISTRATIVO | Mesa SIAJ solamente |
+| `adm_mesa` + `asistente_jurídico` | ADMINISTRATIVO + ABOGADO | Caso especial multi-rol. Ve Mesa SIAJ + Mi Bandeja. |
+
+> **Usuarios multi-rol:** el campo `roles: RolBD[]` en Usuario
+> contiene todos los roles asignados. El sidebar muestra la unión
+> de los ítems de nav de cada rol. Ver `src/data/CLAUDE.md`
+> para la lista completa de casos multi-rol.
 
 ## 6. Design system — Sovereign Ledger
 
