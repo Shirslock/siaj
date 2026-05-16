@@ -21,11 +21,11 @@ const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMI
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'datos',          label: 'Datos',          icon: 'info' },
-  { key: 'vinculos',       label: 'Vinculados',     icon: 'account_tree' },
-  { key: 'intervinientes', label: 'Intervinientes', icon: 'people' },
   { key: 'timeline',       label: 'Timeline',       icon: 'timeline' },
+  { key: 'intervinientes', label: 'Intervinientes', icon: 'people' },
   { key: 'docs',           label: 'Documentos',     icon: 'folder' },
   { key: 'prevision',      label: 'Previsión',      icon: 'trending_up' },
+  { key: 'vinculos',       label: 'Vinculados',     icon: 'account_tree' },
 ]
 
 export default function DetalleExpedientePage() {
