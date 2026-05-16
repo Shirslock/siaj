@@ -8,11 +8,10 @@ import {
   TIPOS_INTERVENCION_PENAL,
 } from '../../data/catalogos'
 import { getCamposFormulario, CAMPOS_COMUNES_MESA } from '../../data/formularios'
+import { ASIGNACION_PENAL } from '../../data/usuarios'
 import { numerador } from '../../utils/format'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
-
-const EXCLUDED_COMUNES = new Set(['numero_ee_gde', 'area', 'tipo_gestion'])
 
 export function useAltaForm() {
   const navigate = useNavigate()
@@ -22,6 +21,7 @@ export function useAltaForm() {
   const [canal, setCanalState] = useState<Canal | ''>('EE_GDE')
   const [area, setAreaState] = useState<Area | ''>('')
   const [tipo, setTipoState] = useState<TipoGestion | ''>('')
+  const [lineaSeleccionada, setLineaSeleccionada] = useState('')
   const [camposMesa, setCamposMesaState] = useState<Record<string, unknown>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -73,6 +73,15 @@ export function useAltaForm() {
     setCamposMesaState(prev => ({ ...prev, [id]: val }))
   }
 
+  function setLinea(lineaId: string) {
+    setLineaSeleccionada(lineaId)
+    setCamposMesaState(prev => ({
+      ...prev,
+      linea: lineaId,
+      abogado_id: lineaId ? ASIGNACION_PENAL[lineaId] : undefined,
+    }))
+  }
+
   function validate(): boolean {
     const errs: Record<string, string> = {}
     if (!((camposMesa['numero_ee_gde'] as string | undefined ?? '').trim())) {
@@ -105,18 +114,16 @@ export function useAltaForm() {
   )
 
   const camposComunes = useMemo(() => {
-    return CAMPOS_COMUNES_MESA
-      .filter(c => !EXCLUDED_COMUNES.has(c.id))
-      .map(c => {
-        if (c.id === 'mesa_tipo_intervencion') {
-          return {
-            ...c,
-            options: (area === 'PENAL' ? TIPOS_INTERVENCION_PENAL : TIPOS_INTERVENCION_CIVIL_LAB)
-              .map(t => t.label),
-          }
+    return CAMPOS_COMUNES_MESA.map(c => {
+      if (c.id === 'mesa_tipo_intervencion') {
+        return {
+          ...c,
+          options: (area === 'PENAL' ? TIPOS_INTERVENCION_PENAL : TIPOS_INTERVENCION_CIVIL_LAB)
+            .map(t => t.label),
         }
-        return c
-      })
+      }
+      return c
+    })
   }, [area])
 
   const camposTipo = useMemo(
@@ -127,7 +134,7 @@ export function useAltaForm() {
   return {
     canal, area, tipo, camposMesa, errors,
     tiposFiltrados, tipoSeleccionado, causaDuplicada,
-    camposComunes, camposTipo,
-    setCanal, setArea, setTipo, setCampoMesa, submit,
+    camposComunes, camposTipo, lineaSeleccionada,
+    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit,
   }
 }

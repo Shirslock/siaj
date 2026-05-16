@@ -45,7 +45,6 @@ export default function BandejaAbogadoPage() {
   const { expedientes, actualizarExpediente } = useExpedientesStore()
   const { usuarioActivo, showToast } = useUIStore()
 
-  const [tab, setTab]     = useState<'activos' | 'urgentes'>('activos')
   const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '' })
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
@@ -71,18 +70,9 @@ export default function BandejaAbogadoPage() {
     [expedientes, usuarioActivo, verTodos]
   )
 
-  const urgentesCount = useMemo(() =>
-    misBandeja.filter(e =>
-      e.tiene_alerta &&
-      e.estado !== 'CUMPLIDO' && e.estado !== 'ARCHIVADO' && e.estado !== 'ARCHIVADA'
-    ).length,
-    [misBandeja]
-  )
-
   const expedientesFiltrados = useMemo(() => {
     return misBandeja.filter(e => {
-      if (tab === 'activos' && (e.estado === 'CUMPLIDO' || e.estado === 'ARCHIVADO' || e.estado === 'ARCHIVADA')) return false
-      if (tab === 'urgentes' && !e.tiene_alerta) return false
+      if (e.estado === 'CUMPLIDO' || e.estado === 'ARCHIVADO' || e.estado === 'ARCHIVADA') return false
       if (filtros.area && e.area !== filtros.area) return false
       if (filtros.tipo && e.tipo !== filtros.tipo) return false
       if (filtros.estado && e.estado !== filtros.estado) return false
@@ -96,7 +86,7 @@ export default function BandejaAbogadoPage() {
       }
       return true
     })
-  }, [misBandeja, filtros, tab])
+  }, [misBandeja, filtros])
 
   const items = useMemo(() => construirItems(expedientesFiltrados), [expedientesFiltrados])
 
@@ -204,14 +194,9 @@ export default function BandejaAbogadoPage() {
       >
         {/* Icon */}
         <td className="w-10 py-3 px-2 text-center">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto ${
-            exp.tiene_alerta ? 'bg-error-container' : 'bg-surface-container'
-          }`}>
-            <span
-              className={`material-symbols-outlined text-[17px] ${exp.tiene_alerta ? 'text-error' : 'text-on-surface-variant'}`}
-              style={{ fontVariationSettings: exp.tiene_alerta ? "'FILL' 1" : "'FILL' 0" }}
-            >
-              {exp.tiene_alerta ? 'warning' : 'description'}
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto bg-surface-container">
+            <span className="material-symbols-outlined text-[17px] text-on-surface-variant">
+              description
             </span>
           </div>
         </td>
@@ -219,8 +204,7 @@ export default function BandejaAbogadoPage() {
         <td className="py-3 px-3">
           <p className="font-mono text-xs font-bold text-primary">{exp.id}</p>
           {exp.es_principal && (
-            <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200 text-[9px] font-bold">
-              <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>hub</span>
+            <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 w-fit bg-green-100 text-green-700 border border-green-200/60">
               Principal · PJN
             </span>
           )}
@@ -234,12 +218,6 @@ export default function BandejaAbogadoPage() {
         {/* Carátula */}
         <td className="py-3 px-3 max-w-[280px]">
           <p className="text-sm text-on-surface line-clamp-2">{exp.caratula}</p>
-          {exp.tiene_alerta && exp.alerta_msg && (
-            <p className="text-[10px] text-error mt-0.5 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-              {exp.alerta_msg}
-            </p>
-          )}
         </td>
         {/* Área */}
         <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
@@ -281,34 +259,6 @@ export default function BandejaAbogadoPage() {
             <span className="font-semibold text-on-surface">{activosCount}</span>{' '}
             expediente{activosCount !== 1 ? 's' : ''} activo{activosCount !== 1 ? 's' : ''}.
           </p>
-        </div>
-        {/* Tabs */}
-        <div className="flex rounded-lg bg-surface-container p-1 gap-0.5 self-start">
-          <button
-            onClick={() => setTab('activos')}
-            className={`px-4 py-2 rounded-md text-sm transition-all ${
-              tab === 'activos'
-                ? 'bg-surface-container-lowest shadow-sm font-bold text-primary'
-                : 'font-medium text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Activos
-          </button>
-          <button
-            onClick={() => setTab('urgentes')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm transition-all ${
-              tab === 'urgentes'
-                ? 'bg-surface-container-lowest shadow-sm font-bold text-primary'
-                : 'font-medium text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Urgentes
-            {urgentesCount > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                tab === 'urgentes' ? 'bg-error text-white' : 'bg-error/20 text-error'
-              }`}>{urgentesCount}</span>
-            )}
-          </button>
         </div>
       </div>
 
@@ -390,7 +340,6 @@ export default function BandejaAbogadoPage() {
                   if (item.kind === 'causa') {
                     const { numeroCausa, expedientes: exps } = item
                     const principal = exps.find(e => e.es_principal) ?? exps[0]
-                    const hasAlerta = exps.some(e => e.tiene_alerta)
                     const areasBadges = [...new Set(exps.map(e => e.area))] as Area[]
 
                     return (
@@ -408,9 +357,6 @@ export default function BandejaAbogadoPage() {
                         {/* N° Causa */}
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-1.5">
-                            {hasAlerta && (
-                              <span className="material-symbols-outlined text-[14px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                            )}
                             <span className="font-mono text-xs font-bold text-primary">{numeroCausa}</span>
                           </div>
                           <p className="text-[10px] text-on-surface-variant mt-0.5">
@@ -420,12 +366,6 @@ export default function BandejaAbogadoPage() {
                         {/* Carátula principal */}
                         <td className="py-3 px-3 max-w-[280px]">
                           <p className="text-sm text-on-surface line-clamp-2">{principal.caratula}</p>
-                          {hasAlerta && (
-                            <p className="text-[10px] text-error mt-0.5 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                              {exps.find(e => e.tiene_alerta)?.alerta_msg}
-                            </p>
-                          )}
                         </td>
                         {/* Área */}
                         <td className="py-3 px-3">

@@ -1,12 +1,11 @@
 import type { CampoFormulario, FormularioSubtipo } from '../types'
 
 export const CAMPOS_COMUNES_MESA: CampoFormulario[] = [
-  { id:'numero_ee_gde',         label:'N° EE / Memo GDE',      type:'text',   required:true, placeholder:'Ej: EE-2026-00001-APN-SOFSA', hint:'Campo obligatorio al alta', mono:true },
-  { id:'area',                  label:'Área',                   type:'select', required:true, options:['CIVIL','LABORAL','PENAL'] },
-  { id:'tipo_gestion',          label:'Tipo de Gestión',        type:'select', required:true, onchange:'filterByArea' },
-  { id:'caratula',              label:'Carátula',               type:'text',   full:true,     placeholder:'Ej: GOMEZ MARIO C/ SOFSA SA S/ DAÑOS Y PERJUICIOS' },
-  { id:'fecha_recepcion',       label:'Fecha de Recepción',     type:'date',   defaultToday:true },
-  { id:'mesa_tipo_intervencion',label:'Tipo de Intervención',   type:'select', options:['Actora','Demandada','Sin Intervención'] },
+  { id:'mesa_oficio_judicial',     label:'Oficio / Referencia Judicial', type:'text',     placeholder:'Ej: Oficio N° 12345/2026' },
+  { id:'mesa_tipo_intervencion',   label:'Tipo de Intervención',          type:'select',   options:['Actora','Demandada','Sin Intervención'] },
+  { id:'mesa_fecha_requerimiento', label:'Fecha de Requerimiento',        type:'date' },
+  { id:'mesa_datos_contacto',      label:'Datos de Contacto',             type:'text',     full:true, placeholder:'Nombre, teléfono, email del requirente' },
+  { id:'mesa_comentarios',         label:'Comentarios de Mesa',           type:'textarea', full:true },
 ]
 
 export const FORMULARIOS: Record<string, FormularioSubtipo> = {

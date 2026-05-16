@@ -71,8 +71,6 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     intervinientes: [],
     timeline: [],
     documentos: [],
-    tiene_alerta: true,
-    alerta_msg: 'Vence período probatorio en 12 días',
     es_principal: true,
   },
   {
@@ -124,8 +122,6 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     intervinientes: [],
     timeline: [],
     documentos: [],
-    tiene_alerta: true,
-    alerta_msg: 'Audiencia fijada para el 20/05/2026',
     es_principal: true,
   },
   {
@@ -346,8 +342,6 @@ export const EXPEDIENTE_DETALLE: Expediente = {
     },
   ],
   observaciones: 'Accidente ferroviario. Demanda por daños y perjuicios.',
-  tiene_alerta: true,
-  alerta_msg: 'Vence plazo de contestación el 18/05/2026',
   es_principal: true,
 }
 

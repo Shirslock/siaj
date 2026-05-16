@@ -87,8 +87,6 @@ export interface Expediente {
   timeline: Actividad[]
   documentos: Documento[]
   observaciones?: string
-  tiene_alerta?: boolean
-  alerta_msg?: string
   es_principal?: boolean
 }
 

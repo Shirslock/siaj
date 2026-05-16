@@ -52,10 +52,9 @@ export default function BandejaAreaPage() {
   const { expedientes, actualizarExpediente, asignarAbogado } = useExpedientesStore()
   const { usuarioActivo, showToast } = useUIStore()
 
-  const [tab, setTab]       = useState<'activos' | 'urgentes'>('activos')
   const [filtros, setFiltros] = useState({
     buscar: '', area: '', tipo: '', estado: '',
-    fechaDesde: '', fechaHasta: '', conAlerta: false, letrado_id: '',
+    fechaDesde: '', fechaHasta: '', letrado_id: '',
   })
   const [expandedCausas, setExpandedCausas] = useState<Set<string>>(new Set())
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
@@ -75,19 +74,9 @@ export default function BandejaAreaPage() {
 
   // ── Computed ──────────────────────────────────────────────────────────────────
 
-  const urgentesCount = useMemo(() =>
-    expedientes.filter(e =>
-      e.tiene_alerta &&
-      e.estado !== 'CUMPLIDO' && e.estado !== 'ARCHIVADO' && e.estado !== 'ARCHIVADA'
-    ).length,
-    [expedientes]
-  )
-
   const expedientesFiltrados = useMemo(() => {
     return expedientes.filter(e => {
-      if (tab === 'activos' && (e.estado === 'CUMPLIDO' || e.estado === 'ARCHIVADO' || e.estado === 'ARCHIVADA')) return false
-      if (tab === 'urgentes' && !e.tiene_alerta) return false
-      if (filtros.conAlerta && !e.tiene_alerta) return false
+      if (e.estado === 'CUMPLIDO' || e.estado === 'ARCHIVADO' || e.estado === 'ARCHIVADA') return false
       if (filtros.area && e.area !== filtros.area) return false
       if (filtros.letrado_id && e.abogado_id !== filtros.letrado_id) return false
       if (filtros.tipo && e.tipo !== filtros.tipo) return false
@@ -104,7 +93,7 @@ export default function BandejaAreaPage() {
       }
       return true
     })
-  }, [expedientes, filtros, tab])
+  }, [expedientes, filtros])
 
   const items = useMemo(() => construirItems(expedientesFiltrados), [expedientesFiltrados])
 
@@ -134,7 +123,6 @@ export default function BandejaAreaPage() {
     if (filtros.letrado_id) chips.push({ label: `Letrado: ${nombreAbogado(filtros.letrado_id)}`, key: 'letrado_id' })
     if (filtros.fechaDesde) chips.push({ label: `Desde: ${formatFecha(filtros.fechaDesde)}`, key: 'fechaDesde' })
     if (filtros.fechaHasta) chips.push({ label: `Hasta: ${formatFecha(filtros.fechaHasta)}`, key: 'fechaHasta' })
-    if (filtros.conAlerta)  chips.push({ label: 'Con alerta', key: 'conAlerta' })
     return chips
   }, [filtros])
 
@@ -164,10 +152,10 @@ export default function BandejaAreaPage() {
     setFiltros(prev => ({ ...prev, [key]: val }))
   }
   function limpiarFiltros() {
-    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', conAlerta: false, letrado_id: '' })
+    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', letrado_id: '' })
   }
   function quitarFiltro(key: string) {
-    setFiltros(prev => ({ ...prev, [key]: key === 'conAlerta' ? false : '' }))
+    setFiltros(prev => ({ ...prev, [key]: '' }))
   }
   function toggleCausa(nc: string) {
     setExpandedCausas(prev => {
@@ -282,11 +270,8 @@ export default function BandejaAreaPage() {
             <div className="relative inline-flex flex-col items-center">
               <div className={`absolute left-[calc(50%-0.5px)] w-px bg-outline-variant ${isLast ? 'top-0 h-[calc(50%+4px)]' : '-top-3 bottom-0'}`} />
               <div className="absolute left-1/2 top-1/2 -translate-y-1/2 w-3 h-px bg-outline-variant" />
-              <span
-                className={`material-symbols-outlined text-[15px] relative z-10 ${exp.tiene_alerta ? 'text-error' : 'text-on-surface-variant'}`}
-                style={{ fontVariationSettings: exp.tiene_alerta ? "'FILL' 1" : "'FILL' 0" }}
-              >
-                {exp.tiene_alerta ? 'warning' : 'description'}
+              <span className="material-symbols-outlined text-[15px] relative z-10 text-on-surface-variant">
+                description
               </span>
             </div>
           </td>
@@ -304,12 +289,6 @@ export default function BandejaAreaPage() {
             <p className="text-sm font-semibold text-on-surface line-clamp-2">{exp.caratula}</p>
             {exp.numero_causa && (
               <p className="font-mono text-[10px] text-on-surface-variant mt-0.5">{exp.numero_causa}</p>
-            )}
-            {exp.tiene_alerta && exp.alerta_msg && (
-              <p className="text-[10px] text-error mt-0.5 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                {exp.alerta_msg}
-              </p>
             )}
           </td>
           {/* Área */}
@@ -359,34 +338,6 @@ export default function BandejaAreaPage() {
             }
           </p>
         </div>
-        {/* Tabs */}
-        <div className="flex rounded-lg bg-surface-container p-1 gap-0.5 self-start">
-          <button
-            onClick={() => setTab('activos')}
-            className={`px-4 py-2 rounded-md text-sm transition-all ${
-              tab === 'activos'
-                ? 'bg-surface-container-lowest shadow-sm font-bold text-primary'
-                : 'font-medium text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Activos
-          </button>
-          <button
-            onClick={() => setTab('urgentes')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm transition-all ${
-              tab === 'urgentes'
-                ? 'bg-surface-container-lowest shadow-sm font-bold text-primary'
-                : 'font-medium text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Urgentes
-            {urgentesCount > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                tab === 'urgentes' ? 'bg-error text-white' : 'bg-error/20 text-error'
-              }`}>{urgentesCount}</span>
-            )}
-          </button>
-        </div>
       </div>
 
       {/* FILTROS */}
@@ -423,17 +374,6 @@ export default function BandejaAreaPage() {
           <input type="date" className="field-input w-auto" value={filtros.fechaDesde} onChange={e => setFiltro('fechaDesde', e.target.value)} />
           <span className="text-on-surface-variant text-sm">—</span>
           <input type="date" className="field-input w-auto" value={filtros.fechaHasta} onChange={e => setFiltro('fechaHasta', e.target.value)} />
-          {/* Con alerta */}
-          <label className="flex items-center gap-1.5 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={filtros.conAlerta}
-              onChange={e => setFiltro('conAlerta', e.target.checked)}
-              className="rounded accent-primary"
-            />
-            <span className="material-symbols-outlined text-[16px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-            <span className="text-sm text-on-surface-variant">Con alerta</span>
-          </label>
           {/* Letrado (solo coordinador/referente) */}
           {puedeReasignar && (
             <select className="field-input min-w-[180px] w-auto" value={filtros.letrado_id} onChange={e => setFiltro('letrado_id', e.target.value)}>
@@ -517,7 +457,6 @@ export default function BandejaAreaPage() {
                 if (item.kind === 'causa') {
                   const { numeroCausa, expedientes: exps } = item
                   const principal = exps.find(e => e.es_principal) ?? exps[0]
-                  const hasAlerta = exps.some(e => e.tiene_alerta)
                   const isExpanded = expandedCausas.has(numeroCausa)
                   const areasBadges = [...new Set(exps.map(e => e.area))] as Area[]
                   const abogadoIds = [...new Set(exps.map(e => e.abogado_id).filter(Boolean) as string[])]
@@ -542,9 +481,6 @@ export default function BandejaAreaPage() {
                         {/* N° Causa */}
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            {hasAlerta && (
-                              <span className="material-symbols-outlined text-[14px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                            )}
                             <span className="material-symbols-outlined text-[14px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
                             <span className="font-mono text-xs font-bold text-primary">{numeroCausa}</span>
                           </div>
@@ -557,12 +493,6 @@ export default function BandejaAreaPage() {
                           <div className="flex flex-wrap gap-1">
                             {areasBadges.map(a => <AreaBadge key={a} area={a} />)}
                           </div>
-                          {hasAlerta && (
-                            <p className="text-[10px] text-error mt-1 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                              {exps.find(e => e.tiene_alerta)?.alerta_msg}
-                            </p>
-                          )}
                         </td>
                         {/* Tipo */}
                         <td className="py-3 px-3">
@@ -614,14 +544,9 @@ export default function BandejaAreaPage() {
                     onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
                   >
                     <td className="w-10 py-3 px-2 text-center">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto ${
-                        exp.tiene_alerta ? 'bg-error-container' : 'bg-surface-container'
-                      }`}>
-                        <span
-                          className={`material-symbols-outlined text-[18px] ${exp.tiene_alerta ? 'text-error' : 'text-on-surface-variant'}`}
-                          style={{ fontVariationSettings: exp.tiene_alerta ? "'FILL' 1" : "'FILL' 0" }}
-                        >
-                          {exp.tiene_alerta ? 'warning' : 'description'}
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto bg-surface-container">
+                        <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
+                          description
                         </span>
                       </div>
                     </td>
@@ -634,12 +559,6 @@ export default function BandejaAreaPage() {
                     </td>
                     <td className="py-3 px-3 max-w-xs">
                       <p className="text-sm text-on-surface line-clamp-2">{exp.caratula}</p>
-                      {exp.tiene_alerta && exp.alerta_msg && (
-                        <p className="text-[10px] text-error mt-0.5 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                          {exp.alerta_msg}
-                        </p>
-                      )}
                     </td>
                     <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
                     <td className="py-3 px-3">

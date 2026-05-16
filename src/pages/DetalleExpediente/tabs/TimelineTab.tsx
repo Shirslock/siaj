@@ -22,8 +22,6 @@ const TIPOS: { value: TipoActividad; label: string; icon: string }[] = [
   { value: 'OTRO',          label: 'Otro',            icon: 'radio_button_unchecked' },
 ]
 
-const TIPO_MAP = Object.fromEntries(TIPOS.map(t => [t.value, t]))
-
 const ESTADOS_ACT = ['PENDIENTE', 'EN_CURSO', 'COMPLETADA', 'VENCIDA']
 
 const BLANK_ACT = {
@@ -137,7 +135,6 @@ export function TimelineTab({ exp }: Props) {
         ) : (
           <div className="space-y-3">
             {sorted.map(act => {
-              const tipoConfig = TIPO_MAP[act.tipo]
               const creador = act.creado_por ? getUsuarioById(act.creado_por) : undefined
               return (
                 <div
@@ -145,11 +142,6 @@ export function TimelineTab({ exp }: Props) {
                   className={`bg-surface-container-lowest rounded-2xl shadow-card p-5 ${act.activo ? 'ring-1 ring-primary/30' : ''}`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${act.activo ? 'bg-primary-container' : 'bg-surface-container'}`}>
-                      <span className={`material-symbols-outlined text-[20px] ${act.activo ? 'text-primary' : 'text-on-surface-variant'}`}>
-                        {tipoConfig?.icon ?? 'circle'}
-                      </span>
-                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         {act.activo && (

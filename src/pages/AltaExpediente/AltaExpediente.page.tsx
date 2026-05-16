@@ -5,6 +5,7 @@ import { FormularioDinamico } from '../../components/expedientes/FormularioDinam
 import { FormField } from '../../components/ui/FormField'
 import { Button } from '../../components/ui/Button'
 import { ASIGNACION_PENAL, getAbogadosFifo, getUsuarioById, getNombreCompleto } from '../../data/usuarios'
+import { LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
 
@@ -76,8 +77,8 @@ export default function AltaExpedientePage() {
   const {
     canal, area, tipo, camposMesa, errors,
     tiposFiltrados, tipoSeleccionado, causaDuplicada,
-    camposComunes, camposTipo,
-    setCanal, setArea, setTipo, setCampoMesa, submit,
+    camposComunes, camposTipo, lineaSeleccionada,
+    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit,
   } = useAltaForm()
 
   const [letradoId, setLetradoId] = useState<string>('')
@@ -304,22 +305,32 @@ export default function AltaExpedientePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div>
+              <div className="space-y-4">
                 {area === 'PENAL' ? (
-                  <FormField label="Letrado Asignado">
-                    <select
-                      className="field-input"
-                      value={abogadoPenal?.id ?? ''}
-                      disabled={!abogadoPenal}
-                      onChange={() => {}}
-                    >
-                      {!abogadoPenal ? (
-                        <option value="">Se determina al seleccionar la línea</option>
-                      ) : (
-                        <option value={abogadoPenal.id}>{getNombreCompleto(abogadoPenal)}</option>
-                      )}
-                    </select>
-                  </FormField>
+                  <>
+                    <FormField label="Línea Ferroviaria">
+                      <select
+                        className="field-input"
+                        value={lineaSeleccionada}
+                        onChange={e => setLinea(e.target.value)}
+                      >
+                        <option value="">— Seleccioná línea —</option>
+                        {LINEAS_FERROVIARIAS.map(l => (
+                          <option key={l.id} value={l.id}>{l.label}</option>
+                        ))}
+                      </select>
+                    </FormField>
+                    <FormField label="Letrado Asignado" hint="Se determina por la línea seleccionada">
+                      <input
+                        type="text"
+                        className="field-input bg-surface-container"
+                        value={abogadoPenal ? getNombreCompleto(abogadoPenal) : ''}
+                        placeholder="Seleccioná una línea para asignar letrado"
+                        disabled
+                        readOnly
+                      />
+                    </FormField>
+                  </>
                 ) : (
                   <FormField label="Letrado Asignado" hint="Asignación secuencial FIFO">
                     <select
@@ -345,7 +356,7 @@ export default function AltaExpedientePage() {
                 </span>
                 <p className="text-sm text-on-surface-variant">
                   {area === 'PENAL'
-                    ? 'Asignación por línea ferroviaria — el letrado se determina al seleccionar la línea.'
+                    ? 'Asignación por línea ferroviaria — seleccioná la línea para determinar el letrado automáticamente.'
                     : 'Asignación secuencial FIFO — se sugiere el siguiente letrado disponible en el área.'}
                 </p>
               </div>
