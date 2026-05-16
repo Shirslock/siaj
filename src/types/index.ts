@@ -59,6 +59,7 @@ export interface Usuario {
   apellido: string
   nombre: string
   rolBD: RolBD
+  roles: RolBD[]
   rolSistema: RolSistema
   areas: Area[]
   lineasPenal?: string[]

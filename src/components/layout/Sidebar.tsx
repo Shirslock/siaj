@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
-import { ROL_ACCESOS, getNombreCompleto } from '../../data/usuarios'
+import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
 import type { RolSistema } from '../../types'
 import { UserSwitcher } from './UserSwitcher'
 
@@ -36,11 +36,11 @@ export function Sidebar({ activePage }: SidebarProps) {
   const [showSwitcher, setShowSwitcher] = useState(false)
   const location = useLocation()
 
-  const navKeys = usuarioActivo
-    ? ROL_ACCESOS[usuarioActivo.rolSistema].nav
-    : []
-
-  const visibleItems = NAV_ITEMS.filter(item => navKeys.includes(item.key))
+  const visibleItems = useMemo(() => {
+    if (!usuarioActivo) return []
+    const union = new Set(usuarioActivo.roles.flatMap(rol => ROL_ACCESOS[mapRol(rol)].nav))
+    return NAV_ITEMS.filter(item => union.has(item.key))
+  }, [usuarioActivo])
 
   const isActive = (item: { key: string; ruta: string }) =>
     activePage === item.key || location.pathname === item.ruta

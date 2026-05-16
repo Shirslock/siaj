@@ -40,7 +40,7 @@ export function UserSwitcher({ onClose }: UserSwitcherProps) {
   const grupos = ROL_ORDEN.map(rol => ({
     rol,
     label: ROL_LABELS[rol],
-    usuarios: USUARIOS.filter(u => u.rolSistema === rol),
+    usuarios: USUARIOS.filter(u => u.rolSistema === rol && u.roles.length > 0),
   })).filter(g => g.usuarios.length > 0)
 
   const handleSelect = (id: string, nombre: string) => {
