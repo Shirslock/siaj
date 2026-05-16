@@ -46,14 +46,12 @@ export function TimelineTab({ exp }: Props) {
   const { agregarActividad, agregarSubitem } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
-  const [filtroTipo, setFiltroTipo] = useState<TipoActividad | ''>('')
   const [modalNueva, setModalNueva] = useState(false)
   const [formAct, setFormAct] = useState(BLANK_ACT)
   const [modalSub, setModalSub] = useState<string | null>(null)
   const [formSub, setFormSub] = useState(BLANK_SUB)
 
   const sorted = [...exp.timeline]
-    .filter(a => !filtroTipo || a.tipo === filtroTipo)
     .sort((a, b) => {
       if (a.activo !== b.activo) return a.activo ? -1 : 1
       return b.fecha.localeCompare(a.fecha)
@@ -97,31 +95,9 @@ export function TimelineTab({ exp }: Props) {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setFiltroTipo('')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filtroTipo === '' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              Todos
-            </button>
-            {TIPOS.map(t => (
-              <button
-                key={t.value}
-                onClick={() => setFiltroTipo(filtroTipo === t.value ? '' : t.value)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  filtroTipo === t.value ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[14px]">{t.icon}</span>
-                {t.label}
-              </button>
-            ))}
-          </div>
           <button
             onClick={() => { setFormAct(BLANK_ACT); setModalNueva(true) }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm flex-shrink-0"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
             Nueva actividad
