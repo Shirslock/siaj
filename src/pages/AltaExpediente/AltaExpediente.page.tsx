@@ -39,12 +39,6 @@ const CANAL_INFO: Record<Canal, string> = {
   OTROS:    'Canal Otros: Carta Suceso SAE, mails internos u otros documentos no GDE.',
 }
 
-const AREA_BADGE: Record<Area, string> = {
-  CIVIL:   'bg-blue-100 text-blue-800',
-  LABORAL: 'bg-amber-100 text-amber-800',
-  PENAL:   'bg-red-100 text-red-800',
-}
-
 function SegmentedSelector<T extends string>({
   options, value, onChange,
 }: {
@@ -76,7 +70,7 @@ export default function AltaExpedientePage() {
   const navigate = useNavigate()
   const {
     canal, area, tipo, camposMesa, errors,
-    tiposFiltrados, tipoSeleccionado, causaDuplicada,
+    tiposFiltrados, tipoSeleccionado,
     camposComunes, camposTipo, lineaSeleccionada,
     setCanal, setArea, setTipo, setCampoMesa, setLinea, submit,
   } = useAltaForm()
@@ -228,44 +222,6 @@ export default function AltaExpedientePage() {
               valores={camposMesa}
               onChange={setCampoMesa}
             />
-
-            {/* N° Causa con detección de duplicados */}
-            <div className="mt-4">
-              <FormField label="N° Causa" hint="Opcional. SS = Sin Siniestro">
-                <input
-                  type="text"
-                  className="field-input font-mono"
-                  placeholder="Ej: 12345/2026 o SS"
-                  value={(camposMesa['numero_causa'] as string) ?? ''}
-                  onChange={e => setCampoMesa('numero_causa', e.target.value)}
-                />
-              </FormField>
-
-              {causaDuplicada.length > 0 && (
-                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <p className="text-sm font-medium text-amber-800 mb-2">
-                    N° de causa ya registrado — existe al menos un expediente con ese número.
-                  </p>
-                  <div className="space-y-1.5">
-                    {causaDuplicada.map(exp => (
-                      <div key={exp.id} className="flex items-center gap-2 text-sm">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${AREA_BADGE[exp.area]}`}>
-                          {exp.area}
-                        </span>
-                        <span className="font-mono text-xs text-on-surface-variant shrink-0">{exp.id}</span>
-                        <span className="text-on-surface truncate">{exp.caratula}</span>
-                        <button
-                          className="ml-auto text-xs text-primary hover:underline shrink-0"
-                          onClick={() => navigate(RUTAS.CAUSA(camposMesa['numero_causa'] as string))}
-                        >
-                          Ver causa
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* SECCIÓN 2 — Detalles del Expediente */}
