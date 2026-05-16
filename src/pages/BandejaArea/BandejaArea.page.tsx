@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { TIPOS_GESTION } from '../../data/catalogos'
-import { USUARIOS, getUsuarioById, getNombreCompleto } from '../../data/usuarios'
+import { USUARIOS, getUsuarioById, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
@@ -142,10 +142,6 @@ export default function BandejaAreaPage() {
     )]
   }, [expedientes, inputCausa])
 
-  const puedeReasignar =
-    usuarioActivo?.rolSistema === 'COORDINADOR' ||
-    usuarioActivo?.rolSistema === 'REFERENTE'
-
   // ── Actions ───────────────────────────────────────────────────────────────────
 
   function setFiltro(key: string, val: string | boolean) {
@@ -236,7 +232,7 @@ export default function BandejaAreaPage() {
             Desagrupar
           </button>
         )}
-        {puedeReasignar && (
+        {puedeReasignar(usuarioActivo) && (
           <>
             <hr className="border-outline-variant/50 my-1" />
             <button
@@ -375,7 +371,7 @@ export default function BandejaAreaPage() {
           <span className="text-on-surface-variant text-sm">—</span>
           <input type="date" className="field-input w-auto" value={filtros.fechaHasta} onChange={e => setFiltro('fechaHasta', e.target.value)} />
           {/* Letrado (solo coordinador/referente) */}
-          {puedeReasignar && (
+          {puedeReasignar(usuarioActivo) && (
             <select className="field-input min-w-[180px] w-auto" value={filtros.letrado_id} onChange={e => setFiltro('letrado_id', e.target.value)}>
               <option value="">Letrado: Todos</option>
               {letradosUnicos.map(u => <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>)}

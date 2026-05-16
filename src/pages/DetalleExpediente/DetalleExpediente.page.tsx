@@ -5,7 +5,7 @@ import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
-import { USUARIOS, getNombreCompleto } from '../../data/usuarios'
+import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { DatosTab }          from './tabs/DatosTab'
 import { VinculosTab }       from './tabs/VinculosTab'
@@ -33,7 +33,7 @@ export default function DetalleExpedientePage() {
   const expId = params['*'] ?? ''
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente } = useExpedientesStore()
-  const { showToast } = useUIStore()
+  const { showToast, usuarioActivo } = useUIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -172,7 +172,8 @@ export default function DetalleExpedientePage() {
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa' },
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar', disabled: !exp.numero_causa },
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar' },
-                ].map(item => (
+                ].filter(item => item.key !== 'reasignar' || puedeReasignar(usuarioActivo))
+                 .map(item => (
                   <button
                     key={item.key}
                     onClick={() => !item.disabled && openAccion(item.key)}
