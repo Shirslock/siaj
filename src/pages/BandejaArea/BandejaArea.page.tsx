@@ -272,10 +272,10 @@ export default function BandejaAreaPage() {
           key={exp.id}
           className={`animate-slide-down border-l-4 ${
             exp.es_principal
-              ? 'border-emerald-400/60'
+              ? 'border-emerald-400/60 bg-green-50/60'
               : 'border-primary/10'
           }`}
-          style={exp.es_principal ? { background: 'linear-gradient(to right, rgba(16,185,129,0.03), transparent)' } : { background: '#fafcfd' }}
+          style={exp.es_principal ? {} : { background: '#fafcfd' }}
         >
           {/* Connector */}
           <td className="w-10 py-3 text-center relative">
@@ -294,8 +294,7 @@ export default function BandejaAreaPage() {
           <td className="py-3 pl-2 pr-3">
             <p className="font-mono text-xs font-bold text-primary">{exp.id}</p>
             {exp.es_principal && (
-              <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200 text-[9px] font-bold">
-                <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>hub</span>
+              <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 w-fit bg-green-100 text-green-700 border border-green-200/60">
                 Principal · PJN
               </span>
             )}
