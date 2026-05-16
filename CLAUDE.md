@@ -44,6 +44,9 @@ npm run dev     # http://localhost:5173
 | `src/utils/routing.ts` | Constantes de rutas + helper de accesos por rol. |
 | `tailwind.config.ts` | Design system Sovereign Ledger. NO modificar tokens. |
 
+> Cada subcarpeta tiene su propio CLAUDE.md con documentación
+> específica. Leer el CLAUDE.md de la carpeta antes de modificarla.
+
 ## 4. Reglas de negocio — inamovibles
 
 - **Único campo obligatorio al alta:** N° EE/Memo GDE. Todos los demás son opcionales.
