@@ -7,6 +7,7 @@ import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
+import { getEstadoProcesal } from '../../data/estadosProcesales'
 import { DatosTab }          from './tabs/DatosTab'
 import { VinculosTab }       from './tabs/VinculosTab'
 import { IntervinientesTab } from './tabs/IntervinientesTab'
@@ -18,6 +19,7 @@ type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prev
 type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
+const HOY = new Date().toISOString().split('T')[0]
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'datos',          label: 'Datos',          icon: 'info' },
@@ -32,7 +34,7 @@ export default function DetalleExpedientePage() {
   const params = useParams()
   const expId = params['*'] ?? ''
 
-  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente } = useExpedientesStore()
+  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad } = useExpedientesStore()
   const { showToast, usuarioActivo } = useUIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
@@ -41,6 +43,7 @@ export default function DetalleExpedientePage() {
   const [nuevoEstado, setNuevoEstado] = useState('')
   const [nuevaCausa, setNuevaCausa] = useState('')
   const [nuevoAbogado, setNuevoAbogado] = useState('')
+  const [motivoEstado, setMotivoEstado] = useState('')
 
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -78,15 +81,43 @@ export default function DetalleExpedientePage() {
   const estadosPosibles = ESTADOS_POR_TIPO[exp.tipo] ?? []
   const abogadosArea = USUARIOS.filter(u => u.areas.includes(exp.area) && u.rolSistema !== 'ADMINISTRATIVO')
 
+  const estadoProcesalActual = getEstadoProcesal(exp.tipo, exp.estadoProcesal ?? exp.estado)
+  const siguienteEstadoProcesal = estadoProcesalActual?.siguiente
+    ? getEstadoProcesal(exp.tipo, estadoProcesalActual.siguiente)
+    : undefined
+  const esFlujoProcesal = !!siguienteEstadoProcesal
+
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
-    if (a === 'estado') setNuevoEstado(exp!.estado)
+    if (a === 'estado') { setNuevoEstado(exp!.estado); setMotivoEstado('') }
     if (a === 'causa')  setNuevaCausa(exp!.numero_causa ?? '')
     if (a === 'reasignar') setNuevoAbogado(exp!.abogado_id ?? '')
     setAccion(a)
   }
 
   function confirmarEstado() {
+    if (esFlujoProcesal && siguienteEstadoProcesal) {
+      const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+      agregarActividad(exp!.id, {
+        id: `ACT_${Date.now()}`,
+        expediente_id: exp!.id,
+        tipo: 'MOVIMIENTO',
+        titulo: `Cambio de estado: ${estadoProcesalActual!.label} → ${siguienteEstadoProcesal.label}`,
+        descripcion: motivoEstado.trim() || `Estado avanzado por ${nombre}.`,
+        fecha: HOY,
+        activo: true,
+        subitems: [],
+        estadoExpediente: siguienteEstadoProcesal.codigo,
+        doc_gde: null,
+        creado_por: usuarioActivo?.id,
+      })
+      actualizarEstado(exp!.id, siguienteEstadoProcesal.codigo)
+      actualizarExpediente(exp!.id, { estadoProcesal: siguienteEstadoProcesal.codigo })
+      showToast(`Estado actualizado a ${siguienteEstadoProcesal.label}`, 'success')
+      setMotivoEstado('')
+      setAccion(null)
+      return
+    }
     if (!nuevoEstado || nuevoEstado === exp!.estado) { setAccion(null); return }
     actualizarEstado(exp!.id, nuevoEstado)
     showToast(`Estado actualizado a "${nuevoEstado}".`, 'success')
@@ -238,20 +269,49 @@ export default function DetalleExpedientePage() {
             </button>
             <button
               onClick={confirmarEstado}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 transition-opacity"
+              disabled={!esFlujoProcesal && !nuevoEstado}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Confirmar
             </button>
           </>
         }
       >
-        <div>
-          <label className="field-label">Nuevo estado</label>
-          <select className="field-input w-full" value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
-            <option value="">Seleccionar…</option>
-            {estadosPosibles.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
+        {esFlujoProcesal ? (
+          <div className="space-y-4">
+            <div className="bg-primary-container/30 rounded-xl p-4 flex items-center justify-center gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wide">Estado actual</span>
+                <span className="text-sm font-black text-on-surface">{estadoProcesalActual?.label}</span>
+              </div>
+              <span className="material-symbols-outlined text-2xl text-primary">arrow_forward</span>
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wide">Nuevo estado</span>
+                <span className="text-sm font-black text-primary">{siguienteEstadoProcesal?.label}</span>
+              </div>
+            </div>
+            <div>
+              <label className="field-label">Motivo (opcional)</label>
+              <textarea
+                className="field-input resize-none h-20 w-full"
+                placeholder="Anotá el motivo del cambio..."
+                value={motivoEstado}
+                onChange={e => setMotivoEstado(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-on-surface-variant italic text-center">
+              Esta acción quedará registrada en el timeline.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="field-label">Nuevo estado</label>
+            <select className="field-input w-full" value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
+              <option value="">Seleccionar…</option>
+              {estadosPosibles.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        )}
       </Modal>
 
       {/* Modal: Agrupar a causa */}

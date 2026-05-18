@@ -74,6 +74,7 @@ export function TimelineTab({ exp }: Props) {
   const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
   const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
   const total = tareas.length
+  const esEstadoInicial = estadoCodigo === 'ASIGNADO'
   const puedeAvanzar = (total === 0 || completadas === total) && !!siguienteEstado
   const progresoPct = total > 0 ? Math.round((completadas / total) * 100) : 0
   const tareasVisibles = mostrarTodas ? tareas : tareas.slice(0, 6)
@@ -110,7 +111,7 @@ export function TimelineTab({ exp }: Props) {
       doc_gde: null,
       creado_por: usuarioActivo?.id,
     })
-    actualizarEstado(exp.id, siguienteEstado.label)
+    actualizarEstado(exp.id, siguienteEstado.codigo)
     actualizarExpediente(exp.id, { estadoProcesal: siguienteEstado.codigo })
     setModalAvanzarEstado(false)
     showToast(`Estado actualizado a ${siguienteEstado.label}`, 'success')
@@ -202,8 +203,19 @@ export function TimelineTab({ exp }: Props) {
           </div>
         )}
 
+        {/* Mensaje informativo para estado ASIGNADO */}
+        {esEstadoInicial && (
+          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 text-center mb-4">
+            <span className="material-symbols-outlined text-3xl text-outline-variant block mb-2">inbox</span>
+            <p className="text-sm font-semibold text-on-surface mb-1">Expediente pendiente de inicio</p>
+            <p className="text-xs text-on-surface-variant">
+              Para comenzar a trabajar este expediente, usá <strong>Acciones → Cambiar estado</strong>.
+            </p>
+          </div>
+        )}
+
         {/* Panel de tareas del estado actual */}
-        {estadoProcesal && (
+        {!esEstadoInicial && estadoProcesal && (
           <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl overflow-hidden mb-4">
             {/* Header */}
             <div className="px-4 py-3 flex items-center gap-2 bg-surface-container-low border-b border-outline-variant/20">
