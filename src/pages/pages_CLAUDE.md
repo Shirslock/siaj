@@ -25,7 +25,6 @@ src/pages/NombrePagina/
 | `BandejaArea/` | /bandeja/area | COORDINADOR, REFERENTE | ✓ |
 | `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ |
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ |
-| `GestionPenal/` | /penal | COORDINADOR PENAL, REFERENTE | ✓ |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | ✓ |
 | `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | pendiente |
 

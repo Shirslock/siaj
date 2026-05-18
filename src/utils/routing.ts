@@ -7,6 +7,5 @@ export const RUTAS = {
   EXPEDIENTE:      (id: string) => `/expediente/${id}`,
   ACTIVIDADES:     (id: string) => `/expediente/${id}/actividades`,
   CAUSA:           (numeroCausa: string) => `/causa/${numeroCausa}`,
-  GESTION_PENAL:   '/penal',
   AGENDA:          '/agenda',
 } as const

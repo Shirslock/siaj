@@ -6,7 +6,6 @@ import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
 import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
 import BandejaAbogadoPage from './pages/BandejaAbogado/BandejaAbogado.page'
 import BandejaAreaPage from './pages/BandejaArea/BandejaArea.page'
-import GestionPenalPage from './pages/GestionPenal/GestionPenal.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
 
@@ -32,7 +31,7 @@ export default function App() {
           <Route path="/bandeja/area"      element={<BandejaAreaPage />} />
           <Route path="/expediente/*"      element={<DetalleExpedientePage />} />
           <Route path="/causa/*"           element={<CausaDetallePage />} />
-          <Route path="/penal"             element={<GestionPenalPage />} />
+          <Route path="/penal"             element={<Navigate to="/" replace />} />
           <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
         </Routes>
       </AppLayout>

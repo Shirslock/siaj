@@ -10,7 +10,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/mesa/alta':       'Alta de Expediente',
   '/bandeja/abogado': 'Mi Bandeja',
   '/bandeja/area':    'Bandeja Área',
-  '/penal':           'Gestión Penal',
   '/agenda':          'Agenda',
 }
 
@@ -20,7 +19,6 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/mesa/alta':       'mesa',
   '/bandeja/abogado': 'bandeja-abogado',
   '/bandeja/area':    'bandeja-area',
-  '/penal':           'gestion-penal',
   '/agenda':          'agenda',
 }
 

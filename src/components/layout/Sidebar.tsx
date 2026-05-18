@@ -10,7 +10,6 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'mesa',            icon: 'inbox',         label: 'Mesa SIAJ',     ruta: '/mesa' },
   { key: 'bandeja-abogado', icon: 'work',          label: 'Mi Bandeja',    ruta: '/bandeja/abogado' },
   { key: 'bandeja-area',    icon: 'folder_shared', label: 'Bandeja Área',  ruta: '/bandeja/area' },
-  { key: 'gestion-penal',   icon: 'gavel',         label: 'Gestión Penal', ruta: '/penal' },
 ]
 
 const AVATAR_COLORS: Record<RolSistema, string> = {
