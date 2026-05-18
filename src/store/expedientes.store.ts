@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Actividad, Expediente, ItemQueue, FiltrosExpediente, VinculoExpediente, Interviniente, SubActividad } from '../types'
+import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE } from '../data/expedientes.mock'
 
 interface ExpedientesState {
@@ -7,6 +7,7 @@ interface ExpedientesState {
   expedientes: Expediente[]
   expedienteActivo: Expediente | null
   filtros: FiltrosExpediente
+  tareasMap: Record<string, Tarea[]>
   setExpedienteActivo: (id: string) => void
   actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
   actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
@@ -20,6 +21,9 @@ interface ExpedientesState {
   agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => void
   eliminarInterviniente: (expedienteId: string, intervinienteId: string) => void
   setFiltros: (filtros: FiltrosExpediente) => void
+  inicializarTareas: (expId: string, estadoCodigo: string, tareas: Tarea[]) => void
+  actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
+  actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => void
 }
 
 function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
@@ -35,6 +39,7 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   expedientes: [EXPEDIENTE_DETALLE, ...EXPEDIENTES_ABOGADO],
   expedienteActivo: null,
   filtros: {},
+  tareasMap: {},
 
   setExpedienteActivo: (id) => {
     const exp = get().expedientes.find(e => e.id === id) ?? null
@@ -137,4 +142,30 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   }),
 
   setFiltros: (filtros) => set({ filtros }),
+
+  inicializarTareas: (expId, estadoCodigo, tareas) => set(s => ({
+    tareasMap: { ...s.tareasMap, [`${expId}__${estadoCodigo}`]: tareas },
+  })),
+
+  actualizarTarea: (expId, estadoCodigo, tareaId, cambios) => set(s => {
+    const key = `${expId}__${estadoCodigo}`
+    const tareas = s.tareasMap[key] ?? []
+    return {
+      tareasMap: {
+        ...s.tareasMap,
+        [key]: tareas.map(t => t.id === tareaId ? { ...t, ...cambios } : t),
+      },
+    }
+  }),
+
+  actualizarChecklist: (expId, actividadIndex, checklist) => set(s => {
+    const fn = (e: Expediente) => ({
+      ...e,
+      timeline: e.timeline.map((t, i) => i === actividadIndex ? { ...t, checklist } : t),
+    })
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+    }
+  }),
 }))
