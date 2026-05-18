@@ -80,34 +80,34 @@ export default function DetalleExpedientePage() {
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
-    if (a === 'estado') setNuevoEstado(exp.estado)
-    if (a === 'causa')  setNuevaCausa(exp.numero_causa ?? '')
-    if (a === 'reasignar') setNuevoAbogado(exp.abogado_id ?? '')
+    if (a === 'estado') setNuevoEstado(exp!.estado)
+    if (a === 'causa')  setNuevaCausa(exp!.numero_causa ?? '')
+    if (a === 'reasignar') setNuevoAbogado(exp!.abogado_id ?? '')
     setAccion(a)
   }
 
   function confirmarEstado() {
-    if (!nuevoEstado || nuevoEstado === exp.estado) { setAccion(null); return }
-    actualizarEstado(exp.id, nuevoEstado)
+    if (!nuevoEstado || nuevoEstado === exp!.estado) { setAccion(null); return }
+    actualizarEstado(exp!.id, nuevoEstado)
     showToast(`Estado actualizado a "${nuevoEstado}".`, 'success')
     setAccion(null)
   }
 
   function confirmarCausa() {
-    actualizarExpediente(exp.id, { numero_causa: nuevaCausa.trim() || null })
+    actualizarExpediente(exp!.id, { numero_causa: nuevaCausa.trim() || null })
     showToast('N° Causa actualizado.', 'success')
     setAccion(null)
   }
 
   function confirmarDesagrupar() {
-    actualizarExpediente(exp.id, { numero_causa: null })
+    actualizarExpediente(exp!.id, { numero_causa: null })
     showToast('Expediente desagrupado de la causa.', 'success')
     setAccion(null)
   }
 
   function confirmarReasignar() {
     if (!nuevoAbogado) { setAccion(null); return }
-    asignarAbogado(exp.id, nuevoAbogado)
+    asignarAbogado(exp!.id, nuevoAbogado)
     showToast('Expediente reasignado.', 'success')
     setAccion(null)
   }
