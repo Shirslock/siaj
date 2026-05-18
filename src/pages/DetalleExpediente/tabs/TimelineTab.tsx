@@ -74,7 +74,7 @@ export function TimelineTab({ exp }: Props) {
   const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
   const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
   const total = tareas.length
-  const puedeAvanzar = total > 0 && completadas === total && !!siguienteEstado
+  const puedeAvanzar = (total === 0 || completadas === total) && !!siguienteEstado
   const progresoPct = total > 0 ? Math.round((completadas / total) * 100) : 0
   const tareasVisibles = mostrarTodas ? tareas : tareas.slice(0, 6)
 
@@ -237,8 +237,14 @@ export function TimelineTab({ exp }: Props) {
               </div>
             </div>
 
-            {/* Lista de tareas */}
-            {tareasVisibles.map(tarea => {
+            {/* Lista de tareas o mensaje vacío */}
+            {tareas.length === 0 ? (
+              <div className="px-4 py-6 text-center">
+                <p className="text-xs text-on-surface-variant italic">
+                  Este estado no requiere tareas. Podés avanzar directamente.
+                </p>
+              </div>
+            ) : tareasVisibles.map(tarea => {
               const urg = calcularUrgencia(tarea.fechaVencimiento)
               const isSelected = tareaSeleccionada?.id === tarea.id
               return (
@@ -303,6 +309,7 @@ export function TimelineTab({ exp }: Props) {
                 </p>
               </div>
             )}
+
           </div>
         )}
 

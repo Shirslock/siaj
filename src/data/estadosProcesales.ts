@@ -3,6 +3,12 @@ import type { EstadoProcesal, UrgenciaTarea } from '../types'
 // ── DEMANDA CIVIL — ciclo completo ──────────────────────
 export const ESTADOS_DEMANDA_CIVIL: EstadoProcesal[] = [
   {
+    codigo: 'ASIGNADO',
+    label: 'Asignado',
+    siguiente: 'INICIO',
+    tareas: [],
+  },
+  {
     codigo: 'INICIO',
     label: 'Inicio',
     siguiente: 'TRABA_LITIS',
