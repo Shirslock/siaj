@@ -445,6 +445,18 @@ export const EXPEDIENTE_DETALLE: Expediente = {
       activo: true,
       creado_por: 'UR_004',
     },
+    {
+      id: 'ACT_004',
+      expediente_id: 'C-0023/2026',
+      tipo: 'MOVIMIENTO' as const,
+      titulo: 'Pedido de fotocopias al juzgado',
+      descripcion: 'Se solicitaron copias certificadas del expediente judicial.',
+      fecha: '2026-03-12',
+      activo: false,
+      subitems: [],
+      doc_gde: null,
+      creado_por: 'UR_004',
+    },
   ],
   documentos: [
     {
@@ -474,6 +486,7 @@ export const EXPEDIENTE_DETALLE: Expediente = {
   ],
   observaciones: 'Accidente ferroviario. Demanda por daños y perjuicios.',
   es_principal: true,
+  estadoProcesal: 'INICIO',
 }
 
 export const CARTA_SUCESO_QUEUE: object[] = [

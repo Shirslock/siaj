@@ -89,6 +89,7 @@ export interface Expediente {
   documentos: Documento[]
   observaciones?: string
   es_principal?: boolean
+  estadoProcesal?: string
 }
 
 export interface VinculoExpediente {
@@ -180,6 +181,33 @@ export interface AgendaEvent {
   abogado_id: string
   area: Area
 }
+
+export type EstadoTarea = 'sin_estado' | 'en_curso' | 'cumplido' | 'no_procedente'
+
+export type UrgenciaTarea = 'rojo' | 'ambar' | 'verde' | 'gris'
+
+export interface Tarea {
+  id: string
+  nombre: string
+  estado: EstadoTarea
+  fecha?: string | null
+  fechaVencimiento?: string | null
+  alertaActiva?: boolean
+  diasAlerta?: number | null
+  observaciones?: string
+  docGde?: string | null
+}
+
+export interface EstadoProcesal {
+  codigo: string
+  label: string
+  siguiente?: string
+  tareas: Tarea[]
+}
+
+export type EntradaTimeline =
+  | { kind: 'actividad'; data: Actividad }
+  | { kind: 'estado'; estadoAnterior: string; estadoNuevo: string; fecha: string; usuarioId: string; tareas: Tarea[] }
 
 export type TipoCampo =
   | 'text'
