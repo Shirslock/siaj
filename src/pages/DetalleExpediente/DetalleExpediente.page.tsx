@@ -151,7 +151,7 @@ export default function DetalleExpedientePage() {
   }
 
   return (
-    <div className="p-6 space-y-5 max-w-screen-xl">
+    <div className="p-6 space-y-5 max-w-screen-xl overflow-hidden">
 
       {/* Header */}
       <div className="bg-surface-container-lowest rounded-2xl shadow-card p-5">
@@ -190,30 +190,24 @@ export default function DetalleExpedientePage() {
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(o => !o)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm"
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-md"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
-              Acciones
-              <span className="material-symbols-outlined text-[16px]">{menuOpen ? 'expand_less' : 'expand_more'}</span>
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-52 bg-surface-container-lowest rounded-xl shadow-card-lg z-10 overflow-hidden border border-outline-variant/40">
                 {[
-                  { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado' },
-                  { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa' },
-                  { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar', disabled: !exp.numero_causa },
-                  { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar' },
-                ].filter(item => item.key !== 'reasignar' || puedeReasignar(usuarioActivo))
-                 .map(item => (
+                  { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
+                  { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
+                  { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
+                  { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
+                ]
+                .filter(item => item.show)
+                .map(item => (
                   <button
                     key={item.key}
-                    onClick={() => !item.disabled && openAccion(item.key)}
-                    disabled={item.disabled}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left transition-colors ${
-                      item.disabled
-                        ? 'text-on-surface-variant opacity-40 cursor-not-allowed'
-                        : 'text-on-surface hover:bg-surface-container'
-                    }`}
+                    onClick={() => openAccion(item.key)}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left text-on-surface hover:bg-surface-container transition-colors"
                   >
                     <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{item.icon}</span>
                     {item.label}
@@ -226,15 +220,15 @@ export default function DetalleExpedientePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-surface-container p-1 rounded-xl w-fit overflow-x-auto">
+      <div className="flex gap-0 border-b border-outline-variant/40 w-full">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
               tab === t.key
-                ? 'bg-surface-container-lowest shadow-sm text-on-surface'
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">{t.icon}</span>

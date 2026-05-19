@@ -21,21 +21,25 @@ const AVATAR_COLORS: Record<RolSistema, string> = {
 
 interface UserSwitcherProps {
   onClose: () => void
+  triggerRef: React.RefObject<HTMLButtonElement>
 }
 
-export function UserSwitcher({ onClose }: UserSwitcherProps) {
+export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
   const { usuarioActivo, setUsuarioActivo, showToast } = useUIStore()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        ref.current && !ref.current.contains(e.target as Node) &&
+        triggerRef.current && !triggerRef.current.contains(e.target as Node)
+      ) {
         onClose()
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [onClose])
+  }, [onClose, triggerRef])
 
   const grupos = ROL_ORDEN.map(rol => ({
     rol,
@@ -52,7 +56,7 @@ export function UserSwitcher({ onClose }: UserSwitcherProps) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 mb-2 w-72 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-card-lg z-50 overflow-hidden"
+      className="fixed bottom-16 left-2 w-72 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-card-lg z-[200] overflow-hidden max-h-[70vh] flex flex-col"
     >
       <div className="px-4 py-3 border-b border-outline-variant/40 bg-surface-container-low">
         <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
@@ -60,7 +64,7 @@ export function UserSwitcher({ onClose }: UserSwitcherProps) {
         </p>
       </div>
 
-      <div className="max-h-96 overflow-y-auto">
+      <div className="overflow-y-auto flex-1 min-h-0">
         {grupos.map(({ rol, label, usuarios }) => (
           <div key={rol}>
             <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-outline">

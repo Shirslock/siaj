@@ -48,7 +48,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           sidebarCollapsed ? 'ml-16' : 'ml-64'
         }`}
       >
-        {children}
+        <div className="max-w-screen-xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   )

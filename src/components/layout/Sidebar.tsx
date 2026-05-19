@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
@@ -34,6 +34,7 @@ export function Sidebar({ activePage }: SidebarProps) {
   const { usuarioActivo, sidebarCollapsed, toggleSidebar } = useUIStore()
   const [showSwitcher, setShowSwitcher] = useState(false)
   const location = useLocation()
+  const switcherButtonRef = useRef<HTMLButtonElement>(null)
 
   const visibleItems = useMemo(() => {
     if (!usuarioActivo) return []
@@ -50,20 +51,21 @@ export function Sidebar({ activePage }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-surface-container-high flex flex-col z-40 transition-all duration-200 overflow-hidden ${
+      className={`fixed left-0 top-0 h-screen bg-white flex flex-col z-40 transition-all duration-200 overflow-hidden ${
         sidebarCollapsed ? 'w-16' : 'w-64'
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-16 flex-shrink-0 border-b border-outline-variant/30">
+      <div className="flex items-center justify-between px-3 h-16 flex-shrink-0 bg-[#242D4F]">
         {!sidebarCollapsed && (
-          <span className="font-headline font-bold text-primary text-lg tracking-tight select-none">
-            SIAJ
-          </span>
+          <div className="border-l-[3px] border-white pl-2.5">
+            <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">TRENES</p>
+            <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">ARGENTINOS</p>
+          </div>
         )}
         <button
           onClick={toggleSidebar}
-          className={`p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors ${
+          className={`p-2 rounded-lg text-white/70 hover:bg-white/15 transition-colors ${
             sidebarCollapsed ? 'mx-auto' : ''
           }`}
           title={sidebarCollapsed ? 'Expandir' : 'Contraer'}
@@ -124,14 +126,18 @@ export function Sidebar({ activePage }: SidebarProps) {
       </nav>
 
       {/* Footer — cambiar usuario */}
-      <div className="flex-shrink-0 border-t border-outline-variant/30 p-2 relative">
+      <div className="flex-shrink-0 border-t border-outline-variant/30">
         {showSwitcher && (
-          <UserSwitcher onClose={() => setShowSwitcher(false)} />
+          <UserSwitcher
+            onClose={() => setShowSwitcher(false)}
+            triggerRef={switcherButtonRef}
+          />
         )}
         <button
+          ref={switcherButtonRef}
           onClick={() => setShowSwitcher(v => !v)}
           title="Cambiar usuario"
-          className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors ${
+          className={`w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors ${
             sidebarCollapsed ? 'justify-center' : ''
           }`}
         >

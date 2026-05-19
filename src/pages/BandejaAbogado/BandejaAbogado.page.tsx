@@ -50,6 +50,7 @@ export default function BandejaAbogadoPage() {
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
   const [modalAgrupar,   setModalAgrupar]   = useState<string | null>(null)
   const [inputCausa,     setInputCausa]     = useState('')
+  const [expandedCausas, setExpandedCausas] = useState<Set<string>>(new Set())
 
   // Close menu on outside click
   useEffect(() => {
@@ -341,60 +342,87 @@ export default function BandejaAbogadoPage() {
                     const { numeroCausa, expedientes: exps } = item
                     const principal = exps.find(e => e.es_principal) ?? exps[0]
                     const areasBadges = [...new Set(exps.map(e => e.area))] as Area[]
+                    const isExpanded = expandedCausas.has(numeroCausa)
 
                     return (
-                      <tr
-                        key={numeroCausa}
-                        className="bg-surface-container-low border-l-4 border-primary/40 hover:border-primary cursor-pointer transition-colors"
-                        onClick={() => navigate(RUTAS.CAUSA(numeroCausa))}
-                      >
-                        {/* Icon */}
-                        <td className="w-10 py-3 px-2 text-center">
-                          <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center mx-auto">
-                            <span className="material-symbols-outlined text-[18px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
-                          </div>
-                        </td>
-                        {/* N° Causa */}
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs font-bold text-primary">{numeroCausa}</span>
-                          </div>
-                          <p className="text-[10px] text-on-surface-variant mt-0.5">
-                            {exps.length} exp. vinculado{exps.length !== 1 ? 's' : ''}
-                          </p>
-                        </td>
-                        {/* Carátula principal */}
-                        <td className="py-3 px-3 max-w-[280px]">
-                          <p className="text-sm text-on-surface line-clamp-2">{principal.caratula}</p>
-                        </td>
-                        {/* Área */}
-                        <td className="py-3 px-3">
-                          <div className="flex flex-wrap gap-1">
-                            {areasBadges.map(a => <AreaBadge key={a} area={a} />)}
-                          </div>
-                        </td>
-                        {/* Tipo */}
-                        <td className="py-3 px-3">
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
-                            <span className="material-symbols-outlined text-[11px]">link</span>
-                            Causa judicial
-                          </span>
-                        </td>
-                        {/* Estado */}
-                        <td className="py-3 px-3">
-                          <EstadoBadge code={principal.estado} label={principal.estado} />
-                        </td>
-                        {/* Recepción */}
-                        <td className="py-3 px-3 whitespace-nowrap">
-                          <span className="text-xs text-on-surface-variant">{formatFecha(principal.fecha_recepcion)}</span>
-                        </td>
-                        {/* Flecha */}
-                        <td className="py-3 px-3 text-center">
-                          <span className="material-symbols-outlined text-[18px] text-on-surface-variant">chevron_right</span>
-                        </td>
-                      </tr>
-                    )
-                  }
+                      <>
+                        <tr
+                          key={numeroCausa}
+                          className="bg-surface-container-low border-l-4 border-primary/40 hover:border-primary cursor-pointer transition-colors"
+                          onClick={() => setExpandedCausas(prev => {
+                            const next = new Set(prev)
+                            next.has(numeroCausa) ? next.delete(numeroCausa) : next.add(numeroCausa)
+                            return next
+                          })}
+                        >
+                          {/* Icon */}
+                          <td className="w-10 py-3 px-2 text-center">
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center mx-auto transition-all ${
+                                isExpanded
+                                  ? 'bg-primary text-on-primary'
+                                  : 'bg-primary-container text-primary'
+                              }`}
+                            >
+                              <span
+                                className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${
+                                  isExpanded ? 'rotate-90' : ''
+                                }`}
+                              >
+                                chevron_right
+                              </span>
+                            </div>
+                          </td>
+                          {/* N° Causa */}
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-xs font-bold text-primary">{numeroCausa}</span>
+                            </div>
+                            <p className="text-[10px] text-on-surface-variant mt-0.5">
+                              {exps.length} exp. vinculado{exps.length !== 1 ? 's' : ''}
+                            </p>
+                          </td>
+                          {/* Carátula principal */}
+                          <td className="py-3 px-3 max-w-[280px]">
+                            <p className="text-sm text-on-surface line-clamp-2">{principal.caratula}</p>
+                          </td>
+                          {/* Área */}
+                          <td className="py-3 px-3">
+                            <div className="flex flex-wrap gap-1">
+                              {areasBadges.map(a => <AreaBadge key={a} area={a} />)}
+                            </div>
+                          </td>
+                          {/* Tipo */}
+                          <td className="py-3 px-3">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                              <span className="material-symbols-outlined text-[11px]">link</span>
+                              Causa judicial
+                            </span>
+                          </td>
+                          {/* Estado */}
+                          <td className="py-3 px-3">
+                            <EstadoBadge code={principal.estado} label={principal.estado} />
+                          </td>
+                          {/* Recepción */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <span className="text-xs text-on-surface-variant">{formatFecha(principal.fecha_recepcion)}</span>
+                          </td>
+                          {/* Flecha */}
+                          <td className="py-3 px-3 text-center">
+                            <span 
+                            className="material-symbols-outlined text-[18px] text-on-surface-variant"
+                            onClick={e => { e.stopPropagation(); navigate(RUTAS.CAUSA(numeroCausa)) }}
+                            >
+                              chevron_right
+                            </span>
+                          </td>
+                        </tr>
+                       {isExpanded &&
+                          exps.map(exp => renderExpRow(exp, false))
+                        }
+                        </>
+                        )
+                    }
                   return renderExpRow(item.exp, true)
                 })}
               </tbody>

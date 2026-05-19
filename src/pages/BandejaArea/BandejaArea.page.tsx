@@ -262,13 +262,28 @@ export default function BandejaAreaPage() {
           style={exp.es_principal ? {} : { background: '#fafcfd' }}
         >
           {/* Connector */}
-          <td className="w-10 py-3 text-center relative">
-            <div className="relative inline-flex flex-col items-center">
-              <div className={`absolute left-[calc(50%-0.5px)] w-px bg-outline-variant ${isLast ? 'top-0 h-[calc(50%+4px)]' : '-top-3 bottom-0'}`} />
-              <div className="absolute left-1/2 top-1/2 -translate-y-1/2 w-3 h-px bg-outline-variant" />
-              <span className="material-symbols-outlined text-[15px] relative z-10 text-on-surface-variant">
-                description
-              </span>
+          <td className="w-10 py-3 px-2 relative">
+            <div className="relative min-h-[56px]">
+
+              {/* Línea vertical */}
+              <div
+                className={`absolute left-3 w-px bg-outline-variant/40 ${
+                  isLast
+                    ? 'top-0 h-1/2'
+                    : 'top-0 bottom-0'
+                }`}
+              />
+
+              {/* Línea horizontal */}
+              <div className="absolute left-3 top-1/2 w-3 h-px bg-outline-variant/40" />
+
+              {/* Icono */}
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
+                <span className="material-symbols-outlined text-[16px] text-on-surface-variant">
+                  description
+                </span>
+              </div>
+
             </div>
           </td>
           {/* N° + Principal badge */}
