@@ -58,7 +58,7 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 w-full max-h-96 overflow-y-auto z-[60] bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg flex flex-col"
+      className="fixed bottom-16 left-2 w-72 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg z-[200] overflow-hidden max-h-[70vh] flex flex-col"
     >
       <div className="px-4 py-3 border-b border-[rgba(0,0,0,0.08)] bg-[#f5f5f5] sticky top-0">
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
