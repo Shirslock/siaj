@@ -47,7 +47,7 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
   if (estados.length <= 1) return null
 
   return (
-    <div className="bg-surface-container-lowest rounded-2xl shadow-card px-6 py-4 mb-4">
+    <div className="bg-surface-container-lowest rounded-2xl shadow-card px-16 py-4 mb-4">
       <div className="flex items-center gap-0">
         {estados.map((estado, idx) => {
           const isPast    = idx < idxActual

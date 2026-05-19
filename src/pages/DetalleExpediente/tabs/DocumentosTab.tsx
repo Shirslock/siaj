@@ -72,9 +72,6 @@ export function DocumentosTab({ exp }: Props) {
         </div>
       )}
 
-      <p className="text-[11px] text-on-surface-variant text-center">
-        Integración GDE pendiente — Visualización de documentos disponible en próxima fase.
-      </p>
     </div>
   )
 }
