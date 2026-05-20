@@ -101,7 +101,7 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
 function TareaFeedItem({
   tarea,
   numero,
-  estadoLabel,
+  estadoLabel: _estadoLabel,
   onClick,
   isSelected,
 }: {
@@ -380,7 +380,7 @@ function TareaDetailPanel({
 
 // ── Entrada del feed (actividad genérica o de sistema) ───────────────────────
 
-function ActividadFeedItem({ act, idx, isLast }: { act: Actividad; idx: number; isLast: boolean }) {
+function ActividadFeedItem({ act, idx: _idx, isLast }: { act: Actividad; idx: number; isLast: boolean }) {
   const iconMap: Record<string, string> = {
     RECEPCION:      'inbox',
     CONTESTACION:   'reply',
