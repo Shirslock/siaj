@@ -13,10 +13,10 @@ const ROL_LABELS: Record<RolSistema, string> = {
 }
 
 const AVATAR_COLORS: Record<RolSistema, string> = {
-  REFERENTE:      'bg-primary text-on-primary',
-  COORDINADOR:    'bg-secondary text-white',
-  ABOGADO:        'bg-on-surface text-surface',
-  ADMINISTRATIVO: 'bg-outline text-surface',
+  REFERENTE:      'bg-[#1b3a57] text-white',
+  COORDINADOR:    'bg-[#2a5278] text-white',
+  ABOGADO:        'bg-[#4a6a84] text-white',
+  ADMINISTRATIVO: 'bg-[#7a9ab4] text-white',
 }
 
 interface UserSwitcherProps {
@@ -56,10 +56,10 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
   return (
     <div
       ref={ref}
-      className="fixed bottom-16 left-2 w-72 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-card-lg z-[200] overflow-hidden max-h-[70vh] flex flex-col"
+      className="absolute bottom-full left-0 w-full max-h-96 overflow-y-auto z-[60] bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg flex flex-col"
     >
-      <div className="px-4 py-3 border-b border-outline-variant/40 bg-surface-container-low">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+      <div className="px-4 py-3 border-b border-[rgba(0,0,0,0.08)] bg-[#f5f5f5] sticky top-0">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
           Cambiar usuario — Demo
         </p>
       </div>
@@ -67,7 +67,7 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
       <div className="overflow-y-auto flex-1 min-h-0">
         {grupos.map(({ rol, label, usuarios }) => (
           <div key={rol}>
-            <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-outline">
+            <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-[#7a9ab4]">
               {label}
             </p>
             {usuarios.map(u => {
@@ -80,8 +80,8 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
                   onClick={() => handleSelect(u.id, `${u.apellido}, ${u.nombre}`)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                     isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'hover:bg-surface-container text-on-surface'
+                      ? 'bg-[#C4DFE8] text-[#1b3a57]'
+                      : 'hover:bg-[#e8e8e8] text-[#1b3a57]'
                   }`}
                 >
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${AVATAR_COLORS[u.rolSistema]}`}>
@@ -89,10 +89,10 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{u.apellido}, {u.nombre}</p>
-                    <p className="text-[10px] text-on-surface-variant truncate">{u.rolBD}</p>
+                    <p className="text-[10px] text-[#4a6a84] truncate">{u.rolBD}</p>
                   </div>
                   {isActive && (
-                    <span className="material-symbols-outlined text-primary text-[18px] flex-shrink-0">
+                    <span className="material-symbols-outlined text-[#1b3a57] text-[18px] flex-shrink-0">
                       check
                     </span>
                   )}

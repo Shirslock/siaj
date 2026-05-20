@@ -126,7 +126,7 @@ export function Sidebar({ activePage }: SidebarProps) {
       </nav>
 
       {/* Footer — cambiar usuario */}
-      <div className="flex-shrink-0 border-t border-black/10">
+      <div className="relative flex-shrink-0 border-t border-black/10">
         {showSwitcher && (
           <UserSwitcher
             onClose={() => setShowSwitcher(false)}
