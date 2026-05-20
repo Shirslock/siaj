@@ -14,10 +14,10 @@ interface ButtonProps {
 }
 
 const VARIANT_CLASSES = {
-  primary:   'bg-gradient-to-br from-primary to-primary-dim text-on-primary hover:opacity-90 shadow-sm',
-  secondary: 'bg-surface-container text-on-surface border border-outline-variant hover:bg-surface-container-high',
-  ghost:     'text-primary hover:bg-primary/10',
-  danger:    'bg-error text-white hover:opacity-90',
+  primary:   'bg-[#1b3a57] hover:bg-[#2a5278] text-white shadow-sm',
+  secondary: 'bg-white border border-[rgba(0,0,0,0.2)] text-[#1b3a57] hover:bg-[#f0f0f0]',
+  ghost:     'text-[#1b3a57] hover:bg-[#E5E5E5]',
+  danger:    'bg-[#b91c1c] hover:bg-[#991b1b] text-white',
 }
 
 const SIZE_CLASSES = {
@@ -47,7 +47,7 @@ export function Button({
       disabled={isDisabled}
       className={`
         inline-flex items-center justify-center gap-2 rounded-lg font-medium
-        transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/20
+        transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#C4DFE8]/50
         ${VARIANT_CLASSES[variant]}
         ${SIZE_CLASSES[size]}
         ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}

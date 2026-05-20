@@ -40,7 +40,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-[#f5f5f5]">
       <Sidebar activePage={activePage} />
       <Topbar titulo={titulo} />
       <main

@@ -13,10 +13,10 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
 ]
 
 const AVATAR_COLORS: Record<RolSistema, string> = {
-  REFERENTE:      'bg-primary text-on-primary',
-  COORDINADOR:    'bg-secondary text-white',
-  ABOGADO:        'bg-on-surface text-surface',
-  ADMINISTRATIVO: 'bg-outline text-surface',
+  REFERENTE:      'bg-[#1b3a57] text-white',
+  COORDINADOR:    'bg-[#2a5278] text-white',
+  ABOGADO:        'bg-[#4a6a84] text-white',
+  ADMINISTRATIVO: 'bg-[#7a9ab4] text-white',
 }
 
 const ROL_LABEL: Record<RolSistema, string> = {
@@ -51,12 +51,12 @@ export function Sidebar({ activePage }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-white flex flex-col z-40 transition-all duration-200 overflow-hidden ${
+      className={`fixed left-0 top-0 h-screen bg-[#E5E5E5] flex flex-col z-40 transition-all duration-200 overflow-hidden ${
         sidebarCollapsed ? 'w-16' : 'w-64'
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-16 flex-shrink-0 bg-[#242D4F]">
+      <div className="flex items-center justify-between px-3 h-16 flex-shrink-0 bg-[#1b3a57]">
         {!sidebarCollapsed && (
           <div className="border-l-[3px] border-white pl-2.5">
             <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">TRENES</p>
@@ -78,7 +78,7 @@ export function Sidebar({ activePage }: SidebarProps) {
 
       {/* Usuario activo */}
       {usuarioActivo && (
-        <div className={`flex items-center gap-3 px-3 py-3 border-b border-outline-variant/30 flex-shrink-0 ${
+        <div className={`flex items-center gap-3 px-3 py-3 border-b border-black/10 flex-shrink-0 ${
           sidebarCollapsed ? 'justify-center' : ''
         }`}>
           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${AVATAR_COLORS[usuarioActivo.rolSistema]}`}>
@@ -86,10 +86,10 @@ export function Sidebar({ activePage }: SidebarProps) {
           </div>
           {!sidebarCollapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-on-surface truncate leading-tight">
+              <p className="text-sm font-semibold text-[#1b3a57] truncate leading-tight">
                 {getNombreCompleto(usuarioActivo)}
               </p>
-              <p className="text-[10px] text-on-surface-variant truncate">
+              <p className="text-[10px] text-[#4a6a84] truncate">
                 {ROL_LABEL[usuarioActivo.rolSistema]}
               </p>
             </div>
@@ -108,11 +108,11 @@ export function Sidebar({ activePage }: SidebarProps) {
               title={sidebarCollapsed ? item.label : undefined}
               className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg mb-0.5 transition-colors group ${
                 active
-                  ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface border-l-2 border-transparent'
+                  ? 'bg-[#C4DFE8] text-[#1b3a57] border-l-2 border-[#1b3a57]'
+                  : 'text-[#1b3a57] hover:bg-[#d8d8d8] border-l-2 border-transparent'
               } ${sidebarCollapsed ? 'justify-center' : ''}`}
             >
-              <span className={`material-symbols-outlined text-[22px] flex-shrink-0 ${active ? 'text-primary' : ''}`}>
+              <span className="material-symbols-outlined text-[22px] flex-shrink-0">
                 {item.icon}
               </span>
               {!sidebarCollapsed && (
@@ -126,7 +126,7 @@ export function Sidebar({ activePage }: SidebarProps) {
       </nav>
 
       {/* Footer — cambiar usuario */}
-      <div className="flex-shrink-0 border-t border-outline-variant/30">
+      <div className="flex-shrink-0 border-t border-black/10">
         {showSwitcher && (
           <UserSwitcher
             onClose={() => setShowSwitcher(false)}
@@ -137,7 +137,7 @@ export function Sidebar({ activePage }: SidebarProps) {
           ref={switcherButtonRef}
           onClick={() => setShowSwitcher(v => !v)}
           title="Cambiar usuario"
-          className={`w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-colors ${
+          className={`w-full flex items-center gap-3 px-4 py-3 text-[#1b3a57] hover:bg-[#d8d8d8] transition-colors ${
             sidebarCollapsed ? 'justify-center' : ''
           }`}
         >

@@ -23,17 +23,17 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-[#63B2DA] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
+      className={`fixed top-0 right-0 h-16 bg-[#1b3a57] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
         sidebarCollapsed ? 'left-16' : 'left-64'
       }`}
     >
       {/* Título */}
       <div>
-        <h1 className="font-headline font-bold text-lg text-on-primary leading-tight">
+        <h1 className="font-headline font-bold text-lg text-white leading-tight">
           {titulo}
         </h1>
         {subtitulo && (
-          <p className="text-sm text-on-primary opacity-80 leading-tight">{subtitulo}</p>
+          <p className="text-sm text-white opacity-70 leading-tight">{subtitulo}</p>
         )}
       </div>
 
@@ -42,19 +42,19 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
         {usuarioActivo && (
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-on-primary leading-tight">
+              <p className="text-sm font-semibold text-white leading-tight">
                 {getNombreCompleto(usuarioActivo)}
               </p>
-              <p className="text-xs text-on-primary opacity-70 leading-tight">
+              <p className="text-xs text-[#C4DFE8] leading-tight">
                 {ROL_LABEL[usuarioActivo.rolSistema]}
               </p>
             </div>
-            <div className="w-8 h-8 rounded-full bg-on-primary/20 flex items-center justify-center text-on-primary text-xs font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {initials}
             </div>
           </div>
         )}
-        <button className="text-on-primary opacity-60 hover:opacity-100 transition-opacity">
+        <button className="text-white opacity-60 hover:opacity-100 transition-opacity">
           <span className="material-symbols-outlined text-[22px]">notifications_none</span>
         </button>
       </div>

@@ -7,32 +7,32 @@ interface BadgeConfig {
 }
 
 const ESTADO_CONFIG: Record<string, BadgeConfig> = {
-  EN_TRAMITE:           { bg: 'bg-secondary-container',          text: 'text-on-secondary-fixed',      dot: 'bg-secondary' },
-  'EN TRAMITACIÓN':     { bg: 'bg-secondary-container',          text: 'text-on-secondary-fixed',      dot: 'bg-secondary' },
-  'EN TRAMITACION':     { bg: 'bg-secondary-container',          text: 'text-on-secondary-fixed',      dot: 'bg-secondary' },
-  EN_PLAZO_CONTESTAR:   { bg: 'bg-primary-container',            text: 'text-on-primary-container',    dot: 'bg-primary-dim' },
-  'EN ANÁLISIS':        { bg: 'bg-primary-container',            text: 'text-on-primary-container',    dot: 'bg-primary-dim' },
-  SUSPENSION_TERMINOS:  { bg: 'bg-surface-container',            text: 'text-on-surface-variant' },
-  'AUDIENCIA PACTADA':  { bg: 'bg-surface-container',            text: 'text-on-surface-variant',      dot: 'bg-secondary-dim' },
-  EN_PRUEBA:            { bg: 'bg-surface-container',            text: 'text-on-surface-variant' },
-  PENDIENTE_GDE:        { bg: 'bg-yellow-100',                   text: 'text-yellow-800' },
-  PENDIENTE:            { bg: 'bg-yellow-100',                   text: 'text-yellow-800',              dot: 'bg-yellow-500' },
-  'PENDIENTE CARGA':    { bg: 'bg-yellow-100',                   text: 'text-yellow-800',              dot: 'bg-yellow-500' },
-  CUMPLIDO:             { bg: 'bg-green-100',                    text: 'text-green-800',               dot: 'bg-green-600' },
-  ACUERDO:              { bg: 'bg-green-100',                    text: 'text-green-800',               dot: 'bg-green-600' },
-  ARCHIVADO:            { bg: 'bg-surface-container-highest',    text: 'text-outline' },
-  ARCHIVADA:            { bg: 'bg-surface-container-highest',    text: 'text-outline' },
-  URGENTE:              { bg: 'bg-red-100',                      text: 'text-red-800',                 dot: 'bg-red-500' },
-  INSTRUCCIÓN:          { bg: 'bg-tertiary-container',           text: 'text-on-tertiary-fixed',       dot: 'bg-tertiary-dim' },
-  'ELEVADA A JUICIO':   { bg: 'bg-primary-container',            text: 'text-on-primary-container',    dot: 'bg-primary' },
-  SENTENCIA:            { bg: 'bg-surface-container-high',       text: 'text-on-surface-variant' },
-  OBSERVADO:            { bg: 'bg-yellow-100',                   text: 'text-yellow-800',              dot: 'bg-yellow-500' },
-  ASIGNADO:             { bg: 'bg-primary-container',            text: 'text-on-primary-container',    dot: 'bg-primary-dim' },
+  EN_TRAMITE:           { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
+  'EN TRAMITACIÓN':     { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
+  'EN TRAMITACION':     { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
+  EN_PLAZO_CONTESTAR:   { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#2a5278]' },
+  'EN ANÁLISIS':        { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#2a5278]' },
+  SUSPENSION_TERMINOS:  { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  'AUDIENCIA PACTADA':  { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]', dot: 'bg-[#7dbad2]' },
+  EN_PRUEBA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  PENDIENTE_GDE:        { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]' },
+  PENDIENTE:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
+  'PENDIENTE CARGA':    { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
+  CUMPLIDO:             { bg: 'bg-[#dcfce7]',  text: 'text-[#15803d]', dot: 'bg-[#15803d]' },
+  ACUERDO:              { bg: 'bg-[#dcfce7]',  text: 'text-[#15803d]', dot: 'bg-[#15803d]' },
+  ARCHIVADO:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  ARCHIVADA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  URGENTE:              { bg: 'bg-[#fee2e2]',  text: 'text-[#b91c1c]', dot: 'bg-[#b91c1c]' },
+  INSTRUCCIÓN:          { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
+  'ELEVADA A JUICIO':   { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#1b3a57]' },
+  SENTENCIA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  OBSERVADO:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
+  ASIGNADO:             { bg: 'bg-[#E5E5E5]',  text: 'text-[#1b3a57]', dot: 'bg-[#7dbad2]' },
 }
 
 const DEFAULT_CONFIG: BadgeConfig = {
-  bg: 'bg-surface-container',
-  text: 'text-on-surface-variant',
+  bg: 'bg-[#e8e8e8]',
+  text: 'text-[#4a6a84]',
 }
 
 export function EstadoBadge({ code, label }: { code: string; label: string }) {
@@ -47,9 +47,9 @@ export function EstadoBadge({ code, label }: { code: string; label: string }) {
 
 export function AreaBadge({ area }: { area: Area }) {
   const config: Record<Area, string> = {
-    CIVIL:   'bg-primary-container text-on-primary-container',
-    LABORAL: 'bg-secondary-container text-on-secondary-fixed',
-    PENAL:   'bg-surface-container text-on-surface-variant',
+    CIVIL:   'bg-[#C4DFE8] text-[#1b3a57]',
+    LABORAL: 'bg-[#dbeafe] text-[#1b3a57]',
+    PENAL:   'bg-[#e8e8e8] text-[#1b3a57]',
   }
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${config[area]}`}>
@@ -60,10 +60,10 @@ export function AreaBadge({ area }: { area: Area }) {
 
 export function RolBadge({ rol }: { rol: RolSistema }) {
   const config: Record<RolSistema, string> = {
-    REFERENTE:      'bg-primary-container text-on-primary-container',
-    COORDINADOR:    'bg-secondary-container text-on-secondary-fixed',
-    ABOGADO:        'bg-surface-container text-on-surface-variant',
-    ADMINISTRATIVO: 'bg-surface-container-highest text-outline',
+    REFERENTE:      'bg-[#1b3a57] text-white',
+    COORDINADOR:    'bg-[#2a5278] text-white',
+    ABOGADO:        'bg-[#C4DFE8] text-[#1b3a57]',
+    ADMINISTRATIVO: 'bg-[#e8e8e8] text-[#4a6a84]',
   }
   const labels: Record<RolSistema, string> = {
     REFERENTE:      'Referente',
