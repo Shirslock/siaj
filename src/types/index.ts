@@ -169,6 +169,7 @@ export interface Actividad {
   subitems: SubActividad[]
   creado_por?: string
   activo: boolean
+  adjunto_nombre?: string | null
 }
 
 export interface AgendaEvent {

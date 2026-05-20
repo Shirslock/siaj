@@ -1,24 +1,47 @@
+import { useState } from 'react'
 import type { Expediente } from '../../../types'
 import { formatFecha } from '../../../utils/format'
 import Icon from '../../../components/ui/Icon'
+import { useExpedientesStore } from '../../../store/expedientes.store'
 
 interface Props { exp: Expediente }
 
 export function DocumentosTab({ exp }: Props) {
+  const [docsLocales, setDocsLocales] = useState<{ nombre: string; tipo: string; fecha: string; size: string; icon: string; color: string }[]>([])
+  const todosLosDocs = [...exp.documentos, ...docsLocales]
+  const { eliminarDocumento } = useExpedientesStore()
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
         <button
-          disabled
-          title="Funcionalidad pendiente"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#e8e8e8] text-[#4a6a84] cursor-not-allowed opacity-60"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
+          onClick={() => document.getElementById('doc-upload')?.click()}
         >
           <Icon name="upload_file" size={18} />
           Subir documento
         </button>
+        <input
+          id="doc-upload"
+          type="file"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            const ext = file.name.split('.').pop()?.toUpperCase() ?? 'FILE'
+            setDocsLocales(prev => [...prev, {
+              nombre: file.name,
+              tipo: ext,
+              fecha: new Date().toISOString().split('T')[0],
+              size: `${(file.size / 1024).toFixed(0)} KB`,
+              icon: ext === 'PDF' ? 'picture_as_pdf' : ext === 'DOCX' || ext === 'DOC' ? 'description' : 'attach_file',
+              color: ext === 'PDF' ? 'text-red-500' : ext === 'DOCX' || ext === 'DOC' ? 'text-blue-500' : 'text-[#4a6a84]',
+            }])
+            e.target.value = ''
+          }}
+        />
       </div>
 
-      {exp.documentos.length === 0 ? (
+      {todosLosDocs.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-10 text-center text-[#4a6a84] text-sm">
           No hay documentos adjuntos.
         </div>
@@ -35,7 +58,7 @@ export function DocumentosTab({ exp }: Props) {
               </tr>
             </thead>
             <tbody>
-              {exp.documentos.map((doc, i) => (
+              {todosLosDocs.map((doc, i) => (
                 <tr
                   key={i}
                   className="group border-b border-[rgba(0,0,0,0.06)] hover:bg-[#f0f0f0] transition-colors"
@@ -58,13 +81,28 @@ export function DocumentosTab({ exp }: Props) {
                     {doc.size}
                   </td>
                   <td className="py-3 px-4">
-                    <button
-                      disabled
-                      title="Descarga no disponible en esta versión"
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-[#4a6a84] hover:bg-[#e0e0e0] transition-all cursor-not-allowed"
-                    >
-                      <Icon name="download" size={18} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        disabled
+                        title="Descarga no disponible en esta versión"
+                        className="p-1.5 rounded-lg text-[#4a6a84] cursor-not-allowed opacity-40"
+                      >
+                        <Icon name="download" size={18} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (i < exp.documentos.length) {
+                            eliminarDocumento(exp.id, i)
+                          } else {
+                            setDocsLocales(prev => prev.filter((_, j) => j !== i - exp.documentos.length))
+                          }
+                        }}
+                        title="Eliminar"
+                        className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <Icon name="delete" size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

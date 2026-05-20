@@ -34,6 +34,15 @@ export function PrevisionTab({ exp }: Props) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 mb-1">
+        <span className="material-symbols-outlined text-[18px] text-amber-600 flex-shrink-0 mt-0.5">construction</span>
+        <div>
+          <p className="text-xs font-bold text-amber-800">Pestaña a relevar con el negocio</p>
+          <p className="text-[11px] text-amber-700 mt-0.5">
+            Los cálculos, tasas y métricas mostrados son ejemplos ilustrativos. La lógica definitiva deberá confirmarse con el área requirente antes de implementar.
+          </p>
+        </div>
+      </div>
       <div className="grid grid-cols-3 gap-4">
         <MetricCard
           titulo="Monto Demanda"

@@ -374,7 +374,7 @@ function TareaDetailPanel({
 
 // ── Entrada del feed (actividad genérica o de sistema) ───────────────────────
 
-function ActividadFeedItem({ act, idx: _idx, isLast }: { act: Actividad; idx: number; isLast: boolean }) {
+function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [] }: { act: Actividad; idx: number; isLast: boolean, hijas?: Actividad[] }) {
   const iconMap: Record<string, string> = {
     RECEPCION:      'inbox',
     CONTESTACION:   'reply',
@@ -387,57 +387,121 @@ function ActividadFeedItem({ act, idx: _idx, isLast }: { act: Actividad; idx: nu
     NOTA_RESPUESTA: 'edit_note',
     OTRO:           'more_horiz',
   }
-  const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente
+  const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
 
   return (
-    <div className="flex gap-3">
-      {/* Timeline dot */}
-      <div className="flex flex-col items-center flex-shrink-0 mt-1">
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
-        }`}>
-          <Icon name={isSistema ? 'swap_horiz' : (iconMap[act.tipo] ?? 'radio_button_unchecked')} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
+    <div className="flex flex-col mb-3">
+      <div className="flex gap-3">
+        {/* Timeline dot */}
+        <div className="flex flex-col items-center flex-shrink-0 mt-1">
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+            isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
+          }`}>
+            <Icon name={isSistema ? 'swap_horiz' : (iconMap[act.tipo] ?? 'radio_button_unchecked')} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
+          </div>
+          {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)] mt-1" />}
         </div>
-        {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)]/20 mt-1" />}
+
+        {/* Card */}
+        <div className={`flex-1 rounded-xl border p-3.5 mb-3 ${
+          isSistema
+            ? 'bg-[rgba(27,58,87,0.05)] border-[rgba(27,58,87,0.20)]'
+            : 'bg-white border-[rgba(0,0,0,0.10)] shadow-card'
+        }`}>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
+              {isSistema && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
+                  Sistema
+                </span>
+              )}
+            </div>
+          </div>
+          {act.descripcion && (
+            <p className="text-xs text-[#4a6a84]">{act.descripcion}</p>
+          )}
+          {(act.doc_gde || act.adjunto_nombre) && (
+            <div className="flex flex-wrap gap-3 mt-1.5">
+              {act.doc_gde && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
+                  <Icon name="description" size={14} />
+                  {act.doc_gde}
+                </span>
+              )}
+              {act.adjunto_nombre && (
+                <a
+                  href="#"
+                  onClick={e => e.preventDefault()}
+                  title="Descarga no disponible en esta versión"
+                  className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                >
+                  <Icon name="attach_file" size={14} />
+                  {act.adjunto_nombre}
+                  <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
+                </a>
+              )}
+            </div>
+          )}
+          {act.subitems && act.subitems.length > 0 && (
+            <div className="mt-2 pl-3 border-l-2 border-[rgba(0,0,0,0.08)] space-y-1">
+              {act.subitems.map((sub, si) => (
+                <div key={si}>
+                  <p className="text-xs font-medium text-[#1b3a57]">{sub.titulo}</p>
+                  {sub.descripcion && <p className="text-[10px] text-[#4a6a84]">{sub.descripcion}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Card */}
-      <div className={`flex-1 rounded-xl border p-3.5 mb-3 ${
-        isSistema
-          ? 'bg-[rgba(27,58,87,0.05)] border-[rgba(27,58,87,0.20)]'
-          : 'bg-white border-[rgba(0,0,0,0.10)] shadow-card'
-      }`}>
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
-          <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
-            {isSistema && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
-                Sistema
-              </span>
-            )}
-          </div>
-        </div>
-        {act.descripcion && (
-          <p className="text-xs text-[#4a6a84]">{act.descripcion}</p>
-        )}
-        {act.doc_gde && (
-          <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
-            <Icon name="attach_file" size={14} />
-            {act.doc_gde}
-          </p>
-        )}
-        {act.subitems && act.subitems.length > 0 && (
-          <div className="mt-2 pl-3 border-l-2 border-[rgba(0,0,0,0.08)] space-y-1">
-            {act.subitems.map((sub, si) => (
-              <div key={si}>
-                <p className="text-xs font-medium text-[#1b3a57]">{sub.titulo}</p>
-                {sub.descripcion && <p className="text-[10px] text-[#4a6a84]">{sub.descripcion}</p>}
+      {/* Actividades hijas indentadas */}
+      {hijas.length > 0 && (
+        <div className="ml-10 mt-1 space-y-1.5">
+          {hijas.map((hija, hi) => (
+            <div key={hija.id ?? hi} className="flex gap-3 pl-4 border-l-2 border-[rgba(27,58,87,0.20)] ml-3">
+              <div className="flex flex-col items-center flex-shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)] flex items-center justify-center">
+                  <Icon name="subdirectory_arrow_right" size={12} className="text-[#4a6a84]" />
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <div className="flex-1 rounded-xl border border-[rgba(0,0,0,0.10)] bg-white shadow-card p-3 mb-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{hija.titulo}</p>
+                  <p className="text-[10px] text-[#4a6a84] whitespace-nowrap flex-shrink-0">{formatFecha(hija.fecha)}</p>
+                </div>
+                {hija.descripcion && (
+                  <p className="text-xs text-[#4a6a84] mt-0.5">{hija.descripcion}</p>
+                )}
+                {(hija.doc_gde || hija.adjunto_nombre) && (
+                  <div className="flex flex-wrap gap-3 mt-1.5">
+                    {hija.doc_gde && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
+                        <Icon name="description" size={14} />
+                        {hija.doc_gde}
+                      </span>
+                    )}
+                    {hija.adjunto_nombre && (
+                      <a
+                        href="#"
+                        onClick={e => e.preventDefault()}
+                        title="Descarga no disponible en esta versión"
+                        className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                      >
+                        <Icon name="attach_file" size={14} />
+                        {hija.adjunto_nombre}
+                        <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -552,6 +616,7 @@ export function TimelineTab({ exp }: Props) {
   const [modalNuevaActividad, setModalNuevaActividad] = useState(false)
   const [modalAvanzarEstado, setModalAvanzarEstado] = useState(false)
   const [formAct, setFormAct] = useState(BLANK_ACT)
+  const [adjuntoNuevaAct, setAdjuntoNuevaAct] = useState<File | null>(null)
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
 
@@ -582,12 +647,15 @@ export function TimelineTab({ exp }: Props) {
 
   // Filtrar feed
   const feedFiltrado = sorted.filter(act => {
-    const esSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente
+    const esSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
     const esActividad = !esSistema
+    const esHija = esActividad && !!act.estadoExpediente && act.estadoExpediente !== 'ASIGNADO' && sorted.some(
+      padre => padre.tipo === 'MOVIMIENTO' && padre.titulo.startsWith('Cambio de estado') && padre.estadoExpediente === act.estadoExpediente
+    )
     if (filtroTab === 'sistema') return esSistema
     if (filtroTab === 'actividades') return esActividad
-    if (filtroTab === 'tareas') return false // las tareas no son del feed
-    return true
+    if (filtroTab === 'tareas') return false
+    return !esHija  // en "todo": solo raíz (sistema + actividades sin estado asignado)
   }).filter(act => {
     if (!busqueda.trim()) return true
     const q = busqueda.toLowerCase()
@@ -633,11 +701,13 @@ export function TimelineTab({ exp }: Props) {
     const act: Actividad = {
       id: `ACT_${Date.now()}`,
       expediente_id: exp.id,
+      estadoExpediente: estadoCodigo,
       tipo: formAct.tipo,
       titulo: formAct.titulo,
       descripcion: formAct.descripcion,
       fecha: formAct.fecha,
-      doc_gde: formAct.doc_gde || null,
+      doc_gde: formAct.doc_gde.trim() || null,
+      adjunto_nombre: adjuntoNuevaAct?.name ?? null,
       subitems: [],
       activo: false,
       creado_por: usuarioActivo?.id,
@@ -646,6 +716,7 @@ export function TimelineTab({ exp }: Props) {
     toast.success('Actividad registrada.')
     setModalNuevaActividad(false)
     setFormAct(BLANK_ACT)
+    setAdjuntoNuevaAct(null)
   }
 
   const FILTRO_TABS: { key: FiltroTab; label: string; count?: number }[] = [
@@ -732,14 +803,25 @@ export function TimelineTab({ exp }: Props) {
           {/* Feed actividades */}
           {filtroTab !== 'tareas' && feedFiltrado.length > 0 && (
             <div className="mb-4">
-              {feedFiltrado.map((act, idx) => (
-                <ActividadFeedItem
-                  key={act.id ?? idx}
-                  act={act}
-                  idx={idx}
-                  isLast={idx === feedFiltrado.length - 1}
-                />
-              ))}
+              {feedFiltrado.map((act, idx) => {
+                // Las hijas son actividades genéricas cuyo estadoExpediente coincide con el estado que este ítem establece
+                const hijasDeEsteItem = !!act.estadoExpediente
+                  ? sorted.filter(a =>
+                      a.estadoExpediente === act.estadoExpediente &&
+                      !(a.tipo === 'MOVIMIENTO' && a.titulo.startsWith('Cambio de estado')) &&
+                      a.id !== act.id  // no incluirse a sí mismo
+                    )
+                  : []
+                return (
+                  <ActividadFeedItem
+                    key={act.id ?? idx}
+                    act={act}
+                    idx={idx}
+                    isLast={idx === feedFiltrado.length - 1}
+                    hijas={hijasDeEsteItem}
+                  />
+                )
+              })}
             </div>
           )}
 
@@ -869,15 +951,39 @@ export function TimelineTab({ exp }: Props) {
           </div>
           <div>
             <label className="field-label">N° GDE</label>
-            <input type="text" className="field-input w-full font-mono text-sm" placeholder="EX-2026-..." value={formAct.doc_gde} onChange={e => setFormAct(p => ({ ...p, doc_gde: e.target.value }))} />
+            <input
+              type="text"
+              className="field-input w-full font-mono text-sm"
+              placeholder="EX-2026-..."
+              value={formAct.doc_gde}
+              onChange={e => setFormAct(p => ({ ...p, doc_gde: e.target.value }))}
+            />
           </div>
           <div>
             <label className="field-label">Adjunto</label>
-            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
-              <Icon name="attach_file" size={18} />
-              <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57]">Adjuntar archivo</span>
-              <input type="file" className="hidden" />
-            </label>
+            {adjuntoNuevaAct ? (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[rgba(0,0,0,0.12)] bg-[#f5f5f5]">
+                <Icon name="attach_file" size={18} />
+                <span className="text-xs text-[#1b3a57] flex-1 truncate">{adjuntoNuevaAct.name}</span>
+                <span className="text-[10px] text-[#4a6a84]">{(adjuntoNuevaAct.size / 1024).toFixed(0)} KB</span>
+                <button
+                  onClick={() => setAdjuntoNuevaAct(null)}
+                  className="p-0.5 rounded text-[#4a6a84] hover:text-red-600 transition-colors"
+                >
+                  <Icon name="close" size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
+                <Icon name="attach_file" size={18} className="text-[#4a6a84] group-hover:text-[#1b3a57]" />
+                <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57]">Adjuntar archivo</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={e => setAdjuntoNuevaAct(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            )}
           </div>
         </div>
       </Modal>
