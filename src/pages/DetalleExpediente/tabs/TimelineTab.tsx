@@ -47,7 +47,7 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
   if (estados.length <= 1) return null
 
   return (
-    <div className="bg-surface-container-lowest rounded-2xl shadow-card px-16 py-4 mb-4">
+    <div className="bg-white rounded-2xl shadow-card px-16 py-4 mb-4">
       <div className="flex items-center gap-0">
         {estados.map((estado, idx) => {
           const isPast    = idx < idxActual
@@ -62,10 +62,10 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
                     isCurrent
-                      ? 'bg-primary border-primary text-on-primary shadow-md'
+                      ? 'bg-[#1b3a57] border-[#1b3a57] text-white shadow-md'
                       : isPast
-                      ? 'bg-primary/20 border-primary/40 text-primary'
-                      : 'bg-surface-container border-outline-variant text-on-surface-variant'
+                      ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#1b3a57]'
+                      : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.12)] text-[#4a6a84]'
                   }`}
                 >
                   {isPast
@@ -74,7 +74,7 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
                   }
                 </div>
                 <span className={`mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[80px] truncate ${
-                  isCurrent ? 'text-primary' : isFuture ? 'text-on-surface-variant' : 'text-primary/70'
+                  isCurrent ? 'text-[#1b3a57]' : isFuture ? 'text-[#4a6a84]' : 'text-[rgba(27,58,87,0.70)]'
                 }`}>
                   {estado.label}
                 </span>
@@ -82,9 +82,9 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
               {/* Línea conectora */}
               {!isLast && (
                 <div className="flex-1 h-px mx-2 mb-4 relative">
-                  <div className="absolute inset-0 bg-outline-variant/40 rounded-full" />
+                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.08)] rounded-full" />
                   {isPast && (
-                    <div className="absolute inset-0 bg-primary/40 rounded-full" />
+                    <div className="absolute inset-0 bg-[rgba(27,58,87,0.40)] rounded-full" />
                   )}
                 </div>
               )}
@@ -116,19 +116,19 @@ function TareaFeedItem({
   const estadoConfig = {
     cumplido:       { icon: 'check_circle', color: 'text-green-600', bg: 'bg-green-50',  badge: 'bg-green-100 text-green-700',   label: 'Cumplido' },
     en_curso:       { icon: 'schedule',     color: 'text-amber-500', bg: 'bg-amber-50',  badge: 'bg-amber-100 text-amber-700',   label: 'En curso' },
-    no_procedente:  { icon: 'block',        color: 'text-outline',   bg: 'bg-surface-container', badge: 'bg-surface-container text-on-surface-variant', label: 'No proc.' },
-    sin_estado:     { icon: 'radio_button_unchecked', color: 'text-outline-variant', bg: '', badge: '', label: '' },
+    no_procedente:  { icon: 'block',        color: 'text-[#7a9ab4]',   bg: 'bg-[#e8e8e8]', badge: 'bg-[#e8e8e8] text-[#4a6a84]', label: 'No proc.' },
+    sin_estado:     { icon: 'radio_button_unchecked', color: 'text-[rgba(0,0,0,0.35)]', bg: '', badge: '', label: '' },
   }[tarea.estado]
 
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-outline-variant/10 transition-all hover:bg-surface-container-low ${
-        isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
+      className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[rgba(0,0,0,0.04)] transition-all hover:bg-[#f0f0f0] ${
+        isSelected ? 'bg-[rgba(27,58,87,0.05)] border-l-2 border-l-[#1b3a57]' : 'border-l-2 border-l-transparent'
       }`}
     >
       {/* Número */}
-      <span className="text-[10px] font-bold text-on-surface-variant w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
+      <span className="text-[10px] font-bold text-[#4a6a84] w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
 
       {/* Ícono estado */}
       <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${estadoConfig.color}`}
@@ -137,12 +137,12 @@ function TareaFeedItem({
       </span>
 
       {/* Nombre */}
-      <p className="text-xs text-on-surface flex-1 truncate">{tarea.nombre}</p>
+      <p className="text-xs text-[#1b3a57] flex-1 truncate">{tarea.nombre}</p>
 
       {/* Dot urgencia */}
       {tarea.fechaVencimiento && (
         <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-          urg === 'rojo' ? 'bg-error' : urg === 'ambar' ? 'bg-amber-500' : 'bg-green-500'
+          urg === 'rojo' ? 'bg-[#b91c1c]' : urg === 'ambar' ? 'bg-amber-500' : 'bg-green-500'
         }`} />
       )}
 
@@ -154,7 +154,7 @@ function TareaFeedItem({
       )}
 
       {/* Chevron */}
-      <span className="material-symbols-outlined text-[14px] text-on-surface-variant flex-shrink-0">chevron_right</span>
+      <span className="material-symbols-outlined text-[14px] text-[#4a6a84] flex-shrink-0">chevron_right</span>
     </div>
   )
 }
@@ -191,19 +191,19 @@ function TareaDetailPanel({
 
   return (
     <div className="w-96 flex-shrink-0 sticky top-4 self-start">
-      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-card">
+      <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden shadow-card">
         {/* Header */}
-        <div className="px-5 pt-4 pb-3 border-b border-outline-variant/20 bg-surface-container-low">
+        <div className="px-5 pt-4 pb-3 border-b border-[rgba(0,0,0,0.06)] bg-[#f0f0f0]">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">
                 ESTADO PROCESAL · {estadoLabel.toUpperCase()}
               </p>
-              <p className="text-sm font-bold text-on-surface leading-snug">{tarea.nombre}</p>
+              <p className="text-sm font-bold text-[#1b3a57] leading-snug">{tarea.nombre}</p>
             </div>
             <button
               onClick={onCerrar}
-              className="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors flex-shrink-0"
+              className="p-1 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors flex-shrink-0"
             >
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
@@ -212,7 +212,7 @@ function TareaDetailPanel({
           {/* Pill estado actual */}
           <div className="mt-2">
             {estadoLocal === 'sin_estado' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-surface-container text-on-surface-variant border border-outline-variant/50">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#e8e8e8] text-[#4a6a84] border border-[rgba(0,0,0,0.12)]">
                 <span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span>
                 Pendiente
               </span>
@@ -227,7 +227,7 @@ function TareaDetailPanel({
                 En curso
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-surface-container text-on-surface-variant">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84]">
                 <span className="material-symbols-outlined text-[12px]">block</span>
                 No procedente
               </span>
@@ -241,8 +241,8 @@ function TareaDetailPanel({
           {/* Observaciones */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">Observaciones</label>
-              <span className="text-[9px] text-on-surface-variant">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84]">Observaciones</label>
+              <span className="text-[9px] text-[#4a6a84]">
                 {(cambiosLocales.observaciones ?? tarea.observaciones ?? '').length} car.
               </span>
             </div>
@@ -257,22 +257,22 @@ function TareaDetailPanel({
 
           {/* Estado de la actividad */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-2">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-2">
               Estado de la actividad
             </label>
             <div className="flex gap-2 py-2">
               {estadoOpts.map(opt => {
                 const isActive = estadoLocal === opt.value
                 const activeClass =
-                  opt.value === 'cumplido'      ? 'border-primary bg-primary text-on-primary text-sm' :
+                  opt.value === 'cumplido'      ? 'border-[#1b3a57] bg-[#1b3a57] text-white text-sm' :
                   opt.value === 'en_curso'       ? 'border-amber-500 bg-amber-50 text-amber-700 text-sm' :
-                                                   'border-outline bg-surface-container text-on-surface-variant text-sm'
+                                                   'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84] text-sm'
                 return (
                   <button
                     key={opt.value}
                     onClick={() => setCambiosLocales(p => ({ ...p, estado: opt.value }))}
                     className={`flex flex-1 items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${
-                      isActive ? activeClass : 'border-outline-variant text-on-surface-variant hover:bg-surface-container'
+                      isActive ? activeClass : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#e8e8e8]'
                     }`}
                   >
                     <span
@@ -291,7 +291,7 @@ function TareaDetailPanel({
           {/* Fechas */}
           <div className="grid grid-cols-2 gap-3 items-start">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
                 Fecha de actualización
               </label>
               <div className="relative">
@@ -304,7 +304,7 @@ function TareaDetailPanel({
               </div>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
                 Fecha de vencimiento
               </label>
               <div className="relative">
@@ -316,7 +316,7 @@ function TareaDetailPanel({
                 />
               </div>
               {urgenciaLocal === 'rojo' && (
-                <p className="text-[9px] text-error mt-1 flex items-center gap-1">
+                <p className="text-[9px] text-[#b91c1c] mt-1 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[11px]">warning</span>
                   Plazo vencido
                 </p>
@@ -324,7 +324,7 @@ function TareaDetailPanel({
               {/* Sin fecha pill */}
               <div className="h-3 mt-1">
                 {!(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
-                  <span className="text-[9px] text-on-surface-variant">Sin fecha</span>
+                  <span className="text-[9px] text-[#4a6a84]">Sin fecha</span>
                 )}
               </div>
             </div>
@@ -332,7 +332,7 @@ function TareaDetailPanel({
 
           {/* Documento GDE */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
               Documento GDE
             </label>
             <input
@@ -346,28 +346,28 @@ function TareaDetailPanel({
 
           {/* Adjunto */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant block mb-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
               Adjunto
             </label>
-            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-outline-variant/50 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group">
-              <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">attach_file</span>
-              <span className="text-xs text-on-surface-variant group-hover:text-primary transition-colors">Adjuntar archivo</span>
+            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
+              <span className="material-symbols-outlined text-[18px] text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">attach_file</span>
+              <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">Adjuntar archivo</span>
               <input type="file" className="hidden" />
             </label>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-4 flex gap-2 justify-end border-t border-outline-variant/20 pt-3">
+        <div className="px-5 pb-4 flex gap-2 justify-end border-t border-[rgba(0,0,0,0.06)] pt-3">
           <button
             onClick={onCerrar}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-on-surface-variant hover:bg-surface-container transition-colors"
+            className="px-3 py-2 rounded-xl text-xs font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={onGuardar}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-on-primary hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
           >
             <span className="material-symbols-outlined text-[14px]">save</span>
             Guardar
@@ -400,47 +400,47 @@ function ActividadFeedItem({ act, idx: _idx, isLast }: { act: Actividad; idx: nu
       {/* Timeline dot */}
       <div className="flex flex-col items-center flex-shrink-0 mt-1">
         <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isSistema ? 'bg-primary-container border border-primary/20' : 'bg-surface-container border border-outline-variant/40'
+          isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
         }`}>
-          <span className={`material-symbols-outlined text-[14px] ${isSistema ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <span className={`material-symbols-outlined text-[14px] ${isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>
             {isSistema ? 'swap_horiz' : (iconMap[act.tipo] ?? 'radio_button_unchecked')}
           </span>
         </div>
-        {!isLast && <div className="w-px flex-1 bg-outline-variant/20 mt-1" />}
+        {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)]/20 mt-1" />}
       </div>
 
       {/* Card */}
       <div className={`flex-1 rounded-xl border p-3.5 mb-3 ${
         isSistema
-          ? 'bg-primary/5 border-primary/20'
-          : 'bg-surface-container-lowest border-outline-variant/40 shadow-card'
+          ? 'bg-[rgba(27,58,87,0.05)] border-[rgba(27,58,87,0.20)]'
+          : 'bg-white border-[rgba(0,0,0,0.10)] shadow-card'
       }`}>
         <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-semibold text-on-surface leading-snug">{act.titulo}</p>
+          <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <p className="text-[10px] text-on-surface-variant whitespace-nowrap">{formatFecha(act.fecha)}</p>
+            <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
             {isSistema && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary-container text-on-primary-container">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
                 Sistema
               </span>
             )}
           </div>
         </div>
         {act.descripcion && (
-          <p className="text-xs text-on-surface-variant">{act.descripcion}</p>
+          <p className="text-xs text-[#4a6a84]">{act.descripcion}</p>
         )}
         {act.doc_gde && (
-          <p className="text-[10px] font-mono text-primary mt-1.5 flex items-center gap-1">
+          <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
             <span className="material-symbols-outlined text-sm">attach_file</span>
             {act.doc_gde}
           </p>
         )}
         {act.subitems && act.subitems.length > 0 && (
-          <div className="mt-2 pl-3 border-l-2 border-outline-variant/30 space-y-1">
+          <div className="mt-2 pl-3 border-l-2 border-[rgba(0,0,0,0.08)] space-y-1">
             {act.subitems.map((sub, si) => (
               <div key={si}>
-                <p className="text-xs font-medium text-on-surface">{sub.titulo}</p>
-                {sub.descripcion && <p className="text-[10px] text-on-surface-variant">{sub.descripcion}</p>}
+                <p className="text-xs font-medium text-[#1b3a57]">{sub.titulo}</p>
+                {sub.descripcion && <p className="text-[10px] text-[#4a6a84]">{sub.descripcion}</p>}
               </div>
             ))}
           </div>
@@ -480,24 +480,24 @@ function TareasBlock({
   const tareasVisibles = mostrarTodas ? tareas : tareas.slice(0, 8)
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden mb-4 shadow-card">
+    <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden mb-4 shadow-card">
       {/* Header bloque tareas */}
-      <div className="px-5 py-3 flex items-center gap-3 bg-surface-container-low border-b border-outline-variant/20">
+      <div className="px-5 py-3 flex items-center gap-3 bg-[#f0f0f0] border-b border-[rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
-            progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-primary-container text-on-primary-container'
+            progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-[#C4DFE8] text-[#1b3a57]'
           }`}>
             {estadoProcesal.label.toUpperCase()}
           </span>
-          <span className="text-xs text-on-surface-variant">{completadas}/{total} tareas</span>
+          <span className="text-xs text-[#4a6a84]">{completadas}/{total} tareas</span>
           {/* Barra de progreso */}
-          <div className="flex-1 bg-surface-container h-1.5 rounded-full max-w-[100px]">
+          <div className="flex-1 bg-[#e8e8e8] h-1.5 rounded-full max-w-[100px]">
             <div
-              className={`h-1.5 rounded-full transition-all ${progresoPct === 100 ? 'bg-green-500' : 'bg-primary'}`}
+              className={`h-1.5 rounded-full transition-all ${progresoPct === 100 ? 'bg-green-500' : 'bg-[#1b3a57]'}`}
               style={{ width: `${progresoPct}%` }}
             />
           </div>
-          <span className="text-[10px] font-bold text-on-surface-variant">{progresoPct}%</span>
+          <span className="text-[10px] font-bold text-[#4a6a84]">{progresoPct}%</span>
         </div>
 
         <button
@@ -505,8 +505,8 @@ function TareasBlock({
           disabled={!puedeAvanzar}
           className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0 ${
             puedeAvanzar
-              ? 'bg-primary text-on-primary hover:opacity-90 animate-pulse'
-              : 'bg-surface-container text-outline cursor-not-allowed'
+              ? 'bg-[#1b3a57] text-white hover:opacity-90 animate-pulse'
+              : 'bg-[#e8e8e8] text-[#7a9ab4] cursor-not-allowed'
           }`}
           title={!puedeAvanzar ? `Faltan ${total - completadas} tarea(s)` : `Avanzar a ${siguienteEstado?.label}`}
         >
@@ -518,7 +518,7 @@ function TareasBlock({
       {/* Lista tareas */}
       {tareas.length === 0 ? (
         <div className="px-5 py-6 text-center">
-          <p className="text-xs text-on-surface-variant italic">Este estado no requiere tareas. Podés avanzar directamente.</p>
+          <p className="text-xs text-[#4a6a84] italic">Este estado no requiere tareas. Podés avanzar directamente.</p>
         </div>
       ) : (
         <>
@@ -534,7 +534,7 @@ function TareasBlock({
           ))}
           {!mostrarTodas && tareas.length > 8 && (
             <button
-              className="w-full px-5 py-2.5 text-[11px] text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors text-left"
+              className="w-full px-5 py-2.5 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors text-left"
               onClick={() => setMostrarTodas(true)}
             >
               + {tareas.length - 8} tareas más...
@@ -670,12 +670,12 @@ export function TimelineTab({ exp }: Props) {
       <ProcesalStepper exp={exp} />
 
       {/* ── Header: título + filtros + acción ── */}
-      <div className="bg-surface-container-lowest rounded-2xl shadow-card px-5 py-3">
+      <div className="bg-white rounded-2xl shadow-card px-5 py-3">
         <div className="flex items-center justify-between gap-3">
           {/* Título y contadores */}
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-on-surface">Ciclo de Vida — Actividades</p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container font-semibold">
+            <p className="text-sm font-bold text-[#1b3a57]">Ciclo de Vida — Actividades</p>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57] font-semibold">
               {completadas} de {total + sorted.length} completadas
             </span>
           </div>
@@ -683,23 +683,23 @@ export function TimelineTab({ exp }: Props) {
           <div className="flex items-center gap-2 flex-shrink-0">
 
             {/* Tabs filtro */}
-            <div className="flex items-center gap-1 bg-surface-container rounded-xl p-1">
+            <div className="flex items-center gap-1 bg-[#e8e8e8] rounded-xl p-1">
               {FILTRO_TABS.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setFiltroTab(tab.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                     filtroTab === tab.key
-                      ? 'bg-surface-container-lowest shadow-sm text-on-surface'
-                      : 'text-on-surface-variant hover:text-on-surface'
+                      ? 'bg-white shadow-sm text-[#1b3a57]'
+                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
                   }`}
                 >
                   {tab.label}
                   {tab.count !== undefined && tab.count > 0 && (
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
                       filtroTab === tab.key
-                        ? 'bg-primary text-on-primary'
-                        : 'bg-surface-container-high text-on-surface-variant'
+                        ? 'bg-[#1b3a57] text-white'
+                        : 'bg-[#e0e0e0] text-[#4a6a84]'
                     }`}>
                       {tab.count}
                     </span>
@@ -711,7 +711,7 @@ export function TimelineTab({ exp }: Props) {
             {/* Botón nueva actividad */}
             <button
               onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               Nueva Actividad
@@ -721,7 +721,7 @@ export function TimelineTab({ exp }: Props) {
 
         {/* Buscador */}
         <div className="relative mt-3">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-[#4a6a84] pointer-events-none">search</span>
           <input
             className="field-input pl-9 w-full text-sm"
             placeholder="Buscar actividad..."
@@ -753,17 +753,17 @@ export function TimelineTab({ exp }: Props) {
 
           {/* Mensaje estado inicial */}
           {esEstadoInicial && filtroTab !== 'tareas' && (
-            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center mb-4">
-              <span className="material-symbols-outlined text-3xl text-outline-variant block mb-2">inbox</span>
-              <p className="text-sm font-semibold text-on-surface mb-1">Expediente pendiente de inicio</p>
-              <p className="text-xs text-on-surface-variant">
+            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 text-center mb-4">
+              <span className="material-symbols-outlined text-3xl text-[rgba(0,0,0,0.35)] block mb-2">inbox</span>
+              <p className="text-sm font-semibold text-[#1b3a57] mb-1">Expediente pendiente de inicio</p>
+              <p className="text-xs text-[#4a6a84]">
                 Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
               </p>
             </div>
           )}
 
           {filtroTab !== 'tareas' && feedFiltrado.length === 0 && !esEstadoInicial && (
-            <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 text-center text-on-surface-variant text-sm mb-4">
+            <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] p-8 text-center text-[#4a6a84] text-sm mb-4">
               No hay actividades que coincidan.
             </div>
           )}
@@ -808,20 +808,20 @@ export function TimelineTab({ exp }: Props) {
         size="sm"
         footer={
           <>
-            <button onClick={() => setModalAvanzarEstado(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={() => setModalAvanzarEstado(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
-            <button onClick={confirmarAvance} className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 transition-opacity">
+            <button onClick={confirmarAvance} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity">
               Confirmar avance
             </button>
           </>
         }
       >
         <div className="text-center py-2">
-          <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-outlined text-primary text-2xl">arrow_forward</span>
+          <div className="w-12 h-12 rounded-full bg-[#C4DFE8] flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-[#1b3a57] text-2xl">arrow_forward</span>
           </div>
-          <p className="text-sm text-on-surface mb-3">
+          <p className="text-sm text-[#1b3a57] mb-3">
             Estás por cambiar el estado de{' '}
             <strong>{estadoProcesal?.label}</strong> a{' '}
             <strong>{siguienteEstado?.label}</strong>.
@@ -829,7 +829,7 @@ export function TimelineTab({ exp }: Props) {
           <div className="bg-green-50 rounded-lg p-3 text-xs text-green-700 font-semibold mb-3">
             ✓ {total} de {total} tareas completadas
           </div>
-          <p className="text-xs text-on-surface-variant italic">
+          <p className="text-xs text-[#4a6a84] italic">
             Esta acción quedará registrada en el timeline del expediente.
           </p>
         </div>
@@ -843,13 +843,13 @@ export function TimelineTab({ exp }: Props) {
         size="md"
         footer={
           <>
-            <button onClick={() => setModalNuevaActividad(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={() => setModalNuevaActividad(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
               onClick={agregarNuevaActividad}
               disabled={!formAct.titulo.trim() || !formAct.descripcion.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Agregar
             </button>
@@ -864,7 +864,7 @@ export function TimelineTab({ exp }: Props) {
             </select>
           </div>
           <div>
-            <label className="field-label">Título <span className="text-error">*</span></label>
+            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
             <input type="text" className="field-input w-full" value={formAct.titulo} onChange={e => setFormAct(p => ({ ...p, titulo: e.target.value }))} autoFocus />
           </div>
           <div>
@@ -872,7 +872,7 @@ export function TimelineTab({ exp }: Props) {
             <input type="date" className="field-input w-full" value={formAct.fecha} onChange={e => setFormAct(p => ({ ...p, fecha: e.target.value }))} />
           </div>
           <div>
-            <label className="field-label">Descripción <span className="text-error">*</span></label>
+            <label className="field-label">Descripción <span className="text-[#b91c1c]">*</span></label>
             <textarea className="field-input w-full resize-y" style={{ minHeight: 72 }} value={formAct.descripcion} onChange={e => setFormAct(p => ({ ...p, descripcion: e.target.value }))} />
           </div>
           <div>
@@ -881,9 +881,9 @@ export function TimelineTab({ exp }: Props) {
           </div>
           <div>
             <label className="field-label">Adjunto</label>
-            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-outline-variant/50 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group">
-              <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary">attach_file</span>
-              <span className="text-xs text-on-surface-variant group-hover:text-primary">Adjuntar archivo</span>
+            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
+              <span className="material-symbols-outlined text-[18px] text-[#4a6a84] group-hover:text-[#1b3a57]">attach_file</span>
+              <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57]">Adjuntar archivo</span>
               <input type="file" className="hidden" />
             </label>
           </div>

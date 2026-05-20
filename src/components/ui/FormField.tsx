@@ -14,11 +14,11 @@ export function FormField({ label, hint, required, error, full, children }: Form
     <div className={full ? 'col-span-2' : ''}>
       <label className="field-label">
         {label}
-        {required && <span className="text-error ml-0.5">*</span>}
+        {required && <span className="text-[#b91c1c] ml-0.5">*</span>}
       </label>
       {children}
       {hint && !error && <p className="field-hint">{hint}</p>}
-      {error && <p className="text-error text-xs mt-1">{error}</p>}
+      {error && <p className="text-[#b91c1c] text-xs mt-1">{error}</p>}
     </div>
   )
 }

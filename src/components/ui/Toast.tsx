@@ -2,9 +2,9 @@ import { useUIStore } from '../../store/ui.store'
 
 const TOAST_CONFIG = {
   success: { bg: 'bg-green-100 border-green-300',   text: 'text-green-800',              icon: 'check_circle' },
-  error:   { bg: 'bg-error-container border-red-300',text: 'text-on-error-container',     icon: 'error' },
+  error:   { bg: 'bg-[#fee2e2] border-red-300',text: 'text-[#991b1b]',     icon: 'error' },
   warn:    { bg: 'bg-yellow-100 border-yellow-300',  text: 'text-yellow-800',             icon: 'warning' },
-  info:    { bg: 'bg-primary-container border-primary/20', text: 'text-on-primary-container', icon: 'info' },
+  info:    { bg: 'bg-[#C4DFE8] border-[rgba(27,58,87,0.20)]', text: 'text-[#1b3a57]', icon: 'info' },
 } as const
 
 export function Toast() {

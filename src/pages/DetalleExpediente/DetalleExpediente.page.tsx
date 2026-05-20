@@ -64,11 +64,11 @@ export default function DetalleExpedientePage() {
   if (!exp) {
     return (
       <div className="p-6">
-        <div className="bg-surface-container-lowest rounded-2xl shadow-card p-12 text-center">
-          <span className="material-symbols-outlined text-[48px] text-on-surface-variant">search_off</span>
-          <p className="mt-4 text-on-surface font-medium">Expediente no encontrado</p>
-          <p className="text-sm text-on-surface-variant mt-1 font-mono">{expId}</p>
-          <Link to="/bandeja/abogado" className="inline-block mt-4 text-sm text-primary hover:underline">
+        <div className="bg-white rounded-2xl shadow-card p-12 text-center">
+          <span className="material-symbols-outlined text-[48px] text-[#4a6a84]">search_off</span>
+          <p className="mt-4 text-[#1b3a57] font-medium">Expediente no encontrado</p>
+          <p className="text-sm text-[#4a6a84] mt-1 font-mono">{expId}</p>
+          <Link to="/bandeja/abogado" className="inline-block mt-4 text-sm text-[#1b3a57] hover:underline">
             Volver a la bandeja
           </Link>
         </div>
@@ -154,32 +154,32 @@ export default function DetalleExpedientePage() {
     <div className="p-6 space-y-5 max-w-screen-xl overflow-hidden">
 
       {/* Header */}
-      <div className="bg-surface-container-lowest rounded-2xl shadow-card p-5">
+      <div className="bg-white rounded-2xl shadow-card p-5">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-on-surface-variant mb-3">
-          <Link to="/bandeja/abogado" className="hover:text-primary transition-colors">Mi Bandeja</Link>
+        <div className="flex items-center gap-1.5 text-xs text-[#4a6a84] mb-3">
+          <Link to="/bandeja/abogado" className="hover:text-[#1b3a57] transition-colors">Mi Bandeja</Link>
           <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-          <span className="text-on-surface">Expediente</span>
+          <span className="text-[#1b3a57]">Expediente</span>
         </div>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="font-mono font-bold text-lg text-primary">{exp.id}</span>
+              <span className="font-mono font-bold text-lg text-[#1b3a57]">{exp.id}</span>
               <AreaBadge area={exp.area} />
               <EstadoBadge code={exp.estado} label={exp.estado} />
               {exp.numero_causa && (
-                <span className="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-0.5 rounded-full font-mono">
+                <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-2 py-0.5 rounded-full font-mono">
                   {exp.numero_causa}
                 </span>
               )}
             </div>
-            <h1 className="font-headline font-bold text-xl text-on-surface leading-snug">{exp.caratula}</h1>
-            <div className="flex items-center gap-4 mt-1.5 text-xs text-on-surface-variant flex-wrap">
+            <h1 className="font-headline font-bold text-xl text-[#1b3a57] leading-snug">{exp.caratula}</h1>
+            <div className="flex items-center gap-4 mt-1.5 text-xs text-[#4a6a84] flex-wrap">
               <span>{tipoLabel}</span>
               {juzgadoLabel && (
                 <>
-                  <span className="text-outline-variant">·</span>
+                  <span className="text-[rgba(0,0,0,0.35)]">·</span>
                   <span>{juzgadoLabel}</span>
                 </>
               )}
@@ -190,12 +190,12 @@ export default function DetalleExpedientePage() {
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(o => !o)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-md"
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-md"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-surface-container-lowest rounded-xl shadow-card-lg z-10 overflow-hidden border border-outline-variant/40">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-card-lg z-10 overflow-hidden border border-[rgba(0,0,0,0.10)]">
                 {[
                   { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
@@ -207,9 +207,9 @@ export default function DetalleExpedientePage() {
                   <button
                     key={item.key}
                     onClick={() => openAccion(item.key)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left text-on-surface hover:bg-surface-container transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{item.icon}</span>
+                    <span className="material-symbols-outlined text-[18px] text-[#4a6a84]">{item.icon}</span>
                     {item.label}
                   </button>
                 ))}
@@ -220,21 +220,21 @@ export default function DetalleExpedientePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-outline-variant/40 w-full">
+      <div className="flex gap-0 border-b border-[rgba(0,0,0,0.10)] w-full">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
               tab === t.key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                ? 'border-[#1b3a57] text-[#1b3a57]'
+                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
             {t.label}
             {tabCounters[t.key] !== undefined && (
-              <span className="text-xs bg-surface-container-high rounded-full px-1.5 py-0.5 text-on-surface-variant">
+              <span className="text-xs bg-[#e0e0e0] rounded-full px-1.5 py-0.5 text-[#4a6a84]">
                 {tabCounters[t.key]}
               </span>
             )}
@@ -258,13 +258,13 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarEstado}
               disabled={!esFlujoProcesal && !nuevoEstado}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Confirmar
             </button>
@@ -273,15 +273,15 @@ export default function DetalleExpedientePage() {
       >
         {esFlujoProcesal ? (
           <div className="space-y-4">
-            <div className="bg-primary-container/30 rounded-xl p-4 flex items-center justify-center gap-4">
+            <div className="bg-[rgba(196,223,232,0.30)] rounded-xl p-4 flex items-center justify-center gap-4">
               <div className="flex flex-col items-center gap-1">
-                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wide">Estado actual</span>
-                <span className="text-sm font-black text-on-surface">{estadoProcesalActual?.label}</span>
+                <span className="text-xs font-bold text-[#4a6a84] uppercase tracking-wide">Estado actual</span>
+                <span className="text-sm font-black text-[#1b3a57]">{estadoProcesalActual?.label}</span>
               </div>
-              <span className="material-symbols-outlined text-2xl text-primary">arrow_forward</span>
+              <span className="material-symbols-outlined text-2xl text-[#1b3a57]">arrow_forward</span>
               <div className="flex flex-col items-center gap-1">
-                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wide">Nuevo estado</span>
-                <span className="text-sm font-black text-primary">{siguienteEstadoProcesal?.label}</span>
+                <span className="text-xs font-bold text-[#4a6a84] uppercase tracking-wide">Nuevo estado</span>
+                <span className="text-sm font-black text-[#1b3a57]">{siguienteEstadoProcesal?.label}</span>
               </div>
             </div>
             <div>
@@ -293,7 +293,7 @@ export default function DetalleExpedientePage() {
                 onChange={e => setMotivoEstado(e.target.value)}
               />
             </div>
-            <p className="text-xs text-on-surface-variant italic text-center">
+            <p className="text-xs text-[#4a6a84] italic text-center">
               Esta acción quedará registrada en el timeline.
             </p>
           </div>
@@ -316,13 +316,13 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarCausa}
               disabled={!nuevaCausa.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Agrupar
             </button>
@@ -351,7 +351,7 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
@@ -363,11 +363,11 @@ export default function DetalleExpedientePage() {
           </>
         }
       >
-        <p className="text-sm text-on-surface">
+        <p className="text-sm text-[#1b3a57]">
           Se desvinculará el expediente <span className="font-mono font-bold">{exp.id}</span> de la causa{' '}
           <span className="font-mono font-bold">{exp.numero_causa}</span>.
         </p>
-        <p className="text-xs text-on-surface-variant mt-2">Esta acción no elimina los datos del expediente.</p>
+        <p className="text-xs text-[#4a6a84] mt-2">Esta acción no elimina los datos del expediente.</p>
       </Modal>
 
       {/* Modal: Reasignar */}
@@ -378,13 +378,13 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarReasignar}
               disabled={!nuevoAbogado}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Reasignar
             </button>

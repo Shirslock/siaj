@@ -36,9 +36,9 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6 max-w-screen-xl">
       <div>
-        <p className="text-on-surface-variant text-sm">
+        <p className="text-[#4a6a84] text-sm">
           Bienvenido/a,{' '}
-          <span className="font-semibold text-on-surface">
+          <span className="font-semibold text-[#1b3a57]">
             {usuarioActivo?.nombre} {usuarioActivo?.apellido}
           </span>
         </p>
@@ -46,28 +46,28 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-4 gap-4">
         {stats.map(s => (
-          <div key={s.area} className="bg-surface-container-lowest rounded-2xl p-5 shadow-card">
+          <div key={s.area} className="bg-white rounded-2xl p-5 shadow-card">
             <div className="flex items-start justify-between mb-3">
               <AreaBadge area={s.area} />
-              <span className="material-symbols-outlined text-[20px] text-on-surface-variant">{AREA_ICON[s.area]}</span>
+              <span className="material-symbols-outlined text-[20px] text-[#4a6a84]">{AREA_ICON[s.area]}</span>
             </div>
-            <p className="text-3xl font-headline font-bold text-on-surface mt-2">{s.total}</p>
-            <p className="text-xs text-on-surface-variant mt-1">{s.activos} activos</p>
+            <p className="text-3xl font-headline font-bold text-[#1b3a57] mt-2">{s.total}</p>
+            <p className="text-xs text-[#4a6a84] mt-1">{s.activos} activos</p>
           </div>
         ))}
-        <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card">
+        <div className="bg-white rounded-2xl p-5 shadow-card">
           <div className="flex items-start justify-between mb-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Mesa SIAJ</span>
-            <span className="material-symbols-outlined text-[20px] text-on-surface-variant">inbox</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">Mesa SIAJ</span>
+            <span className="material-symbols-outlined text-[20px] text-[#4a6a84]">inbox</span>
           </div>
-          <p className="text-3xl font-headline font-bold text-on-surface mt-2">{pendientesQueue}</p>
-          <p className="text-xs text-on-surface-variant mt-1">pendientes en cola</p>
+          <p className="text-3xl font-headline font-bold text-[#1b3a57] mt-2">{pendientesQueue}</p>
+          <p className="text-xs text-[#4a6a84] mt-1">pendientes en cola</p>
         </div>
       </div>
 
-      <div className="bg-surface-container-lowest rounded-2xl shadow-card">
-        <div className="px-6 py-4 border-b border-outline-variant/50">
-          <h2 className="font-headline font-semibold text-on-surface">Expedientes recientes</h2>
+      <div className="bg-white rounded-2xl shadow-card">
+        <div className="px-6 py-4 border-b border-[rgba(0,0,0,0.12)]">
+          <h2 className="font-headline font-semibold text-[#1b3a57]">Expedientes recientes</h2>
         </div>
         <TablaExpedientes expedientes={recientes} />
       </div>

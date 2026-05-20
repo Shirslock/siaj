@@ -9,18 +9,18 @@ import { formatFecha } from '../../utils/format'
 import type { Area, Usuario } from '../../types'
 
 const AREA_CELDA: Record<Area, string> = {
-  CIVIL:   'bg-primary-container/60 text-on-primary-container',
-  LABORAL: 'bg-secondary-container text-on-secondary-fixed',
-  PENAL:   'bg-tertiary-container text-on-tertiary-fixed',
+  CIVIL:   'bg-[rgba(196,223,232,0.60)] text-[#1b3a57]',
+  LABORAL: 'bg-[#dbeafe] text-[#1b3a57]',
+  PENAL:   'bg-[#e8e8e8] text-[#1b3a57]',
 }
 
 const inputCls =
-  'w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm ' +
-  'text-on-surface placeholder:text-on-surface-variant/50 ' +
-  'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40'
+  'w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-[#f5f5f5] px-3 py-2 text-sm ' +
+  'text-[#1b3a57] placeholder:text-[#4a6a84]/50 ' +
+  'focus:outline-none focus:ring-2 focus:ring-[rgba(27,58,87,0.20)] focus:border-[rgba(27,58,87,0.40)]'
 
 const labelCls =
-  'block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5'
+  'block text-[10px] font-bold uppercase tracking-wider text-[#4a6a84] mb-1.5'
 
 const FILTROS_INIT = {
   buscar: '', tipo: '', area: '', causa: '',
@@ -85,13 +85,13 @@ export default function MesaSacoPage() {
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-wide font-medium text-on-surface-variant mb-1">
+          <p className="text-[10px] uppercase tracking-wide font-medium text-[#4a6a84] mb-1">
             SIAJ › Mesa SIAJ
           </p>
-          <h1 className="font-headline font-bold text-2xl text-on-surface leading-tight">
+          <h1 className="font-headline font-bold text-2xl text-[#1b3a57] leading-tight">
             Bandeja Mesa SIAJ
           </h1>
-          <p className="text-on-surface-variant text-sm mt-1">
+          <p className="text-[#4a6a84] text-sm mt-1">
             Consulta de expedientes asignados — vista de solo lectura.
           </p>
         </div>
@@ -105,14 +105,14 @@ export default function MesaSacoPage() {
       </div>
 
       {/* ── Barra de filtros ── */}
-      <div className="bg-surface-container-lowest shadow-sm rounded-xl border border-outline-variant/30 p-4">
+      <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)] p-4">
         <div className="flex flex-wrap gap-3 items-end">
 
           {/* 1. Buscar */}
           <div className="flex-1 min-w-[200px]">
             <label className={labelCls}>Buscar</label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none">
+              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[#4a6a84] pointer-events-none">
                 search
               </span>
               <input
@@ -222,7 +222,7 @@ export default function MesaSacoPage() {
             <label className="invisible block text-[10px] mb-1.5">_</label>
             <button
               onClick={() => setFiltros(FILTROS_INIT)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-outline-variant text-xs font-bold text-on-surface-variant hover:border-primary/50 hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-[rgba(0,0,0,0.12)] text-xs font-bold text-[#4a6a84] hover:border-[rgba(27,58,87,0.50)] hover:text-[#1b3a57] transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">filter_alt_off</span>
               Limpiar
@@ -233,26 +233,26 @@ export default function MesaSacoPage() {
       </div>
 
       {/* ── Tabla de expedientes ── */}
-      <div className="bg-surface-container-lowest shadow-sm rounded-xl border border-outline-variant/30 overflow-hidden">
+      <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden">
 
         {/* Card header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-2">
             <span
-              className="material-symbols-outlined text-primary text-[20px]"
+              className="material-symbols-outlined text-[#1b3a57] text-[20px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               assignment
             </span>
-            <span className="font-semibold text-on-surface text-sm">Expedientes Asignados</span>
+            <span className="font-semibold text-[#1b3a57] text-sm">Expedientes Asignados</span>
           </div>
-          <span className="text-[10px] font-bold bg-surface-container text-on-surface-variant px-3 py-1 rounded-full border border-outline-variant/80">
+          <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-3 py-1 rounded-full border border-[rgba(0,0,0,0.12)]/80">
             {expedientesFiltrados.length} expedientes
           </span>
         </div>
 
         <table className="w-full border-collapse">
-          <thead className="bg-surface-container-low border-b-2 border-outline-variant/40">
+          <thead className="bg-[#f0f0f0] border-b-2 border-[rgba(0,0,0,0.10)]">
             <tr>
               {[
                 'N° Interno', 'N° Causa', 'Área', 'Carátula',
@@ -260,7 +260,7 @@ export default function MesaSacoPage() {
               ].map(col => (
                 <th
                   key={col}
-                  className="text-left text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-4 py-3.5 whitespace-nowrap"
+                  className="text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] px-4 py-3.5 whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -270,7 +270,7 @@ export default function MesaSacoPage() {
           <tbody className="divide-y divide-outline-variant/10">
             {expedientesFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-6 py-12 text-center text-on-surface-variant text-sm">
+                <td colSpan={10} className="px-6 py-12 text-center text-[#4a6a84] text-sm">
                   No hay expedientes que coincidan con los filtros seleccionados.
                 </td>
               </tr>
@@ -284,12 +284,12 @@ export default function MesaSacoPage() {
                 return (
                   <tr
                     key={e.id}
-                    className="cursor-pointer hover:bg-surface-container-low transition-colors"
+                    className="cursor-pointer hover:bg-[#f0f0f0] transition-colors"
                     onClick={() => navigate('/expediente/' + e.id)}
                   >
                     {/* N° Interno */}
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs font-bold text-on-surface">{e.id}</span>
+                      <span className="font-mono text-xs font-bold text-[#1b3a57]">{e.id}</span>
                       <span className={`block text-[10px] px-1.5 py-0.5 rounded font-bold mt-1 w-fit ${AREA_CELDA[e.area]}`}>
                         {e.area}
                       </span>
@@ -297,7 +297,7 @@ export default function MesaSacoPage() {
 
                     {/* N° Causa */}
                     <td className="px-4 py-3">
-                      <span className="font-mono text-[10px] text-on-surface-variant">
+                      <span className="font-mono text-[10px] text-[#4a6a84]">
                         {e.numero_causa || '—'}
                       </span>
                     </td>
@@ -309,52 +309,52 @@ export default function MesaSacoPage() {
 
                     {/* Carátula */}
                     <td className="px-4 py-3 max-w-[220px]">
-                      <p className="text-sm font-semibold text-on-surface line-clamp-2 leading-snug">
+                      <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2 leading-snug">
                         {e.caratula}
                       </p>
                     </td>
 
                     {/* Tipo de Gestión */}
-                    <td className="px-4 py-3 text-xs text-on-surface-variant whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
                       {TIPOS_GESTION.find(t => t.code === e.tipo)?.label || e.tipo}
                     </td>
 
                     {/* Referencia GDE */}
                     <td className="px-4 py-3">
-                      <span className="font-mono text-[10px] text-on-surface-variant">
+                      <span className="font-mono text-[10px] text-[#4a6a84]">
                         {e.numero_ee_gde || '—'}
                       </span>
                     </td>
 
                     {/* Letrado */}
-                    <td className="px-4 py-3 text-xs text-on-surface whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-[#1b3a57] whitespace-nowrap">
                       {letrado ? getNombreCompleto(letrado) : '—'}
                     </td>
 
                     {/* Línea */}
                     <td className="px-4 py-3">
                       {linea ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8e8e8] text-[#4a6a84]">
                           {linea.label.replace('Línea ', '')}
                         </span>
                       ) : (
-                        <span className="text-outline-variant text-[10px]">—</span>
+                        <span className="text-[rgba(0,0,0,0.35)] text-[10px]">—</span>
                       )}
                     </td>
 
                     {/* Recepción */}
-                    <td className="px-4 py-3 text-xs text-on-surface-variant whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
                       {formatFecha(e.fecha_recepcion)}
                     </td>
 
                     {/* Acciones */}
                     <td className="px-4 py-3 text-right">
                       <button
-                        className="p-1.5 hover:bg-surface-container rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-[#e8e8e8] rounded-lg transition-colors"
                         onClick={ev => { ev.stopPropagation(); navigate('/expediente/' + e.id) }}
                         aria-label="Ver detalle"
                       >
-                        <span className="material-symbols-outlined text-on-surface-variant hover:text-primary text-[18px]">
+                        <span className="material-symbols-outlined text-[#4a6a84] hover:text-[#1b3a57] text-[18px]">
                           visibility
                         </span>
                       </button>
@@ -367,9 +367,9 @@ export default function MesaSacoPage() {
         </table>
 
         {/* Footer decorativo */}
-        <div className="flex justify-between items-center px-6 py-4 border-t border-outline-variant/30">
-          <span className="text-xs text-on-surface-variant">Página 1 de 1</span>
-          <span className="text-[10px] font-bold bg-primary text-on-primary px-3 py-1 rounded-full">
+        <div className="flex justify-between items-center px-6 py-4 border-t border-[rgba(0,0,0,0.08)]">
+          <span className="text-xs text-[#4a6a84]">Página 1 de 1</span>
+          <span className="text-[10px] font-bold bg-[#1b3a57] text-white px-3 py-1 rounded-full">
             1
           </span>
         </div>

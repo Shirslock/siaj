@@ -12,8 +12,8 @@ import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.p
 function PagePlaceholder({ nombre }: { nombre: string }) {
   return (
     <div className="p-8">
-      <p className="font-headline text-2xl text-primary font-bold">{nombre}</p>
-      <p className="text-on-surface-variant mt-2 text-sm">Página en construcción — Fase siguiente</p>
+      <p className="font-headline text-2xl text-[#1b3a57] font-bold">{nombre}</p>
+      <p className="text-[#4a6a84] mt-2 text-sm">Página en construcción — Fase siguiente</p>
     </div>
   )
 }

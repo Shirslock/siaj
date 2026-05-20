@@ -63,7 +63,7 @@ export function IntervinientesTab({ exp }: Props) {
         <div className="flex justify-end">
           <button
             onClick={() => { setForm(BLANK); setModal(true) }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             <span className="material-symbols-outlined text-[18px]">person_add</span>
             Agregar interviniente
@@ -71,16 +71,16 @@ export function IntervinientesTab({ exp }: Props) {
         </div>
 
         {exp.intervinientes.length === 0 ? (
-          <div className="bg-surface-container-lowest rounded-2xl shadow-card p-10 text-center text-on-surface-variant text-sm">
+          <div className="bg-white rounded-2xl shadow-card p-10 text-center text-[#4a6a84] text-sm">
             No hay intervinientes registrados.
           </div>
         ) : (
-          <div className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-card overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-outline-variant/50">
+                <tr className="border-b border-[rgba(0,0,0,0.12)]">
                   {['Nombre', 'Rol', 'Documento', 'Contacto', ''].map(col => (
-                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
                       {col}
                     </th>
                   ))}
@@ -88,23 +88,23 @@ export function IntervinientesTab({ exp }: Props) {
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {exp.intervinientes.map(int => (
-                  <tr key={int.id} className="hover:bg-surface-container-low transition-colors">
+                  <tr key={int.id} className="hover:bg-[#f0f0f0] transition-colors">
                     <td className="py-3 px-4">
-                      <p className="text-on-surface font-medium">{int.nombre}</p>
+                      <p className="text-[#1b3a57] font-medium">{int.nombre}</p>
                       {int.representado_por && (
-                        <p className="text-xs text-on-surface-variant mt-0.5">Rep.: {int.representado_por}</p>
+                        <p className="text-xs text-[#4a6a84] mt-0.5">Rep.: {int.representado_por}</p>
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-xs font-bold bg-surface-container px-2 py-0.5 rounded-full text-on-surface-variant">
+                      <span className="text-xs font-bold bg-[#e8e8e8] px-2 py-0.5 rounded-full text-[#4a6a84]">
                         {ROL_LABEL[int.rol_procesal] ?? int.rol_procesal}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-xs text-on-surface-variant">
+                    <td className="py-3 px-4 text-xs text-[#4a6a84]">
                       <span>{DOC_LABEL[int.tipo_documento] ?? int.tipo_documento}</span>
                       <span className="font-mono ml-1">{int.numero_documento}</span>
                     </td>
-                    <td className="py-3 px-4 text-xs text-on-surface-variant space-y-0.5">
+                    <td className="py-3 px-4 text-xs text-[#4a6a84] space-y-0.5">
                       {int.contacto_email     && <p>{int.contacto_email}</p>}
                       {int.contacto_telefono  && <p>{int.contacto_telefono}</p>}
                       {int.contacto_domicilio && <p className="truncate max-w-[180px]">{int.contacto_domicilio}</p>}
@@ -113,7 +113,7 @@ export function IntervinientesTab({ exp }: Props) {
                       <button
                         onClick={() => eliminarInterviniente(exp.id, int.id)}
                         title="Eliminar"
-                        className="p-1.5 rounded-lg text-on-surface-variant hover:bg-red-50 hover:text-red-600 transition-colors"
+                        className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         <span className="material-symbols-outlined text-[16px]">delete</span>
                       </button>
@@ -135,14 +135,14 @@ export function IntervinientesTab({ exp }: Props) {
           <>
             <button
               onClick={() => setModal(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={agregar}
               disabled={!form.nombre.trim() || !form.numero_documento.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Agregar
             </button>
@@ -152,7 +152,7 @@ export function IntervinientesTab({ exp }: Props) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="field-label">Nombre completo <span className="text-error">*</span></label>
+              <label className="field-label">Nombre completo <span className="text-[#b91c1c]">*</span></label>
               <input type="text" className="field-input w-full" placeholder="Apellido, Nombre" value={form.nombre} onChange={e => setField('nombre', e.target.value)} />
             </div>
             <div>
@@ -172,7 +172,7 @@ export function IntervinientesTab({ exp }: Props) {
               </select>
             </div>
             <div>
-              <label className="field-label">N° Documento <span className="text-error">*</span></label>
+              <label className="field-label">N° Documento <span className="text-[#b91c1c]">*</span></label>
               <input type="text" className="field-input w-full font-mono" placeholder="23456789" value={form.numero_documento} onChange={e => setField('numero_documento', e.target.value)} />
             </div>
             <div>

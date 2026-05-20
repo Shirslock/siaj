@@ -35,12 +35,12 @@ interface RowProps {
 
 function FieldRow({ label, value, edit, input }: RowProps) {
   return (
-    <div className="py-3 flex gap-6 items-start border-b border-outline-variant/30 last:border-0">
-      <dt className="w-48 flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant pt-0.5">
+    <div className="py-3 flex gap-6 items-start border-b border-[rgba(0,0,0,0.08)] last:border-0">
+      <dt className="w-48 flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84] pt-0.5">
         {label}
       </dt>
-      <dd className="flex-1 text-sm text-on-surface">
-        {edit && input ? input : (value ?? <span className="text-on-surface-variant">—</span>)}
+      <dd className="flex-1 text-sm text-[#1b3a57]">
+        {edit && input ? input : (value ?? <span className="text-[#4a6a84]">—</span>)}
       </dd>
     </div>
   )
@@ -49,7 +49,7 @@ function FieldRow({ label, value, edit, input }: RowProps) {
 function Seccion({ titulo }: { titulo: string }) {
   return (
     <div className="pt-5 pb-1 first:pt-0">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border-b border-outline-variant/50 pb-2">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84] border-b border-[rgba(0,0,0,0.12)] pb-2">
         {titulo}
       </p>
     </div>
@@ -152,7 +152,7 @@ export function DatosTab({ exp }: Props) {
       return (
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" className="accent-primary rounded" checked={Boolean(draft[campo.id])} onChange={e => setDraft(p => ({ ...p, [campo.id]: e.target.checked }))} />
-          <span className="text-sm text-on-surface">Sí</span>
+          <span className="text-sm text-[#1b3a57]">Sí</span>
         </label>
       )
     }
@@ -167,13 +167,13 @@ export function DatosTab({ exp }: Props) {
   }
 
   return (
-    <div className="bg-surface-container-lowest rounded-2xl shadow-card p-6">
+    <div className="bg-white rounded-2xl shadow-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-on-surface">Datos del expediente</p>
+        <p className="text-sm font-semibold text-[#1b3a57]">Datos del expediente</p>
         {!edit ? (
           <button
             onClick={startEdit}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e8e8e8] text-[#1b3a57] hover:bg-[#e0e0e0] transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">edit</span>
             Editar
@@ -182,13 +182,13 @@ export function DatosTab({ exp }: Props) {
           <div className="flex gap-2">
             <button
               onClick={() => setEdit(false)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:bg-surface-container transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={save}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-on-primary hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
             >
               <span className="material-symbols-outlined text-[16px]">save</span>
               Guardar
@@ -201,7 +201,7 @@ export function DatosTab({ exp }: Props) {
         <Seccion titulo="Expediente" />
 
         <FieldRow label="N° Expediente" edit={false}
-          value={<span className="font-mono font-bold text-primary">{exp.id}</span>}
+          value={<span className="font-mono font-bold text-[#1b3a57]">{exp.id}</span>}
         />
         <FieldRow label="Área" edit={false}
           value={<AreaBadge area={exp.area} />}

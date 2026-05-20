@@ -47,7 +47,7 @@ function SegmentedSelector<T extends string>({
   onChange: (v: T) => void
 }) {
   return (
-    <div className="flex rounded-lg bg-surface-container p-1 gap-0.5">
+    <div className="flex rounded-lg bg-[#e8e8e8] p-1 gap-0.5">
       {options.map(o => (
         <button
           key={o.id}
@@ -55,8 +55,8 @@ function SegmentedSelector<T extends string>({
           onClick={() => onChange(o.id)}
           className={`flex-1 py-2 px-3 rounded-md text-sm transition-all ${
             value === o.id
-              ? 'bg-surface-container-lowest shadow-sm font-bold text-primary'
-              : 'font-medium text-on-surface-variant hover:text-on-surface'
+              ? 'bg-white shadow-sm font-bold text-[#1b3a57]'
+              : 'font-medium text-[#4a6a84] hover:text-[#1b3a57]'
           }`}
         >
           {o.label}
@@ -103,20 +103,20 @@ export default function AltaExpedientePage() {
       {/* HEADER */}
       <div className="flex items-start justify-between">
         <div>
-          <nav className="text-xs text-on-surface-variant mb-1 flex items-center gap-1">
+          <nav className="text-xs text-[#4a6a84] mb-1 flex items-center gap-1">
             <button
-              className="hover:text-on-surface transition-colors"
+              className="hover:text-[#1b3a57] transition-colors"
               onClick={() => navigate(RUTAS.MESA)}
             >
               Mesa SIAJ
             </button>
             <span>›</span>
-            <span className="text-on-surface">Nuevo Expediente</span>
+            <span className="text-[#1b3a57]">Nuevo Expediente</span>
           </nav>
-          <h1 className="font-headline font-extrabold text-3xl text-on-surface">
+          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">
             Nuevo Ingreso de Expediente
           </h1>
-          <p className="text-sm text-on-surface-variant mt-1">
+          <p className="text-sm text-[#4a6a84] mt-1">
             Completá los datos según el canal y tipo de gestión.
           </p>
         </div>
@@ -126,12 +126,12 @@ export default function AltaExpedientePage() {
       </div>
 
       {/* SECCIÓN 1 — Origen y Tipo de Gestión */}
-      <div className="bg-surface-container-lowest shadow-card rounded-xl p-8">
+      <div className="bg-white shadow-card rounded-xl p-8">
         <div className="flex items-center gap-3 mb-6">
-          <span className="w-7 h-7 rounded-full bg-primary-container text-primary text-sm font-bold flex items-center justify-center shrink-0">
+          <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
             1
           </span>
-          <h2 className="font-headline font-bold text-lg text-on-surface">Origen y Tipo de Gestión</h2>
+          <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Origen y Tipo de Gestión</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-5">
@@ -153,7 +153,7 @@ export default function AltaExpedientePage() {
           >
             <input
               type="text"
-              className={`field-input font-mono ${errors['numero_ee_gde'] ? 'border-error ring-1 ring-error/20' : ''}`}
+              className={`field-input font-mono ${errors['numero_ee_gde'] ? 'border-[#fca5a5] ring-1 ring-error/20' : ''}`}
               placeholder={canal ? DOC_PLACEHOLDER[canal as Canal] : ''}
               value={(camposMesa['numero_ee_gde'] as string) ?? ''}
               onChange={e => setCampoMesa('numero_ee_gde', e.target.value)}
@@ -194,14 +194,14 @@ export default function AltaExpedientePage() {
 
         {/* Info canal */}
         {canal && (
-          <div className="mt-5 bg-primary-container/40 rounded-lg p-3 flex items-start gap-2">
+          <div className="mt-5 bg-[rgba(196,223,232,0.40)] rounded-lg p-3 flex items-start gap-2">
             <span
-              className="material-symbols-outlined text-[18px] text-primary mt-0.5 shrink-0"
+              className="material-symbols-outlined text-[18px] text-[#1b3a57] mt-0.5 shrink-0"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               info
             </span>
-            <p className="text-sm text-on-surface-variant">{CANAL_INFO[canal as Canal]}</p>
+            <p className="text-sm text-[#4a6a84]">{CANAL_INFO[canal as Canal]}</p>
           </div>
         )}
       </div>
@@ -209,12 +209,12 @@ export default function AltaExpedientePage() {
       {showSections && (
         <>
           {/* SECCIÓN ◈ — Datos de Recepción */}
-          <div className="bg-surface-container-lowest shadow-card rounded-xl p-8">
+          <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-surface-container text-on-surface-variant text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#e8e8e8] text-[#4a6a84] text-sm font-bold flex items-center justify-center shrink-0">
                 ◈
               </span>
-              <h2 className="font-headline font-bold text-lg text-on-surface">Datos de Recepción</h2>
+              <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Datos de Recepción</h2>
             </div>
 
             <FormularioDinamico
@@ -225,21 +225,21 @@ export default function AltaExpedientePage() {
           </div>
 
           {/* SECCIÓN 2 — Detalles del Expediente */}
-          <div className="bg-surface-container-lowest shadow-card rounded-xl p-8">
+          <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-primary-container text-primary text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
                 2
               </span>
               <div>
-                <h2 className="font-headline font-bold text-lg text-on-surface">Detalles del Expediente</h2>
+                <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Detalles del Expediente</h2>
                 {tipoSeleccionado && (
-                  <p className="text-xs text-on-surface-variant">{tipoSeleccionado.label}</p>
+                  <p className="text-xs text-[#4a6a84]">{tipoSeleccionado.label}</p>
                 )}
               </div>
             </div>
 
             {camposTipo.length === 0 ? (
-              <p className="text-sm text-on-surface-variant italic">
+              <p className="text-sm text-[#4a6a84] italic">
                 Este tipo de gestión no requiere campos adicionales en la apertura.
               </p>
             ) : (
@@ -252,12 +252,12 @@ export default function AltaExpedientePage() {
           </div>
 
           {/* SECCIÓN 3 — Asignación de Letrado */}
-          <div className="bg-surface-container-lowest shadow-card rounded-xl p-8">
+          <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-primary-container text-primary text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
                 3
               </span>
-              <h2 className="font-headline font-bold text-lg text-on-surface">Asignación de Letrado</h2>
+              <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Asignación de Letrado</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
@@ -279,7 +279,7 @@ export default function AltaExpedientePage() {
                     <FormField label="Letrado Asignado" hint="Se determina por la línea seleccionada">
                       <input
                         type="text"
-                        className="field-input bg-surface-container"
+                        className="field-input bg-[#e8e8e8]"
                         value={abogadoPenal ? getNombreCompleto(abogadoPenal) : ''}
                         placeholder="Seleccioná una línea para asignar letrado"
                         disabled
@@ -303,14 +303,14 @@ export default function AltaExpedientePage() {
                 )}
               </div>
 
-              <div className="bg-surface-container rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-[#e8e8e8] rounded-xl p-4 flex items-start gap-3">
                 <span
-                  className="material-symbols-outlined text-2xl text-primary shrink-0"
+                  className="material-symbols-outlined text-2xl text-[#1b3a57] shrink-0"
                   style={{ fontVariationSettings: "'FILL' 1" }}
                 >
                   info
                 </span>
-                <p className="text-sm text-on-surface-variant">
+                <p className="text-sm text-[#4a6a84]">
                   {area === 'PENAL'
                     ? 'Asignación por línea ferroviaria — seleccioná la línea para determinar el letrado automáticamente.'
                     : 'Asignación secuencial FIFO — se sugiere el siguiente letrado disponible en el área.'}
@@ -320,20 +320,20 @@ export default function AltaExpedientePage() {
           </div>
 
           {/* SECCIÓN 4 — Documento GDE */}
-          <div className="bg-surface-container-lowest shadow-card rounded-xl p-8">
+          <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-2">
-              <span className="w-7 h-7 rounded-full bg-primary-container text-primary text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
                 4
               </span>
-              <h2 className="font-headline font-bold text-lg text-on-surface">
-                Documento GDE <span className="text-error text-base">*</span>
+              <h2 className="font-headline font-bold text-lg text-[#1b3a57]">
+                Documento GDE <span className="text-[#b91c1c] text-base">*</span>
               </h2>
             </div>
-            <p className="text-sm text-on-surface-variant mb-5 ml-10">Adjuntá el PDF del expediente GDE.</p>
+            <p className="text-sm text-[#4a6a84] mb-5 ml-10">Adjuntá el PDF del expediente GDE.</p>
 
             {!archivo ? (
               <div
-                className="border-2 border-dashed border-outline-variant rounded-xl p-10 text-center bg-surface-container/50 hover:bg-surface-container cursor-pointer group transition-all"
+                className="border-2 border-dashed border-[rgba(0,0,0,0.12)] rounded-xl p-10 text-center bg-[rgba(232,232,232,0.50)] hover:bg-[#e8e8e8] cursor-pointer group transition-all"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
@@ -342,13 +342,13 @@ export default function AltaExpedientePage() {
                   if (f) handleFile(f)
                 }}
               >
-                <span className="material-symbols-outlined text-4xl text-outline-variant group-hover:text-primary block mb-3 transition-colors">
+                <span className="material-symbols-outlined text-4xl text-[rgba(0,0,0,0.35)] group-hover:text-[#1b3a57] block mb-3 transition-colors">
                   upload_file
                 </span>
-                <p className="text-sm font-medium text-on-surface-variant">
+                <p className="text-sm font-medium text-[#4a6a84]">
                   Arrastrá el PDF aquí o hacé click para seleccionar
                 </p>
-                <p className="text-xs text-outline mt-1">Solo PDF — máximo 10 MB</p>
+                <p className="text-xs text-[#7a9ab4] mt-1">Solo PDF — máximo 10 MB</p>
                 <input
                   ref={fileInputRef}
                   type="file"

@@ -18,15 +18,15 @@ export function PrevisionTab({ exp }: Props) {
 
   function MetricCard({ titulo, valor, subtitulo, highlight }: { titulo: string; valor: string; subtitulo?: string; highlight?: boolean }) {
     return (
-      <div className={`rounded-2xl shadow-card p-5 ${highlight ? 'bg-primary-container' : 'bg-surface-container-lowest'}`}>
-        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${highlight ? 'text-primary' : 'text-on-surface-variant'}`}>
+      <div className={`rounded-2xl shadow-card p-5 ${highlight ? 'bg-[#C4DFE8]' : 'bg-white'}`}>
+        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${highlight ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>
           {titulo}
         </p>
-        <p className={`text-2xl font-headline font-bold ${highlight ? 'text-on-primary-container' : 'text-on-surface'}`}>
+        <p className={`text-2xl font-headline font-bold ${highlight ? 'text-[#1b3a57]' : 'text-[#1b3a57]'}`}>
           {valor}
         </p>
         {subtitulo && (
-          <p className={`text-xs mt-1 ${highlight ? 'text-primary' : 'text-on-surface-variant'}`}>{subtitulo}</p>
+          <p className={`text-xs mt-1 ${highlight ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>{subtitulo}</p>
         )}
       </div>
     )
@@ -54,15 +54,15 @@ export function PrevisionTab({ exp }: Props) {
       </div>
 
       {montoBase > 0 && (
-        <div className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-outline-variant/50">
-            <p className="text-sm font-semibold text-on-surface">Evolución estimada</p>
+        <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+          <div className="px-5 py-4 border-b border-[rgba(0,0,0,0.12)]">
+            <p className="text-sm font-semibold text-[#1b3a57]">Evolución estimada</p>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-outline-variant/40">
+              <tr className="border-b border-[rgba(0,0,0,0.10)]">
                 {['Período', 'Tasa mensual', 'Acumulada', 'Monto estimado'].map(col => (
-                  <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                  <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
                     {col}
                   </th>
                 ))}
@@ -73,11 +73,11 @@ export function PrevisionTab({ exp }: Props) {
                 const factor = 1 + parseFloat(row.acumulada) / 100
                 const montoRow = montoBase * factor
                 return (
-                  <tr key={i} className="hover:bg-surface-container-low transition-colors">
-                    <td className="py-3 px-4 text-xs font-medium text-on-surface">{row.periodo}</td>
-                    <td className="py-3 px-4 text-xs text-on-surface-variant">{row.tasa}</td>
-                    <td className="py-3 px-4 text-xs text-on-surface-variant">{row.acumulada}</td>
-                    <td className="py-3 px-4 text-xs font-mono text-on-surface">{formatMonto(montoRow)}</td>
+                  <tr key={i} className="hover:bg-[#f0f0f0] transition-colors">
+                    <td className="py-3 px-4 text-xs font-medium text-[#1b3a57]">{row.periodo}</td>
+                    <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.tasa}</td>
+                    <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.acumulada}</td>
+                    <td className="py-3 px-4 text-xs font-mono text-[#1b3a57]">{formatMonto(montoRow)}</td>
                   </tr>
                 )
               })}
@@ -86,7 +86,7 @@ export function PrevisionTab({ exp }: Props) {
         </div>
       )}
 
-      <p className="text-[11px] text-on-surface-variant text-center">
+      <p className="text-[11px] text-[#4a6a84] text-center">
         Integración SIGEJ pendiente — Datos calculados en base a tasa de actualización interna SOFSA.
         Los valores son estimativos y no tienen carácter oficial.
       </p>

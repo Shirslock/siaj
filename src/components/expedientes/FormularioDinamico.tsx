@@ -77,7 +77,7 @@ export function FormularioDinamico({ campos, valores, onChange }: Props) {
                   onChange={e => onChange(campo.id, e.target.checked)}
                   className="rounded accent-primary"
                 />
-                <span className="text-sm text-on-surface">{campo.placeholder ?? 'Sí'}</span>
+                <span className="text-sm text-[#1b3a57]">{campo.placeholder ?? 'Sí'}</span>
               </label>
             </FormField>
           )

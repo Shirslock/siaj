@@ -64,7 +64,7 @@ export function VinculosTab({ exp }: Props) {
         <div className="flex justify-end">
           <button
             onClick={openModal}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             <span className="material-symbols-outlined text-[18px]">add_link</span>
             Vincular expediente
@@ -72,7 +72,7 @@ export function VinculosTab({ exp }: Props) {
         </div>
 
         {exp.vinculos.length === 0 ? (
-          <div className="bg-surface-container-lowest rounded-2xl shadow-card p-10 text-center text-on-surface-variant text-sm">
+          <div className="bg-white rounded-2xl shadow-card p-10 text-center text-[#4a6a84] text-sm">
             No hay expedientes vinculados.
           </div>
         ) : (
@@ -80,18 +80,18 @@ export function VinculosTab({ exp }: Props) {
             {exp.vinculos.map(v => {
               const ab = v.abogado_id ? getUsuarioById(v.abogado_id) : undefined
               return (
-                <div key={v.id} className="bg-surface-container-lowest rounded-2xl shadow-card p-4 flex items-start gap-4">
+                <div key={v.id} className="bg-white rounded-2xl shadow-card p-4 flex items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-mono text-sm font-bold text-primary">{v.id}</span>
+                      <span className="font-mono text-sm font-bold text-[#1b3a57]">{v.id}</span>
                       <AreaBadge area={v.area} />
                       <EstadoBadge code={v.estado} label={v.estadoLabel} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#4a6a84] bg-[#e8e8e8] px-2 py-0.5 rounded-full">
                         {v.tipo_relacion.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <p className="text-sm text-on-surface truncate">{v.caratula}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                    <p className="text-sm text-[#1b3a57] truncate">{v.caratula}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-[#4a6a84]">
                       {v.numero_causa && <span className="font-mono">{v.numero_causa}</span>}
                       {ab && <span>{getNombreCompleto(ab)}</span>}
                     </div>
@@ -99,7 +99,7 @@ export function VinculosTab({ exp }: Props) {
                   <button
                     onClick={() => desvincularExpediente(exp.id, v.id)}
                     title="Desvincular"
-                    className="p-1.5 rounded-lg text-on-surface-variant hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
+                    className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
                   >
                     <span className="material-symbols-outlined text-[18px]">link_off</span>
                   </button>
@@ -119,14 +119,14 @@ export function VinculosTab({ exp }: Props) {
           <>
             <button
               onClick={() => setModal(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={confirmar}
               disabled={!seleccionado}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Vincular
             </button>
@@ -135,7 +135,7 @@ export function VinculosTab({ exp }: Props) {
       >
         <div className="space-y-4">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[#4a6a84] pointer-events-none">
               search
             </span>
             <input
@@ -154,20 +154,20 @@ export function VinculosTab({ exp }: Props) {
                 onClick={() => setSeleccionado(e)}
                 className={`w-full text-left px-4 py-2.5 rounded-xl border transition-all ${
                   seleccionado?.id === e.id
-                    ? 'border-primary bg-primary-container'
-                    : 'border-outline-variant/40 hover:bg-surface-container'
+                    ? 'border-[#1b3a57] bg-[#C4DFE8]'
+                    : 'border-[rgba(0,0,0,0.10)] hover:bg-[#e8e8e8]'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-mono text-xs font-bold text-primary">{e.id}</span>
+                  <span className="font-mono text-xs font-bold text-[#1b3a57]">{e.id}</span>
                   <AreaBadge area={e.area} />
                   <EstadoBadge code={e.estado} label={e.estado} />
                 </div>
-                <p className="text-xs text-on-surface truncate">{e.caratula}</p>
+                <p className="text-xs text-[#1b3a57] truncate">{e.caratula}</p>
               </button>
             ))}
             {filtrados.length === 0 && (
-              <p className="text-sm text-center text-on-surface-variant py-4">Sin resultados.</p>
+              <p className="text-sm text-center text-[#4a6a84] py-4">Sin resultados.</p>
             )}
           </div>
 
