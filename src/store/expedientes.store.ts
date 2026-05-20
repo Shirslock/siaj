@@ -24,6 +24,7 @@ interface ExpedientesState {
   inicializarTareas: (expId: string, estadoCodigo: string, tareas: Tarea[]) => void
   actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
   actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => void
+  eliminarDocumento: (expedienteId: string, index: number) => void
 }
 
 function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
@@ -135,6 +136,14 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
 
   eliminarInterviniente: (expedienteId, intervinienteId) => set(s => {
     const fn = (e: Expediente) => ({ ...e, intervinientes: e.intervinientes.filter(i => i.id !== intervinienteId) })
+    return {
+      expedientes: applyToArr(s.expedientes, expedienteId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  eliminarDocumento: (expedienteId, index) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, documentos: e.documentos.filter((_, i) => i !== index) })
     return {
       expedientes: applyToArr(s.expedientes, expedienteId, fn),
       expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),

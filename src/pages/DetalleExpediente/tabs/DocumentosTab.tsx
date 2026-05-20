@@ -1,23 +1,46 @@
+import { useState } from 'react'
 import type { Expediente } from '../../../types'
 import { formatFecha } from '../../../utils/format'
+import { useExpedientesStore } from '../../../store/expedientes.store';
 
 interface Props { exp: Expediente }
 
 export function DocumentosTab({ exp }: Props) {
+  const [docsLocales, setDocsLocales] = useState<{ nombre: string; tipo: string; fecha: string; size: string; icon: string; color: string }[]>([])
+  const todosLosDocs = [...exp.documentos, ...docsLocales]
+  const { eliminarDocumento } = useExpedientesStore()
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
         <button
-          disabled
-          title="Funcionalidad pendiente"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-surface-container text-on-surface-variant cursor-not-allowed opacity-60"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-on-primary hover:opacity-90 transition-opacity shadow-sm"
+          onClick={() => document.getElementById('doc-upload')?.click()}
         >
           <span className="material-symbols-outlined text-[18px]">upload_file</span>
           Subir documento
         </button>
+        <input
+          id="doc-upload"
+          type="file"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            const ext = file.name.split('.').pop()?.toUpperCase() ?? 'FILE'
+            setDocsLocales(prev => [...prev, {
+              nombre: file.name,
+              tipo: ext,
+              fecha: new Date().toISOString().split('T')[0],
+              size: `${(file.size / 1024).toFixed(0)} KB`,
+              icon: ext === 'PDF' ? 'picture_as_pdf' : ext === 'DOCX' || ext === 'DOC' ? 'description' : 'attach_file',
+              color: ext === 'PDF' ? 'text-red-500' : ext === 'DOCX' || ext === 'DOC' ? 'text-blue-500' : 'text-on-surface-variant',
+            }])
+            e.target.value = ''
+          }}
+        />
       </div>
 
-      {exp.documentos.length === 0 ? (
+      {todosLosDocs.length === 0 ? (
         <div className="bg-surface-container-lowest rounded-2xl shadow-card p-10 text-center text-on-surface-variant text-sm">
           No hay documentos adjuntos.
         </div>
@@ -34,7 +57,7 @@ export function DocumentosTab({ exp }: Props) {
               </tr>
             </thead>
             <tbody>
-              {exp.documentos.map((doc, i) => (
+              {todosLosDocs.map((doc, i) => (
                 <tr
                   key={i}
                   className="group border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors"
@@ -57,13 +80,28 @@ export function DocumentosTab({ exp }: Props) {
                     {doc.size}
                   </td>
                   <td className="py-3 px-4">
-                    <button
-                      disabled
-                      title="Descarga no disponible en esta versión"
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all cursor-not-allowed"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">download</span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        disabled
+                        title="Descarga no disponible en esta versión"
+                        className="p-1.5 rounded-lg text-on-surface-variant cursor-not-allowed opacity-40"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">download</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (i < exp.documentos.length) {
+                            eliminarDocumento(exp.id, i)
+                          } else {
+                            setDocsLocales(prev => prev.filter((_, j) => j !== i - exp.documentos.length))
+                          }
+                        }}
+                        title="Eliminar"
+                        className="p-1.5 rounded-lg text-on-surface-variant hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
