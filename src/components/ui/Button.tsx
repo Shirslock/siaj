@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import Icon from './Icon'
 
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -55,14 +56,14 @@ export function Button({
       `}
     >
       {loading && (
-        <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span>
+        <Icon name="refresh" className="animate-spin" size={18} />
       )}
       {!loading && icon && (
-        <span className="material-symbols-outlined text-[18px]">{icon}</span>
+        <Icon name={icon} size={18} />
       )}
       {children}
       {iconRight && (
-        <span className="material-symbols-outlined text-[18px]">{iconRight}</span>
+        <Icon name={iconRight} size={18} />
       )}
     </button>
   )

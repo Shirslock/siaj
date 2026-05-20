@@ -7,6 +7,7 @@ import { TIPOS_GESTION, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import { formatFecha } from '../../utils/format'
 import type { Area, Usuario } from '../../types'
+import Icon from '../../components/ui/Icon'
 
 const AREA_CELDA: Record<Area, string> = {
   CIVIL:   'bg-[rgba(196,223,232,0.60)] text-[#1b3a57]',
@@ -112,9 +113,7 @@ export default function MesaSacoPage() {
           <div className="flex-1 min-w-[200px]">
             <label className={labelCls}>Buscar</label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[#4a6a84] pointer-events-none">
-                search
-              </span>
+              <Icon name="search" size={18} />
               <input
                 className={`${inputCls} pl-8`}
                 placeholder="Carátula, N° causa, N° interno..."
@@ -224,7 +223,7 @@ export default function MesaSacoPage() {
               onClick={() => setFiltros(FILTROS_INIT)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-[rgba(0,0,0,0.12)] text-xs font-bold text-[#4a6a84] hover:border-[rgba(27,58,87,0.50)] hover:text-[#1b3a57] transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">filter_alt_off</span>
+              <Icon name="filter_alt_off" size={16} />
               Limpiar
             </button>
           </div>
@@ -238,12 +237,7 @@ export default function MesaSacoPage() {
         {/* Card header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-[#1b3a57] text-[20px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              assignment
-            </span>
+            <Icon name="assignment" size={20} className="text-[#1b3a57]" />
             <span className="font-semibold text-[#1b3a57] text-sm">Expedientes Asignados</span>
           </div>
           <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-3 py-1 rounded-full border border-[rgba(0,0,0,0.12)]/80">
@@ -354,9 +348,7 @@ export default function MesaSacoPage() {
                         onClick={ev => { ev.stopPropagation(); navigate('/expediente/' + e.id) }}
                         aria-label="Ver detalle"
                       >
-                        <span className="material-symbols-outlined text-[#4a6a84] hover:text-[#1b3a57] text-[18px]">
-                          visibility
-                        </span>
+                        <Icon name="visibility" size={18} />
                       </button>
                     </td>
                   </tr>

@@ -6,6 +6,7 @@ import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEA
 import { USUARIOS, getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
+import Icon from '../../../components/ui/Icon'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 
@@ -175,7 +176,7 @@ export function DatosTab({ exp }: Props) {
             onClick={startEdit}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e8e8e8] text-[#1b3a57] hover:bg-[#e0e0e0] transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px]">edit</span>
+            <Icon name="edit" size={16} />
             Editar
           </button>
         ) : (
@@ -190,7 +191,7 @@ export function DatosTab({ exp }: Props) {
               onClick={save}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
             >
-              <span className="material-symbols-outlined text-[16px]">save</span>
+              <Icon name="save" size={16} />
               Guardar
             </button>
           </div>
@@ -240,7 +241,7 @@ export function DatosTab({ exp }: Props) {
               />
               {causaDuplicada.length > 0 && (
                 <p className="mt-1 text-xs text-amber-700 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">warning</span>
+                  <Icon name="warning" size={14} />
                   Causa con {causaDuplicada.length} exp. más registrados
                 </p>
               )}

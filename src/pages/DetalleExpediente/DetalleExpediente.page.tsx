@@ -14,6 +14,8 @@ import { IntervinientesTab } from './tabs/IntervinientesTab'
 import { TimelineTab }       from './tabs/TimelineTab'
 import { DocumentosTab }     from './tabs/DocumentosTab'
 import { PrevisionTab }      from './tabs/PrevisionTab'
+import Icon from '../../components/ui/Icon'
+import { toast } from 'react-toastify'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
 type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar'
@@ -35,7 +37,7 @@ export default function DetalleExpedientePage() {
   const expId = params['*'] ?? ''
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad } = useExpedientesStore()
-  const { showToast, usuarioActivo } = useUIStore()
+  const { usuarioActivo } = useUIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -65,7 +67,7 @@ export default function DetalleExpedientePage() {
     return (
       <div className="p-6">
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
-          <span className="material-symbols-outlined text-[48px] text-[#4a6a84]">search_off</span>
+          <Icon name="search_off" size={48} />
           <p className="mt-4 text-[#1b3a57] font-medium">Expediente no encontrado</p>
           <p className="text-sm text-[#4a6a84] mt-1 font-mono">{expId}</p>
           <Link to="/bandeja/abogado" className="inline-block mt-4 text-sm text-[#1b3a57] hover:underline">
@@ -113,33 +115,33 @@ export default function DetalleExpedientePage() {
       })
       actualizarEstado(exp!.id, siguienteEstadoProcesal.codigo)
       actualizarExpediente(exp!.id, { estadoProcesal: siguienteEstadoProcesal.codigo })
-      showToast(`Estado actualizado a ${siguienteEstadoProcesal.label}`, 'success')
+      toast.success(`Estado actualizado a ${siguienteEstadoProcesal.label}`)
       setMotivoEstado('')
       setAccion(null)
       return
     }
     if (!nuevoEstado || nuevoEstado === exp!.estado) { setAccion(null); return }
     actualizarEstado(exp!.id, nuevoEstado)
-    showToast(`Estado actualizado a "${nuevoEstado}".`, 'success')
+    toast.success(`Estado actualizado a "${nuevoEstado}".`)
     setAccion(null)
   }
 
   function confirmarCausa() {
     actualizarExpediente(exp!.id, { numero_causa: nuevaCausa.trim() || null })
-    showToast('N° Causa actualizado.', 'success')
+    toast.success('N° Causa actualizado.')
     setAccion(null)
   }
 
   function confirmarDesagrupar() {
     actualizarExpediente(exp!.id, { numero_causa: null })
-    showToast('Expediente desagrupado de la causa.', 'success')
+    toast.success('Expediente desagrupado de la causa.')
     setAccion(null)
   }
 
   function confirmarReasignar() {
     if (!nuevoAbogado) { setAccion(null); return }
     asignarAbogado(exp!.id, nuevoAbogado)
-    showToast('Expediente reasignado.', 'success')
+    toast.success('Expediente reasignado.')
     setAccion(null)
   }
 
@@ -158,7 +160,7 @@ export default function DetalleExpedientePage() {
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-[#4a6a84] mb-3">
           <Link to="/bandeja/abogado" className="hover:text-[#1b3a57] transition-colors">Mi Bandeja</Link>
-          <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+          <Icon name="chevron_right" size={14} />
           <span className="text-[#1b3a57]">Expediente</span>
         </div>
 
@@ -192,7 +194,7 @@ export default function DetalleExpedientePage() {
               onClick={() => setMenuOpen(o => !o)}
               className="w-10 h-10 rounded-full flex items-center justify-center bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-md"
             >
-              <span className="material-symbols-outlined text-[18px]">add</span>
+              <Icon name="add" size={18} />
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-card-lg z-10 overflow-hidden border border-[rgba(0,0,0,0.10)]">
@@ -209,7 +211,7 @@ export default function DetalleExpedientePage() {
                     onClick={() => openAccion(item.key)}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-[#4a6a84]">{item.icon}</span>
+                    <Icon name={item.icon} size={18} />
                     {item.label}
                   </button>
                 ))}
@@ -231,7 +233,7 @@ export default function DetalleExpedientePage() {
                 : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
             }`}
           >
-            <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
+            <Icon name={t.icon} size={16} />
             {t.label}
             {tabCounters[t.key] !== undefined && (
               <span className="text-xs bg-[#e0e0e0] rounded-full px-1.5 py-0.5 text-[#4a6a84]">
@@ -278,7 +280,7 @@ export default function DetalleExpedientePage() {
                 <span className="text-xs font-bold text-[#4a6a84] uppercase tracking-wide">Estado actual</span>
                 <span className="text-sm font-black text-[#1b3a57]">{estadoProcesalActual?.label}</span>
               </div>
-              <span className="material-symbols-outlined text-2xl text-[#1b3a57]">arrow_forward</span>
+              <Icon name="arrow_forward" size={24} />
               <div className="flex flex-col items-center gap-1">
                 <span className="text-xs font-bold text-[#4a6a84] uppercase tracking-wide">Nuevo estado</span>
                 <span className="text-sm font-black text-[#1b3a57]">{siguienteEstadoProcesal?.label}</span>

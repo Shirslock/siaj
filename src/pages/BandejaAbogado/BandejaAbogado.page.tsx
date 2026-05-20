@@ -11,6 +11,8 @@ import { FormField } from '../../components/ui/FormField'
 import { formatFecha } from '../../utils/format'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Expediente, TipoGestion } from '../../types'
+import Icon from '../../components/ui/Icon'
+import { toast } from 'react-toastify'
 
 // ─── Types & helpers ───────────────────────────────────────────────────────────
 
@@ -43,7 +45,7 @@ const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(
 export default function BandejaAbogadoPage() {
   const navigate = useNavigate()
   const { expedientes, actualizarExpediente } = useExpedientesStore()
-  const { usuarioActivo, showToast } = useUIStore()
+  const { usuarioActivo } = useUIStore()
 
   const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '' })
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
@@ -135,7 +137,7 @@ export default function BandejaAbogadoPage() {
   function confirmarAgrupar() {
     if (!inputCausa.trim() || !modalAgrupar) return
     actualizarExpediente(modalAgrupar, { numero_causa: inputCausa.trim() })
-    showToast('Expediente agrupado a la causa correctamente.', 'success')
+    toast.success('Expediente agrupado a la causa correctamente.')
     setModalAgrupar(null)
     setInputCausa('')
   }
@@ -154,7 +156,7 @@ export default function BandejaAbogadoPage() {
           className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
           onClick={() => { navigate(RUTAS.EXPEDIENTE(exp.id)); setMenuAbierto(null) }}
         >
-          <span className="material-symbols-outlined text-[16px] text-[#4a6a84]">open_in_new</span>
+          <Icon name="open_in_new" size={16} />
           Visualizar
         </button>
         {sinCausa ? (
@@ -162,7 +164,7 @@ export default function BandejaAbogadoPage() {
             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
             onClick={() => { setModalAgrupar(exp.id); setMenuAbierto(null) }}
           >
-            <span className="material-symbols-outlined text-[16px] text-[#4a6a84]">folder_open</span>
+            <Icon name="folder_open" size={16} />
             Agrupar a causa
           </button>
         ) : (
@@ -170,11 +172,11 @@ export default function BandejaAbogadoPage() {
             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
             onClick={() => {
               actualizarExpediente(exp.id, { numero_causa: null })
-              showToast('Expediente desagrupado correctamente.', 'info')
+              toast.info('Expediente desagrupado correctamente.')
               setMenuAbierto(null)
             }}
           >
-            <span className="material-symbols-outlined text-[16px] text-[#4a6a84]">link_off</span>
+            <Icon name="link_off" size={16} />
             Desagrupar
           </button>
         )}
@@ -196,9 +198,7 @@ export default function BandejaAbogadoPage() {
         {/* Icon */}
         <td className="w-10 py-3 px-2 text-center">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto bg-[#e8e8e8]">
-            <span className="material-symbols-outlined text-[17px] text-[#4a6a84]">
-              description
-            </span>
+            <Icon name="description" size={17} />
           </div>
         </td>
         {/* N° */}
@@ -211,7 +211,7 @@ export default function BandejaAbogadoPage() {
           )}
           {isSuelto && (
             <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#4a6a84]">
-              <span className="material-symbols-outlined text-[11px]">folder_off</span>
+              <Icon name="folder_off" size={11} />
               Sin causa
             </span>
           )}
@@ -238,7 +238,7 @@ export default function BandejaAbogadoPage() {
             className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors"
             onClick={e => abrirMenu(e, exp.id)}
           >
-            <span className="material-symbols-outlined text-[18px]">more_vert</span>
+            <Icon name="more_vert" size={18} />
           </button>
           {menuAbierto === exp.id && renderMenu(exp)}
         </td>
@@ -267,7 +267,7 @@ export default function BandejaAbogadoPage() {
       <div className="bg-white shadow-sm rounded-xl px-5 py-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[#4a6a84] pointer-events-none">search</span>
+            <Icon name="search" size={18} />
             <input
               className="field-input pl-9"
               placeholder="Buscar carátula, número, causa…"
@@ -294,7 +294,7 @@ export default function BandejaAbogadoPage() {
               className="ml-auto flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
               onClick={() => setFiltros({ buscar: '', area: '', tipo: '', estado: '' })}
             >
-              <span className="material-symbols-outlined text-[14px]">close</span>
+              <Icon name="close" size={14} />
               Limpiar
             </button>
           )}
@@ -304,7 +304,7 @@ export default function BandejaAbogadoPage() {
       {/* TABLA */}
       {misBandeja.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
-          <span className="material-symbols-outlined text-[48px] text-[#4a6a84]">inbox</span>
+          <Icon name="inbox" size={48} />
           <p className="mt-4 text-[#4a6a84] text-sm">No tenés expedientes asignados.</p>
         </div>
       ) : (
@@ -332,7 +332,7 @@ export default function BandejaAbogadoPage() {
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={8} className="py-16 text-center text-[#4a6a84] text-sm">
-                      <span className="material-symbols-outlined text-[40px] block mb-3 text-[rgba(0,0,0,0.35)]">search_off</span>
+                      <Icon name="search_off" className="block mb-3" size={40} />
                       Sin resultados para los filtros aplicados.
                     </td>
                   </tr>
@@ -364,13 +364,7 @@ export default function BandejaAbogadoPage() {
                                   : 'bg-[#C4DFE8] text-[#1b3a57]'
                               }`}
                             >
-                              <span
-                                className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${
-                                  isExpanded ? 'rotate-90' : ''
-                                }`}
-                              >
-                                chevron_right
-                              </span>
+                              <Icon name="chevron_right" size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                             </div>
                           </td>
                           {/* N° Causa */}
@@ -395,7 +389,7 @@ export default function BandejaAbogadoPage() {
                           {/* Tipo */}
                           <td className="py-3 px-3">
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#1b3a57]">
-                              <span className="material-symbols-outlined text-[11px]">link</span>
+                              <Icon name="link" size={11} />
                               Causa judicial
                             </span>
                           </td>
@@ -409,12 +403,9 @@ export default function BandejaAbogadoPage() {
                           </td>
                           {/* Flecha */}
                           <td className="py-3 px-3 text-center">
-                            <span 
-                            className="material-symbols-outlined text-[18px] text-[#4a6a84]"
-                            onClick={e => { e.stopPropagation(); navigate(RUTAS.CAUSA(numeroCausa)) }}
-                            >
-                              chevron_right
-                            </span>
+                            <span onClick={e => { e.stopPropagation(); navigate(RUTAS.CAUSA(numeroCausa)) }}>
+                            <Icon name="chevron_right" size={18} className="text-[#4a6a84]" />
+                          </span>
                           </td>
                         </tr>
                        {isExpanded &&

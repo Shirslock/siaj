@@ -8,6 +8,7 @@ import { ASIGNACION_PENAL, getAbogadosFifo, getUsuarioById, getNombreCompleto } 
 import { LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
+import Icon from '../../components/ui/Icon'
 
 const AREAS: { id: Area; label: string }[] = [
   { id: 'CIVIL',   label: 'Civil' },
@@ -195,12 +196,7 @@ export default function AltaExpedientePage() {
         {/* Info canal */}
         {canal && (
           <div className="mt-5 bg-[rgba(196,223,232,0.40)] rounded-lg p-3 flex items-start gap-2">
-            <span
-              className="material-symbols-outlined text-[18px] text-[#1b3a57] mt-0.5 shrink-0"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              info
-            </span>
+            <Icon name="info" size={18} className="text-[#1b3a57] mt-0.5 shrink-0" />
             <p className="text-sm text-[#4a6a84]">{CANAL_INFO[canal as Canal]}</p>
           </div>
         )}
@@ -304,12 +300,7 @@ export default function AltaExpedientePage() {
               </div>
 
               <div className="bg-[#e8e8e8] rounded-xl p-4 flex items-start gap-3">
-                <span
-                  className="material-symbols-outlined text-2xl text-[#1b3a57] shrink-0"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  info
-                </span>
+                <Icon name="info" size={24} className="text-[#1b3a57] shrink-0" />
                 <p className="text-sm text-[#4a6a84]">
                   {area === 'PENAL'
                     ? 'Asignación por línea ferroviaria — seleccioná la línea para determinar el letrado automáticamente.'
@@ -342,9 +333,7 @@ export default function AltaExpedientePage() {
                   if (f) handleFile(f)
                 }}
               >
-                <span className="material-symbols-outlined text-4xl text-[rgba(0,0,0,0.35)] group-hover:text-[#1b3a57] block mb-3 transition-colors">
-                  upload_file
-                </span>
+                <Icon name="upload_file" className="block mb-3" size={40} />
                 <p className="text-sm font-medium text-[#4a6a84]">
                   Arrastrá el PDF aquí o hacé click para seleccionar
                 </p>
@@ -359,12 +348,7 @@ export default function AltaExpedientePage() {
               </div>
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                <span
-                  className="material-symbols-outlined text-2xl text-green-700 shrink-0"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  picture_as_pdf
-                </span>
+                <Icon name="picture_as_pdf" size={24} className="text-green-700 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-green-900 truncate">{archivo.name}</p>
                   <p className="text-xs text-green-700">{(archivo.size / 1024).toFixed(0)} KB</p>
@@ -374,7 +358,7 @@ export default function AltaExpedientePage() {
                   className="text-green-700 hover:text-green-900 transition-colors ml-auto"
                   onClick={() => setArchivo(null)}
                 >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
+                  <Icon name="close" size={20} />
                 </button>
               </div>
             )}

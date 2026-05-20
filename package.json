@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@material-symbols/font-400": "^0.44.6",
+    "@headlessui/react": "^2.2.10",
+    "@heroicons/react": "^2.2.0",
     "@tailwindcss/vite": "^4.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.15.0",
+    "react-toastify": "^11.1.0",
     "tailwindcss": "^4.0.0",
     "zustand": "^5.0.13"
   },

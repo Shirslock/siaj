@@ -3,6 +3,7 @@ import type { Expediente, Interviniente } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { Modal } from '../../../components/ui/Modal'
 import { ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE } from '../../../data/catalogos'
+import Icon from '../../../components/ui/Icon'
 
 interface Props { exp: Expediente }
 
@@ -65,7 +66,7 @@ export function IntervinientesTab({ exp }: Props) {
             onClick={() => { setForm(BLANK); setModal(true) }}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <Icon name="person_add" size={18} />
             Agregar interviniente
           </button>
         </div>
@@ -115,7 +116,7 @@ export function IntervinientesTab({ exp }: Props) {
                         title="Eliminar"
                         className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        <Icon name="delete" size={16} />
                       </button>
                     </td>
                   </tr>

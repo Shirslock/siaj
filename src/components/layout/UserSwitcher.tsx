@@ -2,6 +2,8 @@ import { useRef, useEffect } from 'react'
 import { USUARIOS } from '../../data/usuarios'
 import { useUIStore } from '../../store/ui.store'
 import type { RolSistema } from '../../types'
+import Icon from '../ui/Icon'
+import { toast } from 'react-toastify'
 
 const ROL_ORDEN: RolSistema[] = ['REFERENTE', 'COORDINADOR', 'ABOGADO', 'ADMINISTRATIVO']
 
@@ -25,7 +27,7 @@ interface UserSwitcherProps {
 }
 
 export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
-  const { usuarioActivo, setUsuarioActivo, showToast } = useUIStore()
+  const { usuarioActivo, setUsuarioActivo } = useUIStore()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
 
   const handleSelect = (id: string, nombre: string) => {
     setUsuarioActivo(id)
-    showToast(`Usuario cambiado a ${nombre}`, 'success')
+    toast.success(`Usuario cambiado a ${nombre}`)
     onClose()
   }
 
@@ -92,9 +94,7 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
                     <p className="text-[10px] text-[#4a6a84] truncate">{u.rolBD}</p>
                   </div>
                   {isActive && (
-                    <span className="material-symbols-outlined text-[#1b3a57] text-[18px] flex-shrink-0">
-                      check
-                    </span>
+                    <Icon name="check" className="flex-shrink-0" size={18} />
                   )}
                 </button>
               )

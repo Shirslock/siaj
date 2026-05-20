@@ -12,10 +12,11 @@ import { ASIGNACION_PENAL } from '../../data/usuarios'
 import { numerador } from '../../utils/format'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
+import { toast } from 'react-toastify'
 
 export function useAltaForm() {
   const navigate = useNavigate()
-  const { showToast } = useUIStore()
+  const {} = useUIStore()
   const { expedientes } = useExpedientesStore()
 
   const [canal, setCanalState] = useState<Canal | ''>('EE_GDE')
@@ -61,10 +62,7 @@ export function useAltaForm() {
     if (t) {
       const td = TIPOS_GESTION.find(x => x.code === t)
       if (td && canal && td.canal !== canal) {
-        showToast(
-          `Este tipo se registra habitualmente por ${td.canal.replace('_', ' ')}. Canal actual: ${(canal as string).replace('_', ' ')}.`,
-          'info'
-        )
+        toast.info(`Este tipo se registra habitualmente por ${td.canal.replace('_', ' ')}. Canal actual: ${(canal as string).replace('_', ' ')}.`)
       }
     }
   }
@@ -95,7 +93,7 @@ export function useAltaForm() {
     if (!validate()) return
     const count = expedientes.filter(e => e.area === (area as Area)).length + 1
     const newId = numerador(area as Area, count, new Date().getFullYear())
-    showToast(`Expediente ${newId} registrado y derivado correctamente.`, 'success')
+    toast.success(`Expediente ${newId} registrado y derivado correctamente.`)
     navigate(RUTAS.MESA)
   }
 

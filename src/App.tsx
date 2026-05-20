@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
-import { Toast } from './components/ui/Toast'
 import DashboardPage from './pages/Dashboard/Dashboard.page'
 import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
 import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
@@ -35,7 +34,6 @@ export default function App() {
           <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
         </Routes>
       </AppLayout>
-      <Toast />
     </>
   )
 }

@@ -8,6 +8,7 @@ import { Modal } from '../../components/ui/Modal'
 import { formatFecha } from '../../utils/format'
 import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import type { Actividad, Area, Documento, VinculoExpediente } from '../../types'
+import Icon from '../../components/ui/Icon'
 
 type Tab = 'timeline' | 'expedientes' | 'repositorio' | 'vinculados'
 
@@ -114,7 +115,7 @@ export default function CausaDetallePage() {
     return (
       <div className="p-6">
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
-          <span className="material-symbols-outlined text-[48px] text-[#4a6a84]">search_off</span>
+          <Icon name="search_off" size={48} />
           <p className="mt-4 text-[#1b3a57] font-medium">Causa no encontrada</p>
           <p className="text-sm text-[#4a6a84] mt-1 font-mono">{numeroCausa}</p>
         </div>
@@ -132,7 +133,7 @@ export default function CausaDetallePage() {
             onClick={() => navigate(-1)}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#e8e8e8] transition-colors text-[#4a6a84]"
           >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            <Icon name="arrow_back" size={20} />
           </button>
           <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
             N° Causa Judicial
@@ -210,9 +211,7 @@ export default function CausaDetallePage() {
               </select>
 
               <div className="relative flex-1 min-w-[200px]">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[#4a6a84] pointer-events-none">
-                  search
-                </span>
+                <Icon name="search" size={18} />
                 <input
                   className="field-input pl-9"
                   placeholder="Buscar por título de actividad..."
@@ -226,7 +225,7 @@ export default function CausaDetallePage() {
                   onClick={() => { setFiltroExpId(''); setFiltroTipo(''); setFiltroBuscar('') }}
                   className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[14px]">close</span>
+                  <Icon name="close" size={14} />
                   Limpiar
                 </button>
               )}
@@ -235,7 +234,7 @@ export default function CausaDetallePage() {
             {/* Lista */}
             {movimientosFiltrados.length === 0 ? (
               <div className="px-6 py-16 text-center">
-                <span className="material-symbols-outlined text-4xl text-[rgba(0,0,0,0.35)] block mb-3">history</span>
+                <Icon name="history" className="block mb-3" size={40} />
                 <p className="text-sm text-[#4a6a84]">
                   No hay actividades que coincidan con los filtros.
                 </p>
@@ -270,12 +269,7 @@ export default function CausaDetallePage() {
 
                       {/* Fila principal: ícono + título + fecha */}
                       <div className="flex items-baseline gap-2 mb-0.5">
-                        <span
-                          className="material-symbols-outlined text-[#4a6a84] flex-shrink-0"
-                          style={{ fontSize: '16px' }}
-                        >
-                          {iconPorTipo(mov.tipo)}
-                        </span>
+                        <Icon name={iconPorTipo(mov.tipo)} size={16} className="text-[#4a6a84] flex-shrink-0" />
                         <p className="text-sm font-semibold text-[#1b3a57]">{mov.titulo}</p>
                         <p className="text-[11px] text-[#4a6a84] flex-shrink-0">
                           {formatFecha(mov.fecha)} · 09:00
@@ -292,12 +286,7 @@ export default function CausaDetallePage() {
                       {/* Doc GDE */}
                       {mov.doc_gde && (
                         <div className="flex items-center gap-1.5 ml-6 mt-1">
-                          <span
-                            className="material-symbols-outlined text-[#4a6a84] flex-shrink-0"
-                            style={{ fontSize: '14px' }}
-                          >
-                            attach_file
-                          </span>
+                          <Icon name="attach_file" size={14} className="text-[#4a6a84] flex-shrink-0" />
                           <span className="font-mono text-[11px] text-[#4a6a84]">{mov.doc_gde}</span>
                         </div>
                       )}
@@ -337,7 +326,7 @@ export default function CausaDetallePage() {
                     <tr key={i} className="hover:bg-[#f0f0f0] transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <span className={`material-symbols-outlined text-[18px] ${doc.color}`}>{doc.icon}</span>
+                          <Icon name={doc.icon} size={18} className={doc.color} />
                           <span className="text-[#1b3a57] text-sm">{doc.nombre}</span>
                         </div>
                       </td>

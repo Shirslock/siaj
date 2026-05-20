@@ -4,6 +4,7 @@ import { useUIStore } from '../../store/ui.store'
 import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
 import type { RolSistema } from '../../types'
 import { UserSwitcher } from './UserSwitcher'
+import Icon from '../ui/Icon'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
   { key: 'dashboard',       icon: 'dashboard',    label: 'Dashboard',     ruta: '/dashboard' },
@@ -70,9 +71,7 @@ export function Sidebar({ activePage }: SidebarProps) {
           }`}
           title={sidebarCollapsed ? 'Expandir' : 'Contraer'}
         >
-          <span className="material-symbols-outlined text-[22px]">
-            {sidebarCollapsed ? 'menu' : 'menu_open'}
-          </span>
+          <Icon name={sidebarCollapsed ? 'menu' : 'menu_open'} size={22} />
         </button>
       </div>
 
@@ -112,9 +111,7 @@ export function Sidebar({ activePage }: SidebarProps) {
                   : 'text-[#1b3a57] hover:bg-[#d8d8d8] border-l-2 border-transparent'
               } ${sidebarCollapsed ? 'justify-center' : ''}`}
             >
-              <span className="material-symbols-outlined text-[22px] flex-shrink-0">
-                {item.icon}
-              </span>
+              <Icon name={item.icon} className="flex-shrink-0" size={22} />
               {!sidebarCollapsed && (
                 <span className={`text-sm truncate ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.label}
@@ -141,7 +138,7 @@ export function Sidebar({ activePage }: SidebarProps) {
             sidebarCollapsed ? 'justify-center' : ''
           }`}
         >
-          <span className="material-symbols-outlined text-[22px] flex-shrink-0">swap_horiz</span>
+          <Icon name="swap_horiz" className="flex-shrink-0" size={22} />
           {!sidebarCollapsed && (
             <span className="text-sm font-medium">Cambiar usuario</span>
           )}

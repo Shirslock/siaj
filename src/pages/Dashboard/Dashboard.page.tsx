@@ -4,6 +4,7 @@ import { useUIStore } from '../../store/ui.store'
 import { AreaBadge } from '../../components/ui/Badge'
 import { TablaExpedientes } from '../../components/expedientes/TablaExpedientes'
 import type { Area } from '../../types'
+import Icon from '../../components/ui/Icon'
 
 const AREAS: Area[] = ['CIVIL', 'LABORAL', 'PENAL']
 
@@ -49,7 +50,7 @@ export default function DashboardPage() {
           <div key={s.area} className="bg-white rounded-2xl p-5 shadow-card">
             <div className="flex items-start justify-between mb-3">
               <AreaBadge area={s.area} />
-              <span className="material-symbols-outlined text-[20px] text-[#4a6a84]">{AREA_ICON[s.area]}</span>
+              <Icon name={AREA_ICON[s.area]} size={20} />
             </div>
             <p className="text-3xl font-headline font-bold text-[#1b3a57] mt-2">{s.total}</p>
             <p className="text-xs text-[#4a6a84] mt-1">{s.activos} activos</p>
@@ -58,7 +59,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-2xl p-5 shadow-card">
           <div className="flex items-start justify-between mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">Mesa SIAJ</span>
-            <span className="material-symbols-outlined text-[20px] text-[#4a6a84]">inbox</span>
+            <Icon name="inbox" size={20} />
           </div>
           <p className="text-3xl font-headline font-bold text-[#1b3a57] mt-2">{pendientesQueue}</p>
           <p className="text-xs text-[#4a6a84] mt-1">pendientes en cola</p>

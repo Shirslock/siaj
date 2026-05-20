@@ -4,6 +4,7 @@ import { useExpedientesStore } from '../../../store/expedientes.store'
 import { AreaBadge, EstadoBadge } from '../../../components/ui/Badge'
 import { Modal } from '../../../components/ui/Modal'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
+import Icon from '../../../components/ui/Icon'
 
 type TipoRelacion = VinculoExpediente['tipo_relacion']
 
@@ -66,7 +67,7 @@ export function VinculosTab({ exp }: Props) {
             onClick={openModal}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
-            <span className="material-symbols-outlined text-[18px]">add_link</span>
+            <Icon name="add_link" size={18} />
             Vincular expediente
           </button>
         </div>
@@ -101,7 +102,7 @@ export function VinculosTab({ exp }: Props) {
                     title="Desvincular"
                     className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
                   >
-                    <span className="material-symbols-outlined text-[18px]">link_off</span>
+                    <Icon name="link_off" size={18} />
                   </button>
                 </div>
               )
@@ -135,9 +136,7 @@ export function VinculosTab({ exp }: Props) {
       >
         <div className="space-y-4">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[#4a6a84] pointer-events-none">
-              search
-            </span>
+            <Icon name="search" size={18} />
             <input
               className="field-input pl-9 w-full"
               placeholder="Buscar por ID o carátula…"

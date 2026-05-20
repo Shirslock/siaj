@@ -6,6 +6,8 @@ import { Modal } from '../../../components/ui/Modal'
 import { formatFecha } from '../../../utils/format'
 import { getNombreCompleto } from '../../../data/usuarios'
 import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia } from '../../../data/estadosProcesales'
+import Icon from '../../../components/ui/Icon'
+import { toast } from 'react-toastify'
 
 interface Props { exp: Expediente }
 
@@ -69,7 +71,7 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
                   }`}
                 >
                   {isPast
-                    ? <span className="material-symbols-outlined text-[16px]">check</span>
+                    ? <Icon name="check" size={16} />
                     : <span className="text-xs">{idx + 1}</span>
                   }
                 </div>
@@ -131,10 +133,7 @@ function TareaFeedItem({
       <span className="text-[10px] font-bold text-[#4a6a84] w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
 
       {/* Ícono estado */}
-      <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${estadoConfig.color}`}
-        style={{ fontVariationSettings: tarea.estado !== 'sin_estado' ? "'FILL' 1" : "'FILL' 0" }}>
-        {estadoConfig.icon}
-      </span>
+      <Icon name={estadoConfig.icon} size={18} className={`flex-shrink-0 ${estadoConfig.color}`} />
 
       {/* Nombre */}
       <p className="text-xs text-[#1b3a57] flex-1 truncate">{tarea.nombre}</p>
@@ -154,7 +153,7 @@ function TareaFeedItem({
       )}
 
       {/* Chevron */}
-      <span className="material-symbols-outlined text-[14px] text-[#4a6a84] flex-shrink-0">chevron_right</span>
+      <Icon name="chevron_right" className="flex-shrink-0" size={14} />
     </div>
   )
 }
@@ -205,7 +204,7 @@ function TareaDetailPanel({
               onClick={onCerrar}
               className="p-1 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors flex-shrink-0"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <Icon name="close" size={16} />
             </button>
           </div>
 
@@ -213,22 +212,22 @@ function TareaDetailPanel({
           <div className="mt-2">
             {estadoLocal === 'sin_estado' ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#e8e8e8] text-[#4a6a84] border border-[rgba(0,0,0,0.12)]">
-                <span className="material-symbols-outlined text-[12px]">radio_button_unchecked</span>
+                <Icon name="radio_button_unchecked" size={12} />
                 Pendiente
               </span>
             ) : estadoLocal === 'cumplido' ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
-                <span className="material-symbols-outlined text-[12px]" style={{fontVariationSettings:"'FILL' 1"}}>check_circle</span>
+                <Icon name="check_circle" size={12} />
                 Cumplido
               </span>
             ) : estadoLocal === 'en_curso' ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
-                <span className="material-symbols-outlined text-[12px]" style={{fontVariationSettings:"'FILL' 1"}}>schedule</span>
+                <Icon name="schedule" size={12} />
                 En curso
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84]">
-                <span className="material-symbols-outlined text-[12px]">block</span>
+                <Icon name="block" size={12} />
                 No procedente
               </span>
             )}
@@ -275,12 +274,7 @@ function TareaDetailPanel({
                       isActive ? activeClass : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#e8e8e8]'
                     }`}
                   >
-                    <span
-                      className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                    >
-                      {opt.icon}
-                    </span>
+                    <Icon name={opt.icon} size={20} />
                     <span className="text-[10px] font-bold leading-tight">{opt.label}</span>
                   </button>
                 )
@@ -317,7 +311,7 @@ function TareaDetailPanel({
               </div>
               {urgenciaLocal === 'rojo' && (
                 <p className="text-[9px] text-[#b91c1c] mt-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[11px]">warning</span>
+                  <Icon name="warning" size={11} />
                   Plazo vencido
                 </p>
               )}
@@ -350,7 +344,7 @@ function TareaDetailPanel({
               Adjunto
             </label>
             <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
-              <span className="material-symbols-outlined text-[18px] text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">attach_file</span>
+              <Icon name="attach_file" size={18} />
               <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">Adjuntar archivo</span>
               <input type="file" className="hidden" />
             </label>
@@ -369,7 +363,7 @@ function TareaDetailPanel({
             onClick={onGuardar}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
           >
-            <span className="material-symbols-outlined text-[14px]">save</span>
+            <Icon name="save" size={14} />
             Guardar
           </button>
         </div>
@@ -402,9 +396,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast }: { act: Actividad; idx: nu
         <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
           isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
         }`}>
-          <span className={`material-symbols-outlined text-[14px] ${isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>
-            {isSistema ? 'swap_horiz' : (iconMap[act.tipo] ?? 'radio_button_unchecked')}
-          </span>
+          <Icon name={isSistema ? 'swap_horiz' : (iconMap[act.tipo] ?? 'radio_button_unchecked')} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
         </div>
         {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)]/20 mt-1" />}
       </div>
@@ -431,7 +423,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast }: { act: Actividad; idx: nu
         )}
         {act.doc_gde && (
           <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">attach_file</span>
+            <Icon name="attach_file" size={14} />
             {act.doc_gde}
           </p>
         )}
@@ -511,7 +503,7 @@ function TareasBlock({
           title={!puedeAvanzar ? `Faltan ${total - completadas} tarea(s)` : `Avanzar a ${siguienteEstado?.label}`}
         >
           Avanzar
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          <Icon name="arrow_forward" size={14} />
         </button>
       </div>
 
@@ -553,7 +545,7 @@ export function TimelineTab({ exp }: Props) {
     tareasMap, inicializarTareas, actualizarTarea,
     agregarActividad, actualizarEstado, actualizarExpediente,
   } = useExpedientesStore()
-  const { usuarioActivo, showToast } = useUIStore()
+  const { usuarioActivo } = useUIStore()
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
   const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
@@ -610,7 +602,7 @@ export function TimelineTab({ exp }: Props) {
   function guardarTarea() {
     if (!tareaSeleccionada) return
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
-    showToast('Tarea actualizada.', 'success')
+    toast.success('Tarea actualizada.')
     setTareaSeleccionada(null)
   }
 
@@ -633,7 +625,7 @@ export function TimelineTab({ exp }: Props) {
     actualizarEstado(exp.id, siguienteEstado.codigo)
     actualizarExpediente(exp.id, { estadoProcesal: siguienteEstado.codigo })
     setModalAvanzarEstado(false)
-    showToast(`Estado actualizado a ${siguienteEstado.label}`, 'success')
+    toast.success(`Estado actualizado a ${siguienteEstado.label}`)
   }
 
   function agregarNuevaActividad() {
@@ -651,7 +643,7 @@ export function TimelineTab({ exp }: Props) {
       creado_por: usuarioActivo?.id,
     }
     agregarActividad(exp.id, act)
-    showToast('Actividad registrada.', 'success')
+    toast.success('Actividad registrada.')
     setModalNuevaActividad(false)
     setFormAct(BLANK_ACT)
   }
@@ -713,7 +705,7 @@ export function TimelineTab({ exp }: Props) {
               onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
             >
-              <span className="material-symbols-outlined text-[16px]">add</span>
+              <Icon name="add" size={16} />
               Nueva Actividad
             </button>
           </div>
@@ -721,7 +713,7 @@ export function TimelineTab({ exp }: Props) {
 
         {/* Buscador */}
         <div className="relative mt-3">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-[#4a6a84] pointer-events-none">search</span>
+          <Icon name="search" size={16} />
           <input
             className="field-input pl-9 w-full text-sm"
             placeholder="Buscar actividad..."
@@ -754,7 +746,7 @@ export function TimelineTab({ exp }: Props) {
           {/* Mensaje estado inicial */}
           {esEstadoInicial && filtroTab !== 'tareas' && (
             <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 text-center mb-4">
-              <span className="material-symbols-outlined text-3xl text-[rgba(0,0,0,0.35)] block mb-2">inbox</span>
+              <Icon name="inbox" className="block mb-2" size={32} />
               <p className="text-sm font-semibold text-[#1b3a57] mb-1">Expediente pendiente de inicio</p>
               <p className="text-xs text-[#4a6a84]">
                 Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
@@ -819,7 +811,7 @@ export function TimelineTab({ exp }: Props) {
       >
         <div className="text-center py-2">
           <div className="w-12 h-12 rounded-full bg-[#C4DFE8] flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-outlined text-[#1b3a57] text-2xl">arrow_forward</span>
+            <Icon name="arrow_forward" size={24} />
           </div>
           <p className="text-sm text-[#1b3a57] mb-3">
             Estás por cambiar el estado de{' '}
@@ -882,7 +874,7 @@ export function TimelineTab({ exp }: Props) {
           <div>
             <label className="field-label">Adjunto</label>
             <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
-              <span className="material-symbols-outlined text-[18px] text-[#4a6a84] group-hover:text-[#1b3a57]">attach_file</span>
+              <Icon name="attach_file" size={18} />
               <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57]">Adjuntar archivo</span>
               <input type="file" className="hidden" />
             </label>

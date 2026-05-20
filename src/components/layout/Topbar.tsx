@@ -1,6 +1,7 @@
 import { useUIStore } from '../../store/ui.store'
 import { getNombreCompleto } from '../../data/usuarios'
 import type { RolSistema } from '../../types'
+import Icon from '../ui/Icon'
 
 const ROL_LABEL: Record<RolSistema, string> = {
   REFERENTE:      'Referente',
@@ -55,7 +56,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
           </div>
         )}
         <button className="text-white opacity-60 hover:opacity-100 transition-opacity">
-          <span className="material-symbols-outlined text-[22px]">notifications_none</span>
+          <Icon name="notifications_none" size={22} />
         </button>
       </div>
     </header>
