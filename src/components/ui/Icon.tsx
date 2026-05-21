@@ -7,11 +7,12 @@ import {
   ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisVerticalIcon,
   ExclamationCircleIcon, ExclamationTriangleIcon, EyeIcon,
-  FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon,
+  ChartBarIcon,
+  FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon, FolderPlusIcon,
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, RectangleGroupIcon,
-  Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
+  ScaleIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
   UsersIcon, WrenchScrewdriverIcon, XMarkIcon,
 } from '@heroicons/react/24/outline'
 
@@ -55,6 +56,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   search_off:            MagnifyingGlassMinusIcon,
 
   // Archivos y documentos
+  article:               DocumentTextIcon,
   assign_file:           DocumentCheckIcon,
   assignment:            ClipboardDocumentListIcon,
   attach_file:           PaperClipIcon,
@@ -62,6 +64,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   picture_as_pdf:        DocumentIcon,
 
   // Carpetas
+  create_new_folder:     FolderPlusIcon,
   folder:                FolderIcon,
   folder_off:            FolderMinusIcon,
   folder_open:           FolderOpenIcon,
@@ -90,7 +93,9 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   block:                 NoSymbolIcon,
   construction:          WrenchScrewdriverIcon,
   dashboard:             Squares2X2Icon,
+  gavel:                 ScaleIcon,
   subdirectory_arrow_right: ArrowTurnDownRightIcon,
+  timeline:              ChartBarIcon,
   trending_up:           ArrowTrendingUpIcon,
   work:                  BriefcaseIcon,
 }
