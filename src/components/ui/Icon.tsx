@@ -2,7 +2,7 @@ import {
   PlusIcon, ArrowLeftIcon, ArrowRightIcon, ArrowPathIcon,
   ArrowDownTrayIcon, ArrowUpTrayIcon, ArrowsRightLeftIcon,
   ArrowTrendingUpIcon, ArrowTopRightOnSquareIcon,
-  ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
+  ArrowTurnDownRightIcon, ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
   CheckIcon, CheckCircleIcon, ChevronRightIcon, ChevronUpDownIcon,
   ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisVerticalIcon,
@@ -12,7 +12,7 @@ import {
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, RectangleGroupIcon,
   Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
-  UsersIcon, XMarkIcon,
+  UsersIcon, WrenchScrewdriverIcon, XMarkIcon,
 } from '@heroicons/react/24/outline'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -88,7 +88,9 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   // Dashboard y layout
   account_tree:          RectangleGroupIcon,
   block:                 NoSymbolIcon,
+  construction:          WrenchScrewdriverIcon,
   dashboard:             Squares2X2Icon,
+  subdirectory_arrow_right: ArrowTurnDownRightIcon,
   trending_up:           ArrowTrendingUpIcon,
   work:                  BriefcaseIcon,
 }
