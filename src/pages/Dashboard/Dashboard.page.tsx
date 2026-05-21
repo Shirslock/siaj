@@ -45,6 +45,21 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Aviso institucional */}
+      <div className="flex items-start gap-3 px-5 py-4 rounded-xl bg-amber-50 border border-amber-200">
+        <Icon name="warning" size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-0.5">
+            Información preliminar — sujeta a revisión
+          </p>
+          <p className="text-xs text-amber-700 leading-relaxed">
+            Los indicadores y métricas presentados en este panel tienen carácter ilustrativo.
+            Los datos, criterios de cálculo y categorías de visualización deberán ser
+            validados y relevados con las áreas requirentas antes de su implementación definitiva.
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-4 gap-4">
         {stats.map(s => (
           <div key={s.area} className="bg-white rounded-2xl p-5 shadow-card">
