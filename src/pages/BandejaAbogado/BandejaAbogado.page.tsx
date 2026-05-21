@@ -40,6 +40,10 @@ function construirItems(exps: Expediente[]): ItemBandeja[] {
 
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
+const filterInputCls =
+  'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
+  'text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#1b3a57]'
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function BandejaAbogadoPage() {
@@ -47,7 +51,7 @@ export default function BandejaAbogadoPage() {
   const { expedientes, actualizarExpediente } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
-  const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '' })
+  const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '' })
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
   const [modalAgrupar,   setModalAgrupar]   = useState<string | null>(null)
@@ -79,6 +83,7 @@ export default function BandejaAbogadoPage() {
       if (filtros.area && e.area !== filtros.area) return false
       if (filtros.tipo && e.tipo !== filtros.tipo) return false
       if (filtros.estado && e.estado !== filtros.estado) return false
+      if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         return (
@@ -124,6 +129,10 @@ export default function BandejaAbogadoPage() {
 
   function setFiltro(key: string, val: string) {
     setFiltros(prev => ({ ...prev, [key]: val }))
+  }
+
+  function limpiarFiltros() {
+    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '' })
   }
 
   function abrirMenu(e: React.MouseEvent<HTMLButtonElement>, expId: string) {
@@ -263,44 +272,6 @@ export default function BandejaAbogadoPage() {
         </div>
       </div>
 
-      {/* FILTROS */}
-      <div className="bg-white shadow-sm rounded-xl px-5 py-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Icon name="search" size={18} />
-            <input
-              className="field-input pl-9"
-              placeholder="Buscar carátula, número, causa…"
-              value={filtros.buscar}
-              onChange={e => setFiltro('buscar', e.target.value)}
-            />
-          </div>
-          <select className="field-input min-w-[120px] w-auto" value={filtros.area} onChange={e => setFiltro('area', e.target.value)}>
-            <option value="">Área: Todas</option>
-            <option value="CIVIL">Civil</option>
-            <option value="LABORAL">Laboral</option>
-            <option value="PENAL">Penal</option>
-          </select>
-          <select className="field-input min-w-[160px] w-auto" value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')}>
-            <option value="">Tipo: Todos</option>
-            {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
-          </select>
-          <select className="field-input min-w-[160px] w-auto" value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)}>
-            <option value="">Estado: Todos</option>
-            {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
-          </select>
-          {(filtros.buscar || filtros.area || filtros.tipo || filtros.estado) && (
-            <button
-              className="ml-auto flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-              onClick={() => setFiltros({ buscar: '', area: '', tipo: '', estado: '' })}
-            >
-              <Icon name="close" size={14} />
-              Limpiar
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* TABLA */}
       {misBandeja.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
@@ -309,23 +280,71 @@ export default function BandejaAbogadoPage() {
         </div>
       ) : (
         <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
-          <div className="flex items-center px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
             <span className="text-xs text-[#4a6a84] font-medium">
               {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
             </span>
+            <button onClick={limpiarFiltros} className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+              <Icon name="filter_alt_off" size={14} />
+              Limpiar filtros
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[780px]">
-              <thead className="bg-[#f0f0f0]">
-                <tr>
-                  <th className="w-10 py-3 px-3" />
-                  <th className="w-40 py-3 px-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">N° Expediente</th>
-                  <th className="py-3 px-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Carátula</th>
-                  <th className="w-24 py-3 px-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Área</th>
-                  <th className="w-36 py-3 px-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Tipo</th>
-                  <th className="w-28 py-3 px-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Estado</th>
-                  <th className="w-24 py-3 px-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Recepción</th>
-                  <th className="w-16 py-3 px-3" />
+              <thead>
+                {/* Fila 1: labels */}
+                <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
+                  <th className="w-10 px-3 py-2.5" />
+                  <th className="w-40 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">N° Causa / Exp.</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Carátula</th>
+                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Área</th>
+                  <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Tipo</th>
+                  <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Estado</th>
+                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Recepción</th>
+                  <th className="w-16 px-3 py-2.5" />
+                </tr>
+
+                {/* Fila 2: inputs de filtro */}
+                <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
+                  {/* icono — sin filtro */}
+                  <th className="px-2 py-1.5" />
+                  {/* N° Causa / Exp — buscar */}
+                  <th className="px-2 py-1.5">
+                    <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+                  </th>
+                  {/* Carátula — buscar (compartido) */}
+                  <th className="px-2 py-1.5">
+                    <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+                  </th>
+                  {/* Área */}
+                  <th className="px-2 py-1.5">
+                    <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
+                      <option value="">Todas</option>
+                      <option value="CIVIL">Civil</option>
+                      <option value="LABORAL">Laboral</option>
+                      <option value="PENAL">Penal</option>
+                    </select>
+                  </th>
+                  {/* Tipo */}
+                  <th className="px-2 py-1.5">
+                    <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} className={filterInputCls}>
+                      <option value="">Todos</option>
+                      {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
+                    </select>
+                  </th>
+                  {/* Estado */}
+                  <th className="px-2 py-1.5">
+                    <select value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} className={filterInputCls}>
+                      <option value="">Todos</option>
+                      {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
+                    </select>
+                  </th>
+                  {/* Recepción desde */}
+                  <th className="px-2 py-1.5">
+                    <input type="date" value={filtros.fechaDesde} onChange={e => setFiltro('fechaDesde', e.target.value)} className={filterInputCls} />
+                  </th>
+                  {/* Acciones — sin filtro */}
+                  <th className="px-2 py-1.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/20">

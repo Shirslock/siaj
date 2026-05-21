@@ -4,8 +4,10 @@ import { useAltaForm } from './useAltaForm'
 import { FormularioDinamico } from '../../components/expedientes/FormularioDinamico'
 import { FormField } from '../../components/ui/FormField'
 import { Button } from '../../components/ui/Button'
+import { Modal } from '../../components/ui/Modal'
 import { ASIGNACION_PENAL, getAbogadosFifo, getUsuarioById, getNombreCompleto } from '../../data/usuarios'
-import { LINEAS_FERROVIARIAS } from '../../data/catalogos'
+import { LINEAS_FERROVIARIAS, TIPOS_GESTION } from '../../data/catalogos'
+import { CAMPOS_COMUNES_MESA, getCamposFormulario } from '../../data/formularios'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
@@ -73,12 +75,18 @@ export default function AltaExpedientePage() {
     canal, area, tipo, camposMesa, errors,
     tiposFiltrados, tipoSeleccionado,
     camposComunes, camposTipo, lineaSeleccionada,
-    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit,
+    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit, validate,
   } = useAltaForm()
 
   const [letradoId, setLetradoId] = useState<string>('')
   const [archivo, setArchivo] = useState<File | null>(null)
+  const [modalRevision, setModalRevision] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function confirmarAlta() {
+    setModalRevision(false)
+    submit()
+  }
 
   const lineaValue = camposMesa['linea'] as string | undefined
   const abogadoPenalId = lineaValue ? ASIGNACION_PENAL[lineaValue] : undefined
@@ -369,12 +377,141 @@ export default function AltaExpedientePage() {
             <Button variant="ghost" onClick={() => navigate(RUTAS.MESA)}>
               Cancelar
             </Button>
-            <Button variant="primary" icon="task_alt" onClick={submit}>
+            <Button variant="primary" icon="task_alt" onClick={() => { if (validate()) setModalRevision(true) }}>
               Revisar y Derivar
             </Button>
           </div>
         </>
       )}
+
+      {/* ── MODAL DE REVISIÓN ── */}
+      <Modal
+        open={modalRevision}
+        onClose={() => setModalRevision(false)}
+        titulo="Revisión del expediente"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setModalRevision(false)}>
+              Volver a editar
+            </Button>
+            <Button variant="primary" onClick={confirmarAlta}>
+              Confirmar y Registrar
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-[#4a6a84] mb-1">Revisá los datos antes de registrar el expediente.</p>
+        <p className="text-sm text-[#4a6a84] mb-5">Una vez registrado será asignado automáticamente.</p>
+
+        {/* ── Identificación ── */}
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Identificación</p>
+        <dl className="mb-5">
+          {[
+            { label: 'Canal',        valor: CANALES.find(c => c.id === canal)?.label ?? '—' },
+            { label: 'Área',         valor: AREAS.find(a => a.id === area)?.label ?? '—' },
+            { label: 'Tipo',         valor: TIPOS_GESTION.find(t => t.code === tipo)?.label ?? '—' },
+            { label: 'N° EE / Memo', valor: (camposMesa['numero_ee_gde'] as string | undefined) || '—', mono: true },
+            { label: 'N° Causa',     valor: (camposMesa['numero_causa'] as string | undefined) || '—' },
+          ].map(({ label, valor, mono }) => (
+            <div key={label} className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)] last:border-0">
+              <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">{label}</dt>
+              <dd className={`text-sm font-semibold text-[#1b3a57] flex-1 ${mono ? 'font-mono' : ''}`}>{valor}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <hr className="border-[rgba(0,0,0,0.08)] mb-5" />
+
+        {/* ── Asignación ── */}
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Asignación</p>
+        <dl className="mb-5">
+          {area === 'PENAL' ? (
+            lineaSeleccionada ? (
+              <>
+                <div className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)]">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Línea</dt>
+                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">
+                    {LINEAS_FERROVIARIAS.find(l => l.id === lineaSeleccionada)?.label ?? lineaSeleccionada}
+                  </dd>
+                </div>
+                <div className="flex items-start gap-3 py-2">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Letrado</dt>
+                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">
+                    {(() => {
+                      const ab = getUsuarioById(ASIGNACION_PENAL[lineaSeleccionada])
+                      return ab ? getNombreCompleto(ab) : '—'
+                    })()}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <Icon name="warning" size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-700">
+                  Línea ferroviaria no seleccionada. El letrado se determinará al completar.
+                </p>
+              </div>
+            )
+          ) : (
+            <>
+              <div className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)]">
+                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Criterio</dt>
+                <dd className="text-sm font-semibold text-[#1b3a57] flex-1">Secuencial FIFO</dd>
+              </div>
+              <div className="flex items-start gap-3 py-2">
+                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Letrado sugerido</dt>
+                <dd className="text-sm font-semibold text-[#1b3a57] flex-1">
+                  {(() => {
+                    const fifo = area ? getAbogadosFifo(area as 'CIVIL' | 'LABORAL') : []
+                    return fifo[0] ? getNombreCompleto(fifo[0]) : '—'
+                  })()}
+                </dd>
+              </div>
+            </>
+          )}
+        </dl>
+
+        <hr className="border-[rgba(0,0,0,0.08)] mb-5" />
+
+        {/* ── Datos de Recepción ── */}
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Datos de Recepción</p>
+        <dl className="mb-5">
+          {CAMPOS_COMUNES_MESA.filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '').length === 0 ? (
+            <p className="text-sm text-[#4a6a84] italic">Sin datos adicionales.</p>
+          ) : (
+            CAMPOS_COMUNES_MESA
+              .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '')
+              .map(c => (
+                <div key={c.id} className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)] last:border-0">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">{c.label}</dt>
+                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">{String(camposMesa[c.id])}</dd>
+                </div>
+              ))
+          )}
+        </dl>
+
+        <hr className="border-[rgba(0,0,0,0.08)] mb-5" />
+
+        {/* ── Campos del tipo ── */}
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Campos del tipo</p>
+        <dl>
+          {tipo && getCamposFormulario(tipo, 'mesa', area || undefined)
+            .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '').length === 0 ? (
+            <p className="text-sm text-[#4a6a84] italic">Sin campos adicionales completados.</p>
+          ) : (
+            tipo && getCamposFormulario(tipo, 'mesa', area || undefined)
+              .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '')
+              .map(c => (
+                <div key={c.id} className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)] last:border-0">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">{c.label}</dt>
+                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">{String(camposMesa[c.id])}</dd>
+                </div>
+              ))
+          )}
+        </dl>
+      </Modal>
+
     </div>
   )
 }

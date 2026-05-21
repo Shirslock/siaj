@@ -15,13 +15,9 @@ const AREA_CELDA: Record<Area, string> = {
   PENAL:   'bg-[#e8e8e8] text-[#1b3a57]',
 }
 
-const inputCls =
-  'w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-[#f5f5f5] px-3 py-2 text-sm ' +
-  'text-[#1b3a57] placeholder:text-[#4a6a84]/50 ' +
-  'focus:outline-none focus:ring-2 focus:ring-[rgba(27,58,87,0.20)] focus:border-[rgba(27,58,87,0.40)]'
-
-const labelCls =
-  'block text-[10px] font-bold uppercase tracking-wider text-[#4a6a84] mb-1.5'
+const filterInputCls =
+  'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
+  'text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#1b3a57]'
 
 const FILTROS_INIT = {
   buscar: '', tipo: '', area: '', causa: '',
@@ -105,132 +101,6 @@ export default function MesaSacoPage() {
         </Button>
       </div>
 
-      {/* ── Barra de filtros ── */}
-      <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)] p-4">
-        <div className="flex flex-wrap gap-3 items-end">
-
-          {/* 1. Buscar */}
-          <div className="flex-1 min-w-[200px]">
-            <label className={labelCls}>Buscar</label>
-            <div className="relative">
-              <Icon name="search" size={18} />
-              <input
-                className={`${inputCls} pl-8`}
-                placeholder="Carátula, N° causa, N° interno..."
-                value={filtros.buscar}
-                onChange={e => setFiltro('buscar', e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* 2. Tipo de gestión */}
-          <div className="min-w-[160px]">
-            <label className={labelCls}>Tipo de gestión</label>
-            <select
-              className={inputCls}
-              value={filtros.tipo}
-              onChange={e => setFiltro('tipo', e.target.value)}
-            >
-              <option value="">Todos</option>
-              {tiposUnicos.map(t => (
-                <option key={t} value={t}>
-                  {TIPOS_GESTION.find(tg => tg.code === t)?.label ?? t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 3. Área */}
-          <div className="min-w-[130px]">
-            <label className={labelCls}>Área</label>
-            <select
-              className={inputCls}
-              value={filtros.area}
-              onChange={e => setFiltro('area', e.target.value)}
-            >
-              <option value="">Todas</option>
-              <option value="CIVIL">Civil</option>
-              <option value="LABORAL">Laboral</option>
-              <option value="PENAL">Penal</option>
-            </select>
-          </div>
-
-          {/* 4. N° Causa */}
-          <div className="min-w-[160px]">
-            <label className={labelCls}>N° Causa</label>
-            <input
-              className={`${inputCls} font-mono`}
-              placeholder="N° Causa..."
-              value={filtros.causa}
-              onChange={e => setFiltro('causa', e.target.value)}
-            />
-          </div>
-
-          {/* 5. Referencia GDE */}
-          <div className="min-w-[180px]">
-            <label className={labelCls}>Referencia GDE</label>
-            <input
-              className={`${inputCls} font-mono`}
-              placeholder="EX-2026-..."
-              value={filtros.gde}
-              onChange={e => setFiltro('gde', e.target.value)}
-            />
-          </div>
-
-          {/* 6. Letrado */}
-          <div className="min-w-[160px]">
-            <label className={labelCls}>Letrado</label>
-            <select
-              className={inputCls}
-              value={filtros.abogado_id}
-              onChange={e => setFiltro('abogado_id', e.target.value)}
-            >
-              <option value="">Todos</option>
-              {abogadosUnicos.map(u => (
-                <option key={u.id} value={u.id}>
-                  {getNombreCompleto(u)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 7. Recepción desde */}
-          <div className="min-w-[130px]">
-            <label className={labelCls}>Recepción desde</label>
-            <input
-              type="date"
-              className={inputCls}
-              value={filtros.fechaDesde}
-              onChange={e => setFiltro('fechaDesde', e.target.value)}
-            />
-          </div>
-
-          {/* 8. Recepción hasta */}
-          <div className="min-w-[130px]">
-            <label className={labelCls}>Recepción hasta</label>
-            <input
-              type="date"
-              className={inputCls}
-              value={filtros.fechaHasta}
-              onChange={e => setFiltro('fechaHasta', e.target.value)}
-            />
-          </div>
-
-          {/* Limpiar */}
-          <div>
-            <label className="invisible block text-[10px] mb-1.5">_</label>
-            <button
-              onClick={() => setFiltros(FILTROS_INIT)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-[rgba(0,0,0,0.12)] text-xs font-bold text-[#4a6a84] hover:border-[rgba(27,58,87,0.50)] hover:text-[#1b3a57] transition-colors"
-            >
-              <Icon name="filter_alt_off" size={16} />
-              Limpiar
-            </button>
-          </div>
-
-        </div>
-      </div>
-
       {/* ── Tabla de expedientes ── */}
       <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden">
 
@@ -245,118 +115,214 @@ export default function MesaSacoPage() {
           </span>
         </div>
 
-        <table className="w-full border-collapse">
-          <thead className="bg-[#f0f0f0] border-b-2 border-[rgba(0,0,0,0.10)]">
-            <tr>
-              {[
-                'N° Interno', 'N° Causa', 'Área', 'Carátula',
-                'Tipo de Gestión', 'Referencia GDE', 'Letrado', 'Línea', 'Recepción', '',
-              ].map(col => (
-                <th
-                  key={col}
-                  className="text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] px-4 py-3.5 whitespace-nowrap"
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-outline-variant/10">
-            {expedientesFiltrados.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="px-6 py-12 text-center text-[#4a6a84] text-sm">
-                  No hay expedientes que coincidan con los filtros seleccionados.
-                </td>
-              </tr>
-            ) : (
-              expedientesFiltrados.map(e => {
-                const letrado = e.abogado_id ? getUsuarioById(e.abogado_id) : undefined
-                const linea = e.linea
-                  ? LINEAS_FERROVIARIAS.find(l => l.id === e.linea)
-                  : undefined
+        {/* Toolbar limpiar */}
+        <div className="flex justify-end px-4 py-2 border-b border-[rgba(0,0,0,0.05)]">
+          <button
+            onClick={() => setFiltros(FILTROS_INIT)}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+          >
+            <Icon name="filter_alt_off" size={14} />
+            Limpiar filtros
+          </button>
+        </div>
 
-                return (
-                  <tr
-                    key={e.id}
-                    className="cursor-pointer hover:bg-[#f0f0f0] transition-colors"
-                    onClick={() => navigate('/expediente/' + e.id)}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[900px]">
+            <thead>
+              {/* Fila 1: labels */}
+              <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
+                {['N° Interno','N° Causa','Área','Carátula','Tipo de Gestión','Referencia GDE','Letrado','Línea','Recepción',''].map(col => (
+                  <th
+                    key={col}
+                    className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap"
                   >
-                    {/* N° Interno */}
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs font-bold text-[#1b3a57]">{e.id}</span>
-                      <span className={`block text-[10px] px-1.5 py-0.5 rounded font-bold mt-1 w-fit ${AREA_CELDA[e.area]}`}>
-                        {e.area}
-                      </span>
-                    </td>
+                    {col}
+                  </th>
+                ))}
+              </tr>
 
-                    {/* N° Causa */}
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-[10px] text-[#4a6a84]">
-                        {e.numero_causa || '—'}
-                      </span>
-                    </td>
+              {/* Fila 2: inputs de filtro */}
+              <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
+                {/* N° Interno — buscar (id/causa/caratula) */}
+                <th className="px-2 py-1.5">
+                  <input
+                    type="text"
+                    placeholder="C-0023…"
+                    value={filtros.buscar}
+                    onChange={e => setFiltro('buscar', e.target.value)}
+                    className={filterInputCls}
+                  />
+                </th>
+                {/* N° Causa */}
+                <th className="px-2 py-1.5">
+                  <input
+                    type="text"
+                    placeholder="Causa…"
+                    value={filtros.causa}
+                    onChange={e => setFiltro('causa', e.target.value)}
+                    className={filterInputCls}
+                  />
+                </th>
+                {/* Área */}
+                <th className="px-2 py-1.5">
+                  <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
+                    <option value="">Todas</option>
+                    <option value="CIVIL">Civil</option>
+                    <option value="LABORAL">Laboral</option>
+                    <option value="PENAL">Penal</option>
+                  </select>
+                </th>
+                {/* Carátula — comparte filtros.buscar */}
+                <th className="px-2 py-1.5">
+                  <input
+                    type="text"
+                    placeholder="Carátula…"
+                    value={filtros.buscar}
+                    onChange={e => setFiltro('buscar', e.target.value)}
+                    className={filterInputCls}
+                  />
+                </th>
+                {/* Tipo de Gestión */}
+                <th className="px-2 py-1.5">
+                  <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value)} className={filterInputCls}>
+                    <option value="">Todos</option>
+                    {tiposUnicos.map(t => (
+                      <option key={t} value={t}>{TIPOS_GESTION.find(tg => tg.code === t)?.label ?? t}</option>
+                    ))}
+                  </select>
+                </th>
+                {/* Referencia GDE */}
+                <th className="px-2 py-1.5">
+                  <input
+                    type="text"
+                    placeholder="EX-2026-…"
+                    value={filtros.gde}
+                    onChange={e => setFiltro('gde', e.target.value)}
+                    className={`${filterInputCls} font-mono`}
+                  />
+                </th>
+                {/* Letrado */}
+                <th className="px-2 py-1.5">
+                  <select value={filtros.abogado_id} onChange={e => setFiltro('abogado_id', e.target.value)} className={filterInputCls}>
+                    <option value="">Todos</option>
+                    {abogadosUnicos.map(u => (
+                      <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
+                    ))}
+                  </select>
+                </th>
+                {/* Línea — sin filtro */}
+                <th className="px-2 py-1.5" />
+                {/* Recepción desde */}
+                <th className="px-2 py-1.5">
+                  <input
+                    type="date"
+                    value={filtros.fechaDesde}
+                    onChange={e => setFiltro('fechaDesde', e.target.value)}
+                    className={filterInputCls}
+                  />
+                </th>
+                {/* Acciones */}
+                <th className="px-2 py-1.5" />
+              </tr>
+            </thead>
 
-                    {/* Área */}
-                    <td className="px-4 py-3">
-                      <AreaBadge area={e.area} />
-                    </td>
+            <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+              {expedientesFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-6 py-12 text-center text-[#4a6a84] text-sm">
+                    No hay expedientes que coincidan con los filtros seleccionados.
+                  </td>
+                </tr>
+              ) : (
+                expedientesFiltrados.map(e => {
+                  const letrado = e.abogado_id ? getUsuarioById(e.abogado_id) : undefined
+                  const linea = e.linea
+                    ? LINEAS_FERROVIARIAS.find(l => l.id === e.linea)
+                    : undefined
 
-                    {/* Carátula */}
-                    <td className="px-4 py-3 max-w-[220px]">
-                      <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2 leading-snug">
-                        {e.caratula}
-                      </p>
-                    </td>
-
-                    {/* Tipo de Gestión */}
-                    <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
-                      {TIPOS_GESTION.find(t => t.code === e.tipo)?.label || e.tipo}
-                    </td>
-
-                    {/* Referencia GDE */}
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-[10px] text-[#4a6a84]">
-                        {e.numero_ee_gde || '—'}
-                      </span>
-                    </td>
-
-                    {/* Letrado */}
-                    <td className="px-4 py-3 text-xs text-[#1b3a57] whitespace-nowrap">
-                      {letrado ? getNombreCompleto(letrado) : '—'}
-                    </td>
-
-                    {/* Línea */}
-                    <td className="px-4 py-3">
-                      {linea ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8e8e8] text-[#4a6a84]">
-                          {linea.label.replace('Línea ', '')}
+                  return (
+                    <tr
+                      key={e.id}
+                      className="cursor-pointer hover:bg-[#f0f0f0] transition-colors"
+                      onClick={() => navigate('/expediente/' + e.id)}
+                    >
+                      {/* N° Interno */}
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs font-bold text-[#1b3a57]">{e.id}</span>
+                        <span className={`block text-[10px] px-1.5 py-0.5 rounded font-bold mt-1 w-fit ${AREA_CELDA[e.area]}`}>
+                          {e.area}
                         </span>
-                      ) : (
-                        <span className="text-[rgba(0,0,0,0.35)] text-[10px]">—</span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Recepción */}
-                    <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
-                      {formatFecha(e.fecha_recepcion)}
-                    </td>
+                      {/* N° Causa */}
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[10px] text-[#4a6a84]">
+                          {e.numero_causa || '—'}
+                        </span>
+                      </td>
 
-                    {/* Acciones */}
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        className="p-1.5 hover:bg-[#e8e8e8] rounded-lg transition-colors"
-                        onClick={ev => { ev.stopPropagation(); navigate('/expediente/' + e.id) }}
-                        aria-label="Ver detalle"
-                      >
-                        <Icon name="visibility" size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+                      {/* Área */}
+                      <td className="px-4 py-3">
+                        <AreaBadge area={e.area} />
+                      </td>
+
+                      {/* Carátula */}
+                      <td className="px-4 py-3 max-w-[220px]">
+                        <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2 leading-snug">
+                          {e.caratula}
+                        </p>
+                      </td>
+
+                      {/* Tipo de Gestión */}
+                      <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
+                        {TIPOS_GESTION.find(t => t.code === e.tipo)?.label || e.tipo}
+                      </td>
+
+                      {/* Referencia GDE */}
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[10px] text-[#4a6a84]">
+                          {e.numero_ee_gde || '—'}
+                        </span>
+                      </td>
+
+                      {/* Letrado */}
+                      <td className="px-4 py-3 text-xs text-[#1b3a57] whitespace-nowrap">
+                        {letrado ? getNombreCompleto(letrado) : '—'}
+                      </td>
+
+                      {/* Línea */}
+                      <td className="px-4 py-3">
+                        {linea ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8e8e8] text-[#4a6a84]">
+                            {linea.label.replace('Línea ', '')}
+                          </span>
+                        ) : (
+                          <span className="text-[rgba(0,0,0,0.35)] text-[10px]">—</span>
+                        )}
+                      </td>
+
+                      {/* Recepción */}
+                      <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
+                        {formatFecha(e.fecha_recepcion)}
+                      </td>
+
+                      {/* Acciones */}
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          className="p-1.5 hover:bg-[#e8e8e8] rounded-lg transition-colors"
+                          onClick={ev => { ev.stopPropagation(); navigate('/expediente/' + e.id) }}
+                          aria-label="Ver detalle"
+                        >
+                          <Icon name="visibility" size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* Footer decorativo */}
         <div className="flex justify-between items-center px-6 py-4 border-t border-[rgba(0,0,0,0.08)]">

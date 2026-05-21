@@ -133,6 +133,6 @@ export function useAltaForm() {
     canal, area, tipo, camposMesa, errors,
     tiposFiltrados, tipoSeleccionado, causaDuplicada,
     camposComunes, camposTipo, lineaSeleccionada,
-    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit,
+    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit, validate,
   }
 }
