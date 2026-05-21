@@ -24,7 +24,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-[#1b3a57] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
+      className={`fixed top-0 right-0 h-16 bg-[#63B2DA] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
         sidebarCollapsed ? 'left-16' : 'left-64'
       }`}
     >

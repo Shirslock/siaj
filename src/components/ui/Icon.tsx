@@ -3,7 +3,7 @@ import {
   ArrowDownTrayIcon, ArrowUpTrayIcon, ArrowsRightLeftIcon,
   ArrowTrendingUpIcon, ArrowTopRightOnSquareIcon,
   ArrowTurnDownRightIcon, ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
-  CheckIcon, CheckCircleIcon, ChevronRightIcon, ChevronUpDownIcon,
+  CheckIcon, CheckBadgeIcon, CheckCircleIcon, ChevronRightIcon, ChevronUpDownIcon,
   ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisVerticalIcon,
   ExclamationCircleIcon, ExclamationTriangleIcon, EyeIcon,
@@ -11,8 +11,8 @@ import {
   FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon, FolderPlusIcon,
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
-  NoSymbolIcon, PaperClipIcon, PencilSquareIcon, RectangleGroupIcon,
-  ScaleIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
+  NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
+  ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
   UsersIcon, WrenchScrewdriverIcon, XMarkIcon,
 } from '@heroicons/react/24/outline'
 
@@ -42,8 +42,10 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   forward:               ArrowUturnRightIcon,
 
   // Acciones
+  add_circle:            PlusCircleIcon,
   check:                 CheckIcon,
   check_circle:          CheckCircleIcon,
+  task_alt:              CheckBadgeIcon,
   delete:                TrashIcon,
   download:              ArrowDownTrayIcon,
   edit:                  PencilSquareIcon,
@@ -94,6 +96,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   construction:          WrenchScrewdriverIcon,
   dashboard:             Squares2X2Icon,
   gavel:                 ScaleIcon,
+  local_police:          ShieldCheckIcon,
   subdirectory_arrow_right: ArrowTurnDownRightIcon,
   timeline:              ChartBarIcon,
   trending_up:           ArrowTrendingUpIcon,
