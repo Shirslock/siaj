@@ -10,16 +10,21 @@
 | React | 18 | UI |
 | TypeScript | 5 | Lenguaje |
 | Vite | 5 | Build / dev server (`npm run dev`) |
-| Tailwind CSS | 3 | Estilos (tokens en `tailwind.config.ts`) |
-| Zustand | latest | Estado global |
-| React Router | v6 | Routing |
-| Material Symbols | @material-symbols/font-400 | Iconos |
+| Tailwind CSS | **4** | Estilos via `@tailwindcss/vite` — sin `tailwind.config.ts` |
+| Zustand | 5 | Estado global |
+| React Router | **v7** | Routing |
+| **@heroicons/react** | 2 | Íconos — usar siempre `<Icon name="...">` de `src/components/ui/Icon.tsx` |
+| @headlessui/react | 2 | Componentes accesibles (Dialog, Combobox) |
+| react-toastify | 11 | Notificaciones — usar `toast.success/error/info()` directamente |
 
 ## 2. Levantar el proyecto
 
 ```bash
 npm install
-npm run dev     # http://localhost:5173
+npm run dev                        # http://localhost:5173 (local / Vercel)
+npm run build                      # build para Vercel (base: /)
+npm run build -- --mode ghpages    # build para GH Pages (base: /siaj/)
+bash deploy.sh                     # build + commit + push GH Pages automático
 ```
 
 ## 3. Mapa de archivos
@@ -29,20 +34,24 @@ npm run dev     # http://localhost:5173
 | `src/types/index.ts` | Todos los tipos del dominio. Fuente de verdad de contratos. |
 | `src/data/catalogos.ts` | TIPOS_GESTION, JUZGADOS, LINEAS, y todos los catálogos de dropdowns. |
 | `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). |
-| `src/data/usuarios.ts` | 28 usuarios reales con IDs UR_001–UR_032, roles y asignaciones. |
+| `src/data/usuarios.ts` | Usuarios reales con IDs UR_001–UR_032, roles y asignaciones. |
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
-| `src/store/expedientes.store.ts` | Estado de expedientes + acciones. |
-| `src/store/actividades.store.ts` | Estado del módulo de actividades del letrado. |
-| `src/store/agenda.store.ts` | Vencimientos y eventos de agenda. |
-| `src/store/ui.store.ts` | Usuario activo, sidebar, toasts. |
-| `src/components/ui/` | Átomos: Badge, Button, Modal, Toast, FormField. |
-| `src/components/layout/` | AppLayout, Sidebar, Topbar. |
-| `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. |
-| `src/components/actividades/` | Timeline, ActividadCard, ChecklistPanel, NuevaActividad. |
+| `src/data/estadosProcesales.ts` | Estados procesales por tipo + tareas estructuradas + cálculo de urgencia. |
+| `src/store/expedientes.store.ts` | Estado de expedientes + acciones (incluye tareasMap). |
+| `src/store/ui.store.ts` | Usuario activo, sidebar collapsed. |
+| `src/components/ui/Icon.tsx` | Wrapper de heroicons. **Único lugar donde se usan íconos.** Ver ICON_MAP. |
+| `src/components/ui/Badge.tsx` | AreaBadge, EstadoBadge. |
+| `src/components/ui/Button.tsx` | Botón con variantes primary/ghost/danger. |
+| `src/components/ui/Modal.tsx` | Modal genérico con header/footer/size. |
+| `src/components/ui/FormField.tsx` | Campo de formulario con label/hint/error. |
+| `src/components/layout/` | AppLayout, Sidebar, Topbar, UserSwitcher. |
+| `src/components/expedientes/` | TablaExpedientes, FormularioDinamico. |
 | `src/pages/*/` | Una carpeta por página. `NombrePagina.page.tsx` + hooks locales. |
 | `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
 | `src/utils/routing.ts` | Constantes de rutas + helper de accesos por rol. |
-| `tailwind.config.ts` | Design system Sovereign Ledger. NO modificar tokens. |
+| `vite.config.ts` | Base path según mode: `ghpages` → `/siaj/`, resto → `/`. |
+| `vercel.json` | Rewrite SPA para Vercel. |
+| `deploy.sh` | Script de deploy a GH Pages. |
 
 > Cada subcarpeta tiene su propio CLAUDE.md con documentación
 > específica. Leer el CLAUDE.md de la carpeta antes de modificarla.
@@ -74,13 +83,44 @@ npm run dev     # http://localhost:5173
 > de los ítems de nav de cada rol. Ver `src/data/CLAUDE.md`
 > para la lista completa de casos multi-rol.
 
-## 6. Design system — Sovereign Ledger
+## 6. Design system
 
-Los tokens están en `tailwind.config.ts`. No hardcodear colores hex en componentes.
-Usar siempre clases Tailwind con los nombres de token: `bg-surface`, `text-on-surface-variant`, `border-outline-variant`, etc.
+Este branch usa **Tailwind CSS v4** sin archivo de configuración.
+Los estilos se definen con clases Tailwind y colores hex del sistema Sovereign Ledger:
+
+| Uso | Hex |
+|-----|-----|
+| Azul oscuro principal (textos, botones, fondos) | `#1b3a57` |
+| Azul medio (textos secundarios, labels) | `#4a6a84` |
+| Azul claro accent (badges, highlights, activos) | `#C4DFE8` |
+| Azul topbar | `#63B2DA` |
+| Gris claro (fondos neutros, filas) | `#e8e8e8` |
+| Gris hover | `#f0f0f0` |
+
+Usar estos hex directamente: `bg-[#1b3a57]`, `text-[#4a6a84]`, etc.
 
 Fuentes: `font-headline` (Public Sans) para títulos. `font-body` (Inter) para datos.
 Sombras: `.shadow-card` y `.shadow-card-lg` (definidas en `index.css`).
+Clases de campo: `field-input`, `field-label`, `field-hint` (definidas en `index.css`).
+
+### Íconos
+
+Usar **siempre** el componente `<Icon name="..." size={N} className="..." />`.
+Nunca usar `<span class="material-symbols-outlined">` ni SVG inline.
+El ICON_MAP completo está en `src/components/ui/Icon.tsx`.
+
+Para agregar un ícono nuevo: ver Sección 10.
+
+### Notificaciones
+
+```ts
+import { toast } from 'react-toastify'
+toast.success('Mensaje')
+toast.error('Error')
+toast.info('Info')
+```
+
+Nunca usar el componente `Toast.tsx` legacy ni `showToast` del store.
 
 ## 7. Convenciones de código
 
@@ -105,11 +145,20 @@ Sombras: `.shadow-card` y `.shadow-card-lg` (definidas en `index.css`).
 2. Si es un tipo nuevo → agregarlo a `TipoGestion` en `src/types/index.ts`
 3. `FormularioDinamico.tsx` lo renderiza automáticamente
 
-## 10. Checklist antes de entregar
+## 10. Agregar un ícono nuevo
+
+1. Buscar el heroicon equivalente en `@heroicons/react/24/outline`
+2. Importarlo en `src/components/ui/Icon.tsx`
+3. Agregar la entrada en `ICON_MAP` con el nombre de Material Symbols como key
+4. Usar `<Icon name="nombre_material" />` en los componentes
+
+## 11. Checklist antes de entregar
 
 - [ ] `npm run dev` sin errores de consola
 - [ ] `npx tsc --noEmit` sin errores TypeScript
-- [ ] Sin colores hex hardcodeados — solo tokens Tailwind
+- [ ] Sin `material-symbols-outlined` en ningún `.tsx` — verificar con `grep -rn "material-symbols" src/`
+- [ ] Sin tokens rotos — verificar con `grep -rn "bg-surface\|text-on-surface" src/`
+- [ ] Todos los `<Icon name="...">` tienen entrada en ICON_MAP
 - [ ] Sin texto en inglés visible al usuario
 - [ ] Datos mock coherentes con el dominio SIAJ
 - [ ] Reglas de negocio de la Sección 4 respetadas
