@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
@@ -9,6 +9,7 @@ import { formatFecha } from '../../utils/format'
 import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import type { Actividad, Area, Documento, VinculoExpediente } from '../../types'
 import Icon from '../../components/ui/Icon'
+import { exportarExcel, exportarPDF, type FilaTimelineExport } from '../../utils/exportTimeline'
 
 type Tab = 'timeline' | 'expedientes' | 'repositorio' | 'vinculados'
 
@@ -52,11 +53,12 @@ export default function CausaDetallePage() {
   const numeroCausa = params['*'] ?? ''
   const { expedientes } = useExpedientesStore()
 
-  const [tabActivo,    setTabActivo]    = useState<Tab>('timeline')
-  const [filtroExpId,  setFiltroExpId]  = useState('')
-  const [filtroTipo,   setFiltroTipo]   = useState('')
-  const [filtroBuscar, setFiltroBuscar] = useState('')
-  const [modalNueva,   setModalNueva]   = useState(false)
+  const [tabActivo,      setTabActivo]      = useState<Tab>('timeline')
+  const [filtroExpId,    setFiltroExpId]    = useState('')
+  const [filtroTipo,     setFiltroTipo]     = useState('')
+  const [filtroBuscar,   setFiltroBuscar]   = useState('')
+  const [modalNueva,     setModalNueva]     = useState(false)
+  const [menuExportCausa, setMenuExportCausa] = useState(false)
 
   const expsDeCausa = useMemo(() =>
     expedientes.filter(e => e.numero_causa === numeroCausa),
@@ -110,6 +112,31 @@ export default function CausaDetallePage() {
   }, [expsDeCausa])
 
   const hayFiltros = filtroExpId !== '' || filtroTipo !== '' || filtroBuscar !== ''
+
+  const nombreArchivoCausa = `timeline_causa_${numeroCausa.replace(/\//g, '-')}_${new Date().toISOString().split('T')[0]}`
+  const tituloCausa    = `Timeline — Causa ${numeroCausa}`
+  const subtituloCausa = `${expsDeCausa.length} expediente${expsDeCausa.length !== 1 ? 's' : ''} — ${[...new Set(expsDeCausa.map(e => e.area))].join(' · ')}`
+
+  function getFilasExportCausa(): FilaTimelineExport[] {
+    return movimientosFiltrados.map(mov => ({
+      fecha:            mov.fecha ?? '',
+      tipo:             mov.titulo.startsWith('Cambio') ? 'Sistema' : 'Actividad',
+      titulo:           mov.titulo,
+      descripcion:      mov.descripcion ?? '',
+      docGde:           mov.doc_gde ?? '',
+      estado:           mov.estado ?? '',
+      estadoExpediente: mov.estadoExpediente ?? '',
+      expediente:       mov._expId,
+      area:             mov._expArea,
+    }))
+  }
+
+  useEffect(() => {
+    if (!menuExportCausa) return
+    const handler = () => setMenuExportCausa(false)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [menuExportCausa])
 
   if (expsDeCausa.length === 0) {
     return (
@@ -179,9 +206,42 @@ export default function CausaDetallePage() {
             {/* Card header */}
             <div className="px-6 py-4 flex items-center justify-between border-b border-[rgba(0,0,0,0.06)]">
               <p className="font-semibold text-sm text-[#1b3a57]">Historial completo de la causa</p>
-              <Button variant="primary" icon="add_circle" size="sm" onClick={() => setModalNueva(true)}>
-                Nueva Actividad
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Botón exportar */}
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => setMenuExportCausa(v => !v)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors"
+                  >
+                    <Icon name="download" size={14} />
+                    Exportar
+                    <Icon name="chevron_right" size={12} className={menuExportCausa ? 'rotate-90 transition-transform' : 'transition-transform'} />
+                  </button>
+
+                  {menuExportCausa && (
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg z-50 py-1 min-w-[160px]">
+                      <button
+                        onClick={() => { exportarExcel(getFilasExportCausa(), nombreArchivoCausa, true); setMenuExportCausa(false) }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+                      >
+                        <Icon name="description" size={16} className="text-[#15803d]" />
+                        Descargar Excel
+                      </button>
+                      <button
+                        onClick={() => { exportarPDF(getFilasExportCausa(), nombreArchivoCausa, tituloCausa, subtituloCausa, true); setMenuExportCausa(false) }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+                      >
+                        <Icon name="picture_as_pdf" size={16} className="text-[#b91c1c]" />
+                        Descargar PDF
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <Button variant="primary" icon="add_circle" size="sm" onClick={() => setModalNueva(true)}>
+                  Nueva Actividad
+                </Button>
+              </div>
             </div>
 
             {/* Filtros */}

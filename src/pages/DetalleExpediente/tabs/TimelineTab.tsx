@@ -8,6 +8,10 @@ import { getNombreCompleto } from '../../../data/usuarios'
 import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia } from '../../../data/estadosProcesales'
 import Icon from '../../../components/ui/Icon'
 import { toast } from 'react-toastify'
+import {
+  actividadesToFilas, tareasToFilas, exportarExcel, exportarPDF,
+  type FilaTimelineExport,
+} from '../../../utils/exportTimeline'
 
 interface Props { exp: Expediente }
 
@@ -619,6 +623,7 @@ export function TimelineTab({ exp }: Props) {
   const [adjuntoNuevaAct, setAdjuntoNuevaAct] = useState<File | null>(null)
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
+  const [menuExport, setMenuExport] = useState(false)
 
   const estadoCodigo = exp.estadoProcesal ?? 'INICIO'
   const estadoProcesal = getEstadoProcesal(exp.tipo, estadoCodigo)
@@ -719,6 +724,26 @@ export function TimelineTab({ exp }: Props) {
     setAdjuntoNuevaAct(null)
   }
 
+  const nombreArchivo = `timeline_${exp.id.replace('/', '-')}_${new Date().toISOString().split('T')[0]}`
+  const tituloDoc     = `Timeline — ${exp.id}`
+  const subtituloDoc  = exp.caratula
+
+  function getFilasExport(): FilaTimelineExport[] {
+    const filasActividades = actividadesToFilas(feedFiltrado, exp.id, exp.area)
+    const filasTareas      = tareasToFilas(tareas, estadoCodigo, exp.id, exp.area)
+    if (filtroTab === 'tareas')      return filasTareas
+    if (filtroTab === 'sistema' || filtroTab === 'actividades') return filasActividades
+    return [...filasActividades, ...filasTareas]
+      .sort((a, b) => (b.fecha ?? '').localeCompare(a.fecha ?? ''))
+  }
+
+  useEffect(() => {
+    if (!menuExport) return
+    const handler = () => setMenuExport(false)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [menuExport])
+
   const FILTRO_TABS: { key: FiltroTab; label: string; count?: number }[] = [
     { key: 'todo',        label: 'Todo' },
     { key: 'sistema',     label: 'Sistema',     count: cntSistema },
@@ -769,6 +794,37 @@ export function TimelineTab({ exp }: Props) {
                   )}
                 </button>
               ))}
+            </div>
+
+            {/* Botón exportar */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={() => setMenuExport(v => !v)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors"
+              >
+                <Icon name="download" size={14} />
+                Exportar
+                <Icon name="chevron_right" size={12} className={menuExport ? 'rotate-90 transition-transform' : 'transition-transform'} />
+              </button>
+
+              {menuExport && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg z-50 py-1 min-w-[160px]">
+                  <button
+                    onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+                  >
+                    <Icon name="description" size={16} className="text-[#15803d]" />
+                    Descargar Excel
+                  </button>
+                  <button
+                    onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, tituloDoc, subtituloDoc); setMenuExport(false) }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+                  >
+                    <Icon name="picture_as_pdf" size={16} className="text-[#b91c1c]" />
+                    Descargar PDF
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Botón nueva actividad */}
