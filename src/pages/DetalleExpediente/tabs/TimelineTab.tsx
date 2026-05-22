@@ -747,8 +747,8 @@ export function TimelineTab({ exp }: Props) {
   const feedFiltrado = sorted.filter(act => {
     const esSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
     const esActividad = !esSistema
-    const esHija = esActividad && !!act.estadoExpediente && act.estadoExpediente !== 'ASIGNADO' && sorted.some(
-      padre => padre.tipo === 'MOVIMIENTO' && padre.titulo.startsWith('Cambio de estado') && padre.estadoExpediente === act.estadoExpediente
+    const esHija = esActividad && !!act.estadoExpediente && sorted.some(
+      padre => padre !== act && padre.tipo === 'MOVIMIENTO' && padre.titulo.startsWith('Cambio de estado') && padre.estadoExpediente === act.estadoExpediente
     )
     if (filtroTab === 'sistema') return esSistema
     if (filtroTab === 'actividades') return esActividad
@@ -815,7 +815,6 @@ export function TimelineTab({ exp }: Props) {
     const act: Actividad = {
       id: `ACT_${Date.now()}`,
       expediente_id: exp.id,
-      estadoExpediente: estadoCodigo,
       tipo: formAct.tipo,
       titulo: formAct.titulo,
       descripcion: formAct.descripcion,
@@ -984,6 +983,7 @@ export function TimelineTab({ exp }: Props) {
               {feedFiltrado.map((act, idx) => {
                 const hijasDeEsteItem = !!act.estadoExpediente
                   ? sorted.filter(a =>
+                      !!a.estadoExpediente &&
                       a.estadoExpediente === act.estadoExpediente &&
                       !(a.tipo === 'MOVIMIENTO' && a.titulo.startsWith('Cambio de estado')) &&
                       a.id !== act.id
