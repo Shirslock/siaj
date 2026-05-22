@@ -170,6 +170,7 @@ export interface Actividad {
   creado_por?: string
   activo: boolean
   adjunto_nombre?: string | null
+  tareasSnapshot?: Tarea[]
 }
 
 export interface AgendaEvent {

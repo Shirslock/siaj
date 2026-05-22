@@ -378,7 +378,15 @@ function TareaDetailPanel({
 
 // ── Entrada del feed (actividad genérica o de sistema) ───────────────────────
 
-function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [] }: { act: Actividad; idx: number; isLast: boolean, hijas?: Actividad[] }) {
+function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, onToggleSnapshot, tareasHistoricas = [] }: {
+  act: Actividad
+  idx: number
+  isLast: boolean
+  hijas?: Actividad[]
+  snapshotOpen?: boolean
+  onToggleSnapshot?: () => void
+  tareasHistoricas?: Tarea[]
+}) {
   const iconMap: Record<string, string> = {
     RECEPCION:      'inbox',
     CONTESTACION:   'reply',
@@ -421,6 +429,16 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [] }: { act: Activi
                   Sistema
                 </span>
               )}
+              {isSistema && tareasHistoricas.length > 0 && (
+                <button
+                  onClick={onToggleSnapshot}
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1.5 transition-colors mt-1"
+                >
+                  <Icon name="checklist" size={14} />
+                  {tareasHistoricas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHistoricas.length} tareas
+                  <Icon name={snapshotOpen ? 'unfold_less' : 'unfold_more'} size={12} />
+                </button>
+              )}
             </div>
           </div>
           {act.descripcion && (
@@ -460,6 +478,73 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [] }: { act: Activi
           )}
         </div>
       </div>
+
+      {/* Panel tareas históricas — solo lectura */}
+      {isSistema && tareasHistoricas.length > 0 && snapshotOpen && (
+        <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
+          <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+              Tareas del estado anterior — Solo lectura
+            </span>
+            <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
+          </div>
+
+          {tareasHistoricas.map(tarea => {
+            const dimmed = tarea.estado === 'sin_estado'
+            return (
+              <div key={tarea.id} className={`flex items-start gap-3 px-4 py-2 border-b border-[rgba(0,0,0,0.04)] last:border-0 ${dimmed ? 'opacity-40' : ''}`}>
+                {/* Ícono estado */}
+                <div className="flex-shrink-0 mt-0.5">
+                  {tarea.estado === 'cumplido' && (
+                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                      <span className="text-green-600 text-[10px]">✓</span>
+                    </div>
+                  )}
+                  {tarea.estado === 'no_procedente' && (
+                    <div className="w-4 h-4 rounded-full bg-[#e8e8e8] flex items-center justify-center text-[#4a6a84] text-[10px]">⊘</div>
+                  )}
+                  {tarea.estado === 'en_curso' && (
+                    <div className="w-4 h-4 rounded-full bg-[#C4DFE8] flex items-center justify-center">
+                      <Icon name="schedule" size={10} className="text-[#1b3a57]" />
+                    </div>
+                  )}
+                  {tarea.estado === 'sin_estado' && (
+                    <div className="w-4 h-4 rounded-full border-2 border-[rgba(0,0,0,0.15)]" />
+                  )}
+                </div>
+
+                {/* Nombre + observaciones inline */}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[11px] font-medium ${
+                    tarea.estado === 'cumplido'       ? 'line-through text-[#7a9ab4]'
+                    : tarea.estado === 'no_procedente' ? 'text-[#7a9ab4]'
+                    : 'text-[#1b3a57]'
+                  }`}>{tarea.nombre}</p>
+                  {tarea.observaciones && (
+                    <p className="text-[10px] text-[#7a9ab4] mt-0.5 italic">{tarea.observaciones}</p>
+                  )}
+                </div>
+
+                {/* Chip estado */}
+                {tarea.estado !== 'sin_estado' && (
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${
+                    tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
+                    : tarea.estado === 'en_curso' ? 'bg-[#C4DFE8] text-[#1b3a57]'
+                    : 'bg-[#e8e8e8] text-[#4a6a84]'
+                  }`}>
+                    {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
+                  </span>
+                )}
+
+                {/* Fecha */}
+                {tarea.fecha && (
+                  <span className="text-[10px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{tarea.fecha}</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Actividades hijas indentadas */}
       {hijas.length > 0 && (
@@ -624,6 +709,14 @@ export function TimelineTab({ exp }: Props) {
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
   const [menuExport, setMenuExport] = useState(false)
+  const [snapshotsExpandidos, setSnapshotsExpandidos] = useState<Set<number>>(new Set())
+
+  const toggleSnapshot = (idx: number) =>
+    setSnapshotsExpandidos(prev => {
+      const next = new Set(prev)
+      next.has(idx) ? next.delete(idx) : next.add(idx)
+      return next
+    })
 
   const estadoCodigo = exp.estadoProcesal ?? 'INICIO'
   const estadoProcesal = getEstadoProcesal(exp.tipo, estadoCodigo)
@@ -672,6 +765,21 @@ export function TimelineTab({ exp }: Props) {
   const cntActividades = sorted.filter(a => !(a.tipo === 'MOVIMIENTO' && !!a.estadoExpediente)).length
   const cntTareas      = total
 
+  function getEstadoAnterior(act: Actividad): string | null {
+    const match = act.titulo.match(/Cambio de estado: (.+) → (.+)/)
+    if (!match) return null
+    const labelAnterior = match[1].trim()
+    const encontrado = getEstadosProcesales(exp.tipo).find(e => e.label === labelAnterior)
+    return encontrado?.codigo ?? null
+  }
+
+  function getTareasHistoricas(act: Actividad): Tarea[] {
+    const codigoAnterior = getEstadoAnterior(act)
+    if (!codigoAnterior) return act.tareasSnapshot ?? []
+    const keyAnterior = `${exp.id}__${codigoAnterior}`
+    return tareasMap[keyAnterior] ?? act.tareasSnapshot ?? []
+  }
+
   function guardarTarea() {
     if (!tareaSeleccionada) return
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
@@ -694,6 +802,7 @@ export function TimelineTab({ exp }: Props) {
       estadoExpediente: siguienteEstado.codigo,
       doc_gde: null,
       creado_por: usuarioActivo?.id,
+      tareasSnapshot: [...tareas],
     })
     actualizarEstado(exp.id, siguienteEstado.codigo)
     actualizarExpediente(exp.id, { estadoProcesal: siguienteEstado.codigo })
@@ -729,8 +838,21 @@ export function TimelineTab({ exp }: Props) {
   const subtituloDoc  = exp.caratula
 
   function getFilasExport(): FilaTimelineExport[] {
-    const filasActividades = actividadesToFilas(feedFiltrado, exp.id, exp.area)
-    const filasTareas      = tareasToFilas(tareas, estadoCodigo, exp.id, exp.area)
+    const filasActividades = actividadesToFilas(feedFiltrado, exp.id, exp.area).map((fila, i) => {
+      if (fila.tipo !== 'Sistema') return fila
+      const tareasHist = getTareasHistoricas(feedFiltrado[i])
+      const tareasDetalle = tareasHist.length > 0
+        ? tareasHist.map(t => {
+            const icono = t.estado === 'cumplido' ? '✓'
+              : t.estado === 'no_procedente' ? '⊘'
+              : t.estado === 'en_curso' ? '⏱'
+              : '○'
+            return `${icono} ${t.nombre}`
+          }).join(' | ')
+        : ''
+      return { ...fila, tareasDetalle }
+    })
+    const filasTareas = tareasToFilas(tareas, estadoCodigo, exp.id, exp.area)
     if (filtroTab === 'tareas')      return filasTareas
     if (filtroTab === 'sistema' || filtroTab === 'actividades') return filasActividades
     return [...filasActividades, ...filasTareas]
@@ -860,14 +982,15 @@ export function TimelineTab({ exp }: Props) {
           {filtroTab !== 'tareas' && feedFiltrado.length > 0 && (
             <div className="mb-4">
               {feedFiltrado.map((act, idx) => {
-                // Las hijas son actividades genéricas cuyo estadoExpediente coincide con el estado que este ítem establece
                 const hijasDeEsteItem = !!act.estadoExpediente
                   ? sorted.filter(a =>
                       a.estadoExpediente === act.estadoExpediente &&
                       !(a.tipo === 'MOVIMIENTO' && a.titulo.startsWith('Cambio de estado')) &&
-                      a.id !== act.id  // no incluirse a sí mismo
+                      a.id !== act.id
                     )
                   : []
+                const esSistemaEntry = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
+                const tareasHist = esSistemaEntry ? getTareasHistoricas(act) : []
                 return (
                   <ActividadFeedItem
                     key={act.id ?? idx}
@@ -875,6 +998,9 @@ export function TimelineTab({ exp }: Props) {
                     idx={idx}
                     isLast={idx === feedFiltrado.length - 1}
                     hijas={hijasDeEsteItem}
+                    snapshotOpen={snapshotsExpandidos.has(idx)}
+                    onToggleSnapshot={() => toggleSnapshot(idx)}
+                    tareasHistoricas={tareasHist}
                   />
                 )
               })}

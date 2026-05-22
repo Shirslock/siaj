@@ -11,6 +11,7 @@ export interface FilaTimelineExport {
   docGde: string
   estado: string
   estadoExpediente: string
+  tareasDetalle?: string
   expediente?: string
   area?: string
 }
@@ -30,19 +31,34 @@ export function actividadesToFilas(
   expedienteId?: string,
   area?: string,
 ): FilaTimelineExport[] {
-  return actividades.map(act => ({
-    fecha:            act.fecha ?? '',
-    tipo:             act.estadoExpediente && act.titulo.startsWith('Cambio')
-                        ? 'Sistema'
-                        : 'Actividad',
-    titulo:           act.titulo,
-    descripcion:      act.descripcion ?? '',
-    docGde:           act.doc_gde ?? '',
-    estado:           act.estado ?? '',
-    estadoExpediente: act.estadoExpediente ?? '',
-    expediente:       expedienteId,
-    area:             area,
-  }))
+  return actividades.map(act => {
+    let tareasDetalle = ''
+    if (act.tareasSnapshot && act.tareasSnapshot.length > 0) {
+      tareasDetalle = act.tareasSnapshot
+        .map(t => {
+          const icono = t.estado === 'cumplido'      ? '✓'
+                      : t.estado === 'no_procedente' ? '⊘'
+                      : t.estado === 'en_curso'      ? '⏱'
+                      : '○'
+          return `${icono} ${t.nombre}`
+        })
+        .join(' | ')
+    }
+    return {
+      fecha:            act.fecha ?? '',
+      tipo:             act.estadoExpediente && act.titulo.startsWith('Cambio')
+                          ? 'Sistema'
+                          : 'Actividad',
+      titulo:           act.titulo,
+      descripcion:      act.descripcion ?? '',
+      docGde:           act.doc_gde ?? '',
+      estado:           act.estado ?? '',
+      estadoExpediente: act.estadoExpediente ?? '',
+      tareasDetalle,
+      expediente:       expedienteId,
+      area:             area,
+    }
+  })
 }
 
 export function tareasToFilas(
@@ -61,6 +77,7 @@ export function tareasToFilas(
       docGde:           t.docGde ?? '',
       estado:           labelEstadoTarea(t.estado),
       estadoExpediente: estadoProcesal,
+      tareasDetalle:    '',
       expediente:       expedienteId,
       area:             area,
     }))
@@ -74,12 +91,14 @@ export function exportarExcel(
   const encabezados = [
     'Fecha', 'Tipo', 'Título', 'Descripción',
     'Documento GDE', 'Estado', 'Estado Expediente',
+    'Tareas realizadas',
     ...(incluirExpediente ? ['Expediente', 'Área'] : []),
   ]
 
   const datos = filas.map(f => [
     f.fecha, f.tipo, f.titulo, f.descripcion,
     f.docGde, f.estado, f.estadoExpediente,
+    f.tareasDetalle ?? '',
     ...(incluirExpediente ? [f.expediente ?? '', f.area ?? ''] : []),
   ])
 
@@ -88,6 +107,7 @@ export function exportarExcel(
   ws['!cols'] = [
     { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 50 },
     { wch: 30 }, { wch: 15 }, { wch: 20 },
+    { wch: 60 },
     ...(incluirExpediente ? [{ wch: 15 }, { wch: 10 }] : []),
   ]
 
@@ -128,13 +148,14 @@ export function exportarPDF(
   )
 
   const columnas = [
-    { header: 'Fecha',       dataKey: 'fecha' },
-    { header: 'Tipo',        dataKey: 'tipo' },
-    { header: 'Título',      dataKey: 'titulo' },
-    { header: 'Descripción', dataKey: 'descripcion' },
-    { header: 'Doc GDE',     dataKey: 'docGde' },
-    { header: 'Estado',      dataKey: 'estado' },
-    { header: 'Estado Exp.', dataKey: 'estadoExpediente' },
+    { header: 'Fecha',             dataKey: 'fecha' },
+    { header: 'Tipo',              dataKey: 'tipo' },
+    { header: 'Título',            dataKey: 'titulo' },
+    { header: 'Descripción',       dataKey: 'descripcion' },
+    { header: 'Doc GDE',           dataKey: 'docGde' },
+    { header: 'Estado',            dataKey: 'estado' },
+    { header: 'Estado Exp.',       dataKey: 'estadoExpediente' },
+    { header: 'Tareas realizadas', dataKey: 'tareasDetalle' },
     ...(incluirExpediente
       ? [{ header: 'Expediente', dataKey: 'expediente' }, { header: 'Área', dataKey: 'area' }]
       : []),
@@ -144,13 +165,14 @@ export function exportarPDF(
     startY: 38,
     columns: columnas,
     body: filas as unknown as RowInput[],
-    styles:          { font: 'helvetica', fontSize: 8, cellPadding: 3, textColor: [27, 58, 87] },
-    headStyles:      { fillColor: [27, 58, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+    styles:             { font: 'helvetica', fontSize: 8, cellPadding: 3, textColor: [27, 58, 87] },
+    headStyles:         { fillColor: [27, 58, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     columnStyles: {
-      titulo:      { cellWidth: 45 },
-      descripcion: { cellWidth: 55 },
-      docGde:      { cellWidth: 40 },
+      titulo:        { cellWidth: 35 },
+      descripcion:   { cellWidth: 40 },
+      docGde:        { cellWidth: 30 },
+      tareasDetalle: { cellWidth: 55 },
     },
     didDrawPage: (data) => {
       doc.setFontSize(7)

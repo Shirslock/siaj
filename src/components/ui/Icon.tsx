@@ -61,6 +61,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   article:               DocumentTextIcon,
   assign_file:           DocumentCheckIcon,
   assignment:            ClipboardDocumentListIcon,
+  checklist:             ClipboardDocumentListIcon,
   attach_file:           PaperClipIcon,
   description:           DocumentTextIcon,
   picture_as_pdf:        DocumentIcon,
