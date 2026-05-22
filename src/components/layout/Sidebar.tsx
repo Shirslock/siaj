@@ -8,7 +8,7 @@ import Icon from '../ui/Icon'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
   { key: 'dashboard',       icon: 'dashboard',    label: 'Dashboard',     ruta: '/dashboard' },
-  { key: 'mesa',            icon: 'inbox',         label: 'Mesa SIAJ',     ruta: '/mesa' },
+  { key: 'mesa',            icon: 'inbox',         label: 'Mesa SACO',     ruta: '/mesa' },
   { key: 'bandeja-abogado', icon: 'work',          label: 'Mi Bandeja',    ruta: '/bandeja/abogado' },
   { key: 'bandeja-area',    icon: 'folder_shared', label: 'Bandeja Área',  ruta: '/bandeja/area' },
 ]

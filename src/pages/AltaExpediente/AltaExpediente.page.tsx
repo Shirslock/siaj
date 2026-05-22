@@ -117,7 +117,7 @@ export default function AltaExpedientePage() {
               className="hover:text-[#1b3a57] transition-colors"
               onClick={() => navigate(RUTAS.MESA)}
             >
-              Mesa SIAJ
+              Mesa SACO
             </button>
             <span>›</span>
             <span className="text-[#1b3a57]">Nuevo Expediente</span>

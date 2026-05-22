@@ -6,7 +6,7 @@ import { Topbar } from './Topbar'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':       'Dashboard',
-  '/mesa':            'Mesa SIAJ',
+  '/mesa':            'Mesa SACO',
   '/mesa/alta':       'Alta de Expediente',
   '/bandeja/abogado': 'Mi Bandeja',
   '/bandeja/area':    'Bandeja Área',

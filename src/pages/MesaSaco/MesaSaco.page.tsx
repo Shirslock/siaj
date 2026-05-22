@@ -83,10 +83,10 @@ export default function MesaSacoPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[10px] uppercase tracking-wide font-medium text-[#4a6a84] mb-1">
-            SIAJ › Mesa SIAJ
+            SIAJ › Mesa SACO
           </p>
           <h1 className="font-headline font-bold text-2xl text-[#1b3a57] leading-tight">
-            Bandeja Mesa SIAJ
+            Bandeja Mesa SACO
           </h1>
           <p className="text-[#4a6a84] text-sm mt-1">
             Consulta de expedientes asignados — vista de solo lectura.

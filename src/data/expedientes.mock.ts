@@ -262,7 +262,7 @@ export const EXPEDIENTE_DETALLE: Expediente = {
       expediente_id: 'C-0023/2026',
       tipo: 'RECEPCION' as const,
       titulo: 'Expediente recibido y asignado',
-      descripcion: 'Demanda civil recibida por Mesa SIAJ y asignada al letrado.',
+      descripcion: 'Demanda civil recibida por Mesa SACO y asignada al letrado.',
       fecha: '2026-05-10',
       activo: false,
       subitems: [],
