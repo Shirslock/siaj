@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Expediente, CampoFormulario } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
-import { getCamposFormulario } from '../../../data/formularios'
+import { getCamposFormulario, CAMPOS_COMUNES_MESA } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto } from '../../../utils/format'
@@ -313,6 +313,24 @@ export function DatosTab({ exp }: Props) {
             />
           }
         />
+
+        {CAMPOS_COMUNES_MESA.map(campo => {
+          const opciones = campo.id === 'mesa_tipo_intervencion'
+            ? exp.area === 'PENAL'
+              ? ['Denunciante', 'Sin Intervención']
+              : ['Actora', 'Demandada', 'Sin Intervención']
+            : undefined
+          const campoConOpciones = opciones ? { ...campo, options: opciones } : campo
+          return (
+            <FieldRow
+              key={campo.id}
+              label={campo.label}
+              edit={edit}
+              value={valorDisplay(campoConOpciones, exp.campos_mesa[campo.id])}
+              input={renderCampoInput(campoConOpciones, draftMesa, setDraftMesa)}
+            />
+          )
+        })}
 
         {camposMesa.length > 0 && (
           <>
