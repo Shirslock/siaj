@@ -52,7 +52,7 @@ function Seccion({ titulo }: { titulo: string }) {
     <div className="pt-6 pb-2 first:pt-0">
       <div className="flex items-center gap-3">
         <div className="w-1 h-4 rounded-full bg-[#1b3a57] flex-shrink-0" />
-        <p className="text-xs font-black uppercase tracking-widest text-[#1b3a57]">
+        <p className="text-xs font-bold tracking-tight text-[#1b3a57]">
           {titulo}
         </p>
         <div className="flex-1 h-px bg-[rgba(0,0,0,0.08)]" />
