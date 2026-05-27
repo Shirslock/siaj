@@ -49,10 +49,14 @@ function FieldRow({ label, value, edit, input }: RowProps) {
 
 function Seccion({ titulo }: { titulo: string }) {
   return (
-    <div className="pt-5 pb-1 first:pt-0">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84] border-b border-[rgba(0,0,0,0.12)] pb-2">
-        {titulo}
-      </p>
+    <div className="pt-6 pb-2 first:pt-0">
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-4 rounded-full bg-[#1b3a57] flex-shrink-0" />
+        <p className="text-xs font-black uppercase tracking-widest text-[#1b3a57]">
+          {titulo}
+        </p>
+        <div className="flex-1 h-px bg-[rgba(0,0,0,0.08)]" />
+      </div>
     </div>
   )
 }
