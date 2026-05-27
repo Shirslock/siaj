@@ -1,11 +1,9 @@
 import type { CampoFormulario, FormularioSubtipo } from '../types'
 
 export const CAMPOS_COMUNES_MESA: CampoFormulario[] = [
-  { id:'mesa_oficio_judicial',     label:'N° OJ',                    type:'text',     placeholder:'N° OJ' },
-  { id:'mesa_tipo_intervencion',   label:'Tipo de Intervención',     type:'select',   options:['Actora','Demandada','Sin Intervención'] },
-  { id:'mesa_fecha_requerimiento', label:'Fecha de Requerimiento',   type:'date' },
-  { id:'mesa_datos_contacto',      label:'Datos de Contacto',        type:'text',     full:true, placeholder:'Teléfono, Mail, Dirección, Contacto' },
-  { id:'mesa_comentarios',         label:'Comentarios',              type:'textarea', full:true },
+  { id:'mesa_oficio_judicial',   label:'N° OJ',                  type:'text',     placeholder:'N° OJ' },
+  { id:'mesa_tipo_intervencion', label:'Tipo de Intervención',   type:'select',   options:['Actora','Demandada','Sin Intervención'] },
+  { id:'mesa_comentarios',       label:'Comentarios',            type:'textarea', full:true },
 ]
 
 export const FORMULARIOS: Record<string, FormularioSubtipo> = {
