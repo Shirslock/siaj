@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import type { Expediente, CampoFormulario } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
-import { getCamposFormulario, CAMPOS_COMUNES_MESA } from '../../../data/formularios'
+import { getCamposFormulario } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
-import { USUARIOS, getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
+import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
@@ -64,7 +64,7 @@ function Seccion({ titulo }: { titulo: string }) {
 interface Props { exp: Expediente }
 
 export function DatosTab({ exp }: Props) {
-  const { actualizarExpediente, expedientes } = useExpedientesStore()
+  const { actualizarExpediente } = useExpedientesStore()
 
   const [edit, setEdit] = useState(false)
   const [draftTop, setDraftTop] = useState<Record<string, unknown>>({})
@@ -75,21 +75,10 @@ export function DatosTab({ exp }: Props) {
   const camposAbogado = getCamposFormulario(exp.tipo, 'abogado', exp.area)
   const tipoLabel     = TIPOS_GESTION.find(t => t.code === exp.tipo)?.label ?? exp.tipo
   const abogado       = exp.abogado_id ? getUsuarioById(exp.abogado_id) : undefined
-  const abogadosArea  = USUARIOS.filter(u => u.areas.includes(exp.area) && u.rolSistema !== 'ADMINISTRATIVO')
-
-  const numeroCausaActual = (draftTop['numero_causa'] as string | undefined) ?? ''
-  const causaDuplicada = edit && numeroCausaActual.trim()
-    ? expedientes.filter(e => e.id !== exp.id && e.numero_causa === numeroCausaActual.trim())
-    : []
 
   function startEdit() {
     setDraftTop({
-      caratula:       exp.caratula,
-      numero_ee_gde:  exp.numero_ee_gde,
-      numero_causa:   exp.numero_causa ?? '',
-      abogado_id:     exp.abogado_id ?? '',
-      fecha_recepcion: exp.fecha_recepcion,
-      observaciones:  exp.observaciones ?? '',
+      numero_ee_gde: exp.numero_ee_gde,
     })
     setDraftMesa({ ...exp.campos_mesa })
     setDraftAbogado({ ...exp.campos_abogado })
@@ -98,12 +87,7 @@ export function DatosTab({ exp }: Props) {
 
   function save() {
     actualizarExpediente(exp.id, {
-      caratula:       String(draftTop['caratula'] ?? exp.caratula),
       numero_ee_gde:  String(draftTop['numero_ee_gde'] ?? exp.numero_ee_gde),
-      numero_causa:   (draftTop['numero_causa'] as string | undefined)?.trim() || null,
-      abogado_id:     (draftTop['abogado_id'] as string | undefined) || undefined,
-      fecha_recepcion: String(draftTop['fecha_recepcion'] ?? exp.fecha_recepcion),
-      observaciones:  (draftTop['observaciones'] as string | undefined) || undefined,
       campos_mesa:    draftMesa,
       campos_abogado: draftAbogado,
     })
@@ -203,97 +187,36 @@ export function DatosTab({ exp }: Props) {
       </div>
 
       <dl>
-        <Seccion titulo="Expediente" />
 
-        <FieldRow label="N° Expediente" edit={false}
+        {/* ── SECCIÓN 1: Expediente ── */}
+        <Seccion titulo="Expediente" />
+        <FieldRow label="N° Interno" edit={false}
           value={<span className="font-mono font-bold text-[#1b3a57]">{exp.id}</span>}
-        />
-        <FieldRow label="Área" edit={false}
-          value={<AreaBadge area={exp.area} />}
         />
         <FieldRow label="Tipo de Gestión" edit={false}
           value={tipoLabel}
         />
+        <FieldRow label="Área" edit={false}
+          value={<AreaBadge area={exp.area} />}
+        />
         <FieldRow label="Estado" edit={false}
           value={<EstadoBadge code={exp.estado} label={exp.estado} />}
         />
-        <FieldRow
-          label="Carátula"
-          edit={edit}
-          value={exp.caratula}
-          input={
-            <input
-              type="text"
-              className="field-input w-full text-sm"
-              value={(draftTop['caratula'] as string) ?? ''}
-              onChange={e => setTop('caratula', e.target.value)}
-            />
-          }
-        />
-        <FieldRow
-          label="N° Causa"
-          edit={edit}
-          value={exp.numero_causa ?? '—'}
-          input={
-            <div>
-              <input
-                type="text"
-                className="field-input w-full text-sm font-mono"
-                placeholder="12345/2026 o SS"
-                value={(draftTop['numero_causa'] as string) ?? ''}
-                onChange={e => setTop('numero_causa', e.target.value)}
-              />
-              {causaDuplicada.length > 0 && (
-                <p className="mt-1 text-xs text-amber-700 flex items-center gap-1">
-                  <Icon name="warning" size={14} />
-                  Causa con {causaDuplicada.length} exp. más registrados
-                </p>
-              )}
-            </div>
-          }
-        />
-        <FieldRow
-          label="Letrado/a"
-          edit={edit}
+        <FieldRow label="Letrado Asignado" edit={false}
           value={abogado ? getNombreCompleto(abogado) : '—'}
-          input={
-            <select
-              className="field-input w-full text-sm"
-              value={(draftTop['abogado_id'] as string) ?? ''}
-              onChange={e => setTop('abogado_id', e.target.value)}
-            >
-              <option value="">Sin asignar</option>
-              {abogadosArea.map(u => (
-                <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
-              ))}
-            </select>
-          }
         />
-        {exp.observaciones !== undefined && (
-          <FieldRow
-            label="Observaciones"
-            edit={edit}
-            value={exp.observaciones}
-            input={
-              <textarea
-                className="field-input resize-y w-full text-sm"
-                style={{ minHeight: 64 }}
-                value={(draftTop['observaciones'] as string) ?? ''}
-                onChange={e => setTop('observaciones', e.target.value)}
-              />
-            }
-          />
-        )}
+        <FieldRow label="Fecha de Recepción" edit={false}
+          value={formatFecha(exp.fecha_recepcion)}
+        />
 
+        {/* ── SECCIÓN 2: Datos de Recepción ── */}
         <Seccion titulo="Datos de Recepción" />
-
         <FieldRow
           label="N° EE / Memo GDE"
           edit={edit}
           value={<span className="font-mono">{exp.numero_ee_gde}</span>}
           input={
-            <input
-              type="text"
+            <input type="text"
               className="field-input w-full text-sm font-mono"
               value={(draftTop['numero_ee_gde'] as string) ?? ''}
               onChange={e => setTop('numero_ee_gde', e.target.value)}
@@ -301,37 +224,58 @@ export function DatosTab({ exp }: Props) {
           }
         />
         <FieldRow
-          label="Fecha de Recepción"
+          label="Oficio Judicial"
           edit={edit}
-          value={formatFecha(exp.fecha_recepcion)}
+          value={valorDisplay(
+            { id: 'mesa_oficio_judicial', label: '', type: 'text' },
+            exp.campos_mesa['mesa_oficio_judicial']
+          )}
           input={
-            <input
-              type="date"
+            <input type="text"
               className="field-input w-full text-sm"
-              value={(draftTop['fecha_recepcion'] as string) ?? ''}
-              onChange={e => setTop('fecha_recepcion', e.target.value)}
+              value={(draftMesa['mesa_oficio_judicial'] as string) ?? ''}
+              onChange={e => setDraftMesa(p =>
+                ({ ...p, mesa_oficio_judicial: e.target.value }))}
+            />
+          }
+        />
+        <FieldRow
+          label="Tipo de Intervención"
+          edit={edit}
+          value={String(exp.campos_mesa['mesa_tipo_intervencion'] ?? '—')}
+          input={
+            <select
+              className="field-input w-full text-sm"
+              value={(draftMesa['mesa_tipo_intervencion'] as string) ?? ''}
+              onChange={e => setDraftMesa(p =>
+                ({ ...p, mesa_tipo_intervencion: e.target.value }))}
+            >
+              <option value="">Seleccionar…</option>
+              {(exp.area === 'PENAL'
+                ? ['Denunciante', 'Sin Intervención']
+                : ['Actora', 'Demandada', 'Sin Intervención']
+              ).map(o => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+          }
+        />
+        <FieldRow
+          label="Comentarios"
+          edit={edit}
+          value={String(exp.campos_mesa['mesa_comentarios'] ?? '—')}
+          input={
+            <textarea
+              className="field-input resize-y w-full text-sm"
+              style={{ minHeight: 64 }}
+              value={(draftMesa['mesa_comentarios'] as string) ?? ''}
+              onChange={e => setDraftMesa(p =>
+                ({ ...p, mesa_comentarios: e.target.value }))}
             />
           }
         />
 
-        {CAMPOS_COMUNES_MESA.map(campo => {
-          const opciones = campo.id === 'mesa_tipo_intervencion'
-            ? exp.area === 'PENAL'
-              ? ['Denunciante', 'Sin Intervención']
-              : ['Actora', 'Demandada', 'Sin Intervención']
-            : undefined
-          const campoConOpciones = opciones ? { ...campo, options: opciones } : campo
-          return (
-            <FieldRow
-              key={campo.id}
-              label={campo.label}
-              edit={edit}
-              value={valorDisplay(campoConOpciones, exp.campos_mesa[campo.id])}
-              input={renderCampoInput(campoConOpciones, draftMesa, setDraftMesa)}
-            />
-          )
-        })}
-
+        {/* ── SECCIÓN 3: Mesa SACO ── */}
         {camposMesa.length > 0 && (
           <>
             <Seccion titulo="Mesa SACO" />
@@ -347,9 +291,28 @@ export function DatosTab({ exp }: Props) {
           </>
         )}
 
+        {/* ── SECCIÓN 4: Letrado/a ── */}
         {camposAbogado.length > 0 && (
           <>
             <Seccion titulo="Letrado/a" />
+
+            {/* Datos de Contacto — siempre primero */}
+            <FieldRow
+              label="Datos de Contacto"
+              edit={edit}
+              value={String(exp.campos_abogado['abg_datos_contacto'] ?? '—')}
+              input={
+                <input type="text"
+                  className="field-input w-full text-sm"
+                  placeholder="Teléfono, Mail, Dirección, Contacto"
+                  value={(draftAbogado['abg_datos_contacto'] as string) ?? ''}
+                  onChange={e => setDraftAbogado(p =>
+                    ({ ...p, abg_datos_contacto: e.target.value }))}
+                />
+              }
+            />
+
+            {/* Campos abogado del tipo */}
             {camposAbogado.map(campo => (
               <FieldRow
                 key={campo.id}
@@ -361,6 +324,7 @@ export function DatosTab({ exp }: Props) {
             ))}
           </>
         )}
+
       </dl>
     </div>
   )
