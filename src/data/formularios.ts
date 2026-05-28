@@ -75,7 +75,6 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'mesa_fecha_audiencia', label:'Fecha de audiencia',  type:'date' },
     ],
     abogado: [
-      { id:'tipo_intervencion', label:'Tipo de Intervención', type:'select', options:['Actora','Demandada','Sin Intervención'] },
       { id:'resultado',         label:'Resultado',            type:'select', options:['PENDIENTE','ACUERDO','FRACASÓ','CONTINÚA','ARCHIVADA'] },
       { id:'monto_acuerdo',     label:'Monto del Acuerdo',    type:'money' },
       { id:'fecha_acuerdo',     label:'Fecha del Acuerdo',    type:'date' },
@@ -92,7 +91,6 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'documental',     label:'Documental',          type:'select', options:['Completo','Incompleto'] },
     ],
     abogado: [
-      { id:'tipo_intervencion',label:'Tipo de Intervención', type:'select', options:['Demandada','Sin Intervención'] },
       { id:'resultado',        label:'Resultado',            type:'select', options:['PENDIENTE','ACUERDO','FRACASÓ','SIN ACUERDO','ARCHIVADO'] },
       { id:'monto_acuerdo',    label:'Monto del Acuerdo',    type:'money' },
       { id:'tope_convenio',    label:'Tope Convenio',        type:'select', options:['SI','NO','VIZZOTI'] },
@@ -260,7 +258,6 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'monto_reclamado', label:'Monto Reclamado',   type:'money' },
     ],
     abogado: [
-      { id:'tipo_intervencion',  label:'Tipo de Intervención',      type:'select', options:['Demandada','Sin Intervención'] },
       { id:'estado_tramite',     label:'Estado',                     type:'select', options:['INGRESADO','EN TRÁMITE','AUDIENCIA FIJADA','SENTENCIA','APELACIÓN','FIRME','ARCHIVADO'] },
       { id:'fecha_contestacion', label:'Fecha Contestación Demanda', type:'date' },
       { id:'observaciones',      label:'Observaciones',              type:'textarea', full:true },
@@ -329,7 +326,6 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'mesa_monto',         label:'Monto de la demanda',   type:'money' },
     ],
     abogado: [
-      { id:'tipo_intervencion',  label:'Tipo de Intervención',      type:'select', options:['Actora','Demandada','Sin Intervención'] },
       { id:'estado_tramite',     label:'Estado',                     type:'select', options:['INGRESADO','EN TRAMITACIÓN','AUDIENCIA PACTADA','SENTENCIA','APELACIÓN','FIRME','ARCHIVADO'] },
       { id:'fecha_contestacion', label:'Fecha Contestación Demanda', type:'date' },
       { id:'monto_acuerdo',      label:'Monto del Acuerdo',          type:'money' },
@@ -354,7 +350,6 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'mesa_monto',         label:'Monto de la demanda',   type:'money' },
     ],
     abogado: [
-      { id:'tipo_intervencion',  label:'Tipo de Intervención',      type:'select', options:['Demandada','Sin Intervención'] },
       { id:'estado_tramite',     label:'Estado',                     type:'select', options:['INGRESADO','EN TRAMITACIÓN','AUDIENCIA PACTADA','SENTENCIA','APELACIÓN','FIRME','ARCHIVADO'] },
       { id:'tope_convenio',      label:'Tope Convenio',              type:'select', options:['SI','NO','VIZZOTI'] },
       { id:'fecha_contestacion', label:'Fecha Contestación Demanda', type:'date' },
