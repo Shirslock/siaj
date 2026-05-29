@@ -8,6 +8,7 @@ import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from
 import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { getEstadoProcesal } from '../../data/estadosProcesales'
+import { getEtapasPenales } from '../../data/etapasPenales'
 import { DatosTab }          from './tabs/DatosTab'
 import { VinculosTab }       from './tabs/VinculosTab'
 import { IntervinientesTab } from './tabs/IntervinientesTab'
@@ -91,13 +92,39 @@ export default function DetalleExpedientePage() {
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
-    if (a === 'estado') { setNuevoEstado(exp!.estado); setMotivoEstado('') }
+    if (a === 'estado') { setNuevoEstado(exp!.area === 'PENAL' ? '' : exp!.estado); setMotivoEstado('') }
     if (a === 'causa')  setNuevaCausa(exp!.numero_causa ?? '')
     if (a === 'reasignar') setNuevoAbogado(exp!.abogado_id ?? '')
     setAccion(a)
   }
 
   function confirmarEstado() {
+    if (exp!.area === 'PENAL') {
+      if (!nuevoEstado || nuevoEstado === exp!.estadoProcesal) { setAccion(null); return }
+      const etapas = getEtapasPenales(exp!.tipo)
+      const etapaActual = etapas.find(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
+      const etapaDestino = etapas.find(e => e.codigo === nuevoEstado)
+      const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+      agregarActividad(exp!.id, {
+        id: `ACT_${Date.now()}`,
+        expediente_id: exp!.id,
+        tipo: 'MOVIMIENTO',
+        titulo: `Cambio de estado: ${etapaActual?.label ?? exp!.estadoProcesal} → ${etapaDestino?.label ?? nuevoEstado}`,
+        descripcion: motivoEstado.trim() || `Estado avanzado por ${nombre}.`,
+        fecha: HOY,
+        activo: true,
+        subitems: [],
+        estadoExpediente: nuevoEstado,
+        doc_gde: null,
+        creado_por: usuarioActivo?.id,
+      })
+      actualizarEstado(exp!.id, nuevoEstado)
+      actualizarExpediente(exp!.id, { estadoProcesal: nuevoEstado })
+      toast.success(`Estado actualizado a ${etapaDestino?.label ?? nuevoEstado}`)
+      setMotivoEstado('')
+      setAccion(null)
+      return
+    }
     if (esFlujoProcesal && siguienteEstadoProcesal) {
       const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
       agregarActividad(exp!.id, {
@@ -265,7 +292,7 @@ export default function DetalleExpedientePage() {
             </button>
             <button
               onClick={confirmarEstado}
-              disabled={!esFlujoProcesal && !nuevoEstado}
+              disabled={exp.area === 'PENAL' ? !nuevoEstado : (!esFlujoProcesal && !nuevoEstado)}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Confirmar
@@ -273,7 +300,31 @@ export default function DetalleExpedientePage() {
           </>
         }
       >
-        {esFlujoProcesal ? (
+        {exp.area === 'PENAL' ? (
+          <div className="space-y-4">
+            <div>
+              <label className="field-label">Nuevo estado procesal</label>
+              <select className="field-input w-full" value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
+                <option value="">Seleccionar…</option>
+                {getEtapasPenales(exp.tipo)
+                  .filter(e => e.codigo !== 'ASIGNADO' && e.numero >= 0 && e.codigo !== exp.estadoProcesal)
+                  .map(e => <option key={e.codigo} value={e.codigo}>{e.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Motivo (opcional)</label>
+              <textarea
+                className="field-input resize-none h-20 w-full"
+                placeholder="Anotá el motivo del cambio..."
+                value={motivoEstado}
+                onChange={e => setMotivoEstado(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-[#4a6a84] italic text-center">
+              Esta acción quedará registrada en el timeline.
+            </p>
+          </div>
+        ) : esFlujoProcesal ? (
           <div className="space-y-4">
             <div className="bg-[rgba(196,223,232,0.30)] rounded-xl p-4 flex items-center justify-center gap-4">
               <div className="flex flex-col items-center gap-1">
