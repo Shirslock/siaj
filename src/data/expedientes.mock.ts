@@ -1,4 +1,4 @@
-import type { ItemQueue, Expediente } from '../types'
+import type { ItemQueue, Expediente, TipoActividad, TipoGestion, Area } from '../types'
 
 export const QUEUE_MESA: ItemQueue[] = [
   {
@@ -333,6 +333,76 @@ export const EXPEDIENTE_DETALLE: Expediente = {
   observaciones: 'Accidente ferroviario. Demanda por daños y perjuicios.',
   es_principal: true,
   estadoProcesal: 'ASIGNADO',
+}
+
+export const EXPEDIENTE_PENAL_MOCK: Expediente = {
+  id: 'P-0012/2026',
+  tipo: 'QUERELLA' as TipoGestion,
+  area: 'PENAL' as Area,
+  estado: 'EN_TRAMITE',
+  estadoProcesal: 'INSTRUCCION',
+  caratula: 'APEDREO CON DAÑO — Línea Roca Km 27 Est. Temperley',
+  numero_ee_gde: 'EX-2026-01234-APN-DGJYA',
+  numero_causa: 'IPP-1234/2026',
+  abogado_id: 'UR_019',
+  fecha_recepcion: '2026-01-15',
+  campos_mesa: {
+    linea: 'LIN_001',
+    tipo_hecho: 'APEDREO CON DAÑO',
+    juzgado: 'JUZ_001',
+    numero_causa: 'IPP-1234/2026',
+  },
+  campos_abogado: {},
+  timeline: [
+    {
+      tipo: 'RECEPCION' as TipoActividad,
+      titulo: 'Expediente recibido y asignado',
+      descripcion: 'Querella recibida por Mesa SACO y asignada al letrado.',
+      fecha: '2026-01-15',
+      activo: false,
+      subitems: [],
+      estadoExpediente: 'RECEPCIONADO',
+      doc_gde: 'EX-2026-01234-APN-DGJYA',
+      tareasSnapshot: [],
+    },
+    {
+      tipo: 'MOVIMIENTO' as TipoActividad,
+      titulo: 'Cambio de estado: Recepcionado → En Análisis',
+      descripcion: 'Expediente tomado para análisis.',
+      fecha: '2026-01-20',
+      activo: false,
+      subitems: [],
+      estadoExpediente: 'EN_ANALISIS',
+      doc_gde: null,
+      tareasSnapshot: [],
+    },
+    {
+      tipo: 'MOVIMIENTO' as TipoActividad,
+      titulo: 'Cambio de estado: En Análisis → Aceptado',
+      descripcion: 'Causa aceptada. Se presenta como querellante.',
+      fecha: '2026-02-01',
+      activo: false,
+      subitems: [],
+      estadoExpediente: 'ACEPTADO',
+      doc_gde: null,
+      tareasSnapshot: [],
+    },
+    {
+      tipo: 'MOVIMIENTO' as TipoActividad,
+      titulo: 'Cambio de estado: Aceptado → Instrucción',
+      descripcion: 'Inicia etapa de instrucción.',
+      fecha: '2026-02-15',
+      activo: true,
+      subitems: [],
+      estadoExpediente: 'INSTRUCCION',
+      doc_gde: null,
+      tareasSnapshot: [],
+    },
+  ],
+  intervinientes: [],
+  documentos: [],
+  vinculos: [],
+  observaciones: 'Apedreo con daño en formación. Se presentó denuncia policial.',
 }
 
 export const CARTA_SUCESO_QUEUE: object[] = [

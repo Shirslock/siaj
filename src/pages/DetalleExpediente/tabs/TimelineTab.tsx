@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { Expediente, Actividad, TipoActividad, Tarea } from '../../../types'
+import { TimelinePenal } from './TimelinePenal'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { useUIStore } from '../../../store/ui.store'
 import { Modal } from '../../../components/ui/Modal'
@@ -694,6 +695,10 @@ function TareasBlock({
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export function TimelineTab({ exp }: Props) {
+  if (exp.area === 'PENAL') {
+    return <TimelinePenal exp={exp} />
+  }
+
   const {
     tareasMap, inicializarTareas, actualizarTarea,
     agregarActividad, actualizarEstado, actualizarExpediente,

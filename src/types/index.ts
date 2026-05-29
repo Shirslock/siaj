@@ -272,3 +272,55 @@ export interface AccesosRol {
   verTodaBandeja: boolean
   inicio: string
 }
+
+// ── Módulo Penal ─────────────────────────────────────
+
+export type EstadoActividadPenal =
+  'sin_estado' | 'en_curso' | 'cumplido' | 'no_procedente'
+
+export type ResultadoBinario = 'SI' | 'NO' | null
+export type ResultadoAcuerdo = 'HAY_ACUERDO' | 'NO_HAY_ACUERDO' | null
+
+export interface CampoPenal {
+  id: string
+  label: string
+  type: 'text' | 'textarea' | 'date' | 'money' | 'boolean' | 'upload' | 'select'
+  placeholder?: string
+  options?: string[]
+  full?: boolean
+}
+
+export interface SubActividadPenal {
+  id: string
+  numero: string
+  nombre: string
+  tipo: 'SI_NO' | 'ACUERDO' | 'LIBRE'
+  finalizaCausa?: boolean
+  avanzaEtapa?: string
+  camposSI?: CampoPenal[]
+  camposNO?: CampoPenal[]
+  camposHayAcuerdo?: CampoPenal[]
+  camposNoAcuerdo?: CampoPenal[]
+  camposLibres?: CampoPenal[]
+}
+
+export interface RegistroActividadPenal {
+  id: string
+  subActividadId: string
+  numero: string
+  nombre: string
+  estado: EstadoActividadPenal
+  resultado: ResultadoBinario | ResultadoAcuerdo
+  fecha: string
+  campos: Record<string, string | boolean>
+  observaciones?: string
+  etapaCodigo: string
+}
+
+export interface EtapaPenal {
+  codigo: string
+  label: string
+  numero: number
+  siguiente?: string
+  subActividades: SubActividadPenal[]
+}

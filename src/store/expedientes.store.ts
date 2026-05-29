@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad } from '../types'
-import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE } from '../data/expedientes.mock'
+import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal } from '../types'
+import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK } from '../data/expedientes.mock'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -8,6 +8,7 @@ interface ExpedientesState {
   expedienteActivo: Expediente | null
   filtros: FiltrosExpediente
   tareasMap: Record<string, Tarea[]>
+  registrosPenales: Record<string, RegistroActividadPenal[]>
   setExpedienteActivo: (id: string) => void
   actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
   actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
@@ -25,6 +26,9 @@ interface ExpedientesState {
   actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
   actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => void
   eliminarDocumento: (expedienteId: string, index: number) => void
+  agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
+  actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
+  eliminarRegistroPenal: (expId: string, registroId: string) => void
 }
 
 function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
@@ -37,10 +41,11 @@ function applyToActivo(activo: Expediente | null, id: string, fn: (e: Expediente
 
 export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   queue: QUEUE_MESA,
-  expedientes: [EXPEDIENTE_DETALLE, ...EXPEDIENTES_ABOGADO],
+  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, ...EXPEDIENTES_ABOGADO],
   expedienteActivo: null,
   filtros: {},
   tareasMap: {},
+  registrosPenales: {},
 
   setExpedienteActivo: (id) => {
     const exp = get().expedientes.find(e => e.id === id) ?? null
@@ -177,4 +182,27 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
       expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
     }
   }),
+
+  agregarRegistroPenal: (expId, registro) => set(s => ({
+    registrosPenales: {
+      ...s.registrosPenales,
+      [expId]: [...(s.registrosPenales[expId] ?? []), registro],
+    },
+  })),
+
+  actualizarRegistroPenal: (expId, registroId, cambios) => set(s => ({
+    registrosPenales: {
+      ...s.registrosPenales,
+      [expId]: (s.registrosPenales[expId] ?? []).map(r =>
+        r.id === registroId ? { ...r, ...cambios } : r
+      ),
+    },
+  })),
+
+  eliminarRegistroPenal: (expId, registroId) => set(s => ({
+    registrosPenales: {
+      ...s.registrosPenales,
+      [expId]: (s.registrosPenales[expId] ?? []).filter(r => r.id !== registroId),
+    },
+  })),
 }))
