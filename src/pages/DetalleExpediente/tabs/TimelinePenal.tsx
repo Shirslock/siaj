@@ -22,8 +22,8 @@ const HOY = new Date().toISOString().split('T')[0]
 // ── Stepper penal ─────────────────────────────────────
 
 function ProcesalStepperPenal({ exp }: { exp: Expediente }) {
-  const etapas = getEtapasPenales(exp.tipo)
-  const etapaCodigo = exp.estadoProcesal ?? 'RECEPCIONADO'
+  const etapas = getEtapasPenales(exp.tipo).filter(e => e.numero >= 1)
+  const etapaCodigo = exp.estadoProcesal ?? 'EN_ANALISIS'
   const idxActual = etapas.findIndex(e => e.codigo === etapaCodigo)
 
   if (etapas.length <= 1) return null
