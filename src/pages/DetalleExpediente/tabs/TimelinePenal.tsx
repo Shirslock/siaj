@@ -49,7 +49,7 @@ const BLANK_ACT = {
 type EntradaHistorial =
   | { kind: 'sistema';  fecha: string; titulo: string; descripcion: string; doc_gde?: string | null }
   | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null }
-  | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; resultado: string | null }
+  | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; etapaCodigo: string; resultado: string | null }
 
 // ── Helpers ───────────────────────────────────────────
 
@@ -423,10 +423,12 @@ export function TimelinePenal({ exp }: Props) {
   const [tabNueva,   setTabNueva]   = useState<'procesales' | 'genericas'>('procesales')
   const [formAct,    setFormAct]    = useState(BLANK_ACT)
 
+  // Estado para modal de detalle de actividad procesal
+  const [modalDetalle, setModalDetalle] = useState(false)
+
   // Datos de la etapa actual
-  const etapaCodigo    = exp.estadoProcesal ?? 'EN_ANALISIS'
-  const etapaActual    = getEtapaPenal(exp.tipo, etapaCodigo)
-  const registrosEtapa = registros.filter(r => r.etapaCodigo === etapaCodigo)
+  const etapaCodigo = exp.estadoProcesal ?? 'EN_ANALISIS'
+  const etapaActual = getEtapaPenal(exp.tipo, etapaCodigo)
 
   const subActDisponibles = etapaActual?.subActividades.filter(
     sa => !registros.some(r => r.subActividadId === sa.id && r.etapaCodigo === etapaCodigo)
@@ -466,7 +468,6 @@ export function TimelinePenal({ exp }: Props) {
     agregarRegistroPenal(exp.id, nuevoRegistro)
     toast.success(`Actividad "${subActSeleccionada.nombre}" registrada.`)
     closeModalNueva()
-    setRegistroSeleccionado(nuevoRegistro)
   }
 
   // ── Acción: guardar actividad genérica ──────────────
@@ -555,6 +556,7 @@ export function TimelinePenal({ exp }: Props) {
         nombre: r.nombre,
         estado: r.estado,
         etapaLabel: etapa?.label ?? r.etapaCodigo,
+        etapaCodigo: r.etapaCodigo,
         resultado: r.resultado as string | null,
       })
     })
@@ -583,20 +585,6 @@ export function TimelinePenal({ exp }: Props) {
   const countProcesales = historialCompleto.filter(e => e.kind === 'procesal').length
   const countGenericas  = historialCompleto.filter(e => e.kind === 'generica').length
 
-  // ── Badge helpers ───────────────────────────────────
-
-  const badgeEstado = (estado: EstadoActividadPenal) => {
-    if (estado === 'cumplido')  return 'bg-green-100 text-green-700'
-    if (estado === 'en_curso')  return 'bg-[#C4DFE8] text-[#1b3a57]'
-    return 'bg-[#e8e8e8] text-[#4a6a84]'
-  }
-  const labelEstado = (estado: EstadoActividadPenal) => {
-    if (estado === 'cumplido')      return 'Cumplido'
-    if (estado === 'en_curso')      return 'En curso'
-    if (estado === 'no_procedente') return 'No proc.'
-    return 'Sin estado'
-  }
-
   // ── Render ──────────────────────────────────────────
 
   return (
@@ -605,124 +593,20 @@ export function TimelinePenal({ exp }: Props) {
       {/* Stepper clickeable */}
       <ProcesalStepperPenal exp={exp} onEtapaClick={handleEtapaClick} />
 
-      {/* Layout dos columnas */}
-      <div className="flex gap-4 items-start">
-
-        {/* Columna izquierda */}
-        <div className="flex-1 min-w-0">
-
-          {/* Card actividades procesales */}
-          <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.10)] overflow-hidden mb-4 shadow-card">
-            {/* Header */}
-            <div className="px-5 py-4 flex items-center justify-between border-b border-[rgba(0,0,0,0.08)]">
-              <div>
-                <p className="text-sm font-bold text-[#1b3a57]">Actividades procesales</p>
-                <p className="text-xs text-[#4a6a84] mt-0.5">
-                  {etapaActual?.label} — {registrosEtapa.length} registradas
-                </p>
-              </div>
-              <button
-                onClick={() => { setTabNueva('procesales'); setModalNueva(true) }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-[#1b3a57] text-white rounded-xl text-xs font-bold hover:bg-[#2a5278] transition-colors"
-              >
-                <Icon name="add" size={14} />
-                Registrar actividad
-              </button>
-            </div>
-
-            {/* Lista */}
-            {registrosEtapa.length === 0 ? (
-              <div className="px-5 py-12 text-center">
-                <Icon name="inbox" size={32} className="text-[#7a9ab4] mx-auto mb-3 block" />
-                <p className="text-sm text-[#4a6a84]">No hay actividades registradas en esta etapa.</p>
-                <p className="text-xs text-[#7a9ab4] mt-1">Usá "Registrar actividad" para agregar una.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-[rgba(0,0,0,0.06)]">
-                {registrosEtapa.map(registro => (
-                  <div
-                    key={registro.id}
-                    onClick={() => setRegistroSeleccionado(registro)}
-                    className={`flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-[#f5f5f5] ${
-                      registroSeleccionado?.id === registro.id
-                        ? 'bg-[#f0f6ff] border-l-[3px] border-l-[#1b3a57]'
-                        : ''
-                    }`}
-                  >
-                    {registro.estado === 'cumplido' && (
-                      <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <Icon name="check" size={12} className="text-green-600" />
-                      </div>
-                    )}
-                    {registro.estado === 'en_curso' && (
-                      <div className="w-5 h-5 rounded-full bg-[#C4DFE8] flex items-center justify-center flex-shrink-0">
-                        <Icon name="schedule" size={12} className="text-[#1b3a57]" />
-                      </div>
-                    )}
-                    {registro.estado === 'no_procedente' && (
-                      <div className="w-5 h-5 rounded-full bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 text-[#4a6a84] text-[11px]">⊘</div>
-                    )}
-                    {registro.estado === 'sin_estado' && (
-                      <div className="w-5 h-5 rounded-full border-2 border-[rgba(0,0,0,0.20)] flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#1b3a57] truncate">
-                        {registro.numero} {registro.nombre}
-                      </p>
-                      <p className="text-[11px] text-[#7a9ab4]">{formatFecha(registro.fecha)}</p>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${badgeEstado(registro.estado)}`}>
-                      {labelEstado(registro.estado)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Botón nueva actividad (dual) */}
-          <button
-            onClick={() => { setTabNueva('procesales'); setModalNueva(true) }}
-            className="w-full py-2.5 border-2 border-dashed border-[rgba(0,0,0,0.15)] rounded-xl text-xs font-bold text-[#4a6a84] hover:border-[#1b3a57] hover:text-[#1b3a57] transition-all flex items-center justify-center gap-2"
-          >
-            <Icon name="add" size={14} />
-            Nueva Actividad
-          </button>
-        </div>
-
-        {/* Columna derecha — detalle */}
-        <div className="w-80 flex-shrink-0">
-          {!registroSeleccionado ? (
-            <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.10)] p-8 text-center shadow-card">
-              <Icon name="description" size={32} className="text-[#7a9ab4] mx-auto mb-3 block" />
-              <p className="text-sm text-[#4a6a84]">Seleccioná una actividad para ver su detalle</p>
-            </div>
-          ) : (
-            <PanelDetalleRegistro
-              registro={registroSeleccionado}
-              exp={exp}
-              etapaCodigo={etapaCodigo}
-              onGuardar={(cambios) => {
-                actualizarRegistroPenal(exp.id, registroSeleccionado.id, cambios)
-                toast.success('Actividad actualizada.')
-                setRegistroSeleccionado(null)
-              }}
-              onCancelar={() => setRegistroSeleccionado(null)}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* ── Historial unificado ── */}
+      {/* Card principal — feed unificado */}
       <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.10)] overflow-hidden">
 
-        {/* Header con filtros */}
-        <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
-
-          {/* Fila 1: título + tabs de filtro */}
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-bold text-[#1b3a57]">Historial completo</p>
-            <div className="flex gap-1">
+        {/* Header */}
+        <div className="px-5 py-3.5 flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <p className="text-sm font-bold text-[#1b3a57]">Ciclo de Vida — Actividades</p>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
+              {historialCompleto.length} registros
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Tabs de filtro */}
+            <div className="flex gap-0.5 bg-[#f5f5f5] rounded-lg p-0.5">
               {([
                 ['todo',       'Todo',       null],
                 ['sistema',    'Sistema',    countSistema],
@@ -732,17 +616,17 @@ export function TimelinePenal({ exp }: Props) {
                 <button
                   key={val}
                   onClick={() => setFiltroHistorial(val)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 ${
                     filtroHistorial === val
-                      ? 'bg-[#1b3a57] text-white'
-                      : 'bg-[#f5f5f5] text-[#4a6a84] hover:bg-[#e8e8e8]'
+                      ? 'bg-white text-[#1b3a57] shadow-sm'
+                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
                   }`}
                 >
                   {lbl}
                   {count !== null && count > 0 && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
                       filtroHistorial === val
-                        ? 'bg-white/20 text-white'
+                        ? 'bg-[rgba(27,58,87,0.10)] text-[#1b3a57]'
                         : 'bg-[#e8e8e8] text-[#4a6a84]'
                     }`}>
                       {count}
@@ -751,19 +635,29 @@ export function TimelinePenal({ exp }: Props) {
                 </button>
               ))}
             </div>
+            {/* Botón Nueva Actividad */}
+            <button
+              onClick={() => { setTabNueva('procesales'); setModalNueva(true) }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-[#1b3a57] text-white rounded-xl text-xs font-bold hover:bg-[#2a5278] transition-colors"
+            >
+              <Icon name="add" size={14} />
+              Nueva Actividad
+            </button>
           </div>
+        </div>
 
-          {/* Fila 2: búsqueda */}
+        {/* Buscador */}
+        <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.06)]">
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7a9ab4]">
               <Icon name="search" size={14} />
             </div>
             <input
               type="text"
-              placeholder="Buscar en el historial..."
+              placeholder="Buscar actividad..."
               value={busquedaHistorial}
               onChange={e => setBusquedaHistorial(e.target.value)}
-              className="w-full pl-8 pr-8 py-2 text-xs border border-[rgba(0,0,0,0.12)] rounded-lg bg-[#f9f9f9] text-[#1b3a57] placeholder-[#7a9ab4] focus:outline-none focus:border-[#1b3a57]"
+              className="w-full pl-8 pr-8 py-2 text-sm border border-[rgba(0,0,0,0.12)] rounded-lg bg-[#f9f9f9] text-[#1b3a57] placeholder-[#7a9ab4] focus:outline-none focus:border-[#1b3a57]"
             />
             {busquedaHistorial && (
               <button
@@ -776,85 +670,134 @@ export function TimelinePenal({ exp }: Props) {
           </div>
         </div>
 
-        {/* Feed de entradas */}
-        {historialFiltrado.length === 0 ? (
+        {/* Estado ASIGNADO */}
+        {etapaCodigo === 'ASIGNADO' && (
           <div className="px-5 py-10 text-center">
-            <Icon name="history" size={28} className="text-[#7a9ab4] mx-auto mb-2 block" />
-            <p className="text-sm text-[#4a6a84]">No hay entradas que coincidan.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-[rgba(0,0,0,0.05)]">
-            {historialFiltrado.map((entrada, idx) => (
-              <div key={idx} className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
-
-                {/* Ícono según tipo */}
-                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                  entrada.kind === 'sistema'
-                    ? 'bg-[#C4DFE8]'
-                    : entrada.kind === 'procesal'
-                    ? 'bg-[rgba(27,58,87,0.08)]'
-                    : 'bg-[#e8e8e8]'
-                }`}>
-                  <Icon
-                    name={entrada.kind === 'sistema' ? 'swap_horiz' : entrada.kind === 'procesal' ? 'gavel' : 'description'}
-                    size={14}
-                    className={entrada.kind === 'generica' ? 'text-[#4a6a84]' : 'text-[#1b3a57]'}
-                  />
-                </div>
-
-                {/* Contenido */}
-                <div className="flex-1 min-w-0">
-
-                  {(entrada.kind === 'sistema' || entrada.kind === 'generica') && (
-                    <>
-                      <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
-                      <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>
-                      {entrada.doc_gde && (
-                        <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
-                          <Icon name="attach_file" size={12} />
-                          {entrada.doc_gde}
-                        </p>
-                      )}
-                    </>
-                  )}
-
-                  {entrada.kind === 'procesal' && (
-                    <>
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <p className="text-sm font-semibold text-[#1b3a57]">
-                          {entrada.numero} {entrada.nombre}
-                        </p>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
-                          {entrada.etapaLabel}
-                        </span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                          entrada.estado === 'cumplido'      ? 'bg-green-100 text-green-700'
-                          : entrada.estado === 'en_curso'    ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                          : entrada.estado === 'no_procedente' ? 'bg-[#e8e8e8] text-[#4a6a84]'
-                          : 'bg-[#f5f5f5] text-[#7a9ab4]'
-                        }`}>
-                          {entrada.estado === 'cumplido' ? 'Cumplido'
-                            : entrada.estado === 'en_curso' ? 'En curso'
-                            : entrada.estado === 'no_procedente' ? 'No proc.'
-                            : 'Sin estado'}
-                        </span>
-                      </div>
-                      {entrada.resultado && (
-                        <p className="text-xs text-[#4a6a84]">Resultado: {entrada.resultado}</p>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Fecha */}
-                <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">
-                  {formatFecha(entrada.fecha)}
-                </span>
-              </div>
-            ))}
+            <Icon name="inbox" size={32} className="text-[#7a9ab4] mx-auto mb-3 block" />
+            <p className="text-sm font-semibold text-[#1b3a57] mb-1">Expediente pendiente de inicio</p>
+            <p className="text-xs text-[#4a6a84]">
+              Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
+            </p>
           </div>
         )}
+
+        {/* Feed unificado */}
+        {etapaCodigo !== 'ASIGNADO' && (
+          historialFiltrado.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <Icon name="history" size={28} className="text-[#7a9ab4] mx-auto mb-2 block" />
+              <p className="text-sm text-[#4a6a84]">No hay entradas que coincidan.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[rgba(0,0,0,0.05)]">
+              {historialFiltrado.map((entrada, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    if (entrada.kind === 'procesal') {
+                      const reg = registros.find(
+                        r => r.numero === entrada.numero && r.etapaCodigo === entrada.etapaCodigo
+                      )
+                      if (reg) { setRegistroSeleccionado(reg); setModalDetalle(true) }
+                    }
+                  }}
+                  className={`flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors ${
+                    entrada.kind === 'procesal' ? 'cursor-pointer' : ''
+                  }`}
+                >
+                  {/* Ícono */}
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    entrada.kind === 'sistema'
+                      ? 'bg-[#C4DFE8]'
+                      : entrada.kind === 'procesal'
+                      ? 'bg-[rgba(27,58,87,0.08)]'
+                      : 'bg-[#e8e8e8]'
+                  }`}>
+                    <Icon
+                      name={entrada.kind === 'sistema' ? 'swap_horiz' : entrada.kind === 'procesal' ? 'gavel' : 'description'}
+                      size={16}
+                      className={entrada.kind === 'generica' ? 'text-[#4a6a84]' : 'text-[#1b3a57]'}
+                    />
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1 min-w-0">
+                    {(entrada.kind === 'sistema' || entrada.kind === 'generica') && (
+                      <>
+                        <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
+                        {entrada.descripcion && (
+                          <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>
+                        )}
+                        {entrada.doc_gde && (
+                          <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                            <Icon name="attach_file" size={12} />
+                            {entrada.doc_gde}
+                          </p>
+                        )}
+                      </>
+                    )}
+                    {entrada.kind === 'procesal' && (
+                      <>
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <p className="text-sm font-semibold text-[#1b3a57]">
+                            {entrada.numero} {entrada.nombre}
+                          </p>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
+                            {entrada.etapaLabel}
+                          </span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                            entrada.estado === 'cumplido'        ? 'bg-green-100 text-green-700'
+                            : entrada.estado === 'en_curso'      ? 'bg-[#C4DFE8] text-[#1b3a57]'
+                            : entrada.estado === 'no_procedente' ? 'bg-[#e8e8e8] text-[#4a6a84]'
+                            : 'bg-[#f5f5f5] text-[#7a9ab4]'
+                          }`}>
+                            {entrada.estado === 'cumplido' ? 'Cumplido'
+                              : entrada.estado === 'en_curso' ? 'En curso'
+                              : entrada.estado === 'no_procedente' ? 'No proc.'
+                              : 'Sin estado'}
+                          </span>
+                        </div>
+                        {entrada.resultado && (
+                          <p className="text-xs text-[#4a6a84]">Resultado: {entrada.resultado}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Fecha */}
+                  <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">
+                    {formatFecha(entrada.fecha)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )
+        )}
       </div>
+
+      {/* ── Modal: Detalle actividad procesal ── */}
+      <Modal
+        open={modalDetalle}
+        onClose={() => { setModalDetalle(false); setRegistroSeleccionado(null) }}
+        titulo={registroSeleccionado ? `${registroSeleccionado.numero} ${registroSeleccionado.nombre}` : ''}
+        size="md"
+        footer={null}
+      >
+        {registroSeleccionado && (
+          <PanelDetalleRegistro
+            registro={registroSeleccionado}
+            exp={exp}
+            etapaCodigo={registroSeleccionado.etapaCodigo}
+            onGuardar={(cambios) => {
+              actualizarRegistroPenal(exp.id, registroSeleccionado.id, cambios)
+              toast.success('Actividad actualizada.')
+              setModalDetalle(false)
+              setRegistroSeleccionado(null)
+            }}
+            onCancelar={() => { setModalDetalle(false); setRegistroSeleccionado(null) }}
+          />
+        )}
+      </Modal>
 
       {/* ── Modal: Cambiar estado desde stepper ── */}
       <Modal
