@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type {
   Expediente,
   EstadoActividadPenal,
@@ -7,66 +7,49 @@ import type {
   RegistroActividadPenal,
   SubActividadPenal,
   CampoPenal,
+  EtapaPenal,
+  TipoActividad,
 } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
+import { useUIStore } from '../../../store/ui.store'
 import { Modal } from '../../../components/ui/Modal'
 import Icon from '../../../components/ui/Icon'
 import { formatFecha } from '../../../utils/format'
 import { getEtapasPenales, getEtapaPenal } from '../../../data/etapasPenales'
+import { getNombreCompleto } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
 
 interface Props { exp: Expediente }
 
 const HOY = new Date().toISOString().split('T')[0]
 
-// ── Stepper penal ─────────────────────────────────────
+const TIPOS: { value: TipoActividad; label: string }[] = [
+  { value: 'RECEPCION',      label: 'Recepción' },
+  { value: 'CONTESTACION',   label: 'Contestación' },
+  { value: 'PRESENTACION',   label: 'Presentación' },
+  { value: 'AUDIENCIA',      label: 'Audiencia' },
+  { value: 'PERICIA',        label: 'Pericia' },
+  { value: 'TRASLADO',       label: 'Traslado' },
+  { value: 'NOTIFICACION',   label: 'Notificación' },
+  { value: 'MOVIMIENTO',     label: 'Movimiento' },
+  { value: 'NOTA_RESPUESTA', label: 'Nota / Respuesta' },
+  { value: 'OTRO',           label: 'Otro' },
+]
 
-function ProcesalStepperPenal({ exp }: { exp: Expediente }) {
-  const etapas = getEtapasPenales(exp.tipo).filter(e => e.numero >= 1)
-  const etapaCodigo = exp.estadoProcesal ?? 'EN_ANALISIS'
-  const idxActual = etapas.findIndex(e => e.codigo === etapaCodigo)
-
-  if (etapas.length <= 1) return null
-
-  return (
-    <div className="bg-white rounded-2xl shadow-card px-8 py-4 mb-4 overflow-x-auto">
-      <div className="flex items-center gap-0 min-w-max">
-        {etapas.map((etapa, idx) => {
-          const isPast    = idx < idxActual
-          const isCurrent = idx === idxActual
-          const isLast    = idx === etapas.length - 1
-
-          return (
-            <div key={etapa.codigo} className="flex items-center flex-shrink-0">
-              <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
-                  isCurrent
-                    ? 'bg-[#1b3a57] border-[#1b3a57] text-white shadow-md'
-                    : isPast
-                    ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#1b3a57]'
-                    : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.12)] text-[#4a6a84]'
-                }`}>
-                  {isPast ? <Icon name="check" size={14} /> : <span className="text-[11px]">{idx + 1}</span>}
-                </div>
-                <span className={`mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[72px] truncate ${
-                  isCurrent ? 'text-[#1b3a57]' : isPast ? 'text-[rgba(27,58,87,0.70)]' : 'text-[#4a6a84]'
-                }`}>
-                  {etapa.label}
-                </span>
-              </div>
-              {!isLast && (
-                <div className="w-8 h-px mx-1 mb-4 relative">
-                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.08)] rounded-full" />
-                  {isPast && <div className="absolute inset-0 bg-[rgba(27,58,87,0.40)] rounded-full" />}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
+const BLANK_ACT = {
+  tipo: 'MOVIMIENTO' as TipoActividad,
+  titulo: '',
+  descripcion: '',
+  fecha: HOY,
+  doc_gde: '',
 }
+
+// ── Tipos del historial unificado ────────────────────
+
+type EntradaHistorial =
+  | { kind: 'sistema';  fecha: string; titulo: string; descripcion: string; doc_gde?: string | null }
+  | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null }
+  | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; resultado: string | null }
 
 // ── Helpers ───────────────────────────────────────────
 
@@ -79,10 +62,144 @@ function getCamposActivos(
     if (resultado === 'NO') return sa.camposNO ?? []
   }
   if (sa.tipo === 'ACUERDO') {
-    if (resultado === 'HAY_ACUERDO')  return sa.camposHayAcuerdo ?? []
+    if (resultado === 'HAY_ACUERDO')    return sa.camposHayAcuerdo ?? []
     if (resultado === 'NO_HAY_ACUERDO') return sa.camposNoAcuerdo ?? []
   }
   return sa.camposLibres ?? []
+}
+
+// ── Stepper penal clickeable ──────────────────────────
+
+function ProcesalStepperPenal({
+  exp,
+  onEtapaClick,
+}: {
+  exp: Expediente
+  onEtapaClick: (etapa: EtapaPenal) => void
+}) {
+  const todos = getEtapasPenales(exp.tipo)
+  const etapasBase = todos.filter(e => e.numero >= 1)
+  const rechazado  = todos.find(e => e.codigo === 'RECHAZADO')
+  // Insertar RECHAZADO entre ACEPTADO (idx 1) e INSTRUCCION (idx 2)
+  const etapas = rechazado
+    ? [...etapasBase.slice(0, 2), rechazado, ...etapasBase.slice(2)]
+    : etapasBase
+
+  const etapaCodigo = exp.estadoProcesal ?? 'EN_ANALISIS'
+  const idxActual   = etapas.findIndex(e => e.codigo === etapaCodigo)
+
+  if (etapas.length <= 1) return null
+
+  return (
+    <div className="bg-white rounded-2xl shadow-card px-8 py-4 mb-4 overflow-x-auto">
+      <div className="flex items-center gap-0 min-w-max">
+        {etapas.map((etapa, idx) => {
+          const isPast    = idx < idxActual
+          const isCurrent = idx === idxActual
+          const isLast    = idx === etapas.length - 1
+          const isRechazado = etapa.codigo === 'RECHAZADO'
+          const isClickable = !isCurrent
+
+          return (
+            <div key={etapa.codigo} className="flex items-center flex-shrink-0">
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => isClickable && onEtapaClick(etapa)}
+                  disabled={!isClickable}
+                  title={isClickable ? `Ir a ${etapa.label}` : undefined}
+                  className={[
+                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all',
+                    isClickable ? 'hover:ring-2 hover:ring-[#1b3a57]/30 cursor-pointer' : 'cursor-default',
+                    isCurrent
+                      ? 'bg-[#1b3a57] border-[#1b3a57] text-white shadow-md'
+                      : isRechazado
+                      ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
+                      : isPast
+                      ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#1b3a57]'
+                      : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.12)] text-[#4a6a84]',
+                  ].join(' ')}
+                >
+                  {isPast && !isRechazado
+                    ? <Icon name="check" size={14} />
+                    : isRechazado
+                    ? <Icon name="close" size={12} />
+                    : <span className="text-[11px]">{idx + 1}</span>
+                  }
+                </button>
+                <span className={[
+                  'mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[72px] truncate',
+                  isCurrent    ? 'text-[#1b3a57]'
+                  : isRechazado ? 'text-[#b91c1c]'
+                  : isPast     ? 'text-[rgba(27,58,87,0.70)]'
+                  :              'text-[#4a6a84]',
+                ].join(' ')}>
+                  {etapa.label}
+                </span>
+              </div>
+              {!isLast && (
+                <div className="w-8 h-px mx-1 mb-4 relative">
+                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.08)] rounded-full" />
+                  {isPast && !isRechazado && (
+                    <div className="absolute inset-0 bg-[rgba(27,58,87,0.40)] rounded-full" />
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Campo genérico de input ───────────────────────────
+
+function CampoInput({
+  campo,
+  value,
+  onChange,
+}: {
+  campo: CampoPenal
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className={campo.full ? 'col-span-2' : ''}>
+      <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1">
+        {campo.label}
+      </label>
+      {campo.type === 'textarea' ? (
+        <textarea
+          className="field-input resize-none w-full text-xs"
+          style={{ minHeight: 64 }}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        />
+      ) : campo.type === 'upload' ? (
+        <div className="border-2 border-dashed border-[rgba(0,0,0,0.15)] rounded-xl p-3 text-center text-xs text-[#7a9ab4]">
+          <Icon name="upload_file" size={18} className="mx-auto mb-1 text-[#7a9ab4] block" />
+          Arrastrá el archivo o hacé click · PDF máx 25MB
+        </div>
+      ) : campo.type === 'select' ? (
+        <select
+          className="field-input w-full text-xs"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        >
+          <option value="">Seleccionar…</option>
+          {campo.options?.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input
+          type={campo.type === 'date' ? 'date' : campo.type === 'money' ? 'number' : 'text'}
+          className="field-input w-full text-xs"
+          value={value}
+          placeholder={campo.placeholder ?? ''}
+          onChange={e => onChange(e.target.value)}
+        />
+      )}
+    </div>
+  )
 }
 
 // ── Panel de detalle de registro ──────────────────────
@@ -101,36 +218,33 @@ function PanelDetalleRegistro({
   onCancelar: () => void
 }) {
   const etapas = getEtapasPenales(exp.tipo)
-  const etapa = etapas.find(e => e.codigo === etapaCodigo)
+  const etapa  = etapas.find(e => e.codigo === etapaCodigo)
   const subAct = etapa?.subActividades.find(s => s.id === registro.subActividadId)
 
   const [draft, setDraft] = useState<Partial<RegistroActividadPenal>>({
-    estado: registro.estado,
-    resultado: registro.resultado,
-    campos: { ...registro.campos },
-    fecha: registro.fecha,
+    estado:       registro.estado,
+    resultado:    registro.resultado,
+    campos:       { ...registro.campos },
+    fecha:        registro.fecha,
     observaciones: registro.observaciones,
   })
 
-  const camposActivos = subAct ? getCamposActivos(subAct, draft.resultado ?? registro.resultado) : []
+  const camposActivos    = subAct ? getCamposActivos(subAct, draft.resultado ?? registro.resultado) : []
   const mostrarAvisoFirme =
-    subAct && (draft.resultado ?? registro.resultado) === 'SI' &&
+    subAct &&
+    (draft.resultado ?? registro.resultado) === 'SI' &&
     (draft.campos?.sentencia_firme ?? registro.campos?.sentencia_firme) === 'SI' &&
     (subAct.finalizaCausa || subAct.avanzaEtapa)
-
-  function setEstado(estado: EstadoActividadPenal) {
-    setDraft(p => ({ ...p, estado }))
-  }
 
   function setCampo(id: string, val: string | boolean) {
     setDraft(p => ({ ...p, campos: { ...(p.campos ?? registro.campos), [id]: val } }))
   }
 
   const estadoConfig: Record<EstadoActividadPenal, { label: string; activeClass: string }> = {
-    en_curso:      { label: '⏱ En curso',   activeClass: 'border-[#1b3a57] bg-[#f0f6ff] text-[#1b3a57]' },
-    cumplido:      { label: '✓ Cumplido',   activeClass: 'border-green-500 bg-green-50 text-green-700' },
-    no_procedente: { label: '⊘ No proc.',   activeClass: 'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84]' },
-    sin_estado:    { label: 'Sin estado',   activeClass: 'border-[rgba(0,0,0,0.12)] text-[#4a6a84]' },
+    en_curso:      { label: '⏱ En curso',  activeClass: 'border-[#1b3a57] bg-[#f0f6ff] text-[#1b3a57]' },
+    cumplido:      { label: '✓ Cumplido',  activeClass: 'border-green-500 bg-green-50 text-green-700' },
+    no_procedente: { label: '⊘ No proc.',  activeClass: 'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84]' },
+    sin_estado:    { label: 'Sin estado',  activeClass: 'border-[rgba(0,0,0,0.12)] text-[#4a6a84]' },
   }
 
   return (
@@ -140,9 +254,7 @@ function PanelDetalleRegistro({
         <div className="px-4 pt-4 pb-3 border-b border-[rgba(0,0,0,0.06)] bg-[#f0f0f0]">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">
-                Detalle de actividad
-              </p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">Detalle</p>
               <p className="text-sm font-bold text-[#1b3a57] leading-snug">
                 {registro.numero} {registro.nombre}
               </p>
@@ -160,20 +272,19 @@ function PanelDetalleRegistro({
           <div>
             <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Estado</label>
             <div className="flex gap-1.5">
-              {(['en_curso', 'cumplido', 'no_procedente'] as EstadoActividadPenal[]).map(val => {
-                const isActive = (draft.estado ?? registro.estado) === val
-                return (
-                  <button
-                    key={val}
-                    onClick={() => setEstado(val)}
-                    className={`flex-1 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
-                      isActive ? estadoConfig[val].activeClass : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
-                    }`}
-                  >
-                    {estadoConfig[val].label}
-                  </button>
-                )
-              })}
+              {(['en_curso', 'cumplido', 'no_procedente'] as EstadoActividadPenal[]).map(val => (
+                <button
+                  key={val}
+                  onClick={() => setDraft(p => ({ ...p, estado: val }))}
+                  className={`flex-1 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
+                    (draft.estado ?? registro.estado) === val
+                      ? estadoConfig[val].activeClass
+                      : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                  }`}
+                >
+                  {estadoConfig[val].label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -191,9 +302,7 @@ function PanelDetalleRegistro({
                         ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
                         : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
                     }`}
-                  >
-                    {r}
-                  </button>
+                  >{r}</button>
                 ))}
               </div>
             </div>
@@ -205,9 +314,9 @@ function PanelDetalleRegistro({
               <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
               <div className="flex gap-2">
                 {([
-                  { val: 'HAY_ACUERDO', label: 'Hay Acuerdo' },
-                  { val: 'NO_HAY_ACUERDO', label: 'No Hay Acuerdo' },
-                ] as { val: ResultadoAcuerdo; label: string }[]).map(r => (
+                  { val: 'HAY_ACUERDO' as ResultadoAcuerdo, label: 'Hay Acuerdo' },
+                  { val: 'NO_HAY_ACUERDO' as ResultadoAcuerdo, label: 'No Hay Acuerdo' },
+                ]).map(r => (
                   <button
                     key={r.val!}
                     onClick={() => setDraft(p => ({ ...p, resultado: r.val }))}
@@ -216,9 +325,7 @@ function PanelDetalleRegistro({
                         ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
                         : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
                     }`}
-                  >
-                    {r.label}
-                  </button>
+                  >{r.label}</button>
                 ))}
               </div>
             </div>
@@ -288,70 +395,46 @@ function PanelDetalleRegistro({
   )
 }
 
-// ── Campo genérico de input ───────────────────────────
-
-function CampoInput({ campo, value, onChange }: { campo: CampoPenal; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className={campo.full ? 'col-span-2' : ''}>
-      <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1">{campo.label}</label>
-      {campo.type === 'textarea' ? (
-        <textarea
-          className="field-input resize-none w-full text-xs"
-          style={{ minHeight: 64 }}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-        />
-      ) : campo.type === 'upload' ? (
-        <div className="border-2 border-dashed border-[rgba(0,0,0,0.15)] rounded-xl p-3 text-center text-xs text-[#7a9ab4]">
-          <Icon name="upload_file" size={18} className="mx-auto mb-1 text-[#7a9ab4] block" />
-          Arrastrá el archivo o hacé click · PDF máx 25MB
-        </div>
-      ) : campo.type === 'select' ? (
-        <select
-          className="field-input w-full text-xs"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-        >
-          <option value="">Seleccionar…</option>
-          {campo.options?.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
-      ) : (
-        <input
-          type={campo.type === 'date' ? 'date' : campo.type === 'money' ? 'number' : 'text'}
-          className="field-input w-full text-xs"
-          value={value}
-          placeholder={campo.placeholder ?? ''}
-          onChange={e => onChange(e.target.value)}
-        />
-      )}
-    </div>
-  )
-}
-
 // ── Componente principal ──────────────────────────────
 
 export function TimelinePenal({ exp }: Props) {
-  const { registrosPenales, agregarRegistroPenal, actualizarRegistroPenal } = useExpedientesStore()
+  const {
+    registrosPenales, agregarRegistroPenal, actualizarRegistroPenal,
+    agregarActividad, actualizarEstado, actualizarExpediente,
+  } = useExpedientesStore()
+  const { usuarioActivo } = useUIStore()
+
   const registros = registrosPenales[exp.id] ?? []
 
+  // Estado para registros procesales
   const [registroSeleccionado, setRegistroSeleccionado] = useState<RegistroActividadPenal | null>(null)
-  const [modalRegistrar, setModalRegistrar] = useState(false)
-  const [subActSeleccionada, setSubActSeleccionada] = useState<SubActividadPenal | null>(null)
-  const [resultadoModal, setResultadoModal] = useState<ResultadoBinario | ResultadoAcuerdo>(null)
-  const [camposModal, setCamposModal] = useState<Record<string, string | boolean>>({})
-  const [estadoModal, setEstadoModal] = useState<EstadoActividadPenal>('en_curso')
-  const [fechaModal, setFechaModal] = useState(HOY)
+  const [subActSeleccionada,   setSubActSeleccionada]   = useState<SubActividadPenal | null>(null)
+  const [resultadoModal,       setResultadoModal]       = useState<ResultadoBinario | ResultadoAcuerdo>(null)
+  const [camposModal,          setCamposModal]           = useState<Record<string, string | boolean>>({})
+  const [estadoModal,          setEstadoModal]           = useState<EstadoActividadPenal>('en_curso')
+  const [fechaModal,           setFechaModal]            = useState(HOY)
 
-  const etapaCodigo = exp.estadoProcesal ?? 'RECEPCIONADO'
-  const etapaActual = getEtapaPenal(exp.tipo, etapaCodigo)
+  // Estado para cambio de etapa desde stepper
+  const [modalCambiarEstado, setModalCambiarEstado] = useState(false)
+  const [etapaDestino,       setEtapaDestino]       = useState<EtapaPenal | null>(null)
+
+  // Estado para modal dual (procesales + genéricas)
+  const [modalNueva, setModalNueva] = useState(false)
+  const [tabNueva,   setTabNueva]   = useState<'procesales' | 'genericas'>('procesales')
+  const [formAct,    setFormAct]    = useState(BLANK_ACT)
+
+  // Datos de la etapa actual
+  const etapaCodigo    = exp.estadoProcesal ?? 'EN_ANALISIS'
+  const etapaActual    = getEtapaPenal(exp.tipo, etapaCodigo)
+  const registrosEtapa = registros.filter(r => r.etapaCodigo === etapaCodigo)
 
   const subActDisponibles = etapaActual?.subActividades.filter(
     sa => !registros.some(r => r.subActividadId === sa.id && r.etapaCodigo === etapaCodigo)
   ) ?? []
 
-  const registrosEtapa = registros.filter(r => r.etapaCodigo === etapaCodigo)
+  // ── Helpers de reset ───────────────────────────────
 
-  function resetModal() {
+  function resetProcesales() {
     setSubActSeleccionada(null)
     setResultadoModal(null)
     setCamposModal({})
@@ -359,33 +442,152 @@ export function TimelinePenal({ exp }: Props) {
     setFechaModal(HOY)
   }
 
+  function closeModalNueva() {
+    setModalNueva(false)
+    resetProcesales()
+    setFormAct(BLANK_ACT)
+  }
+
+  // ── Acción: registrar actividad procesal ────────────
+
   function confirmarRegistro() {
     if (!subActSeleccionada) return
     const nuevoRegistro: RegistroActividadPenal = {
-      id: `${exp.id}_${subActSeleccionada.id}_${Date.now()}`,
+      id:            `${exp.id}_${subActSeleccionada.id}_${Date.now()}`,
       subActividadId: subActSeleccionada.id,
-      numero: subActSeleccionada.numero,
-      nombre: subActSeleccionada.nombre,
-      estado: estadoModal,
-      resultado: resultadoModal,
-      fecha: fechaModal,
-      campos: camposModal,
+      numero:        subActSeleccionada.numero,
+      nombre:        subActSeleccionada.nombre,
+      estado:        estadoModal,
+      resultado:     resultadoModal,
+      fecha:         fechaModal,
+      campos:        camposModal,
       etapaCodigo,
     }
     agregarRegistroPenal(exp.id, nuevoRegistro)
     toast.success(`Actividad "${subActSeleccionada.nombre}" registrada.`)
-    setModalRegistrar(false)
-    resetModal()
+    closeModalNueva()
     setRegistroSeleccionado(nuevoRegistro)
   }
+
+  // ── Acción: guardar actividad genérica ──────────────
+
+  function guardarActividadGenerica() {
+    if (!formAct.titulo.trim()) return
+    agregarActividad(exp.id, {
+      id:            `ACT_${Date.now()}`,
+      expediente_id: exp.id,
+      tipo:          formAct.tipo,
+      titulo:        formAct.titulo,
+      descripcion:   formAct.descripcion,
+      fecha:         formAct.fecha,
+      activo:        true,
+      subitems:      [],
+      doc_gde:       formAct.doc_gde.trim() || null,
+      tareasSnapshot: [],
+    })
+    toast.success('Actividad registrada.')
+    closeModalNueva()
+  }
+
+  // ── Acción: cambiar estado desde stepper ────────────
+
+  function handleEtapaClick(etapa: EtapaPenal) {
+    setEtapaDestino(etapa)
+    setModalCambiarEstado(true)
+  }
+
+  function confirmarCambioEstado() {
+    if (!etapaDestino) return
+    const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+    agregarActividad(exp.id, {
+      id:            `ACT_${Date.now()}`,
+      expediente_id: exp.id,
+      tipo:          'MOVIMIENTO',
+      titulo:        `Cambio de estado: ${etapaActual?.label ?? etapaCodigo} → ${etapaDestino.label}`,
+      descripcion:   `Estado modificado por ${nombre}.`,
+      fecha:         HOY,
+      activo:        true,
+      subitems:      [],
+      estadoExpediente: etapaDestino.codigo,
+      doc_gde:       null,
+      tareasSnapshot: [],
+    })
+    actualizarEstado(exp.id, etapaDestino.codigo)
+    actualizarExpediente(exp.id, { estadoProcesal: etapaDestino.codigo })
+    toast.success(`Estado cambiado a ${etapaDestino.label}.`)
+    setModalCambiarEstado(false)
+    setEtapaDestino(null)
+    // Limpiar registro seleccionado si no pertenece a la nueva etapa
+    setRegistroSeleccionado(null)
+  }
+
+  // ── Campos del modal procesal según resultado ───────
 
   const camposActualesModal = subActSeleccionada
     ? getCamposActivos(subActSeleccionada, resultadoModal)
     : []
 
+  // ── Historial unificado ──────────────────────────────
+
+  const [filtroHistorial, setFiltroHistorial] =
+    useState<'todo' | 'sistema' | 'procesales' | 'genericas'>('todo')
+  const [busquedaHistorial, setBusquedaHistorial] = useState('')
+
+  const historialCompleto = useMemo((): EntradaHistorial[] => {
+    const entradas: EntradaHistorial[] = []
+
+    exp.timeline.forEach(act => {
+      const esSistema =
+        act.tipo === 'MOVIMIENTO' && act.titulo.startsWith('Cambio de estado')
+      entradas.push(
+        esSistema
+          ? { kind: 'sistema', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', doc_gde: act.doc_gde }
+          : { kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde }
+      )
+    })
+
+    registros.forEach(r => {
+      const etapa = getEtapaPenal(exp.tipo, r.etapaCodigo)
+      entradas.push({
+        kind: 'procesal',
+        fecha: r.fecha,
+        numero: r.numero,
+        nombre: r.nombre,
+        estado: r.estado,
+        etapaLabel: etapa?.label ?? r.etapaCodigo,
+        resultado: r.resultado as string | null,
+      })
+    })
+
+    return entradas.sort((a, b) => b.fecha.localeCompare(a.fecha))
+  }, [exp.timeline, registros, exp.tipo])
+
+  const historialFiltrado = useMemo(() => {
+    return historialCompleto.filter(e => {
+      if (filtroHistorial !== 'todo') {
+        const kindMap = { sistema: 'sistema', procesales: 'procesal', genericas: 'generica' } as const
+        if (e.kind !== kindMap[filtroHistorial]) return false
+      }
+      if (busquedaHistorial.trim()) {
+        const q = busquedaHistorial.toLowerCase()
+        const texto = e.kind === 'procesal'
+          ? `${e.numero} ${e.nombre} ${e.etapaLabel}`
+          : `${e.titulo} ${e.descripcion}`
+        if (!texto.toLowerCase().includes(q)) return false
+      }
+      return true
+    })
+  }, [historialCompleto, filtroHistorial, busquedaHistorial])
+
+  const countSistema    = historialCompleto.filter(e => e.kind === 'sistema').length
+  const countProcesales = historialCompleto.filter(e => e.kind === 'procesal').length
+  const countGenericas  = historialCompleto.filter(e => e.kind === 'generica').length
+
+  // ── Badge helpers ───────────────────────────────────
+
   const badgeEstado = (estado: EstadoActividadPenal) => {
-    if (estado === 'cumplido')      return 'bg-green-100 text-green-700'
-    if (estado === 'en_curso')      return 'bg-[#C4DFE8] text-[#1b3a57]'
+    if (estado === 'cumplido')  return 'bg-green-100 text-green-700'
+    if (estado === 'en_curso')  return 'bg-[#C4DFE8] text-[#1b3a57]'
     return 'bg-[#e8e8e8] text-[#4a6a84]'
   }
   const labelEstado = (estado: EstadoActividadPenal) => {
@@ -395,11 +597,13 @@ export function TimelinePenal({ exp }: Props) {
     return 'Sin estado'
   }
 
+  // ── Render ──────────────────────────────────────────
+
   return (
     <div className="space-y-4">
 
-      {/* Stepper */}
-      <ProcesalStepperPenal exp={exp} />
+      {/* Stepper clickeable */}
+      <ProcesalStepperPenal exp={exp} onEtapaClick={handleEtapaClick} />
 
       {/* Layout dos columnas */}
       <div className="flex gap-4 items-start">
@@ -407,7 +611,7 @@ export function TimelinePenal({ exp }: Props) {
         {/* Columna izquierda */}
         <div className="flex-1 min-w-0">
 
-          {/* Card actividades */}
+          {/* Card actividades procesales */}
           <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.10)] overflow-hidden mb-4 shadow-card">
             {/* Header */}
             <div className="px-5 py-4 flex items-center justify-between border-b border-[rgba(0,0,0,0.08)]">
@@ -418,7 +622,7 @@ export function TimelinePenal({ exp }: Props) {
                 </p>
               </div>
               <button
-                onClick={() => setModalRegistrar(true)}
+                onClick={() => { setTabNueva('procesales'); setModalNueva(true) }}
                 className="flex items-center gap-1.5 px-3 py-2 bg-[#1b3a57] text-white rounded-xl text-xs font-bold hover:bg-[#2a5278] transition-colors"
               >
                 <Icon name="add" size={14} />
@@ -440,10 +644,11 @@ export function TimelinePenal({ exp }: Props) {
                     key={registro.id}
                     onClick={() => setRegistroSeleccionado(registro)}
                     className={`flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors hover:bg-[#f5f5f5] ${
-                      registroSeleccionado?.id === registro.id ? 'bg-[#f0f6ff] border-l-[3px] border-l-[#1b3a57]' : ''
+                      registroSeleccionado?.id === registro.id
+                        ? 'bg-[#f0f6ff] border-l-[3px] border-l-[#1b3a57]'
+                        : ''
                     }`}
                   >
-                    {/* Ícono estado */}
                     {registro.estado === 'cumplido' && (
                       <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                         <Icon name="check" size={12} className="text-green-600" />
@@ -460,14 +665,12 @@ export function TimelinePenal({ exp }: Props) {
                     {registro.estado === 'sin_estado' && (
                       <div className="w-5 h-5 rounded-full border-2 border-[rgba(0,0,0,0.20)] flex-shrink-0" />
                     )}
-
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[#1b3a57] truncate">
                         {registro.numero} {registro.nombre}
                       </p>
                       <p className="text-[11px] text-[#7a9ab4]">{formatFecha(registro.fecha)}</p>
                     </div>
-
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${badgeEstado(registro.estado)}`}>
                       {labelEstado(registro.estado)}
                     </span>
@@ -477,6 +680,14 @@ export function TimelinePenal({ exp }: Props) {
             )}
           </div>
 
+          {/* Botón nueva actividad (dual) */}
+          <button
+            onClick={() => { setTabNueva('procesales'); setModalNueva(true) }}
+            className="w-full py-2.5 border-2 border-dashed border-[rgba(0,0,0,0.15)] rounded-xl text-xs font-bold text-[#4a6a84] hover:border-[#1b3a57] hover:text-[#1b3a57] transition-all flex items-center justify-center gap-2"
+          >
+            <Icon name="add" size={14} />
+            Nueva Actividad
+          </button>
         </div>
 
         {/* Columna derecha — detalle */}
@@ -502,179 +713,464 @@ export function TimelinePenal({ exp }: Props) {
         </div>
       </div>
 
-      {/* Modal registrar actividad */}
+      {/* ── Historial unificado ── */}
+      <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.10)] overflow-hidden">
+
+        {/* Header con filtros */}
+        <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
+
+          {/* Fila 1: título + tabs de filtro */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-bold text-[#1b3a57]">Historial completo</p>
+            <div className="flex gap-1">
+              {([
+                ['todo',       'Todo',       null],
+                ['sistema',    'Sistema',    countSistema],
+                ['procesales', 'Procesales', countProcesales],
+                ['genericas',  'Genéricas',  countGenericas],
+              ] as const).map(([val, lbl, count]) => (
+                <button
+                  key={val}
+                  onClick={() => setFiltroHistorial(val)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                    filtroHistorial === val
+                      ? 'bg-[#1b3a57] text-white'
+                      : 'bg-[#f5f5f5] text-[#4a6a84] hover:bg-[#e8e8e8]'
+                  }`}
+                >
+                  {lbl}
+                  {count !== null && count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                      filtroHistorial === val
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#e8e8e8] text-[#4a6a84]'
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Fila 2: búsqueda */}
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7a9ab4]">
+              <Icon name="search" size={14} />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar en el historial..."
+              value={busquedaHistorial}
+              onChange={e => setBusquedaHistorial(e.target.value)}
+              className="w-full pl-8 pr-8 py-2 text-xs border border-[rgba(0,0,0,0.12)] rounded-lg bg-[#f9f9f9] text-[#1b3a57] placeholder-[#7a9ab4] focus:outline-none focus:border-[#1b3a57]"
+            />
+            {busquedaHistorial && (
+              <button
+                onClick={() => setBusquedaHistorial('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#7a9ab4] hover:text-[#1b3a57]"
+              >
+                <Icon name="close" size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Feed de entradas */}
+        {historialFiltrado.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <Icon name="history" size={28} className="text-[#7a9ab4] mx-auto mb-2 block" />
+            <p className="text-sm text-[#4a6a84]">No hay entradas que coincidan.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[rgba(0,0,0,0.05)]">
+            {historialFiltrado.map((entrada, idx) => (
+              <div key={idx} className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
+
+                {/* Ícono según tipo */}
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  entrada.kind === 'sistema'
+                    ? 'bg-[#C4DFE8]'
+                    : entrada.kind === 'procesal'
+                    ? 'bg-[rgba(27,58,87,0.08)]'
+                    : 'bg-[#e8e8e8]'
+                }`}>
+                  <Icon
+                    name={entrada.kind === 'sistema' ? 'swap_horiz' : entrada.kind === 'procesal' ? 'gavel' : 'description'}
+                    size={14}
+                    className={entrada.kind === 'generica' ? 'text-[#4a6a84]' : 'text-[#1b3a57]'}
+                  />
+                </div>
+
+                {/* Contenido */}
+                <div className="flex-1 min-w-0">
+
+                  {(entrada.kind === 'sistema' || entrada.kind === 'generica') && (
+                    <>
+                      <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
+                      <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>
+                      {entrada.doc_gde && (
+                        <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                          <Icon name="attach_file" size={12} />
+                          {entrada.doc_gde}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  {entrada.kind === 'procesal' && (
+                    <>
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <p className="text-sm font-semibold text-[#1b3a57]">
+                          {entrada.numero} {entrada.nombre}
+                        </p>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
+                          {entrada.etapaLabel}
+                        </span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                          entrada.estado === 'cumplido'      ? 'bg-green-100 text-green-700'
+                          : entrada.estado === 'en_curso'    ? 'bg-[#C4DFE8] text-[#1b3a57]'
+                          : entrada.estado === 'no_procedente' ? 'bg-[#e8e8e8] text-[#4a6a84]'
+                          : 'bg-[#f5f5f5] text-[#7a9ab4]'
+                        }`}>
+                          {entrada.estado === 'cumplido' ? 'Cumplido'
+                            : entrada.estado === 'en_curso' ? 'En curso'
+                            : entrada.estado === 'no_procedente' ? 'No proc.'
+                            : 'Sin estado'}
+                        </span>
+                      </div>
+                      {entrada.resultado && (
+                        <p className="text-xs text-[#4a6a84]">Resultado: {entrada.resultado}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Fecha */}
+                <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">
+                  {formatFecha(entrada.fecha)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Modal: Cambiar estado desde stepper ── */}
       <Modal
-        open={modalRegistrar}
-        onClose={() => { setModalRegistrar(false); resetModal() }}
-        titulo="Registrar actividad procesal"
-        size="lg"
+        open={modalCambiarEstado}
+        onClose={() => { setModalCambiarEstado(false); setEtapaDestino(null) }}
+        titulo="Cambiar estado del expediente"
+        size="sm"
         footer={
           <>
             <button
-              onClick={() => { setModalRegistrar(false); resetModal() }}
+              onClick={() => { setModalCambiarEstado(false); setEtapaDestino(null) }}
               className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
             >
               Cancelar
             </button>
             <button
-              onClick={confirmarRegistro}
-              disabled={!subActSeleccionada}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              onClick={confirmarCambioEstado}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
             >
-              Registrar
+              Confirmar
             </button>
           </>
         }
       >
-        {!subActSeleccionada ? (
-          /* PASO 1: Seleccionar sub-actividad */
-          <div>
-            <p className="text-xs text-[#4a6a84] mb-3">
-              Etapa: <strong>{etapaActual?.label}</strong> — Seleccioná la actividad que ocurrió
-            </p>
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-              {subActDisponibles.map(sa => (
-                <button
-                  key={sa.id}
-                  onClick={() => setSubActSeleccionada(sa)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all hover:border-[#1b3a57] hover:bg-[#f0f6ff] ${
-                    sa.finalizaCausa
-                      ? 'border-l-4 border-l-[#d97706] border-[rgba(0,0,0,0.12)]'
-                      : sa.avanzaEtapa
-                      ? 'border-l-4 border-l-[#1b3a57] border-[rgba(0,0,0,0.12)]'
-                      : 'border-[rgba(0,0,0,0.12)]'
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {sa.finalizaCausa && <Icon name="warning" size={14} className="text-[#d97706] mt-0.5 flex-shrink-0" />}
-                    {sa.avanzaEtapa && <Icon name="arrow_forward" size={14} className="text-[#1b3a57] mt-0.5 flex-shrink-0" />}
-                    <div>
-                      <p className="text-sm font-semibold text-[#1b3a57]">{sa.numero} {sa.nombre}</p>
-                      {sa.finalizaCausa && (
-                        <p className="text-[10px] text-[#d97706] mt-0.5">Si queda firme → finaliza la causa</p>
-                      )}
-                      {sa.avanzaEtapa && (
-                        <p className="text-[10px] text-[#1b3a57] mt-0.5">Si queda firme → avanza a siguiente etapa</p>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))}
-              {subActDisponibles.length === 0 && (
-                <p className="text-sm text-[#4a6a84] text-center py-8">
-                  Todas las actividades de esta etapa ya fueron registradas.
-                </p>
-              )}
-            </div>
+        <div className="py-2">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-sm font-bold text-[#1b3a57] px-3 py-1.5 bg-[#e8e8e8] rounded-lg">
+              {etapaActual?.label ?? etapaCodigo}
+            </span>
+            <Icon name="arrow_forward" size={16} className="text-[#4a6a84]" />
+            <span className="text-sm font-bold text-white px-3 py-1.5 bg-[#1b3a57] rounded-lg">
+              {etapaDestino?.label}
+            </span>
           </div>
-        ) : (
-          /* PASO 2: Completar campos */
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                onClick={() => { setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
-                className="p-1 rounded-lg text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-              >
-                <Icon name="arrow_back" size={16} />
-              </button>
-              <p className="text-sm font-bold text-[#1b3a57]">
-                {subActSeleccionada.numero} {subActSeleccionada.nombre}
+          {etapaDestino?.codigo === 'RECHAZADO' && (
+            <div className="bg-[#fee2e2] border border-[#fca5a5] rounded-xl p-3 mb-3">
+              <p className="text-xs text-[#991b1b] font-semibold flex items-center gap-2">
+                <Icon name="warning" size={14} />
+                Esta acción marca la querella como rechazada.
               </p>
             </div>
+          )}
+          <p className="text-xs text-[#4a6a84] text-center">
+            Esta acción quedará registrada en el timeline.
+          </p>
+        </div>
+      </Modal>
 
-            {/* Resultado SI/NO */}
-            {subActSeleccionada.tipo === 'SI_NO' && (
-              <div className="mb-4">
-                <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
-                <div className="flex gap-2">
-                  {(['SI', 'NO'] as ResultadoBinario[]).filter(Boolean).map(r => (
-                    <button
-                      key={r!}
-                      onClick={() => setResultadoModal(r)}
-                      className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                        resultadoModal === r
-                          ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                          : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
+      {/* ── Modal dual: Nueva Actividad ── */}
+      <Modal
+        open={modalNueva}
+        onClose={closeModalNueva}
+        titulo="Nueva Actividad"
+        size="lg"
+        footer={
+          tabNueva === 'procesales' ? (
+            <>
+              <button
+                onClick={() => {
+                  if (subActSeleccionada) {
+                    setSubActSeleccionada(null)
+                    setResultadoModal(null)
+                    setCamposModal({})
+                  } else {
+                    closeModalNueva()
+                  }
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              >
+                {subActSeleccionada ? 'Volver' : 'Cancelar'}
+              </button>
+              <button
+                onClick={confirmarRegistro}
+                disabled={!subActSeleccionada}
+                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
+                Registrar
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={closeModalNueva}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarActividadGenerica}
+                disabled={!formAct.titulo.trim()}
+                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
+                Guardar
+              </button>
+            </>
+          )
+        }
+      >
+        {/* Solapas */}
+        <div className="flex gap-0 border-b border-[rgba(0,0,0,0.08)] mb-4 -mx-6 px-6">
+          <button
+            onClick={() => { setTabNueva('procesales'); setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tabNueva === 'procesales'
+                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
+                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+            }`}
+          >
+            Actividades Procesales
+          </button>
+          <button
+            onClick={() => { setTabNueva('genericas'); setFormAct(BLANK_ACT) }}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tabNueva === 'genericas'
+                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
+                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+            }`}
+          >
+            Actividades Genéricas
+          </button>
+        </div>
+
+        {/* ── Tab: Procesales ── */}
+        {tabNueva === 'procesales' && (
+          !subActSeleccionada ? (
+            <div>
+              <p className="text-xs text-[#4a6a84] mb-3">
+                Etapa: <strong>{etapaActual?.label}</strong> — Seleccioná la actividad que ocurrió
+              </p>
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                {subActDisponibles.map(sa => (
+                  <button
+                    key={sa.id}
+                    onClick={() => setSubActSeleccionada(sa)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all hover:border-[#1b3a57] hover:bg-[#f0f6ff] ${
+                      sa.finalizaCausa
+                        ? 'border-l-4 border-l-[#d97706] border-[rgba(0,0,0,0.12)]'
+                        : sa.avanzaEtapa
+                        ? 'border-l-4 border-l-[#1b3a57] border-[rgba(0,0,0,0.12)]'
+                        : 'border-[rgba(0,0,0,0.12)]'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {sa.finalizaCausa && <Icon name="warning"       size={14} className="text-[#d97706] mt-0.5 flex-shrink-0" />}
+                      {sa.avanzaEtapa  && <Icon name="arrow_forward"  size={14} className="text-[#1b3a57] mt-0.5 flex-shrink-0" />}
+                      <div>
+                        <p className="text-sm font-semibold text-[#1b3a57]">{sa.numero} {sa.nombre}</p>
+                        {sa.finalizaCausa && <p className="text-[10px] text-[#d97706] mt-0.5">Si queda firme → finaliza la causa</p>}
+                        {sa.avanzaEtapa  && <p className="text-[10px] text-[#1b3a57] mt-0.5">Si queda firme → avanza a siguiente etapa</p>}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                {subActDisponibles.length === 0 && (
+                  <p className="text-sm text-[#4a6a84] text-center py-8">
+                    Todas las actividades de esta etapa ya fueron registradas.
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <button
+                  onClick={() => { setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
+                  className="p-1 rounded-lg text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                >
+                  <Icon name="arrow_back" size={16} />
+                </button>
+                <p className="text-sm font-bold text-[#1b3a57]">
+                  {subActSeleccionada.numero} {subActSeleccionada.nombre}
+                </p>
+              </div>
+
+              {subActSeleccionada.tipo === 'SI_NO' && (
+                <div className="mb-4">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
+                  <div className="flex gap-2">
+                    {(['SI', 'NO'] as ResultadoBinario[]).filter(Boolean).map(r => (
+                      <button
+                        key={r!}
+                        onClick={() => setResultadoModal(r)}
+                        className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                          resultadoModal === r
+                            ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
+                            : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        }`}
+                      >{r}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {subActSeleccionada.tipo === 'ACUERDO' && (
+                <div className="mb-4">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
+                  <div className="flex gap-2">
+                    {([
+                      { val: 'HAY_ACUERDO' as ResultadoAcuerdo,    label: 'Hay Acuerdo' },
+                      { val: 'NO_HAY_ACUERDO' as ResultadoAcuerdo, label: 'No Hay Acuerdo' },
+                    ]).map(r => (
+                      <button
+                        key={r.val!}
+                        onClick={() => setResultadoModal(r.val)}
+                        className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                          resultadoModal === r.val
+                            ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
+                            : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        }`}
+                      >{r.label}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {camposActualesModal.map(campo => (
+                <div key={campo.id} className="mb-3">
+                  <CampoInput
+                    campo={campo}
+                    value={(camposModal[campo.id] as string) ?? ''}
+                    onChange={val => setCamposModal(p => ({ ...p, [campo.id]: val }))}
+                  />
+                </div>
+              ))}
+
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Estado</label>
+                  <div className="flex gap-1">
+                    {([
+                      ['en_curso',      '⏱ En curso'],
+                      ['cumplido',      '✓ Cumplido'],
+                      ['no_procedente', '⊘ No proc.'],
+                    ] as const).map(([val, lbl]) => (
+                      <button
+                        key={val}
+                        onClick={() => setEstadoModal(val)}
+                        className={`flex-1 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
+                          estadoModal === val
+                            ? val === 'cumplido'
+                              ? 'border-green-500 bg-green-50 text-green-700'
+                              : val === 'en_curso'
+                              ? 'border-[#1b3a57] bg-[#f0f6ff] text-[#1b3a57]'
+                              : 'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84]'
+                            : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        }`}
+                      >{lbl}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Fecha</label>
+                  <input
+                    type="date"
+                    className="field-input w-full text-xs"
+                    value={fechaModal}
+                    onChange={e => setFechaModal(e.target.value)}
+                  />
                 </div>
               </div>
-            )}
+            </div>
+          )
+        )}
 
-            {/* Resultado ACUERDO */}
-            {subActSeleccionada.tipo === 'ACUERDO' && (
-              <div className="mb-4">
-                <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
-                <div className="flex gap-2">
-                  {([
-                    { val: 'HAY_ACUERDO', label: 'Hay Acuerdo' },
-                    { val: 'NO_HAY_ACUERDO', label: 'No Hay Acuerdo' },
-                  ] as { val: ResultadoAcuerdo; label: string }[]).map(r => (
-                    <button
-                      key={r.val!}
-                      onClick={() => setResultadoModal(r.val)}
-                      className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                        resultadoModal === r.val
-                          ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                          : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Campos dinámicos */}
-            {camposActualesModal.map(campo => (
-              <div key={campo.id} className="mb-3">
-                <CampoInput
-                  campo={campo}
-                  value={(camposModal[campo.id] as string) ?? ''}
-                  onChange={val => setCamposModal(p => ({ ...p, [campo.id]: val }))}
-                />
-              </div>
-            ))}
-
-            {/* Estado y fecha */}
-            <div className="grid grid-cols-2 gap-3 mt-4">
+        {/* ── Tab: Genéricas ── */}
+        {tabNueva === 'genericas' && (
+          <div className="space-y-3">
+            <div>
+              <label className="field-label">Tipo</label>
+              <select
+                className="field-input w-full"
+                value={formAct.tipo}
+                onChange={e => setFormAct(p => ({ ...p, tipo: e.target.value as TipoActividad }))}
+              >
+                {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+              <input
+                type="text"
+                className="field-input w-full"
+                placeholder="Descripción breve de la actividad"
+                value={formAct.titulo}
+                onChange={e => setFormAct(p => ({ ...p, titulo: e.target.value }))}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="field-label">Descripción</label>
+              <textarea
+                className="field-input resize-none w-full"
+                style={{ minHeight: 80 }}
+                placeholder="Detalle de la actividad..."
+                value={formAct.descripcion}
+                onChange={e => setFormAct(p => ({ ...p, descripcion: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Estado</label>
-                <div className="flex gap-1">
-                  {([
-                    ['en_curso',      '⏱ En curso'],
-                    ['cumplido',      '✓ Cumplido'],
-                    ['no_procedente', '⊘ No proc.'],
-                  ] as const).map(([val, lbl]) => (
-                    <button
-                      key={val}
-                      onClick={() => setEstadoModal(val)}
-                      className={`flex-1 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
-                        estadoModal === val
-                          ? val === 'cumplido'
-                            ? 'border-green-500 bg-green-50 text-green-700'
-                            : val === 'en_curso'
-                            ? 'border-[#1b3a57] bg-[#f0f6ff] text-[#1b3a57]'
-                            : 'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84]'
-                          : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
-                      }`}
-                    >
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Fecha</label>
+                <label className="field-label">Fecha</label>
                 <input
                   type="date"
-                  className="field-input w-full text-xs"
-                  value={fechaModal}
-                  onChange={e => setFechaModal(e.target.value)}
+                  className="field-input w-full"
+                  value={formAct.fecha}
+                  onChange={e => setFormAct(p => ({ ...p, fecha: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="field-label">N° Documento GDE</label>
+                <input
+                  type="text"
+                  className="field-input w-full font-mono text-xs"
+                  placeholder="EX-2026-..."
+                  value={formAct.doc_gde}
+                  onChange={e => setFormAct(p => ({ ...p, doc_gde: e.target.value }))}
                 />
               </div>
             </div>
