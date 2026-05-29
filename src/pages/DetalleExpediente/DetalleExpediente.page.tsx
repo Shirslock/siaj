@@ -18,10 +18,14 @@ import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
-type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar'
+type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
+const TIPOS_CON_JUICIO = new Set([
+  'COBRO_CANON', 'RECLAMO_CONTRAT', 'LANZAMIENTO', 'RECUPERO',
+  'CONSIGNACION', 'DESAFUERO', 'EJECUCION_GAR', 'QUERELLA',
+])
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'datos',          label: 'Datos',          icon: 'info' },
@@ -46,6 +50,22 @@ export default function DetalleExpedientePage() {
   const [nuevaCausa, setNuevaCausa] = useState('')
   const [nuevoAbogado, setNuevoAbogado] = useState('')
   const [motivoEstado, setMotivoEstado] = useState('')
+  const [formJuicio, setFormJuicio] = useState({
+  oficio_judicial: '',
+  tipo_intervencion: '',
+  secretaria: '',
+  numero_causa: '',
+  juzgado: '',
+  caratula: '',
+  abogado_contraria: '',
+  parte_actora: '',
+  parte_demandada: 'SOFSE',
+  coactores: '',
+  codemandados: '',
+  fecha_inicio: HOY,
+  tipo_juicio: '',
+  monto: '',
+})
 
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -94,6 +114,9 @@ export default function DetalleExpedientePage() {
     if (a === 'estado') { setNuevoEstado(exp!.estado); setMotivoEstado('') }
     if (a === 'causa')  setNuevaCausa(exp!.numero_causa ?? '')
     if (a === 'reasignar') setNuevoAbogado(exp!.abogado_id ?? '')
+    if (a === 'iniciar_juicio') {
+      setFormJuicio(p => ({ ...p, caratula: exp!.caratula, numero_causa: exp!.numero_causa ?? '' }))
+    }
     setAccion(a)
   }
 
@@ -144,6 +167,31 @@ export default function DetalleExpedientePage() {
     toast.success('Expediente reasignado.')
     setAccion(null)
   }
+
+  function confirmarIniciarJuicio() {
+  actualizarExpediente(exp!.id, {
+    numero_causa: formJuicio.numero_causa.trim() || exp!.numero_causa,
+    campos_mesa: {
+      ...exp!.campos_mesa,
+      mesa_num_causa:     formJuicio.numero_causa,
+      mesa_juzgado:       formJuicio.juzgado,
+      mesa_secretaria:    formJuicio.secretaria,
+      mesa_caratula:      formJuicio.caratula,
+      mesa_abogado_contr: formJuicio.abogado_contraria,
+      mesa_parte_actora:  formJuicio.parte_actora,
+      mesa_parte_dem:     formJuicio.parte_demandada,
+      mesa_coactores:     formJuicio.coactores,
+      mesa_codemandados:  formJuicio.codemandados,
+      mesa_fecha_inicio:  formJuicio.fecha_inicio,
+      mesa_juicio:        formJuicio.tipo_juicio,
+      mesa_monto:         formJuicio.monto,
+      mesa_oficio_judicial: formJuicio.oficio_judicial,
+      mesa_tipo_intervencion: formJuicio.tipo_intervencion,
+    },
+  })
+  toast.success('Juicio iniciado y datos registrados.')
+  setAccion(null)
+}
 
   const tabCounters: Partial<Record<Tab, number>> = {
     vinculos:       exp.vinculos.length,
@@ -203,6 +251,7 @@ export default function DetalleExpedientePage() {
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
+                  { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) },
                 ]
                 .filter(item => item.show)
                 .map(item => (
@@ -401,6 +450,142 @@ export default function DetalleExpedientePage() {
               <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
             ))}
           </select>
+        </div>
+      </Modal>
+
+      {/* Modal: Iniciar Juicio */}
+      <Modal
+        open={accion === 'iniciar_juicio'}
+        onClose={() => setAccion(null)}
+        titulo="Iniciar Juicio"
+        size="lg"
+        footer={
+          <>
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarIniciarJuicio}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            >
+              <Icon name="gavel" size={16} />
+              Confirmar Inicio
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* Aviso */}
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+            <Icon name="warning" size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-amber-800">Confirmar inicio de acción judicial</p>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Esta acción registrará el inicio del proceso judicial para{' '}
+                <span className="font-mono font-bold">{exp.id}</span>.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="field-label">Oficio Judicial (OJ)</label>
+              <input type="text" className="field-input w-full" placeholder="OJ-2026-XXXX"
+                value={formJuicio.oficio_judicial}
+                onChange={e => setFormJuicio(p => ({ ...p, oficio_judicial: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Tipo de Intervención <span className="text-[#b91c1c]">*</span></label>
+              <select className="field-input w-full"
+                value={formJuicio.tipo_intervencion}
+                onChange={e => setFormJuicio(p => ({ ...p, tipo_intervencion: e.target.value }))}>
+                <option value="">— Seleccioná —</option>
+                <option>Actora</option>
+                <option>Demandada</option>
+                <option>Sin Intervención</option>
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Secretaría</label>
+              <input type="text" className="field-input w-full" placeholder="Ej: Secretaría N°3"
+                value={formJuicio.secretaria}
+                onChange={e => setFormJuicio(p => ({ ...p, secretaria: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">N° de Causa <span className="text-[#b91c1c]">*</span></label>
+              <input type="text" className="field-input w-full font-mono" placeholder="FSM-XXXXX/2026"
+                value={formJuicio.numero_causa}
+                onChange={e => setFormJuicio(p => ({ ...p, numero_causa: e.target.value }))} />
+            </div>
+            <div className="col-span-2">
+              <label className="field-label">Juzgado</label>
+              <select className="field-input w-full"
+                value={formJuicio.juzgado}
+                onChange={e => setFormJuicio(p => ({ ...p, juzgado: e.target.value }))}>
+                <option value="">— Seleccioná juzgado —</option>
+                {ALL_JUZGADOS.map(j => <option key={j.id} value={j.id}>{j.label}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="field-label">Carátula</label>
+              <input type="text" className="field-input w-full"
+                value={formJuicio.caratula}
+                onChange={e => setFormJuicio(p => ({ ...p, caratula: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Abogado de la Contraria <span className="text-[#b91c1c]">*</span></label>
+              <input type="text" className="field-input w-full" placeholder="Dr. Apellido, Nombre"
+                value={formJuicio.abogado_contraria}
+                onChange={e => setFormJuicio(p => ({ ...p, abogado_contraria: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Parte Actora <span className="text-[#b91c1c]">*</span></label>
+              <input type="text" className="field-input w-full" placeholder="Nombre del actor"
+                value={formJuicio.parte_actora}
+                onChange={e => setFormJuicio(p => ({ ...p, parte_actora: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Parte Demandada <span className="text-[#b91c1c]">*</span></label>
+              <input type="text" className="field-input w-full"
+                value={formJuicio.parte_demandada}
+                onChange={e => setFormJuicio(p => ({ ...p, parte_demandada: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Coactores</label>
+              <input type="text" className="field-input w-full" placeholder="Si corresponde"
+                value={formJuicio.coactores}
+                onChange={e => setFormJuicio(p => ({ ...p, coactores: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Codemandados</label>
+              <input type="text" className="field-input w-full" placeholder="Si corresponde"
+                value={formJuicio.codemandados}
+                onChange={e => setFormJuicio(p => ({ ...p, codemandados: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Fecha de Inicio <span className="text-[#b91c1c]">*</span></label>
+              <input type="date" className="field-input w-full"
+                value={formJuicio.fecha_inicio}
+                onChange={e => setFormJuicio(p => ({ ...p, fecha_inicio: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Tipo de Juicio <span className="text-[#b91c1c]">*</span></label>
+              <select className="field-input w-full"
+                value={formJuicio.tipo_juicio}
+                onChange={e => setFormJuicio(p => ({ ...p, tipo_juicio: e.target.value }))}>
+                <option value="">— Seleccioná —</option>
+                {['DAÑOS Y PERJUICIOS','COBRO DE SUMAS DE DINERO','EJECUTIVO O PREPARACIÓN VÍA EJECUTIVA',
+                  'ACCIDENTE - ACCIÓN CIVIL','AMPARO','BENEFICIO DE LSG','CONSIGNACIÓN','OTROS']
+                  .map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Monto de la Demanda <span className="text-[#b91c1c]">*</span></label>
+              <input type="number" className="field-input w-full" placeholder="$ 0"
+                value={formJuicio.monto}
+                onChange={e => setFormJuicio(p => ({ ...p, monto: e.target.value }))} />
+            </div>
+          </div>
         </div>
       </Modal>
     </div>

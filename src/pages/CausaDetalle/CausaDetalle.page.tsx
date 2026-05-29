@@ -10,6 +10,7 @@ import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import type { Actividad, Area, Documento, VinculoExpediente } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { exportarExcel, exportarPDF, type FilaTimelineExport } from '../../utils/exportTimeline'
+import { toast } from '../../components/ui/Toast'
 
 type Tab = 'timeline' | 'expedientes' | 'repositorio' | 'vinculados'
 
@@ -271,7 +272,7 @@ export default function CausaDetallePage() {
               </select>
 
               <div className="relative flex-1 min-w-[200px]">
-                <Icon name="search" size={18} />
+                <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
                 <input
                   className="field-input pl-9"
                   placeholder="Buscar por título de actividad..."
@@ -374,7 +375,7 @@ export default function CausaDetallePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[rgba(0,0,0,0.12)]">
-                    {['Documento', 'Tipo', 'Expediente', 'Fecha', 'Tamaño'].map(col => (
+                    {['Documento', 'Tipo', 'Expediente', 'Fecha', 'Tamaño', ''].map(col => (
                       <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
                         {col}
                       </th>
@@ -399,6 +400,13 @@ export default function CausaDetallePage() {
                       </td>
                       <td className="py-3 px-4 text-xs text-[#4a6a84] whitespace-nowrap">{formatFecha(doc.fecha)}</td>
                       <td className="py-3 px-4 text-xs text-[#4a6a84]">{doc.size}</td>
+                      <td className="py-3 px-4">
+                        <button className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#4a9ab5] transition-colors cursor-pointer"
+                        onClick={() => toast.info(`Descarga de "${doc.nombre}".`)}
+                        >
+                          <Icon name="download" size={15} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
