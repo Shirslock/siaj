@@ -535,15 +535,16 @@ export function TimelinePenal({ exp }: Props) {
   const [busquedaHistorial, setBusquedaHistorial] = useState('')
 
   const historialCompleto = useMemo((): EntradaHistorial[] => {
-    const entradas: EntradaHistorial[] = []
+    type EntradaConIdx = EntradaHistorial & { _idx: number }
+    const entradas: EntradaConIdx[] = []
 
     exp.timeline.forEach(act => {
       const esSistema =
         act.tipo === 'MOVIMIENTO' && act.titulo.startsWith('Cambio de estado')
       entradas.push(
         esSistema
-          ? { kind: 'sistema', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', doc_gde: act.doc_gde }
-          : { kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde }
+          ? { kind: 'sistema', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', doc_gde: act.doc_gde, _idx: entradas.length }
+          : { kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, _idx: entradas.length }
       )
     })
 
@@ -558,15 +559,15 @@ export function TimelinePenal({ exp }: Props) {
         etapaLabel: etapa?.label ?? r.etapaCodigo,
         etapaCodigo: r.etapaCodigo,
         resultado: r.resultado as string | null,
+        _idx: entradas.length,
       })
     })
 
     return entradas.sort((a, b) => {
-      const diff = a.fecha.localeCompare(b.fecha)
+      const diff = b.fecha.localeCompare(a.fecha)
       if (diff !== 0) return diff
-      const orden = { sistema: 0, procesal: 1, generica: 2 }
-      return (orden[a.kind] ?? 1) - (orden[b.kind] ?? 1)
-    })
+      return b._idx - a._idx
+    }) as EntradaHistorial[]
   }, [exp.timeline, registros, exp.tipo])
 
   const historialFiltrado = useMemo(() => {
