@@ -9,6 +9,7 @@
 | `usuarios.ts` | 31 usuarios reales con roles y asignaciones | Roles.xlsx |
 | `expedientes.mock.ts` | Datos de ejemplo para el prototipo | Creado manualmente |
 | `estadosProcesales.ts` | Estados y tareas por tipo de gestión | Diseño funcional |
+| `notificaciones.mock.ts` | 4 notificaciones de demo (NOTIFICACIONES_MOCK) | Creado manualmente |
 
 ---
 

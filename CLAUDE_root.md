@@ -50,8 +50,10 @@ npm run build      # build de producción
 | `src/data/usuarios.ts` | 31 usuarios reales UR_001–UR_032, roles y asignaciones. |
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
 | `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión (DEMANDA_CIVIL completo). |
+| `src/data/notificaciones.mock.ts` | 4 notificaciones de demo — inicializadas en main.tsx. |
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage. |
+| `src/store/notificaciones.store.ts` | Notificaciones de asignación/reasignación (HU-05). |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
 | `src/components/ui/Modal.tsx` | Modal Headless UI. Props: open, onClose, titulo, size, footer. |

@@ -10,8 +10,24 @@ Solo sessionStorage para ID del usuario activo.
 |-------|-----------|------|
 | `expedientes.store.ts` | Expedientes, queue, tareas, filtros | `useExpedientesStore()` |
 | `ui.store.ts` | Usuario activo, sidebar, sessionStorage | `useUIStore()` |
+| `notificaciones.store.ts` | Notificaciones de asignación/reasignación | `useNotificacionesStore()` |
 
 > actividades.store.ts y agenda.store.ts no existen aún — pendientes para sprint de agenda.
+
+---
+
+## Acciones — notificaciones.store.ts
+
+```ts
+agregarNotificacion(n: Notificacion)     // prepend al array
+marcarLeida(id)                          // leida: true
+marcarTodasLeidas(usuarioId)             // marca las del usuario
+descartarNotificacion(id)                // elimina del array
+limpiarVencidas()                        // elimina leídas > 30 días
+```
+
+Se inicializa con `NOTIFICACIONES_MOCK` en `main.tsx`.
+`asignarAbogado` del expedientes.store llama `agregarNotificacion` automáticamente.
 
 ---
 

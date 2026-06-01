@@ -38,6 +38,8 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `ItemQueue` | Entrada en la cola de Mesa SIAJ |
 | `FiltrosExpediente` | Estado de filtros de las bandejas |
 | `AccesosRol` | Permisos y ruta de inicio por rol |
+| `TipoNotificacion` | 'ASIGNACION' \| 'REASIGNACION' |
+| `Notificacion` | Notificación de asignación/reasignación a un letrado |
 
 ## Cómo agregar un tipo nuevo
 
