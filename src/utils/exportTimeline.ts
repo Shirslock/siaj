@@ -133,7 +133,7 @@ export function exportarPDF(
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(14)
   doc.setTextColor(27, 58, 87)
-  doc.text('SIAJ — Sistema Integral de Asuntos Jurídicos', 14, 15)
+  doc.text('SIAJ — Sistema Inteligente de Asuntos Jurídicos', 14, 15)
 
   doc.setFontSize(12)
   doc.text(titulo, 14, 23)
