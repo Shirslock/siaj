@@ -356,7 +356,12 @@ export default function DetalleExpedientePage() {
               <select className="field-input w-full" value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
                 <option value="">Seleccionar…</option>
                 {getEtapasPenales(exp.tipo)
-                  .filter(e => e.codigo !== 'ASIGNADO' && e.numero >= 0 && e.codigo !== exp.estadoProcesal)
+                  .filter(e => e.codigo !== 'ASIGNADO' && e.codigo !== exp.estadoProcesal)
+                  .sort((a, b) => {
+                    if (a.codigo === 'RECHAZADO') return 1
+                    if (b.codigo === 'RECHAZADO') return -1
+                    return a.numero - b.numero
+                  })
                   .map(e => <option key={e.codigo} value={e.codigo}>{e.label}</option>)}
               </select>
             </div>

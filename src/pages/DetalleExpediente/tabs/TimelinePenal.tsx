@@ -561,7 +561,12 @@ export function TimelinePenal({ exp }: Props) {
       })
     })
 
-    return entradas.sort((a, b) => b.fecha.localeCompare(a.fecha))
+    return entradas.sort((a, b) => {
+      const diff = a.fecha.localeCompare(b.fecha)
+      if (diff !== 0) return diff
+      const orden = { sistema: 0, procesal: 1, generica: 2 }
+      return (orden[a.kind] ?? 1) - (orden[b.kind] ?? 1)
+    })
   }, [exp.timeline, registros, exp.tipo])
 
   const historialFiltrado = useMemo(() => {
