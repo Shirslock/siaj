@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK } from '../data/expedientes.mock'
+import { useNotificacionesStore } from './notificaciones.store'
+import { TIPOS_GESTION } from '../data/catalogos'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -84,13 +86,31 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     }
   }),
 
-  asignarAbogado: (expedienteId, abogadoId) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, abogado_id: abogadoId })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
+  asignarAbogado: (expedienteId, abogadoId) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, abogado_id: abogadoId })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+    if (!abogadoId) return
+    const exp = get().expedientes.find(e => e.id === expedienteId)
+    if (!exp) return
+    const tipoLabel = TIPOS_GESTION.find(t => t.code === exp.tipo)?.label ?? exp.tipo
+    const tipo = exp.abogado_id ? 'REASIGNACION' : 'ASIGNACION'
+    useNotificacionesStore.getState().agregarNotificacion({
+      id: `NOTIF_${Date.now()}`,
+      tipo,
+      expedienteId: exp.id,
+      tipoGestion: tipoLabel,
+      caratula: exp.caratula,
+      numeroCausa: exp.numero_causa ?? null,
+      leida: false,
+      fecha: new Date().toISOString(),
+      destinatarioId: abogadoId,
+    })
+  },
 
   agregarActividad: (expedienteId, actividad) => set(s => {
     const fn = (e: Expediente) => ({ ...e, timeline: [...e.timeline, actividad] })

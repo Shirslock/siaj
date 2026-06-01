@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import { useNotificacionesStore } from '../../store/notificaciones.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
@@ -73,6 +74,14 @@ export default function DetalleExpedientePage() {
   useEffect(() => {
     if (expId) setExpedienteActivo(expId)
   }, [expId, setExpedienteActivo])
+
+  useEffect(() => {
+    if (!exp || !usuarioActivo) return
+    const { notificaciones, marcarLeida } = useNotificacionesStore.getState()
+    notificaciones
+      .filter(n => n.expedienteId === exp.id && n.destinatarioId === usuarioActivo.id && !n.leida)
+      .forEach(n => marcarLeida(n.id))
+  }, [exp?.id, usuarioActivo?.id])
 
   useEffect(() => {
     function handler(e: MouseEvent) {

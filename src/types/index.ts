@@ -324,3 +324,17 @@ export interface EtapaPenal {
   siguiente?: string
   subActividades: SubActividadPenal[]
 }
+
+export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION'
+
+export interface Notificacion {
+  id: string
+  tipo: TipoNotificacion
+  expedienteId: string
+  tipoGestion: string
+  caratula: string
+  numeroCausa?: string | null
+  leida: boolean
+  fecha: string
+  destinatarioId: string
+}
