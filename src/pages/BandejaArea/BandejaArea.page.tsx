@@ -61,6 +61,7 @@ export default function BandejaAreaPage() {
   const [filtros, setFiltros] = useState({
     buscar: '', area: '', tipo: '', estado: '',
     fechaDesde: '', fechaHasta: '', letrado_id: '',
+    soloUrgentes: false,
   })
   const [expandedCausas, setExpandedCausas] = useState<Set<string>>(new Set())
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
@@ -89,6 +90,13 @@ export default function BandejaAreaPage() {
       if (filtros.estado && e.estado !== filtros.estado) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
+      if (filtros.soloUrgentes) {
+        const tieneVencimiento = e.campos_abogado?.plazo_respuesta || e.campos_mesa?.plazo_respuesta
+        if (!tieneVencimiento) return false
+        const fecha = String(tieneVencimiento)
+        const dias = Math.ceil((new Date(fecha).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        if (dias > 7) return false
+      }
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         return (
@@ -144,7 +152,7 @@ export default function BandejaAreaPage() {
     setFiltros(prev => ({ ...prev, [key]: val }))
   }
   function limpiarFiltros() {
-    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', letrado_id: '' })
+    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', letrado_id: '', soloUrgentes: false })
   }
   function toggleCausa(nc: string) {
     setExpandedCausas(prev => {
@@ -165,7 +173,10 @@ export default function BandejaAreaPage() {
     e.stopPropagation()
     if (menuAbierto === expId) { setMenuAbierto(null); return }
     const rect = e.currentTarget.getBoundingClientRect()
-    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    const menuHeight = 120 // altura estimada del menú
+    const spaceBelow = window.innerHeight - rect.bottom
+    const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom + 4
+    setMenuPos({ top, right: window.innerWidth - rect.right })
     setMenuAbierto(expId)
   }
 
@@ -202,7 +213,7 @@ export default function BandejaAreaPage() {
         onClick={e => e.stopPropagation()}
       >
         <button
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
           onClick={() => { navigate(RUTAS.EXPEDIENTE(exp.id)); setMenuAbierto(null) }}
         >
           <Icon name="open_in_new" size={16} />
@@ -210,7 +221,7 @@ export default function BandejaAreaPage() {
         </button>
         {sinCausa ? (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
             onClick={() => { setModalAgrupar(exp.id); setMenuAbierto(null) }}
           >
             <Icon name="folder_open" size={16} />
@@ -218,7 +229,7 @@ export default function BandejaAreaPage() {
           </button>
         ) : (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
             onClick={() => desagrupar(exp.id)}
           >
             <Icon name="link_off" size={16} />
@@ -229,7 +240,7 @@ export default function BandejaAreaPage() {
           <>
             <hr className="border-[rgba(0,0,0,0.12)] my-1" />
             <button
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
               onClick={() => { setModalReasignar(exp.id); setMenuAbierto(null) }}
             >
               <Icon name="forward" size={16} />
@@ -312,7 +323,7 @@ export default function BandejaAreaPage() {
           {/* Menú */}
           <td className="py-3 px-3 text-center">
             <button
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
               onClick={e => abrirMenu(e, exp.id)}
             >
               <Icon name="more_vert" size={18} />
@@ -358,6 +369,18 @@ export default function BandejaAreaPage() {
             <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
               <Icon name="unfold_less" size={14} />
               Colapsar
+            </button>
+            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+            <button
+              onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
+              className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+                filtros.soloUrgentes
+                  ? 'text-[#b91c1c]'
+                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}
+            >
+              <Icon name="warning" size={14} />
+              {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
             </button>
             <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
             <button onClick={limpiarFiltros} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
@@ -411,14 +434,12 @@ export default function BandejaAreaPage() {
                     {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
                   </select>
                 </th>
-                {/* Letrado (solo coordinador/referente) */}
+                {/* Letrado */}
                 <th className="px-2 py-1.5">
-                  {puedeReasignar(usuarioActivo) ? (
-                    <select value={filtros.letrado_id} onChange={e => setFiltro('letrado_id', e.target.value)} className={filterInputCls}>
-                      <option value="">Todos</option>
-                      {letradosUnicos.map(u => <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>)}
-                    </select>
-                  ) : <div />}
+                  <select value={filtros.letrado_id} onChange={e => setFiltro('letrado_id', e.target.value)} className={filterInputCls}>
+                    <option value="">Todos</option>
+                    {letradosUnicos.map(u => <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>)}
+                  </select>
                 </th>
                 {/* Estado */}
                 <th className="px-2 py-1.5">
@@ -427,9 +448,23 @@ export default function BandejaAreaPage() {
                     {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
                   </select>
                 </th>
-                {/* Recepción desde */}
+                {/* Recepción desde / hasta */}
                 <th className="px-2 py-1.5">
-                  <input type="date" value={filtros.fechaDesde} onChange={e => setFiltro('fechaDesde', e.target.value)} className={filterInputCls} />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={filtros.fechaDesde}
+                      onChange={e => setFiltro('fechaDesde', e.target.value)}
+                      className={filterInputCls}
+                    />
+
+                    <input
+                      type="date"
+                      value={filtros.fechaHasta}
+                      onChange={e => setFiltro('fechaHasta', e.target.value)}
+                      className={filterInputCls}
+                    />
+                  </div>
                 </th>
                 {/* Acciones — sin filtro */}
                 <th className="px-2 py-1.5" />
@@ -529,8 +564,7 @@ export default function BandejaAreaPage() {
                 return (
                   <tr
                     key={exp.id}
-                    className="cursor-pointer hover:bg-[#f0f0f0] transition-colors"
-                    onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
+                    className="transition-colors"
                   >
                     <td className="w-10 py-3 px-2 text-center">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto bg-[#e8e8e8]">
@@ -560,7 +594,7 @@ export default function BandejaAreaPage() {
                     </td>
                     <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                       <button
-                        className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
                         onClick={e => abrirMenu(e, exp.id)}
                       >
                         <Icon name="more_vert" size={18} />

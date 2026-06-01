@@ -57,7 +57,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
   {
     id: 'C-0021/2026',
     area: 'CIVIL',
-    tipo: 'OFICIO',
+    tipo: 'COBRO_CANON',
     estado: 'EN ANÁLISIS',
     caratula: 'JUZ. FED. CIVIL N°2 — OFICIO S/ MARTINEZ PAULA SILVANA',
     numero_ee_gde: 'EE-2026-00589-APN-DGJYA',

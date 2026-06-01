@@ -5,7 +5,6 @@ import { useExpedientesStore } from '../../../store/expedientes.store'
 import { useUIStore } from '../../../store/ui.store'
 import { Modal } from '../../../components/ui/Modal'
 import { formatFecha } from '../../../utils/format'
-import { getNombreCompleto } from '../../../data/usuarios'
 import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia } from '../../../data/estadosProcesales'
 import Icon from '../../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -296,7 +295,7 @@ function TareaDetailPanel({
               <div className="relative">
                 <input
                   type="date"
-                  className="field-input w-full text-xs pl-6 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute"
+                  className="field-input w-full text-xs [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   value={cambiosLocales.fecha ?? tarea.fecha ?? HOY}
                   onChange={e => setCambiosLocales(p => ({ ...p, fecha: e.target.value }))}
                 />
@@ -309,7 +308,7 @@ function TareaDetailPanel({
               <div className="relative">
                 <input
                   type="date"
-                  className={`field-input w-full text-xs pl-6 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute`}
+                  className="field-input w-full text-xs [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   value={cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento ?? ''}
                   onChange={e => setCambiosLocales(p => ({ ...p, fechaVencimiento: e.target.value || null }))}
                 />
@@ -328,6 +327,31 @@ function TareaDetailPanel({
               </div>
             </div>
           </div>
+
+          {/* Alerta de vencimiento */}
+          {(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
+            <div>
+              <label className="text-[9px] text-[#4a6a84] font-black uppercase tracking-widest text-on-surface-variant block mb-1.5">
+                Aviso previo al vencimiento
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  className="field-input w-20 text-xs text-center"
+                  placeholder="—"
+                  value={cambiosLocales.diasAlerta ?? tarea.diasAlerta ?? ''}
+                  onChange={e => setCambiosLocales(p => ({
+                    ...p,
+                    diasAlerta: e.target.value ? Number(e.target.value) : null,
+                    alertaActiva: !!e.target.value,
+                  }))}
+                />
+                <span className="text-xs text-on-surface-variant">días antes</span>
+              </div>
+            </div>
+          )}
 
           {/* Documento GDE */}
           <div>
@@ -606,7 +630,6 @@ function TareasBlock({
   total,
   tareaSeleccionada,
   setTareaSeleccionada,
-  onAvanzar,
 }: {
   exp: Expediente
   tareas: Tarea[]
@@ -615,7 +638,6 @@ function TareasBlock({
   total: number
   tareaSeleccionada: Tarea | null
   setTareaSeleccionada: (t: Tarea) => void
-  onAvanzar: () => void
 }) {
   const [mostrarTodas, setMostrarTodas] = useState(false)
   const siguienteEstado = estadoProcesal.siguiente
@@ -646,19 +668,12 @@ function TareasBlock({
           <span className="text-[10px] font-bold text-[#4a6a84]">{progresoPct}%</span>
         </div>
 
-        <button
-          onClick={onAvanzar}
-          disabled={!puedeAvanzar}
-          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0 ${
-            puedeAvanzar
-              ? 'bg-[#1b3a57] text-white hover:opacity-90 animate-pulse'
-              : 'bg-[#e8e8e8] text-[#7a9ab4] cursor-not-allowed'
-          }`}
-          title={!puedeAvanzar ? `Faltan ${total - completadas} tarea(s)` : `Avanzar a ${siguienteEstado?.label}`}
-        >
-          Avanzar
-          <Icon name="arrow_forward" size={14} />
-        </button>
+        {puedeAvanzar && (
+          <p className="text-[10px] text-green-700 font-semibold flex items-center gap-1 flex-shrink-0">
+             <Icon name="check_circle" size={12} />
+            Listo para avanzar al siguiente estado
+          </p>
+        )}
       </div>
 
       {/* Lista tareas */}
@@ -701,14 +716,13 @@ export function TimelineTab({ exp }: Props) {
 
   const {
     tareasMap, inicializarTareas, actualizarTarea,
-    agregarActividad, actualizarEstado, actualizarExpediente,
+    agregarActividad,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
   const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
   const [modalNuevaActividad, setModalNuevaActividad] = useState(false)
-  const [modalAvanzarEstado, setModalAvanzarEstado] = useState(false)
   const [formAct, setFormAct] = useState(BLANK_ACT)
   const [adjuntoNuevaAct, setAdjuntoNuevaAct] = useState<File | null>(null)
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
@@ -726,9 +740,6 @@ export function TimelineTab({ exp }: Props) {
   const estadoCodigo = exp.estadoProcesal ?? 'INICIO'
   const estadoProcesal = getEstadoProcesal(exp.tipo, estadoCodigo)
   const key = `${exp.id}__${estadoCodigo}`
-  const siguienteEstado = estadoProcesal?.siguiente
-    ? getEstadoProcesal(exp.tipo, estadoProcesal.siguiente)
-    : undefined
   const esEstadoInicial = estadoCodigo === 'ASIGNADO'
 
   useEffect(() => {
@@ -790,29 +801,6 @@ export function TimelineTab({ exp }: Props) {
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
     toast.success('Tarea actualizada.')
     setTareaSeleccionada(null)
-  }
-
-  function confirmarAvance() {
-    if (!estadoProcesal || !siguienteEstado) return
-    const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
-    agregarActividad(exp.id, {
-      id: `ACT_${Date.now()}`,
-      expediente_id: exp.id,
-      tipo: 'MOVIMIENTO',
-      titulo: `Cambio de estado: ${estadoProcesal.label} → ${siguienteEstado.label}`,
-      descripcion: `Estado avanzado por ${nombre}.`,
-      fecha: HOY,
-      activo: true,
-      subitems: [],
-      estadoExpediente: siguienteEstado.codigo,
-      doc_gde: null,
-      creado_por: usuarioActivo?.id,
-      tareasSnapshot: [...tareas],
-    })
-    actualizarEstado(exp.id, siguienteEstado.codigo)
-    actualizarExpediente(exp.id, { estadoProcesal: siguienteEstado.codigo })
-    setModalAvanzarEstado(false)
-    toast.success(`Estado actualizado a ${siguienteEstado.label}`)
   }
 
   function agregarNuevaActividad() {
@@ -966,7 +954,7 @@ export function TimelineTab({ exp }: Props) {
 
         {/* Buscador */}
         <div className="relative mt-3">
-          <Icon name="search" size={16} />
+          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
           <input
             className="field-input pl-9 w-full text-sm"
             placeholder="Buscar actividad..."
@@ -1042,7 +1030,6 @@ export function TimelineTab({ exp }: Props) {
                 setTareaSeleccionada(t)
                 setCambiosLocales({})
               }}
-              onAvanzar={() => setModalAvanzarEstado(true)}
             />
           )}
 
@@ -1060,41 +1047,6 @@ export function TimelineTab({ exp }: Props) {
           />
         )}
       </div>
-
-      {/* ── Modal avanzar estado ── */}
-      <Modal
-        open={modalAvanzarEstado}
-        onClose={() => setModalAvanzarEstado(false)}
-        titulo="Confirmar avance de estado"
-        size="sm"
-        footer={
-          <>
-            <button onClick={() => setModalAvanzarEstado(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
-              Cancelar
-            </button>
-            <button onClick={confirmarAvance} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity">
-              Confirmar avance
-            </button>
-          </>
-        }
-      >
-        <div className="text-center py-2">
-          <div className="w-12 h-12 rounded-full bg-[#C4DFE8] flex items-center justify-center mx-auto mb-4">
-            <Icon name="arrow_forward" size={24} />
-          </div>
-          <p className="text-sm text-[#1b3a57] mb-3">
-            Estás por cambiar el estado de{' '}
-            <strong>{estadoProcesal?.label}</strong> a{' '}
-            <strong>{siguienteEstado?.label}</strong>.
-          </p>
-          <div className="bg-green-50 rounded-lg p-3 text-xs text-green-700 font-semibold mb-3">
-            ✓ {total} de {total} tareas completadas
-          </div>
-          <p className="text-xs text-[#4a6a84] italic">
-            Esta acción quedará registrada en el timeline del expediente.
-          </p>
-        </div>
-      </Modal>
 
       {/* ── Modal nueva actividad ── */}
       <Modal
