@@ -1,3 +1,17 @@
+export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION'
+
+export interface Notificacion {
+  id: string
+  tipo: TipoNotificacion
+  expedienteId: string
+  tipoGestion: string
+  caratula: string
+  numeroCausa: string | null
+  leida: boolean
+  fecha: string
+  destinatarioId: string
+}
+
 export type Area = 'CIVIL' | 'LABORAL' | 'PENAL'
 
 export type Canal = 'EE_GDE' | 'MEMO_GDE' | 'OTROS'

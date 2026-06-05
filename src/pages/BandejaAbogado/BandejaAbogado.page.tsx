@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { TIPOS_GESTION } from '../../data/catalogos'
+import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar } from '../../data/usuarios'
 
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
@@ -14,6 +15,10 @@ import { getAlertaExpediente } from '../../utils/alertas'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
+
+// ─── Constants ─────────────────────────────────────────────────────────────────
+
+const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'CERRADO', 'CUMPLIDO', 'COMPLETADA'] as const
 
 // ─── Types & helpers ───────────────────────────────────────────────────────────
 
@@ -49,18 +54,43 @@ const filterInputCls =
 
 export default function BandejaAbogadoPage() {
   const navigate = useNavigate()
-  const { expedientes, actualizarExpediente, tareasMap } = useExpedientesStore()
+  const { expedientes, actualizarExpediente, asignarAbogado, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
-  const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false, soloAlerta: false })
+  const rolSistema  = usuarioActivo?.rolSistema
+  const esCoordi    = rolSistema === 'COORDINADOR'
+  const esReferente = rolSistema === 'REFERENTE'
+  const esAbogado   = !esCoordi && !esReferente
+
+  const filtroInicial = useMemo(() => ({
+    buscar:     '',
+    area:       esCoordi ? (usuarioActivo?.areas[0] ?? '') : '',
+    tipo:       '',
+    estado:     '',
+    letrado:    esAbogado ? (usuarioActivo?.id ?? '') : '',
+    fechaDesde: '',
+    fechaHasta: '',
+    soloUrgentes: false,
+    soloAlerta:   false,
+  }), [usuarioActivo?.id, esCoordi, esAbogado])
+
+  const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>('activos')
+  const [filtros,        setFiltros]        = useState(filtroInicial)
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
   const [modalAgrupar,   setModalAgrupar]   = useState<string | null>(null)
   const [inputCausa,     setInputCausa]     = useState('')
   const [expandedCausas, setExpandedCausas] = useState<Set<string>>(new Set())
-  const [expADesagrupar, setExpADesagrupar] = useState<Expediente | null>(null)
+  const [expADesagrupar,  setExpADesagrupar]  = useState<Expediente | null>(null)
+  const [modalReasignar,  setModalReasignar]  = useState<Expediente | null>(null)
+  const [nuevoAbogadoId,  setNuevoAbogadoId]  = useState('')
 
-  // Close menu on outside click
+  // Resetear filtros cuando cambia el usuario activo
+  useEffect(() => {
+    setFiltros(filtroInicial)
+  }, [usuarioActivo?.id])
+
+  // Cerrar menú contextual al click fuera
   useEffect(() => {
     if (!menuAbierto) return
     const h = () => setMenuAbierto(null)
@@ -70,21 +100,24 @@ export default function BandejaAbogadoPage() {
 
   // ── Computed ──────────────────────────────────────────────────────────────────
 
-  const verTodos =
-    usuarioActivo?.rolSistema === 'COORDINADOR' ||
-    usuarioActivo?.rolSistema === 'REFERENTE'
-
-  const misBandeja = useMemo(() =>
-    expedientes.filter(e => verTodos || e.abogado_id === usuarioActivo?.id),
-    [expedientes, usuarioActivo, verTodos]
-  )
+  const poolBase = useMemo(() => {
+    if (esReferente) return expedientes
+    if (esCoordi) {
+      const misAreas = usuarioActivo?.areas ?? []
+      return expedientes.filter(e => misAreas.includes(e.area as Area))
+    }
+    return expedientes.filter(e => e.abogado_id === usuarioActivo?.id)
+  }, [expedientes, usuarioActivo, esCoordi, esReferente])
 
   const expedientesFiltrados = useMemo(() => {
-    return misBandeja.filter(e => {
-      if (e.estado === 'CUMPLIDO' || e.estado === 'ARCHIVADO' || e.estado === 'ARCHIVADA') return false
-      if (filtros.area && e.area !== filtros.area) return false
-      if (filtros.tipo && e.tipo !== filtros.tipo) return false
-      if (filtros.estado && e.estado !== filtros.estado) return false
+    return poolBase.filter(e => {
+      const esCerrado = ESTADOS_CERRADO.includes(e.estado as typeof ESTADOS_CERRADO[number])
+      if (tabEstado === 'activos'     &&  esCerrado) return false
+      if (tabEstado === 'archivados'  && !esCerrado) return false
+      if (filtros.letrado   && e.abogado_id !== filtros.letrado)   return false
+      if (filtros.area      && e.area !== filtros.area)             return false
+      if (filtros.tipo      && e.tipo !== filtros.tipo)             return false
+      if (filtros.estado    && e.estado !== filtros.estado)         return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
@@ -99,7 +132,7 @@ export default function BandejaAbogadoPage() {
       }
       return true
     })
-  }, [misBandeja, filtros])
+  }, [poolBase, filtros, tareasMap])
 
   const items = useMemo(() => construirItems(expedientesFiltrados), [expedientesFiltrados])
 
@@ -108,14 +141,14 @@ export default function BandejaAbogadoPage() {
   , [expedientesFiltrados, tareasMap])
 
   const tiposUnicos = useMemo(() =>
-    [...new Set(misBandeja.map(e => e.tipo))]
+    [...new Set(poolBase.map(e => e.tipo))]
       .map(code => ({ code, label: TIPO_LABEL[code] ?? code }))
       .sort((a, b) => a.label.localeCompare(b.label)),
-    [misBandeja]
+    [poolBase]
   )
   const estadosUnicos = useMemo(() =>
-    [...new Set(misBandeja.map(e => e.estado))].sort(),
-    [misBandeja]
+    [...new Set(poolBase.map(e => e.estado))].sort(),
+    [poolBase]
   )
 
   const causasExistentes = useMemo(() => {
@@ -130,18 +163,29 @@ export default function BandejaAbogadoPage() {
   }, [expedientes, inputCausa])
 
   const activosCount = useMemo(() =>
-    expedientesFiltrados.filter(e => e.estado !== 'ARCHIVADO' && e.estado !== 'ARCHIVADA').length,
-    [expedientesFiltrados]
+    poolBase.filter(e => !ESTADOS_CERRADO.includes(e.estado as typeof ESTADOS_CERRADO[number])).length,
+    [poolBase]
   )
+
+  const mostrarLetrado = esCoordi || esReferente
+
+  const abogadosDisponibles = useMemo(() =>
+    USUARIOS.filter(u =>
+      u.rolSistema === 'ABOGADO' &&
+      (esCoordi || esReferente
+        ? (usuarioActivo?.areas ?? []).some(a => u.areas.includes(a as Area))
+        : true)
+    ).sort((a, b) => a.apellido.localeCompare(b.apellido))
+  , [usuarioActivo, esCoordi, esReferente])
 
   // ── Actions ───────────────────────────────────────────────────────────────────
 
-  function setFiltro(key: string, val: string) {
+  function setFiltro(key: string, val: string | boolean) {
     setFiltros(prev => ({ ...prev, [key]: val }))
   }
 
   function limpiarFiltros() {
-    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false, soloAlerta: false })
+    setFiltros(filtroInicial)
   }
 
   function expandAll() {
@@ -157,11 +201,19 @@ export default function BandejaAbogadoPage() {
     e.stopPropagation()
     if (menuAbierto === expId) { setMenuAbierto(null); return }
     const rect = e.currentTarget.getBoundingClientRect()
-    const menuHeight = 120 // altura estimada del menú
+    const menuHeight = 120
     const spaceBelow = window.innerHeight - rect.bottom
     const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom + 4
     setMenuPos({ top, right: window.innerWidth - rect.right })
     setMenuAbierto(expId)
+  }
+
+  function confirmarReasignar() {
+    if (!modalReasignar || !nuevoAbogadoId) return
+    asignarAbogado(modalReasignar.id, nuevoAbogadoId)
+    toast.success('Actuación reasignada.')
+    setModalReasignar(null)
+    setNuevoAbogadoId('')
   }
 
   function confirmarDesagrupar() {
@@ -196,6 +248,22 @@ export default function BandejaAbogadoPage() {
           <Icon name="open_in_new" size={16} />
           Visualizar
         </button>
+        {puedeReasignar(usuarioActivo) && (
+          <>
+            <div className="my-1 border-t border-[rgba(0,0,0,0.06)]" />
+            <button
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+              onClick={() => {
+                setModalReasignar(exp)
+                setNuevoAbogadoId(exp.abogado_id ?? '')
+                setMenuAbierto(null)
+              }}
+            >
+              <Icon name="person_search" size={16} />
+              Reasignar
+            </button>
+          </>
+        )}
         {sinCausa ? (
           <button
             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
@@ -217,139 +285,155 @@ export default function BandejaAbogadoPage() {
     )
   }
 
-  // Shared expediente row (used in both causa child rows and sueltos)
-  function renderExpRow(exp: Expediente, idx: number, arr: Expediente[]) {
+  function renderExpRow(exp: Expediente, idx: number, arr: Expediente[], isSuelto: boolean = false) {
     const isLast = idx === arr.length - 1
     const tieneCausa =
       exp.numero_causa &&
       exp.numero_causa.trim() !== '' &&
       exp.numero_causa.toUpperCase() !== 'SS SOFSE'
+    const letrado = exp.abogado_id ? getUsuarioById(exp.abogado_id) : undefined
+
     return (
-        <tr
-          key={exp.id}
-          className={`animate-slide-down border-l-4 ${
-            exp.es_principal
-              ? 'border-emerald-400/60 bg-green-50/60'
-              : tieneCausa
-                ? 'border-[rgba(27,58,87,0.10)]'
-                : 'border-transparent'
-          }`}
-          style={exp.es_principal ? {} : { background: '#fafcfd' }}
-        >
-          {/* Connector */}
-          <td className="w-10 py-3 px-2 relative">
-            {tieneCausa ? (
-              <div className="relative min-h-[56px]">
-
-                {/* Línea vertical */}
-                <div
-                  className={`absolute left-3 w-px bg-[rgba(0,0,0,0.08)] ${
-                    isLast
-                      ? 'top-0 h-1/2'
-                      : 'top-0 bottom-0'
-                  }`}
-                />
-
-                {/* Línea horizontal */}
-                <div className="absolute left-3 top-1/2 w-3 h-px bg-[rgba(0,0,0,0.08)]" />
-
-                {/* Icono */}
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-                  <Icon name="description" size={16} />
-                </div>
-
+      <tr
+        key={exp.id}
+        className={`animate-slide-down border-l-4 ${
+          exp.es_principal
+            ? 'border-emerald-400/60 bg-green-50/60'
+            : tieneCausa
+              ? 'border-[rgba(27,58,87,0.10)]'
+              : 'border-transparent'
+        }`}
+        style={exp.es_principal ? {} : { background: '#fafcfd' }}
+      >
+        {/* Connector */}
+        <td className="w-10 py-3 px-2 relative">
+          {tieneCausa ? (
+            <div className="relative min-h-[56px]">
+              <div className={`absolute left-3 w-px bg-[rgba(0,0,0,0.08)] ${isLast ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} />
+              <div className="absolute left-3 top-1/2 w-3 h-px bg-[rgba(0,0,0,0.08)]" />
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
+                <Icon name="description" size={16} />
               </div>
-            ) : (
-              <div className="flex items-center justify-center">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#f0f7f8] text-[#4a6a84]">
-                  <Icon name="description" size={18} />
-                </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#f0f7f8] text-[#4a6a84]">
+                <Icon name="description" size={18} />
               </div>
-            )}
-          </td>
-          {/* N° + Principal badge + Por vencer */}
-          <td className="py-3 pl-2 pr-3">
-            <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
-            {exp.es_principal && (
-              <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 w-fit bg-green-100 text-green-700 border border-green-200/60">
-                Principal · PJN
-              </span>
-            )}
-            {(() => {
-              const alerta = getAlertaExpediente(exp.id, tareasMap)
-              if (!alerta.activa) return null
-              const tooltip = alerta.nombreTarea
-                ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — ${formatFecha(alerta.fechaVencimiento)}` : ''}`
-                : 'Tarea por vencer'
-              return (
-                <div
-                  title={tooltip}
-                  className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a] cursor-default"
-                >
-                  <Icon name="warning" size={10} className="text-[#d97706]" />
-                  <span className="text-[9px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
-                </div>
-              )
-            })()}
-            {exp.es_urgente && (
-              <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]">
-                <Icon name="warning" size={10} className="text-[#b91c1c]" />
-                <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Urgente</span>
+            </div>
+          )}
+        </td>
+        {/* N° + badges */}
+        <td className="py-3 pl-2 pr-3">
+          <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
+          {isSuelto && (
+            <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#4a6a84]">
+              <Icon name="folder_off" size={11} />
+              Sin causa
+            </span>
+          )}
+          {exp.es_principal && (
+            <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 w-fit bg-green-100 text-green-700 border border-green-200/60">
+              Principal · PJN
+            </span>
+          )}
+          {(() => {
+            const alerta = getAlertaExpediente(exp.id, tareasMap)
+            if (!alerta.activa) return null
+            const tooltip = alerta.nombreTarea
+              ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — ${formatFecha(alerta.fechaVencimiento)}` : ''}`
+              : 'Tarea por vencer'
+            return (
+              <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a] cursor-default">
+                <Icon name="warning" size={10} className="text-[#d97706]" />
+                <span className="text-[9px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
               </div>
-            )}
-          </td>
-          {/* Carátula */}
-          <td className="py-3 px-3 max-w-xs">
-            <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
-            {exp.numero_causa && (
-              <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{exp.numero_causa}</p>
-            )}
-          </td>
-          {/* Área */}
-          <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
-          {/* Tipo */}
+            )
+          })()}
+          {exp.es_urgente && (
+            <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]">
+              <Icon name="warning" size={10} className="text-[#b91c1c]" />
+              <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Urgente</span>
+            </div>
+          )}
+        </td>
+        {/* Carátula */}
+        <td className="py-3 px-3 max-w-xs">
+          <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
+          {exp.numero_causa && (
+            <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{exp.numero_causa}</p>
+          )}
+        </td>
+        {/* Área */}
+        <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
+        {/* Tipo */}
+        <td className="py-3 px-3">
+          <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
+        </td>
+        {/* Letrado (condicional) */}
+        {mostrarLetrado && (
           <td className="py-3 px-3">
-            <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
+            <span className="text-xs text-[#4a6a84]">
+              {letrado ? getNombreCompleto(letrado) : '—'}
+            </span>
           </td>
-          {/* Estado */}
-          <td className="py-3 px-3"><EstadoBadge code={exp.estado} label={exp.estado} /></td>
-          {/* Recepción */}
-          <td className="py-3 px-3 whitespace-nowrap">
-            <span className="text-xs text-[#4a6a84]">{formatFecha(exp.fecha_recepcion)}</span>
-          </td>
-          {/* Menú */}
-          <td className="py-3 px-3 text-center">
-            <button
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
-              onClick={e => abrirMenu(e, exp.id)}
-            >
-              <Icon name="more_vert" size={18} />
-            </button>
-            {menuAbierto === exp.id && renderMenu(exp)}
-          </td>
-        </tr>
-      )
-    }
+        )}
+        {/* Estado */}
+        <td className="py-3 px-3"><EstadoBadge code={exp.estado} label={exp.estado} /></td>
+        {/* Recepción */}
+        <td className="py-3 px-3 whitespace-nowrap">
+          <span className="text-xs text-[#4a6a84]">{formatFecha(exp.fecha_recepcion)}</span>
+        </td>
+        {/* Menú */}
+        <td className="py-3 px-3 text-center">
+          <button
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
+            onClick={e => abrirMenu(e, exp.id)}
+          >
+            <Icon name="more_vert" size={18} />
+          </button>
+          {menuAbierto === exp.id && renderMenu(exp)}
+        </td>
+      </tr>
+    )
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────────
+
+  const colSpanTotal = mostrarLetrado ? 9 : 8
 
   return (
     <div className="p-6 space-y-4 max-w-screen-xl">
 
       {/* HEADER */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Mis Actuaciones</h1>
+          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Actuaciones</h1>
           <p className="text-sm text-[#4a6a84] mt-1">
-            Hola, {usuarioActivo?.nombre ?? ''}. Tenés{' '}
+            Hola, {usuarioActivo?.nombre ?? ''}. Gestionando{' '}
             <span className="font-semibold text-[#1b3a57]">{activosCount}</span>{' '}
             actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
           </p>
         </div>
+        <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1 self-start">
+          {(['activos', 'archivados'] as const).map(val => (
+            <button
+              key={val}
+              onClick={() => setTabEstado(val)}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
+                tabEstado === val
+                  ? 'bg-white text-[#1b3a57] shadow-sm'
+                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}
+            >
+              {val === 'activos' ? 'Activos' : 'Archivados'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* TABLA */}
-      {misBandeja.length === 0 ? (
+      {poolBase.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
           <Icon name="inbox" size={48} />
           <p className="mt-4 text-[#4a6a84] text-sm">No tenés expedientes asignados.</p>
@@ -396,9 +480,7 @@ export default function BandejaAbogadoPage() {
                 Por vencer
                 {contadorAlerta > 0 && (
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                    filtros.soloAlerta
-                      ? 'bg-[#fde68a] text-[#d97706]'
-                      : 'bg-[#e8e8e8] text-[#4a6a84]'
+                    filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#e8e8e8] text-[#4a6a84]'
                   }`}>
                     {contadorAlerta}
                   </span>
@@ -412,7 +494,6 @@ export default function BandejaAbogadoPage() {
                 <Icon name="filter_alt_off" size={14} />
                 Limpiar filtros
               </button>
-
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -425,6 +506,9 @@ export default function BandejaAbogadoPage() {
                   <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Carátula</th>
                   <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Área</th>
                   <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Tipo</th>
+                  {mostrarLetrado && (
+                    <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Letrado</th>
+                  )}
                   <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Estado</th>
                   <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Recepción</th>
                   <th className="w-16 px-3 py-2.5" />
@@ -432,17 +516,13 @@ export default function BandejaAbogadoPage() {
 
                 {/* Fila 2: inputs de filtro */}
                 <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
-                  {/* icono — sin filtro */}
                   <th className="px-2 py-1.5" />
-                  {/* N° Causa / Exp — buscar */}
                   <th className="px-2 py-1.5">
                     <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
                   </th>
-                  {/* Carátula — buscar (compartido) */}
                   <th className="px-2 py-1.5">
                     <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
                   </th>
-                  {/* Área */}
                   <th className="px-2 py-1.5">
                     <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
                       <option value="">Todas</option>
@@ -451,46 +531,41 @@ export default function BandejaAbogadoPage() {
                       <option value="PENAL">Penal</option>
                     </select>
                   </th>
-                  {/* Tipo */}
                   <th className="px-2 py-1.5">
                     <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} className={filterInputCls}>
                       <option value="">Todos</option>
                       {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
                     </select>
                   </th>
-                  {/* Estado */}
+                  {mostrarLetrado && (
+                    <th className="px-2 py-1.5">
+                      <select value={filtros.letrado} onChange={e => setFiltro('letrado', e.target.value)} className={filterInputCls}>
+                        <option value="">Todos</option>
+                        {abogadosDisponibles.map(u => (
+                          <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
+                        ))}
+                      </select>
+                    </th>
+                  )}
                   <th className="px-2 py-1.5">
                     <select value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} className={filterInputCls}>
                       <option value="">Todos</option>
                       {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
                     </select>
                   </th>
-                  {/* Recepción desde / hasta */}
                   <th className="px-2 py-1.5">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={filtros.fechaDesde}
-                        onChange={e => setFiltro('fechaDesde', e.target.value)}
-                        className={filterInputCls}
-                      />
-
-                      <input
-                        type="date"
-                        value={filtros.fechaHasta}
-                        onChange={e => setFiltro('fechaHasta', e.target.value)}
-                        className={filterInputCls}
-                      />
+                    <div className="flex items-center gap-1">
+                      <input type="date" value={filtros.fechaDesde} onChange={e => setFiltro('fechaDesde', e.target.value)} className={filterInputCls} />
+                      <input type="date" value={filtros.fechaHasta} onChange={e => setFiltro('fechaHasta', e.target.value)} className={filterInputCls} />
                     </div>
                   </th>
-                  {/* Acciones — sin filtro */}
                   <th className="px-2 py-1.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/20">
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-16 text-center text-[#4a6a84] text-sm">
+                    <td colSpan={colSpanTotal} className="py-16 text-center text-[#4a6a84] text-sm">
                       <Icon name="search_off" className="block mb-3" size={40} />
                       Sin resultados para los filtros aplicados.
                     </td>
@@ -513,19 +588,13 @@ export default function BandejaAbogadoPage() {
                             return next
                           })}
                         >
-                          {/* Icon */}
                           <td className="w-10 py-3 px-2 text-center">
-                            <div
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center mx-auto transition-all ${
-                                isExpanded
-                                  ? 'bg-[#1b3a57] text-white'
-                                  : 'bg-[#C4DFE8] text-[#1b3a57]'
-                              }`}
-                            >
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center mx-auto transition-all ${
+                              isExpanded ? 'bg-[#1b3a57] text-white' : 'bg-[#C4DFE8] text-[#1b3a57]'
+                            }`}>
                               <Icon name="chevron_right" size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                             </div>
                           </td>
-                          {/* N° Causa */}
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-1.5">
                               <Icon name="folder" size={14} className="text-[#1b3a57]" />
@@ -535,32 +604,27 @@ export default function BandejaAbogadoPage() {
                               {exps.length} actuación{exps.length !== 1 ? 'es' : ''} agrupada{exps.length !== 1 ? 's' : ''}
                             </p>
                           </td>
-                          {/* Carátula principal */}
                           <td className="py-3 px-3 max-w-[280px]">
                             <p className="text-sm text-[#1b3a57] line-clamp-2">{principal.caratula}</p>
                           </td>
-                          {/* Área */}
                           <td className="py-3 px-3">
                             <div className="flex flex-wrap gap-1">
                               {areasBadges.map(a => <AreaBadge key={a} area={a} />)}
                             </div>
                           </td>
-                          {/* Tipo */}
                           <td className="py-3 px-3">
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#1b3a57]">
                               <Icon name="link" size={11} />
                               Causa judicial
                             </span>
                           </td>
-                          {/* Estado */}
+                          {mostrarLetrado && <td className="py-3 px-3" />}
                           <td className="py-3 px-3">
                             <EstadoBadge code={principal.estado} label={principal.estado} />
                           </td>
-                          {/* Recepción */}
                           <td className="py-3 px-3 whitespace-nowrap">
                             <span className="text-xs text-[#4a6a84]">{formatFecha(principal.fecha_recepcion)}</span>
                           </td>
-                          {/* Ver Todo */}
                           <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                             <button
                               onClick={() => navigate(RUTAS.CAUSA(numeroCausa))}
@@ -570,11 +634,11 @@ export default function BandejaAbogadoPage() {
                             </button>
                           </td>
                         </tr>
-                          {isExpanded && exps.map((exp, idx, arr) => renderExpRow(exp, idx, arr))}
+                        {isExpanded && exps.map((exp, idx, arr) => renderExpRow(exp, idx, arr))}
                       </Fragment>
-                        )
-                    }
-                  return renderExpRow(item.exp, 0, [item.exp])
+                    )
+                  }
+                  return renderExpRow(item.exp, 0, [item.exp], true)
                 })}
               </tbody>
             </table>
@@ -619,7 +683,54 @@ export default function BandejaAbogadoPage() {
         )}
       </Modal>
 
-      {/* Modal: Desagrupar */}
+      {/* MODAL REASIGNAR */}
+      <Modal
+        open={!!modalReasignar}
+        onClose={() => { setModalReasignar(null); setNuevoAbogadoId('') }}
+        titulo="Reasignar actuación"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setModalReasignar(null); setNuevoAbogadoId('') }}>Cancelar</Button>
+            <Button
+              variant="primary"
+              disabled={!nuevoAbogadoId || nuevoAbogadoId === modalReasignar?.abogado_id}
+              onClick={confirmarReasignar}
+            >
+              Confirmar
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs font-bold font-mono text-[#1b3a57]">{modalReasignar?.id}</p>
+            <p className="text-xs text-[#4a6a84] line-clamp-2">{modalReasignar?.caratula}</p>
+          </div>
+          <div>
+            <label className="field-label">Letrado asignado</label>
+            <select
+              className="field-input w-full"
+              value={nuevoAbogadoId}
+              onChange={e => setNuevoAbogadoId(e.target.value)}
+            >
+              <option value="">Sin asignar</option>
+              {USUARIOS
+                .filter(u =>
+                  u.rolSistema === 'ABOGADO' &&
+                  modalReasignar?.area &&
+                  u.areas.includes(modalReasignar.area as Area)
+                )
+                .map(u => (
+                  <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
+                ))
+              }
+            </select>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL DESAGRUPAR */}
       <Modal
         open={!!expADesagrupar}
         onClose={() => setExpADesagrupar(null)}

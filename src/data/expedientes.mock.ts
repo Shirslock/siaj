@@ -232,6 +232,25 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
   },
 ]
 
+export const EXPEDIENTE_CERRADO_MOCK: Expediente = {
+  id: 'C-0020/2025',
+  tipo: 'OFICIO',
+  area: 'CIVIL',
+  estado: 'CERRADO',
+  caratula: 'OFICIO — JUZGADO CIVIL N°4 S/ INFORME',
+  numero_ee_gde: 'EX-2025-09876-APN-DGJYA',
+  numero_causa: null,
+  abogado_id: 'UR_004',
+  fecha_recepcion: '2025-11-10',
+  campos_mesa: {},
+  campos_abogado: {},
+  timeline: [],
+  intervinientes: [],
+  documentos: [],
+  vinculos: [],
+  observaciones: 'Oficio respondido y archivado.',
+}
+
 export const EXPEDIENTE_DETALLE: Expediente = {
   id: 'C-0023/2026',
   area: 'CIVIL',
