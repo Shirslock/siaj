@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
       <div className="bg-white rounded-2xl shadow-card">
         <div className="px-6 py-4 border-b border-[rgba(0,0,0,0.12)]">
-          <h2 className="font-headline font-semibold text-[#1b3a57]">Expedientes recientes</h2>
+          <h2 className="font-headline font-semibold text-[#1b3a57]">Actuaciones recientes</h2>
         </div>
         <TablaExpedientes expedientes={recientes} />
       </div>

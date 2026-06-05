@@ -242,6 +242,7 @@ export const EXPEDIENTE_DETALLE: Expediente = {
   numero_causa: '12345/2026',
   juzgado: 'JUZ_001',
   abogado_id: 'UR_004',
+  es_urgente: true,
   fecha_recepcion: '2026-05-10',
   campos_mesa: {
     numero_causa: '12345/2026',

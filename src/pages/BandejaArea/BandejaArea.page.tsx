@@ -182,14 +182,14 @@ export default function BandejaAreaPage() {
 
   function desagrupar(expId: string) {
     actualizarExpediente(expId, { numero_causa: null })
-    toast.info('Expediente desagrupado correctamente.')
+    toast.info('Actuación desagrupada correctamente.')
     setMenuAbierto(null)
   }
 
   function confirmarAgrupar() {
     if (!inputCausa.trim() || !modalAgrupar) return
     actualizarExpediente(modalAgrupar, { numero_causa: inputCausa.trim() })
-    toast.success('Expediente agrupado a la causa correctamente.')
+    toast.success('Actuación agrupada a la causa correctamente.')
     setModalAgrupar(null)
     setInputCausa('')
   }

@@ -62,6 +62,7 @@ npm run build      # build de producción
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
+| `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap)` — calcula alerta "Por vencer" de tareas. |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
 | `vercel.json` | Rewrites para SPA en Vercel. |
 | `deploy.sh` | Script de deploy para GH Pages. |
@@ -147,6 +148,9 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 - **Sin backend, sin AI, sin integración automática PJN/SIGEJ** (fuera de scope v1).
 - **Orden en AltaExpediente:** Canal → Área → Tipo (en ese orden).
 - **Estado inicial:** todos los expedientes arrancan en "ASIGNADO" al crearse.
+- **Terminología UI:** el término visible al usuario es siempre **"Actuación/es"** — nunca "Expediente/s". Los nombres de variables, tipos y rutas internas siguen usando `expediente` (no cambiar).
+- **`es_urgente`:** flag opcional en `Expediente`. Toggle en el header del detalle; filtro "Urgentes" en BandejaAbogado lo usa directamente.
+- **Badge "Por vencer":** se muestra en fila de BandejaAbogado y en el header del detalle cuando alguna tarea del expediente tiene `fecha_aviso <= hoy` y no está cumplida/no_procedente. Lógica en `src/utils/alertas.ts`.
 
 ---
 

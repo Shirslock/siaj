@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { formatFecha } from '../../utils/format'
 import { RUTAS } from '../../utils/routing'
+import { getAlertaExpediente } from '../../utils/alertas'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -51,38 +52,13 @@ export default function BandejaAbogadoPage() {
   const { expedientes, actualizarExpediente, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
-  const HOY = new Date().toISOString().split('T')[0]
-
-  function getAlertaExpediente(expId: string): { activa: boolean; fechaVencimiento?: string; nombreTarea?: string } {
-    const tareasConAlerta = Object.keys(tareasMap)
-      .filter(k => k.startsWith(`${expId}__`))
-      .flatMap(k => tareasMap[k] ?? [])
-      .filter(t =>
-        t.fecha_aviso &&
-        t.fecha_aviso <= HOY &&
-        t.estado !== 'cumplido' &&
-        t.estado !== 'no_procedente'
-      )
-      .sort((a, b) => {
-        if (!a.fechaVencimiento) return 1
-        if (!b.fechaVencimiento) return -1
-        return a.fechaVencimiento.localeCompare(b.fechaVencimiento)
-      })
-
-    if (tareasConAlerta.length === 0) return { activa: false }
-    return {
-      activa: true,
-      fechaVencimiento: tareasConAlerta[0].fechaVencimiento ?? undefined,
-      nombreTarea: tareasConAlerta[0].nombre,
-    }
-  }
-
   const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false, soloAlerta: false })
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
   const [modalAgrupar,   setModalAgrupar]   = useState<string | null>(null)
   const [inputCausa,     setInputCausa]     = useState('')
   const [expandedCausas, setExpandedCausas] = useState<Set<string>>(new Set())
+  const [expADesagrupar, setExpADesagrupar] = useState<Expediente | null>(null)
 
   // Close menu on outside click
   useEffect(() => {
@@ -111,13 +87,8 @@ export default function BandejaAbogadoPage() {
       if (filtros.estado && e.estado !== filtros.estado) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
-      if (filtros.soloUrgentes) {
-        const tieneVencimiento = e.campos_abogado?.plazo_respuesta || e.campos_mesa?.plazo_respuesta
-        if (!tieneVencimiento) return false
-        const dias = Math.ceil((new Date(String(tieneVencimiento)).getTime() - new Date().getTime()) / 86400000)
-        if (dias > 7) return false
-      }
-      if (filtros.soloAlerta && !getAlertaExpediente(e.id).activa) return false
+      if (filtros.soloUrgentes && !e.es_urgente) return false
+      if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap).activa) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         return (
@@ -133,7 +104,7 @@ export default function BandejaAbogadoPage() {
   const items = useMemo(() => construirItems(expedientesFiltrados), [expedientesFiltrados])
 
   const contadorAlerta = useMemo(() =>
-    expedientesFiltrados.filter(e => getAlertaExpediente(e.id).activa).length
+    expedientesFiltrados.filter(e => getAlertaExpediente(e.id, tareasMap).activa).length
   , [expedientesFiltrados, tareasMap])
 
   const tiposUnicos = useMemo(() =>
@@ -193,10 +164,17 @@ export default function BandejaAbogadoPage() {
     setMenuAbierto(expId)
   }
 
+  function confirmarDesagrupar() {
+    if (!expADesagrupar) return
+    actualizarExpediente(expADesagrupar.id, { numero_causa: null })
+    toast.success('Actuación desagrupada correctamente.')
+    setExpADesagrupar(null)
+  }
+
   function confirmarAgrupar() {
     if (!inputCausa.trim() || !modalAgrupar) return
     actualizarExpediente(modalAgrupar, { numero_causa: inputCausa.trim() })
-    toast.success('Expediente agrupado a la causa correctamente.')
+    toast.success('Actuación agrupada a la causa correctamente.')
     setModalAgrupar(null)
     setInputCausa('')
   }
@@ -229,11 +207,7 @@ export default function BandejaAbogadoPage() {
         ) : (
           <button
             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
-            onClick={() => {
-              actualizarExpediente(exp.id, { numero_causa: null })
-              toast.info('Expediente desagrupado correctamente.')
-              setMenuAbierto(null)
-            }}
+            onClick={() => { setExpADesagrupar(exp); setMenuAbierto(null) }}
           >
             <Icon name="link_off" size={16} />
             Desagrupar
@@ -302,7 +276,7 @@ export default function BandejaAbogadoPage() {
               </span>
             )}
             {(() => {
-              const alerta = getAlertaExpediente(exp.id)
+              const alerta = getAlertaExpediente(exp.id, tareasMap)
               if (!alerta.activa) return null
               const tooltip = alerta.nombreTarea
                 ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — ${formatFecha(alerta.fechaVencimiento)}` : ''}`
@@ -317,6 +291,12 @@ export default function BandejaAbogadoPage() {
                 </div>
               )
             })()}
+            {exp.es_urgente && (
+              <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]">
+                <Icon name="warning" size={10} className="text-[#b91c1c]" />
+                <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Urgente</span>
+              </div>
+            )}
           </td>
           {/* Carátula */}
           <td className="py-3 px-3 max-w-xs">
@@ -363,7 +343,7 @@ export default function BandejaAbogadoPage() {
           <p className="text-sm text-[#4a6a84] mt-1">
             Hola, {usuarioActivo?.nombre ?? ''}. Tenés{' '}
             <span className="font-semibold text-[#1b3a57]">{activosCount}</span>{' '}
-            expediente{activosCount !== 1 ? 's' : ''} activo{activosCount !== 1 ? 's' : ''}.
+            actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
           </p>
         </div>
       </div>
@@ -553,7 +533,7 @@ export default function BandejaAbogadoPage() {
                               <span className="font-mono text-xs font-bold text-[#1b3a57]">{numeroCausa}</span>
                             </div>
                             <p className="text-[10px] text-[#4a6a84] mt-0.5">
-                              {exps.length} exp. vinculado{exps.length !== 1 ? 's' : ''}
+                              {exps.length} actuación{exps.length !== 1 ? 'es' : ''} agrupada{exps.length !== 1 ? 's' : ''}
                             </p>
                           </td>
                           {/* Carátula principal */}
@@ -638,6 +618,37 @@ export default function BandejaAbogadoPage() {
             ))}
           </div>
         )}
+      </Modal>
+
+      {/* Modal: Desagrupar */}
+      <Modal
+        open={!!expADesagrupar}
+        onClose={() => setExpADesagrupar(null)}
+        titulo="Desagrupar actuación"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setExpADesagrupar(null)}>Cancelar</Button>
+            <Button variant="danger" onClick={confirmarDesagrupar}>Desagrupar</Button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          <p className="text-sm text-[#1b3a57]">¿Confirmás que querés desagrupar esta actuación de la causa?</p>
+          <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs font-bold text-[#1b3a57] font-mono">{expADesagrupar?.id}</p>
+            <p className="text-xs text-[#4a6a84] line-clamp-2">{expADesagrupar?.caratula}</p>
+            {expADesagrupar?.numero_causa && (
+              <p className="text-[11px] text-[#7a9ab4] flex items-center gap-1 mt-1">
+                <Icon name="folder" size={12} />
+                Causa: {expADesagrupar.numero_causa}
+              </p>
+            )}
+          </div>
+          <p className="text-xs text-[#7a9ab4]">
+            La actuación pasará a estar sin causa asignada. Esta acción se puede revertir agrupándola nuevamente.
+          </p>
+        </div>
       </Modal>
     </div>
   )

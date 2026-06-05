@@ -120,7 +120,7 @@ export default function AltaExpedientePage() {
               Mesa SACO
             </button>
             <span>›</span>
-            <span className="text-[#1b3a57]">Nuevo Expediente</span>
+            <span className="text-[#1b3a57]">Nueva Actuación</span>
           </nav>
           <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">
             Nuevo Ingreso de Expediente
@@ -235,7 +235,7 @@ export default function AltaExpedientePage() {
                 2
               </span>
               <div>
-                <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Detalles del Expediente</h2>
+                <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Detalles de la Actuación</h2>
                 {tipoSeleccionado && (
                   <p className="text-xs text-[#4a6a84]">{tipoSeleccionado.label}</p>
                 )}
@@ -328,7 +328,7 @@ export default function AltaExpedientePage() {
                 Documento GDE <span className="text-[#b91c1c] text-base">*</span>
               </h2>
             </div>
-            <p className="text-sm text-[#4a6a84] mb-5 ml-10">Adjuntá el PDF del expediente GDE.</p>
+            <p className="text-sm text-[#4a6a84] mb-5 ml-10">Adjuntá el PDF de la actuación GDE.</p>
 
             {!archivo ? (
               <div
@@ -388,7 +388,7 @@ export default function AltaExpedientePage() {
       <Modal
         open={modalRevision}
         onClose={() => setModalRevision(false)}
-        titulo="Revisión del expediente"
+        titulo="Revisión de la actuación"
         size="lg"
         footer={
           <>
@@ -401,7 +401,7 @@ export default function AltaExpedientePage() {
           </>
         }
       >
-        <p className="text-sm text-[#4a6a84] mb-1">Revisá los datos antes de registrar el expediente.</p>
+        <p className="text-sm text-[#4a6a84] mb-1">Revisá los datos antes de registrar la actuación.</p>
         <p className="text-sm text-[#4a6a84] mb-5">Una vez registrado será asignado automáticamente.</p>
 
         {/* ── Identificación ── */}

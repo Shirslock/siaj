@@ -17,6 +17,8 @@ import { DocumentosTab }     from './tabs/DocumentosTab'
 import { PrevisionTab }      from './tabs/PrevisionTab'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
+import { formatFecha } from '../../utils/format'
+import { getAlertaExpediente } from '../../utils/alertas'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
 type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio'
@@ -41,7 +43,7 @@ export default function DetalleExpedientePage() {
   const params = useParams()
   const expId = params['*'] ?? ''
 
-  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad } = useExpedientesStore()
+  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
@@ -89,7 +91,7 @@ export default function DetalleExpedientePage() {
       <div className="p-6">
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
           <Icon name="search_off" size={48} />
-          <p className="mt-4 text-[#1b3a57] font-medium">Expediente no encontrado</p>
+          <p className="mt-4 text-[#1b3a57] font-medium">Actuación no encontrada</p>
           <p className="text-sm text-[#4a6a84] mt-1 font-mono">{expId}</p>
           <Link to="/bandeja/abogado" className="inline-block mt-4 text-sm text-[#1b3a57] hover:underline">
             Volver a la bandeja
@@ -184,14 +186,14 @@ export default function DetalleExpedientePage() {
 
   function confirmarDesagrupar() {
     actualizarExpediente(exp!.id, { numero_causa: null })
-    toast.success('Expediente desagrupado de la causa.')
+    toast.success('Actuación desagrupada de la causa.')
     setAccion(null)
   }
 
   function confirmarReasignar() {
     if (!nuevoAbogado) { setAccion(null); return }
     asignarAbogado(exp!.id, nuevoAbogado)
-    toast.success('Expediente reasignado.')
+    toast.success('Actuación reasignada.')
     setAccion(null)
   }
 
@@ -220,6 +222,8 @@ export default function DetalleExpedientePage() {
   setAccion(null)
 }
 
+  const alerta = getAlertaExpediente(exp.id, tareasMap)
+
   const tabCounters: Partial<Record<Tab, number>> = {
     vinculos:       exp.vinculos.length,
     intervinientes: exp.intervinientes.length,
@@ -236,7 +240,7 @@ export default function DetalleExpedientePage() {
         <div className="flex items-center gap-1.5 text-xs text-[#4a6a84] mb-3">
           <Link to="/actuaciones" className="hover:text-[#1b3a57] transition-colors">Actuaciones</Link>
           <Icon name="chevron_right" size={14} />
-          <span className="text-[#1b3a57]">Expediente</span>
+          <span className="text-[#1b3a57]">Actuación</span>
         </div>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -245,6 +249,29 @@ export default function DetalleExpedientePage() {
               <span className="font-mono font-bold text-lg text-[#1b3a57]">{exp.id}</span>
               <AreaBadge area={exp.area} />
               <EstadoBadge code={exp.estado} label={exp.estado} />
+              {alerta.activa && (
+                <div
+                  title={alerta.nombreTarea ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — vence ${formatFecha(alerta.fechaVencimiento)}` : ''}` : 'Tarea por vencer'}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a]"
+                >
+                  <Icon name="schedule" size={11} className="text-[#d97706]" />
+                  <span className="text-[10px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
+                </div>
+              )}
+              <button
+                onClick={() => actualizarExpediente(exp.id, { es_urgente: !exp.es_urgente })}
+                title={exp.es_urgente ? 'Marcar como no urgente' : 'Marcar como urgente'}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                  exp.es_urgente
+                    ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
+                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:border-[#fca5a5] hover:text-[#b91c1c]'
+                }`}
+              >
+                <Icon name="warning" size={11} className={exp.es_urgente ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
+                <span className="text-[10px] font-black uppercase tracking-wide">
+                  {exp.es_urgente ? 'Urgente' : 'Marcar urgente'}
+                </span>
+              </button>
               {exp.numero_causa && (
                 <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-2 py-0.5 rounded-full font-mono">
                   {exp.numero_causa}
@@ -454,7 +481,7 @@ export default function DetalleExpedientePage() {
       <Modal
         open={accion === 'desagrupar'}
         onClose={() => setAccion(null)}
-        titulo="Desagrupar expediente"
+        titulo="Desagrupar actuación"
         size="sm"
         footer={
           <>
@@ -471,17 +498,17 @@ export default function DetalleExpedientePage() {
         }
       >
         <p className="text-sm text-[#1b3a57]">
-          Se desvinculará el expediente <span className="font-mono font-bold">{exp.id}</span> de la causa{' '}
+          Se desvinculará la actuación <span className="font-mono font-bold">{exp.id}</span> de la causa{' '}
           <span className="font-mono font-bold">{exp.numero_causa}</span>.
         </p>
-        <p className="text-xs text-[#4a6a84] mt-2">Esta acción no elimina los datos del expediente.</p>
+        <p className="text-xs text-[#4a6a84] mt-2">Esta acción no elimina los datos de la actuación.</p>
       </Modal>
 
       {/* Modal: Reasignar */}
       <Modal
         open={accion === 'reasignar'}
         onClose={() => setAccion(null)}
-        titulo="Reasignar expediente"
+        titulo="Reasignar actuación"
         size="sm"
         footer={
           <>

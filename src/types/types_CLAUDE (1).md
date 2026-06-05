@@ -21,7 +21,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `EstadoActividad` | PENDIENTE \| EN_CURSO \| COMPLETADA \| VENCIDA |
 | `EstadoTarea` | 'sin_estado' \| 'en_curso' \| 'cumplido' \| 'no_procedente' |
 | `UrgenciaTarea` | 'rojo' \| 'ambar' \| 'verde' \| 'gris' |
-| `Tarea` | Tarea estructurada de un estado procesal — incluye `fecha_aviso` para alertas de vencimiento |
+| `Tarea` | Tarea estructurada de un estado procesal — incluye `fecha_aviso` y `fechaVencimiento` para alertas |
 | `EstadoProcesal` | Estado con su lista de tareas y siguiente estado |
 | `CatalogoItem` | { id, label } — base para todos los catálogos |
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
@@ -38,6 +38,11 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `ItemQueue` | Entrada en la cola de Mesa SIAJ |
 | `FiltrosExpediente` | Estado de filtros de las bandejas |
 | `AccesosRol` | Permisos y ruta de inicio por rol |
+
+## Campos destacados de Expediente
+
+- `es_urgente?: boolean` — marcado manualmente desde el detalle; usado por filtro "Urgentes" en BandejaAbogado
+- `es_principal?: boolean` — badge verde "Principal · PJN" en la fila de bandeja
 
 ## Cómo agregar un tipo nuevo
 

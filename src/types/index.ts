@@ -89,6 +89,7 @@ export interface Expediente {
   documentos: Documento[]
   observaciones?: string
   es_principal?: boolean
+  es_urgente?: boolean
   estadoProcesal?: string
 }
 

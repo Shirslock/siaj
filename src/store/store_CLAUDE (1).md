@@ -96,4 +96,5 @@ const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 **Campos de alerta en `Tarea`:**
 - `fecha_aviso?: string` — fecha ISO desde la cual mostrar el badge "Por vencer"
 - `fechaVencimiento?: string` — fecha límite real de la tarea (se muestra en el tooltip)
-- La alerta activa se calcula en `BandejaAbogado`: `fecha_aviso <= HOY && estado !== 'cumplido' && estado !== 'no_procedente'`
+- La alerta activa se calcula con `getAlertaExpediente(expId, tareasMap)` de `src/utils/alertas.ts`
+- Usada en BandejaAbogado (fila + filtro) y en DetalleExpediente (badge en header)

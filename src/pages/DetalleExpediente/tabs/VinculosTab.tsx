@@ -114,7 +114,7 @@ export function VinculosTab({ exp }: Props) {
       <Modal
         open={modal}
         onClose={() => setModal(false)}
-        titulo="Vincular expediente"
+        titulo="Vincular actuación"
         size="lg"
         footer={
           <>

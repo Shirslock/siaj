@@ -1004,7 +1004,7 @@ export function TimelineTab({ exp }: Props) {
           {esEstadoInicial && filtroTab !== 'tareas' && (
             <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 text-center mb-4">
               <Icon name="inbox" className="block mb-2" size={32} />
-              <p className="text-sm font-semibold text-[#1b3a57] mb-1">Expediente pendiente de inicio</p>
+              <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
               <p className="text-xs text-[#4a6a84]">
                 Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
               </p>

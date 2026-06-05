@@ -158,7 +158,7 @@ export function DatosTab({ exp }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-[#1b3a57]">Datos del expediente</p>
+        <p className="text-sm font-semibold text-[#1b3a57]">Datos de la actuación</p>
         {!edit ? (
           <button
             onClick={startEdit}
@@ -189,7 +189,7 @@ export function DatosTab({ exp }: Props) {
       <dl>
 
         {/* ── SECCIÓN 1: Expediente ── */}
-        <Seccion titulo="Expediente" />
+        <Seccion titulo="Actuación" />
         <FieldRow label="N° Interno" edit={false}
           value={<span className="font-mono font-bold text-[#1b3a57]">{exp.id}</span>}
         />

@@ -108,7 +108,7 @@ export default function MesaSacoPage() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-2">
             <Icon name="assignment" size={20} className="text-[#1b3a57]" />
-            <span className="font-semibold text-[#1b3a57] text-sm">Expedientes Asignados</span>
+            <span className="font-semibold text-[#1b3a57] text-sm">Actuaciones Asignadas</span>
           </div>
           <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-3 py-1 rounded-full border border-[rgba(0,0,0,0.12)]/80">
             {expedientesFiltrados.length} expedientes

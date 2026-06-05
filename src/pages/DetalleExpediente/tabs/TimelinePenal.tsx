@@ -680,7 +680,7 @@ export function TimelinePenal({ exp }: Props) {
         {etapaCodigo === 'ASIGNADO' && (
           <div className="px-5 py-10 text-center">
             <Icon name="inbox" size={32} className="text-[#7a9ab4] mx-auto mb-3 block" />
-            <p className="text-sm font-semibold text-[#1b3a57] mb-1">Expediente pendiente de inicio</p>
+            <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
             <p className="text-xs text-[#4a6a84]">
               Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
             </p>
@@ -809,7 +809,7 @@ export function TimelinePenal({ exp }: Props) {
       <Modal
         open={modalCambiarEstado}
         onClose={() => { setModalCambiarEstado(false); setEtapaDestino(null) }}
-        titulo="Cambiar estado del expediente"
+        titulo="Cambiar estado de la actuación"
         size="sm"
         footer={
           <>
