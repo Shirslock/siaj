@@ -36,11 +36,44 @@ src/pages/NombrePagina/
 | Tab | Archivo | Estado |
 |-----|---------|--------|
 | Datos | DatosTab.tsx | ✓ edición completa |
-| Timeline | TimelineTab.tsx | ✓ tareas + actividades genéricas |
+| Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
 | Intervinientes | IntervinientesTab.tsx | ✓ CRUD |
 | Documentos | DocumentosTab.tsx | ✓ botón carga |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
+
+---
+
+## DetalleExpediente — Cambio de estado (Civil/Laboral)
+
+Modal "Cambiar estado" con lógica de flujo procesal:
+
+- **Desde ASIGNADO**: muestra solo el nombre del próximo estado (sin select). Siempre habilitado.
+- **Desde cualquier otro estado**: select con `<optgroup label="Avanzar">` (solo el estado inmediato siguiente) y `<optgroup label="Retroceder">` (todos los anteriores).
+- **Avance bloqueado** si `tareasEstadoActual.length > 0 && some(t => t.estado === 'en_curso')` → aviso rojo + options disabled + botón Confirmar disabled.
+- **Retroceso siempre habilitado** → aviso amarillo informativo.
+- `tieneTareasPendientes` se calcula una sola vez antes del JSX, no inline.
+
+## TimelineTab — Arquitectura del feed
+
+El feed colapsable usa `gruposFeed` (useMemo sobre `sorted`):
+
+```ts
+gruposFeed = {
+  grupos: Array<{ sistema: Actividad | null, tareasHist: Tarea[], actividades: Actividad[] }>,
+  entradaRecepcion: Actividad | null,
+}
+```
+
+- La entrada `RECEPCION` se extrae del sorted y se renderiza **siempre fija al final** del feed, fuera de los bloques colapsables.
+- Cada grupo `sistema` agrupa las actividades entre ese cambio de estado y el siguiente, **por posición en sorted** (no por fecha) — evita bugs con actividades de misma fecha.
+- El período actual (`{ sistema: null }`) contiene actividades más recientes que el último cambio de estado.
+- `getTareasHistoricas` reconoce tanto "Cambio de estado:" como "Retroceso de estado:" (regex `(?:Cambio|Retroceso)`). Si el estado anterior es ASIGNADO, retorna `[]`.
+
+Orden de renderizado en tab "Todo":
+1. **TareasBlock** del estado actual (arriba)
+2. **Feed colapsable** por estado (abajo)
+3. **Entrada RECEPCION** fija al final
 
 ---
 

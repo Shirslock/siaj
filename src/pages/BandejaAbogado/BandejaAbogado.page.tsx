@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { Fragment, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
@@ -504,9 +504,8 @@ export default function BandejaAbogadoPage() {
                     const isExpanded = expandedCausas.has(numeroCausa)
 
                     return (
-                      <>
+                      <Fragment key={numeroCausa}>
                         <tr
-                          key={numeroCausa}
                           className="bg-[#f0f0f0] border-l-4 border-[rgba(27,58,87,0.40)] hover:border-[#1b3a57] cursor-pointer transition-colors"
                           onClick={() => setExpandedCausas(prev => {
                             const next = new Set(prev)
@@ -572,7 +571,7 @@ export default function BandejaAbogadoPage() {
                           </td>
                         </tr>
                           {isExpanded && exps.map((exp, idx, arr) => renderExpRow(exp, idx, arr))}
-                        </>
+                      </Fragment>
                         )
                     }
                   return renderExpRow(item.exp, 0, [item.exp])

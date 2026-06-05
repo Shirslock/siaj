@@ -94,7 +94,9 @@ const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 ```
 
 **Campos de alerta en `Tarea`:**
-- `fecha_aviso?: string` — fecha ISO desde la cual mostrar el badge "Por vencer"
+- `fecha_aviso?: string` — fecha ISO desde la cual mostrar el badge "Por vencer"; se configura con el date picker en TimelineTab (no hardcodeado en mock)
 - `fechaVencimiento?: string` — fecha límite real de la tarea (se muestra en el tooltip)
 - La alerta activa se calcula con `getAlertaExpediente(expId, tareasMap)` de `src/utils/alertas.ts`
 - Usada en BandejaAbogado (fila + filtro) y en DetalleExpediente (badge en header)
+
+**`tareasMap` inicial:** arranca vacío `{}`. Las tareas se inicializan con `inicializarTareas(expId, estadoCodigo, tareas)` al abrir un estado en TimelineTab.

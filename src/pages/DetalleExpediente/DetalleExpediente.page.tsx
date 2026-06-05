@@ -7,7 +7,7 @@ import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
-import { getEstadoProcesal } from '../../data/estadosProcesales'
+import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
 import { getEtapasPenales } from '../../data/etapasPenales'
 import { DatosTab }          from './tabs/DatosTab'
 import { VinculosTab }       from './tabs/VinculosTab'
@@ -43,7 +43,7 @@ export default function DetalleExpedientePage() {
   const params = useParams()
   const expId = params['*'] ?? ''
 
-  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, tareasMap } = useExpedientesStore()
+  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, tareasMap, inicializarTareas } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
@@ -114,7 +114,19 @@ export default function DetalleExpedientePage() {
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
-    if (a === 'estado') { setNuevoEstado(exp!.area === 'PENAL' ? '' : exp!.estado); setMotivoEstado('') }
+    if (a === 'estado') {
+      if (exp!.area === 'PENAL') {
+        setNuevoEstado('')
+      } else if (esFlujoProcesal) {
+        const todosEstados = getEstadosProcesales(exp!.tipo)
+        const idxActual = todosEstados.findIndex(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
+        const porDefecto = todosEstados[idxActual + 1]?.codigo ?? ''
+        setNuevoEstado(porDefecto)
+      } else {
+        setNuevoEstado(exp!.estado)
+      }
+      setMotivoEstado('')
+    }
     if (a === 'causa')  setNuevaCausa(exp!.numero_causa ?? '')
     if (a === 'reasignar') setNuevoAbogado(exp!.abogado_id ?? '')
     if (a === 'iniciar_juicio') {
@@ -150,24 +162,39 @@ export default function DetalleExpedientePage() {
       setAccion(null)
       return
     }
-    if (esFlujoProcesal && siguienteEstadoProcesal) {
+    if (esFlujoProcesal) {
+      if (!nuevoEstado) { setAccion(null); return }
+      const todosEstados = getEstadosProcesales(exp!.tipo)
+      const idxActual = todosEstados.findIndex(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
+      const destCodigo = nuevoEstado
+      const destEstado = todosEstados.find(e => e.codigo === destCodigo) ?? siguienteEstadoProcesal!
+      const idxDest = todosEstados.findIndex(e => e.codigo === destCodigo)
+      const esRetroceso = idxDest < idxActual
       const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+      const tareas = tareasMap[`${exp!.id}__${exp!.estadoProcesal ?? exp!.estado}`] ?? estadoProcesalActual?.tareas ?? []
       agregarActividad(exp!.id, {
         id: `ACT_${Date.now()}`,
         expediente_id: exp!.id,
         tipo: 'MOVIMIENTO',
-        titulo: `Cambio de estado: ${estadoProcesalActual!.label} → ${siguienteEstadoProcesal.label}`,
-        descripcion: motivoEstado.trim() || `Estado avanzado por ${nombre}.`,
+        titulo: `${esRetroceso ? 'Retroceso' : 'Cambio'} de estado: ${estadoProcesalActual!.label} → ${destEstado.label}`,
+        descripcion: motivoEstado.trim() || `Estado ${esRetroceso ? 'retrocedido' : 'avanzado'} por ${nombre}.`,
         fecha: HOY,
         activo: true,
         subitems: [],
-        estadoExpediente: siguienteEstadoProcesal.codigo,
+        estadoExpediente: destCodigo,
+        tareasSnapshot: tareas,
         doc_gde: null,
         creado_por: usuarioActivo?.id,
       })
-      actualizarEstado(exp!.id, siguienteEstadoProcesal.codigo)
-      actualizarExpediente(exp!.id, { estadoProcesal: siguienteEstadoProcesal.codigo })
-      toast.success(`Estado actualizado a ${siguienteEstadoProcesal.label}`)
+      // Inicializar tareas del destino si no existen aún
+      const keyDest = `${exp!.id}__${destCodigo}`
+      if (!tareasMap[keyDest] && destEstado.tareas?.length) {
+        inicializarTareas(exp!.id, destCodigo, destEstado.tareas)
+      }
+      actualizarEstado(exp!.id, destCodigo)
+      actualizarExpediente(exp!.id, { estadoProcesal: destCodigo })
+      toast.success(`Estado actualizado a ${destEstado.label}`)
+      setNuevoEstado('')
       setMotivoEstado('')
       setAccion(null)
       return
@@ -223,6 +250,9 @@ export default function DetalleExpedientePage() {
 }
 
   const alerta = getAlertaExpediente(exp.id, tareasMap)
+
+  const tareasEstadoActual = tareasMap[`${exp.id}__${exp.estadoProcesal ?? exp.estado}`] ?? []
+  const tieneTareasPendientes = tareasEstadoActual.length > 0 && tareasEstadoActual.some(t => t.estado === 'en_curso')
 
   const tabCounters: Partial<Record<Tab, number>> = {
     vinculos:       exp.vinculos.length,
@@ -368,7 +398,18 @@ export default function DetalleExpedientePage() {
             </button>
             <button
               onClick={confirmarEstado}
-              disabled={exp.area === 'PENAL' ? !nuevoEstado : (!esFlujoProcesal && !nuevoEstado)}
+              disabled={(() => {
+                if (exp.area === 'PENAL') return !nuevoEstado
+                if (!esFlujoProcesal) return !nuevoEstado
+                const estadoCodigo = exp.estadoProcesal ?? exp.estado
+                if (estadoCodigo === 'ASIGNADO') return false
+                if (!nuevoEstado) return true
+                const todos = getEstadosProcesales(exp.tipo)
+                const idxActual = todos.findIndex(e => e.codigo === estadoCodigo)
+                const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
+                const esRetroceso = idxDest < idxActual
+                return !esRetroceso && tieneTareasPendientes
+              })()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Confirmar
@@ -406,31 +447,82 @@ export default function DetalleExpedientePage() {
             </p>
           </div>
         ) : esFlujoProcesal ? (
-          <div className="space-y-4">
-            <div className="bg-[rgba(196,223,232,0.30)] rounded-xl p-4 flex items-center justify-center gap-4">
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xs font-bold text-[#4a6a84] uppercase tracking-wide">Estado actual</span>
-                <span className="text-sm font-black text-[#1b3a57]">{estadoProcesalActual?.label}</span>
+          (() => {
+            const estadoCodigo = exp.estadoProcesal ?? exp.estado
+            const esAsignado = estadoCodigo === 'ASIGNADO'
+            const todos = getEstadosProcesales(exp.tipo)
+            const idxActual = todos.findIndex(e => e.codigo === estadoCodigo)
+            const anteriores = todos.slice(0, idxActual)
+            const siguientes = todos[idxActual + 1] ? [todos[idxActual + 1]] : []
+            const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
+            const esRetroceso = !esAsignado && idxDest < idxActual
+            return (
+              <div className="space-y-3">
+                {!esAsignado && !esRetroceso && tieneTareasPendientes && (
+                  <div className="flex items-start gap-2 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-xl">
+                    <Icon name="warning" size={14} className="text-[#b91c1c] flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-[#b91c1c]">
+                      No podés avanzar al siguiente estado mientras haya tareas en curso.
+                      Completá o marcá como "No procedente" todas las tareas del estado actual.
+                    </p>
+                  </div>
+                )}
+                {esRetroceso && (
+                  <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
+                    <Icon name="warning" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-[#d97706]">
+                      Estás retrocediendo a un estado anterior. Las tareas de ese estado quedarán en
+                      modo solo lectura. Solo podrás agregar actividades genéricas.
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <label className="field-label">Estado destino</label>
+                  {esAsignado ? (
+                    <div className="bg-[#f5f5f5] rounded-xl px-4 py-3">
+                      <p className="text-xs text-[#4a6a84] mb-1">Próximo estado</p>
+                      <p className="text-sm font-bold text-[#1b3a57]">{siguienteEstadoProcesal?.label}</p>
+                    </div>
+                  ) : (
+                    <select
+                      className="field-input w-full"
+                      value={nuevoEstado}
+                      onChange={e => setNuevoEstado(e.target.value)}
+                    >
+                      {siguientes.length > 0 && (
+                        <optgroup label="Avanzar">
+                          {siguientes.map(e => (
+                            <option key={e.codigo} value={e.codigo} disabled={tieneTareasPendientes}>
+                              {e.label}{tieneTareasPendientes ? ' (tareas pendientes)' : ''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {anteriores.length > 0 && (
+                        <optgroup label="Retroceder">
+                          {[...anteriores].reverse().map(e => (
+                            <option key={e.codigo} value={e.codigo}>{e.label}</option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  )}
+                </div>
+                <div>
+                  <label className="field-label">Motivo (opcional)</label>
+                  <textarea
+                    className="field-input resize-none h-20 w-full"
+                    placeholder="Anotá el motivo del cambio..."
+                    value={motivoEstado}
+                    onChange={e => setMotivoEstado(e.target.value)}
+                  />
+                </div>
+                <p className="text-xs text-[#4a6a84] italic text-center">
+                  Esta acción quedará registrada en el timeline.
+                </p>
               </div>
-              <Icon name="arrow_forward" size={24} />
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xs font-bold text-[#4a6a84] uppercase tracking-wide">Nuevo estado</span>
-                <span className="text-sm font-black text-[#1b3a57]">{siguienteEstadoProcesal?.label}</span>
-              </div>
-            </div>
-            <div>
-              <label className="field-label">Motivo (opcional)</label>
-              <textarea
-                className="field-input resize-none h-20 w-full"
-                placeholder="Anotá el motivo del cambio..."
-                value={motivoEstado}
-                onChange={e => setMotivoEstado(e.target.value)}
-              />
-            </div>
-            <p className="text-xs text-[#4a6a84] italic text-center">
-              Esta acción quedará registrada en el timeline.
-            </p>
-          </div>
+            )
+          })()
         ) : (
           <div>
             <label className="field-label">Nuevo estado</label>

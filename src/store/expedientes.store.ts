@@ -44,20 +44,7 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, ...EXPEDIENTES_ABOGADO],
   expedienteActivo: null,
   filtros: {},
-  tareasMap: {
-    'C-0023/2026__ASIGNADO': [
-      {
-        id: 'TAREA_DEMO_ALERTA',
-        nombre: 'Contestación de demanda',
-        estado: 'en_curso' as const,
-        fecha: '2026-05-01',
-        fechaVencimiento: '2026-06-10',
-        fecha_aviso: '2026-06-01',
-        observaciones: '',
-        docGde: null,
-      },
-    ],
-  },
+  tareasMap: {},
   registrosPenales: {},
 
   setExpedienteActivo: (id) => {

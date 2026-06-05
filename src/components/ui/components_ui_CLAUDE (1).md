@@ -22,17 +22,20 @@ Agregar:
 1. Import del Heroicon correspondiente desde `@heroicons/react/24/outline`
 2. Entrada en ICON_MAP: `nombre_material_symbol: HeroIconComponent`
 
-Íconos mapeados actualmente (44+):
+Íconos mapeados actualmente (46+):
 add, add_circle, add_link, arrow_back, arrow_forward, article,
 assign_file, attach_file, check, check_circle, chevron_right,
 close, construction, create_new_folder, delete, description,
-download, edit, filter_alt_off, folder, folder_off, folder_open,
-folder_shared, forward, gavel, history, inbox, info, link,
-link_off, menu, menu_open, more_vert, notifications_none,
-open_in_new, person_add, picture_as_pdf, refresh, save,
-schedule, search, search_off, subdirectory_arrow_right,
-swap_horiz, timeline, unfold_less, unfold_more, upload_file,
-visibility, warning
+download, edit, expand_less, expand_more, filter_alt_off,
+folder, folder_off, folder_open, folder_shared, forward, gavel,
+history, inbox, info, link, link_off, menu, menu_open, more_vert,
+notifications_none, open_in_new, person_add, picture_as_pdf,
+refresh, save, schedule, search, search_off,
+subdirectory_arrow_right, swap_horiz, timeline, unfold_less,
+unfold_more, upload_file, visibility, warning
+
+Nota: `expand_more` → ChevronDownIcon, `expand_less` → ChevronUpIcon
+(usados en el feed colapsable de TimelineTab)
 
 ---
 

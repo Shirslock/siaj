@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { Expediente, Actividad, TipoActividad, Tarea } from '../../../types'
 import { TimelinePenal } from './TimelinePenal'
 import { useExpedientesStore } from '../../../store/expedientes.store'
@@ -114,7 +114,7 @@ function TareaFeedItem({
   tarea: Tarea
   numero: number
   estadoLabel: string
-  onClick: () => void
+  onClick?: () => void
   isSelected: boolean
 }) {
   const urg = calcularUrgencia(tarea.fechaVencimiento)
@@ -328,28 +328,26 @@ function TareaDetailPanel({
             </div>
           </div>
 
-          {/* Alerta de vencimiento */}
+          {/* Fecha de aviso */}
           {(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
             <div>
-              <label className="text-[9px] text-[#4a6a84] font-black uppercase tracking-widest text-on-surface-variant block mb-1.5">
-                Aviso previo al vencimiento
+              <label className="text-[9px] text-[#4a6a84] font-black uppercase tracking-widest block mb-1">
+                Fecha de aviso
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  className="field-input w-20 text-xs text-center"
-                  placeholder="—"
-                  value={cambiosLocales.diasAlerta ?? tarea.diasAlerta ?? ''}
-                  onChange={e => setCambiosLocales(p => ({
-                    ...p,
-                    diasAlerta: e.target.value ? Number(e.target.value) : null,
-                    alertaActiva: !!e.target.value,
-                  }))}
-                />
-                <span className="text-xs text-on-surface-variant">días antes</span>
-              </div>
+              <p className="text-[10px] text-[#7a9ab4] mb-1.5">
+                A partir de qué fecha recibir el aviso de proximidad al vencimiento.
+              </p>
+              <input
+                type="date"
+                className="field-input w-full text-xs [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                max={cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento ?? undefined}
+                value={cambiosLocales.fecha_aviso ?? tarea.fecha_aviso ?? ''}
+                onChange={e => setCambiosLocales(p => ({
+                  ...p,
+                  fecha_aviso: e.target.value || undefined,
+                  alertaActiva: !!e.target.value,
+                }))}
+              />
             </div>
           )}
 
@@ -628,6 +626,7 @@ function TareasBlock({
   estadoProcesal,
   completadas,
   total,
+  soloLectura = false,
   tareaSeleccionada,
   setTareaSeleccionada,
 }: {
@@ -636,6 +635,7 @@ function TareasBlock({
   estadoProcesal: NonNullable<ReturnType<typeof getEstadoProcesal>>
   completadas: number
   total: number
+  soloLectura?: boolean
   tareaSeleccionada: Tarea | null
   setTareaSeleccionada: (t: Tarea) => void
 }) {
@@ -676,6 +676,16 @@ function TareasBlock({
         )}
       </div>
 
+      {/* Banner solo lectura */}
+      {soloLectura && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#fef3c7] border-b border-[#fde68a]">
+          <Icon name="lock" size={14} className="text-[#d97706] flex-shrink-0" />
+          <p className="text-xs text-[#d97706] font-medium">
+            Estado con retroceso activo — solo lectura. Podés agregar actividades genéricas.
+          </p>
+        </div>
+      )}
+
       {/* Lista tareas */}
       {tareas.length === 0 ? (
         <div className="px-5 py-6 text-center">
@@ -689,8 +699,8 @@ function TareasBlock({
               tarea={tarea}
               numero={idx + 1}
               estadoLabel={estadoProcesal.label}
-              onClick={() => setTareaSeleccionada(tarea)}
-              isSelected={tareaSeleccionada?.id === tarea.id}
+              onClick={soloLectura ? undefined : () => setTareaSeleccionada(tarea)}
+              isSelected={!soloLectura && tareaSeleccionada?.id === tarea.id}
             />
           ))}
           {!mostrarTodas && tareas.length > 8 && (
@@ -729,6 +739,14 @@ export function TimelineTab({ exp }: Props) {
   const [busqueda, setBusqueda] = useState('')
   const [menuExport, setMenuExport] = useState(false)
   const [snapshotsExpandidos, setSnapshotsExpandidos] = useState<Set<number>>(new Set())
+  const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
+
+  const toggleEstado = (idx: number) =>
+    setEstadosExpandidos(prev => {
+      const next = new Set(prev)
+      next.has(idx) ? next.delete(idx) : next.add(idx)
+      return next
+    })
 
   const toggleSnapshot = (idx: number) =>
     setSnapshotsExpandidos(prev => {
@@ -757,6 +775,16 @@ export function TimelineTab({ exp }: Props) {
   const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
   const total = tareas.length
 
+  const estadoFueAvanzado = useMemo(() =>
+    estadoProcesal
+      ? exp.timeline.some(act =>
+          act.tipo === 'MOVIMIENTO' &&
+          (act.titulo.startsWith(`Cambio de estado: ${estadoProcesal.label} →`) ||
+           act.titulo.startsWith(`Retroceso de estado: ${estadoProcesal.label} →`))
+        )
+      : false
+  , [exp.timeline, estadoProcesal])
+
   const sorted = [...exp.timeline].sort((a, b) => a.fecha.localeCompare(b.fecha))
 
   // Filtrar feed
@@ -776,13 +804,46 @@ export function TimelineTab({ exp }: Props) {
     return act.titulo.toLowerCase().includes(q) || act.descripcion?.toLowerCase().includes(q)
   })
 
+  // Grupos para feed colapsable (sistema + actividades del período)
+  const gruposFeed = useMemo(() => {
+    const esSistemaEntry = (a: Actividad) =>
+      a.tipo === 'MOVIMIENTO' && !!a.estadoExpediente &&
+      (a.titulo.startsWith('Cambio de estado') || a.titulo.startsWith('Retroceso de estado'))
+
+    // La entrada de recepción se renderiza siempre fija al final, fuera de los bloques
+    const entradaRecepcion = sorted.find(a => a.tipo === 'RECEPCION') ?? null
+    const sortedSinRecepcion = sorted.filter(a => a.tipo !== 'RECEPCION')
+
+    // Índices de cada entrada sistema en sortedSinRecepcion
+    const sistemasIdx = sortedSinRecepcion
+      .map((a, i) => ({ a, i }))
+      .filter(({ a }) => esSistemaEntry(a))
+      .map(({ i }) => i)
+
+    const result: { sistema: Actividad | null; tareasHist: Tarea[]; actividades: Actividad[] }[] = []
+
+    for (let gi = 0; gi < sistemasIdx.length; gi++) {
+      const idxS = sistemasIdx[gi]
+      const idxNext = gi + 1 < sistemasIdx.length ? sistemasIdx[gi + 1] : sortedSinRecepcion.length
+      const actsDelPeriodo = sortedSinRecepcion.slice(idxS + 1, idxNext).filter(a => !esSistemaEntry(a))
+      result.push({ sistema: sortedSinRecepcion[idxS], tareasHist: getTareasHistoricas(sortedSinRecepcion[idxS]), actividades: actsDelPeriodo })
+    }
+
+    // Período actual: actividades más recientes que el último cambio de estado
+    const ultimoSistemaIdx = sistemasIdx.length > 0 ? sistemasIdx[sistemasIdx.length - 1] : -1
+    const actsActuales = sortedSinRecepcion.slice(ultimoSistemaIdx + 1).filter(a => !esSistemaEntry(a))
+    result.push({ sistema: null, tareasHist: [], actividades: actsActuales })
+
+    return { grupos: result.reverse(), entradaRecepcion }
+  }, [sorted])
+
   // Contadores para tabs
   const cntSistema     = sorted.filter(a => a.tipo === 'MOVIMIENTO' && !!a.estadoExpediente).length
   const cntActividades = sorted.filter(a => !(a.tipo === 'MOVIMIENTO' && !!a.estadoExpediente)).length
   const cntTareas      = total
 
   function getEstadoAnterior(act: Actividad): string | null {
-    const match = act.titulo.match(/Cambio de estado: (.+) → (.+)/)
+    const match = act.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) → (.+)/)
     if (!match) return null
     const labelAnterior = match[1].trim()
     const encontrado = getEstadosProcesales(exp.tipo).find(e => e.label === labelAnterior)
@@ -791,7 +852,7 @@ export function TimelineTab({ exp }: Props) {
 
   function getTareasHistoricas(act: Actividad): Tarea[] {
     const codigoAnterior = getEstadoAnterior(act)
-    if (!codigoAnterior) return act.tareasSnapshot ?? []
+    if (!codigoAnterior || codigoAnterior === 'ASIGNADO') return []
     const keyAnterior = `${exp.id}__${codigoAnterior}`
     return tareasMap[keyAnterior] ?? act.tareasSnapshot ?? []
   }
@@ -970,53 +1031,6 @@ export function TimelineTab({ exp }: Props) {
         {/* ── Columna izquierda: feed ── */}
         <div className="flex-1 min-w-0 space-y-0">
 
-          {/* Feed actividades */}
-          {filtroTab !== 'tareas' && feedFiltrado.length > 0 && (
-            <div className="mb-4">
-              {feedFiltrado.map((act, idx) => {
-                const hijasDeEsteItem = !!act.estadoExpediente
-                  ? sorted.filter(a =>
-                      !!a.estadoExpediente &&
-                      a.estadoExpediente === act.estadoExpediente &&
-                      !(a.tipo === 'MOVIMIENTO' && a.titulo.startsWith('Cambio de estado')) &&
-                      a.id !== act.id
-                    )
-                  : []
-                const esSistemaEntry = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
-                const tareasHist = esSistemaEntry ? getTareasHistoricas(act) : []
-                return (
-                  <ActividadFeedItem
-                    key={act.id ?? idx}
-                    act={act}
-                    idx={idx}
-                    isLast={idx === feedFiltrado.length - 1}
-                    hijas={hijasDeEsteItem}
-                    snapshotOpen={snapshotsExpandidos.has(idx)}
-                    onToggleSnapshot={() => toggleSnapshot(idx)}
-                    tareasHistoricas={tareasHist}
-                  />
-                )
-              })}
-            </div>
-          )}
-
-          {/* Mensaje estado inicial */}
-          {esEstadoInicial && filtroTab !== 'tareas' && (
-            <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl p-6 text-center mb-4">
-              <Icon name="inbox" className="block mb-2" size={32} />
-              <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
-              <p className="text-xs text-[#4a6a84]">
-                Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
-              </p>
-            </div>
-          )}
-
-          {filtroTab !== 'tareas' && feedFiltrado.length === 0 && !esEstadoInicial && (
-            <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.08)] p-8 text-center text-[#4a6a84] text-sm mb-4">
-              No hay actividades que coincidan.
-            </div>
-          )}
-
           {/* Bloque tareas (tab todo o tareas) */}
           {(filtroTab === 'todo' || filtroTab === 'tareas') && !esEstadoInicial && estadoProcesal && (
             <TareasBlock
@@ -1025,12 +1039,152 @@ export function TimelineTab({ exp }: Props) {
               estadoProcesal={estadoProcesal}
               completadas={completadas}
               total={total}
+              soloLectura={estadoFueAvanzado}
               tareaSeleccionada={tareaSeleccionada}
               setTareaSeleccionada={(t) => {
+                if (estadoFueAvanzado) return
                 setTareaSeleccionada(t)
                 setCambiosLocales({})
               }}
             />
+          )}
+
+          {/* Feed colapsable por estado */}
+          {filtroTab !== 'tareas' && (
+            <div className="mb-4 bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden shadow-card">
+              {gruposFeed.grupos.map((grupo, gi) => {
+                const { sistema, tareasHist, actividades } = grupo
+                const expandido = estadosExpandidos.has(gi)
+                const snapshotOpen = sistema ? snapshotsExpandidos.has(gi) : false
+
+                if (!sistema) {
+                  // Período actual — actividades sin agrupar
+                  if (actividades.length === 0 && !esEstadoInicial) return null
+                  return (
+                    <div key={`actual-${gi}`}>
+                      {esEstadoInicial && (
+                        <div className="p-6 text-center">
+                          <Icon name="inbox" className="block mb-2 mx-auto" size={32} />
+                          <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
+                          <p className="text-xs text-[#4a6a84]">Usá <strong>Acciones → Cambiar estado</strong> para comenzar.</p>
+                        </div>
+                      )}
+                      {actividades.map((a, ai) => (
+                        <ActividadFeedItem
+                          key={a.id ?? ai}
+                          act={a}
+                          idx={ai}
+                          isLast={ai === actividades.length - 1}
+                          hijas={[]}
+                          snapshotOpen={false}
+                          onToggleSnapshot={() => {}}
+                          tareasHistoricas={[]}
+                        />
+                      ))}
+                    </div>
+                  )
+                }
+
+                // Entrada de cambio de estado — colapsable
+                return (
+                  <div key={sistema.id ?? gi} className="border-t border-[rgba(0,0,0,0.06)] first:border-t-0">
+                    {/* Cabecera colapsable */}
+                    <div
+                      onClick={() => toggleEstado(gi)}
+                      className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Icon name={expandido ? 'expand_less' : 'expand_more'} size={16} className="text-[#1b3a57]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#1b3a57]">{sistema.titulo}</p>
+                        {sistema.descripcion && <p className="text-xs text-[#4a6a84]">{sistema.descripcion}</p>}
+                        {tareasHist.length > 0 && (
+                          <button
+                            onClick={e => { e.stopPropagation(); toggleSnapshot(gi) }}
+                            className="flex items-center gap-1.5 text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1 transition-colors mt-1.5"
+                          >
+                            <Icon name="checklist" size={14} />
+                            {tareasHist.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHist.length} tareas
+                            <Icon name={snapshotOpen ? 'unfold_less' : 'unfold_more'} size={12} />
+                          </button>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-1">{formatFecha(sistema.fecha)}</span>
+                    </div>
+
+                    {/* Snapshot tareas */}
+                    {snapshotOpen && tareasHist.length > 0 && (
+                      <div className="border-t border-[rgba(0,0,0,0.06)] bg-[#f9f9f9]">
+                        <ActividadFeedItem
+                          act={sistema}
+                          idx={gi}
+                          isLast={false}
+                          hijas={[]}
+                          snapshotOpen={true}
+                          onToggleSnapshot={() => toggleSnapshot(gi)}
+                          tareasHistoricas={tareasHist}
+                        />
+                      </div>
+                    )}
+
+                    {/* Actividades del período */}
+                    {expandido && (
+                      <div className="border-t border-[rgba(0,0,0,0.05)] bg-[#fafafa]">
+                        {actividades.length === 0 ? (
+                          <p className="px-16 py-3 text-xs text-[#7a9ab4] italic">Sin actividades en este período.</p>
+                        ) : (
+                          actividades.map((a, ai) => (
+                            <div key={a.id ?? ai} className="flex items-start gap-3 px-5 py-3 border-b border-[rgba(0,0,0,0.04)] last:border-0 ml-10">
+                              <div className="w-7 h-7 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0">
+                                <Icon name="description" size={14} className="text-[#4a6a84]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
+                                {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
+                                {(a.doc_gde || a.adjunto_nombre) && (
+                                  <div className="flex flex-wrap gap-3 mt-1">
+                                    {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]"><Icon name="description" size={12} />{a.doc_gde}</span>}
+                                    {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              {!esEstadoInicial && gruposFeed.grupos.every(g => !g.sistema && g.actividades.length === 0) && !gruposFeed.entradaRecepcion && (
+                <div className="p-8 text-center text-[#4a6a84] text-sm">
+                  No hay actividades que coincidan.
+                </div>
+              )}
+              {/* Entrada de recepción — siempre visible al final */}
+              {gruposFeed.entradaRecepcion && (
+                <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[rgba(0,0,0,0.05)]">
+                  <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Icon name="inbox" size={16} className="text-[#4a6a84]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#1b3a57]">{gruposFeed.entradaRecepcion.titulo}</p>
+                    {gruposFeed.entradaRecepcion.descripcion && (
+                      <p className="text-xs text-[#4a6a84]">{gruposFeed.entradaRecepcion.descripcion}</p>
+                    )}
+                    {gruposFeed.entradaRecepcion.doc_gde && (
+                      <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                        <Icon name="attach_file" size={12} />
+                        {gruposFeed.entradaRecepcion.doc_gde}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(gruposFeed.entradaRecepcion.fecha)}</span>
+                </div>
+              )}
+            </div>
           )}
 
         </div>
