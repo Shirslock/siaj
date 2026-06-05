@@ -32,7 +32,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   let activePage = PAGE_ACTIVE[pathname] ?? ''
 
   if (pathname.startsWith('/expediente/')) {
-    titulo     = 'Detalle de Expediente'
+    titulo     = 'Detalle de Actuación'
     activePage = 'actuaciones'
   }
 
