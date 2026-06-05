@@ -86,9 +86,14 @@ nuevaAccion: (param) => set(s => ({
 ## tareasMap — estructura
 
 Key: `${expedienteId}__${estadoCodigo}`
-Ejemplo: `'C-0023/2026__INICIO'`
+Ejemplo: `'C-0023/2026__ASIGNADO'`
 
 ```ts
 const key = `${exp.id}__${estadoCodigo}`
 const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 ```
+
+**Campos de alerta en `Tarea`:**
+- `fecha_aviso?: string` — fecha ISO desde la cual mostrar el badge "Por vencer"
+- `fechaVencimiento?: string` — fecha límite real de la tarea (se muestra en el tooltip)
+- La alerta activa se calcula en `BandejaAbogado`: `fecha_aviso <= HOY && estado !== 'cumplido' && estado !== 'no_procedente'`

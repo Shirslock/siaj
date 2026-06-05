@@ -21,7 +21,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `EstadoActividad` | PENDIENTE \| EN_CURSO \| COMPLETADA \| VENCIDA |
 | `EstadoTarea` | 'sin_estado' \| 'en_curso' \| 'cumplido' \| 'no_procedente' |
 | `UrgenciaTarea` | 'rojo' \| 'ambar' \| 'verde' \| 'gris' |
-| `Tarea` | Tarea estructurada de un estado procesal |
+| `Tarea` | Tarea estructurada de un estado procesal — incluye `fecha_aviso` para alertas de vencimiento |
 | `EstadoProcesal` | Estado con su lista de tareas y siguiente estado |
 | `CatalogoItem` | { id, label } — base para todos los catálogos |
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |

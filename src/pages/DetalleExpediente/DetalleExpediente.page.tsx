@@ -234,7 +234,7 @@ export default function DetalleExpedientePage() {
       <div className="bg-white rounded-2xl shadow-card p-5">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-[#4a6a84] mb-3">
-          <Link to="/bandeja/abogado" className="hover:text-[#1b3a57] transition-colors">Mi Bandeja</Link>
+          <Link to="/actuaciones" className="hover:text-[#1b3a57] transition-colors">Actuaciones</Link>
           <Icon name="chevron_right" size={14} />
           <span className="text-[#1b3a57]">Expediente</span>
         </div>

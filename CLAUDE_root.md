@@ -115,9 +115,9 @@ Agregar el import de Heroicons y la entrada en ICON_MAP. Ver `src/components/ui/
 | Rol en BD | Rol sistema | Permisos | Ruta inicio |
 |-----------|-------------|----------|-------------|
 | `gerente` | REFERENTE | Todo: dashboard, todas las áreas | /dashboard |
-| `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar | /bandeja/area |
-| `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /bandeja/abogado |
-| `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente) | /bandeja/abogado |
+| `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar | /actuaciones |
+| `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /actuaciones |
+| `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente) | /actuaciones |
 | `adm_mesa` | ADMINISTRATIVO | Mesa SIAJ solamente | /mesa |
 
 **Multi-rol:** UR_032 BUÑIRIGO tiene `roles: ['adm_mesa', 'asistente_jurídico']`.
@@ -125,6 +125,13 @@ El sidebar muestra la unión de nav items de todos sus roles.
 Ver `src/data/CLAUDE.md` para detalles.
 
 **Reasignar:** solo `rolBD === 'abogado_coordinador'`. Usar helper `puedeReasignar(usuario)`.
+
+**Página Actuaciones (`/actuaciones`):** punto de entrada unificado que enruta por rol:
+- REFERENTE → `BandejaAreaPage` directamente
+- COORDINADOR → tabs "Mis Actuaciones" / "Del Área" (`ActuacionesCoordinador`)
+- ABOGADO → `BandejaAbogadoPage` directamente
+- ADMINISTRATIVO → no ve el ítem en sidebar
+Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `<Navigate>`.
 
 ---
 
@@ -182,8 +189,9 @@ El timeline del expediente tiene DOS capas:
 | Dashboard/ | /dashboard | REFERENTE, COORDINADOR | Métricas + recientes |
 | MesaSaco/ | /mesa | ADMINISTRATIVO | Filtros embebidos en thead |
 | AltaExpediente/ | /mesa/alta | ADMINISTRATIVO | Canal→Área→Tipo + modal confirmación |
-| BandejaAbogado/ | /bandeja/abogado | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa |
-| BandejaArea/ | /bandeja/area | COORDINADOR, REFERENTE | Árbol causa↔expedientes |
+| Actuaciones/ | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | Router por rol — ver Sección 6 |
+| BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer |
+| BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes |
 | DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 6 tabs |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |

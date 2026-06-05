@@ -62,22 +62,22 @@ export function getAbogadosFifo(area: 'CIVIL' | 'LABORAL'): Usuario[] {
 
 export const ROL_ACCESOS: Record<RolSistema, AccesosRol> = {
   REFERENTE: {
-    nav: ['dashboard', 'bandeja-abogado', 'bandeja-area'],
+    nav: ['dashboard', 'actuaciones'],
     puedeReasignar: false,
     verTodaBandeja: true,
     inicio: '/dashboard',
   },
   COORDINADOR: {
-    nav: ['dashboard', 'bandeja-abogado', 'bandeja-area'],
+    nav: ['dashboard', 'actuaciones'],
     puedeReasignar: false,
     verTodaBandeja: true,
-    inicio: '/bandeja/area',
+    inicio: '/actuaciones',
   },
   ABOGADO: {
-    nav: ['bandeja-abogado', 'bandeja-area'],
+    nav: ['actuaciones'],
     puedeReasignar: false,
     verTodaBandeja: false,
-    inicio: '/bandeja/abogado',
+    inicio: '/actuaciones',
   },
   ADMINISTRATIVO: {
     nav: ['mesa'],

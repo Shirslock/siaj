@@ -3,8 +3,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import DashboardPage from './pages/Dashboard/Dashboard.page'
 import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
 import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
-import BandejaAbogadoPage from './pages/BandejaAbogado/BandejaAbogado.page'
-import BandejaAreaPage from './pages/BandejaArea/BandejaArea.page'
+import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
 
@@ -26,8 +25,9 @@ export default function App() {
           <Route path="/dashboard"         element={<DashboardPage />} />
           <Route path="/mesa"              element={<MesaSacoPage />} />
           <Route path="/mesa/alta"         element={<AltaExpedientePage />} />
-          <Route path="/bandeja/abogado"   element={<BandejaAbogadoPage />} />
-          <Route path="/bandeja/area"      element={<BandejaAreaPage />} />
+          <Route path="/actuaciones"         element={<ActuacionesPage />} />
+          <Route path="/bandeja/abogado"   element={<Navigate to="/actuaciones" replace />} />
+          <Route path="/bandeja/area"      element={<Navigate to="/actuaciones" replace />} />
           <Route path="/expediente/*"      element={<DetalleExpedientePage />} />
           <Route path="/causa/*"           element={<CausaDetallePage />} />
           <Route path="/penal"             element={<Navigate to="/" replace />} />

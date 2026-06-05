@@ -2,6 +2,7 @@ export const RUTAS = {
   DASHBOARD:       '/dashboard',
   MESA:            '/mesa',
   MESA_ALTA:       '/mesa/alta',
+  ACTUACIONES:     '/actuaciones',
   BANDEJA_ABOGADO: '/bandeja/abogado',
   BANDEJA_AREA:    '/bandeja/area',
   EXPEDIENTE:      (id: string) => `/expediente/${id}`,

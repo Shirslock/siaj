@@ -8,8 +8,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard':       'Dashboard',
   '/mesa':            'Mesa SACO',
   '/mesa/alta':       'Alta de Expediente',
-  '/bandeja/abogado': 'Mi Bandeja',
-  '/bandeja/area':    'Bandeja Área',
+  '/actuaciones':     'Actuaciones',
+  '/bandeja/abogado': 'Actuaciones',
+  '/bandeja/area':    'Actuaciones',
   '/agenda':          'Agenda',
 }
 
@@ -17,8 +18,9 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/dashboard':       'dashboard',
   '/mesa':            'mesa',
   '/mesa/alta':       'mesa',
-  '/bandeja/abogado': 'bandeja-abogado',
-  '/bandeja/area':    'bandeja-area',
+  '/actuaciones':     'actuaciones',
+  '/bandeja/abogado': 'actuaciones',
+  '/bandeja/area':    'actuaciones',
   '/agenda':          'agenda',
 }
 
@@ -31,12 +33,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   if (pathname.startsWith('/expediente/')) {
     titulo     = 'Detalle de Expediente'
-    activePage = 'bandeja-abogado'
+    activePage = 'actuaciones'
   }
 
   if (pathname.startsWith('/causa/')) {
     titulo     = `Causa ${pathname.replace('/causa/', '')}`
-    activePage = 'bandeja-abogado'
+    activePage = 'actuaciones'
   }
 
   return (

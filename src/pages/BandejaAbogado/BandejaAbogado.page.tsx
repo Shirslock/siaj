@@ -48,10 +48,36 @@ const filterInputCls =
 
 export default function BandejaAbogadoPage() {
   const navigate = useNavigate()
-  const { expedientes, actualizarExpediente } = useExpedientesStore()
+  const { expedientes, actualizarExpediente, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
-  const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false })
+  const HOY = new Date().toISOString().split('T')[0]
+
+  function getAlertaExpediente(expId: string): { activa: boolean; fechaVencimiento?: string; nombreTarea?: string } {
+    const tareasConAlerta = Object.keys(tareasMap)
+      .filter(k => k.startsWith(`${expId}__`))
+      .flatMap(k => tareasMap[k] ?? [])
+      .filter(t =>
+        t.fecha_aviso &&
+        t.fecha_aviso <= HOY &&
+        t.estado !== 'cumplido' &&
+        t.estado !== 'no_procedente'
+      )
+      .sort((a, b) => {
+        if (!a.fechaVencimiento) return 1
+        if (!b.fechaVencimiento) return -1
+        return a.fechaVencimiento.localeCompare(b.fechaVencimiento)
+      })
+
+    if (tareasConAlerta.length === 0) return { activa: false }
+    return {
+      activa: true,
+      fechaVencimiento: tareasConAlerta[0].fechaVencimiento ?? undefined,
+      nombreTarea: tareasConAlerta[0].nombre,
+    }
+  }
+
+  const [filtros, setFiltros] = useState({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false, soloAlerta: false })
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
   const [modalAgrupar,   setModalAgrupar]   = useState<string | null>(null)
@@ -88,10 +114,10 @@ export default function BandejaAbogadoPage() {
       if (filtros.soloUrgentes) {
         const tieneVencimiento = e.campos_abogado?.plazo_respuesta || e.campos_mesa?.plazo_respuesta
         if (!tieneVencimiento) return false
-        const fecha = String(tieneVencimiento)
-        const dias = Math.ceil((new Date(fecha).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        const dias = Math.ceil((new Date(String(tieneVencimiento)).getTime() - new Date().getTime()) / 86400000)
         if (dias > 7) return false
       }
+      if (filtros.soloAlerta && !getAlertaExpediente(e.id).activa) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         return (
@@ -105,6 +131,10 @@ export default function BandejaAbogadoPage() {
   }, [misBandeja, filtros])
 
   const items = useMemo(() => construirItems(expedientesFiltrados), [expedientesFiltrados])
+
+  const contadorAlerta = useMemo(() =>
+    expedientesFiltrados.filter(e => getAlertaExpediente(e.id).activa).length
+  , [expedientesFiltrados, tareasMap])
 
   const tiposUnicos = useMemo(() =>
     [...new Set(misBandeja.map(e => e.tipo))]
@@ -140,7 +170,7 @@ export default function BandejaAbogadoPage() {
   }
 
   function limpiarFiltros() {
-    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false })
+    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', soloUrgentes: false, soloAlerta: false })
   }
 
   function expandAll() {
@@ -263,7 +293,7 @@ export default function BandejaAbogadoPage() {
               </div>
             )}
           </td>
-          {/* N° + Principal badge */}
+          {/* N° + Principal badge + Por vencer */}
           <td className="py-3 pl-2 pr-3">
             <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
             {exp.es_principal && (
@@ -271,6 +301,22 @@ export default function BandejaAbogadoPage() {
                 Principal · PJN
               </span>
             )}
+            {(() => {
+              const alerta = getAlertaExpediente(exp.id)
+              if (!alerta.activa) return null
+              const tooltip = alerta.nombreTarea
+                ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — ${formatFecha(alerta.fechaVencimiento)}` : ''}`
+                : 'Tarea por vencer'
+              return (
+                <div
+                  title={tooltip}
+                  className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a] cursor-default"
+                >
+                  <Icon name="warning" size={10} className="text-[#d97706]" />
+                  <span className="text-[9px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
+                </div>
+              )
+            })()}
           </td>
           {/* Carátula */}
           <td className="py-3 px-3 max-w-xs">
@@ -313,7 +359,7 @@ export default function BandejaAbogadoPage() {
       {/* HEADER */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Mi Bandeja</h1>
+          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Mis Actuaciones</h1>
           <p className="text-sm text-[#4a6a84] mt-1">
             Hola, {usuarioActivo?.nombre ?? ''}. Tenés{' '}
             <span className="font-semibold text-[#1b3a57]">{activosCount}</span>{' '}
@@ -348,14 +394,35 @@ export default function BandejaAbogadoPage() {
               <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
               <button
                 onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
-                className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
                   filtros.soloUrgentes
-                    ? 'text-[#b91c1c]'
-                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                    ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
+                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
                 }`}
               >
-                <Icon name="warning" size={14} />
-                {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
+                <Icon name="warning" size={14} className={filtros.soloUrgentes ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
+                Urgentes
+              </button>
+              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+              <button
+                onClick={() => setFiltros(p => ({ ...p, soloAlerta: !p.soloAlerta }))}
+                className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
+                  filtros.soloAlerta
+                    ? 'bg-[#fef3c7] border-[#fde68a] text-[#d97706]'
+                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
+                }`}
+              >
+                <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#4a6a84]'} />
+                Por vencer
+                {contadorAlerta > 0 && (
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                    filtros.soloAlerta
+                      ? 'bg-[#fde68a] text-[#d97706]'
+                      : 'bg-[#e8e8e8] text-[#4a6a84]'
+                  }`}>
+                    {contadorAlerta}
+                  </span>
+                )}
               </button>
               <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
               <button

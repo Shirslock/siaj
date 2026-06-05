@@ -343,7 +343,7 @@ export default function BandejaAreaPage() {
       {/* HEADER */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Bandeja Área</h1>
+          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Actuaciones del Área</h1>
           <p className="text-sm text-[#4a6a84] mt-1">
             {filtros.area
               ? `Área ${AREA_LABEL[filtros.area as Area]} — ${expedientesFiltrados.length} expediente${expedientesFiltrados.length !== 1 ? 's' : ''}.`

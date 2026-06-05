@@ -21,8 +21,9 @@ src/pages/NombrePagina/
 | `Dashboard/` | /dashboard | REFERENTE, COORDINADOR | ✓ |
 | `MesaSaco/` | /mesa | ADMINISTRATIVO | ✓ filtros embebidos |
 | `AltaExpediente/` | /mesa/alta | ADMINISTRATIVO | ✓ modal confirmación |
-| `BandejaAbogado/` | /bandeja/abogado | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros embebidos |
-| `BandejaArea/` | /bandeja/area | COORDINADOR, REFERENTE | ✓ filtros embebidos |
+| `Actuaciones/` | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | ✓ router por rol |
+| `BandejaAbogado/` | /bandeja/abogado (alias→/actuaciones) | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros Urgentes + Por vencer |
+| `BandejaArea/` | /bandeja/area (alias→/actuaciones) | COORDINADOR, REFERENTE | ✓ filtros embebidos |
 | `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 6 tabs |
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |

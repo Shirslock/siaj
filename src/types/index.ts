@@ -194,6 +194,7 @@ export interface Tarea {
   estado: EstadoTarea
   fecha?: string | null
   fechaVencimiento?: string | null
+  fecha_aviso?: string | null
   alertaActiva?: boolean
   diasAlerta?: number | null
   observaciones?: string
