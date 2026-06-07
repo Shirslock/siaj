@@ -58,7 +58,6 @@ export default function CausaDetallePage() {
   const [filtroExpId,    setFiltroExpId]    = useState('')
   const [filtroTipo,     setFiltroTipo]     = useState('')
   const [filtroBuscar,   setFiltroBuscar]   = useState('')
-  const [modalNueva,     setModalNueva]     = useState(false)
   const [menuExportCausa, setMenuExportCausa] = useState(false)
 
   const expsDeCausa = useMemo(() =>
@@ -239,9 +238,6 @@ export default function CausaDetallePage() {
                   )}
                 </div>
 
-                <Button variant="primary" icon="add_circle" size="sm" onClick={() => setModalNueva(true)}>
-                  Nueva Actividad
-                </Button>
               </div>
             </div>
 
@@ -457,16 +453,6 @@ export default function CausaDetallePage() {
         )}
       </div>
 
-      {/* Modal Nueva Actividad */}
-      <Modal
-        open={modalNueva}
-        onClose={() => setModalNueva(false)}
-        titulo="Nueva Actividad"
-        size="sm"
-        footer={<Button variant="ghost" onClick={() => setModalNueva(false)}>Cerrar</Button>}
-      >
-        <p className="text-sm text-[#4a6a84]">Funcionalidad en desarrollo.</p>
-      </Modal>
 
     </div>
   )

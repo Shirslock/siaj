@@ -70,6 +70,7 @@ export default function DetalleExpedientePage() {
   fecha_inicio: HOY,
   tipo_juicio: '',
   monto: '',
+  tipo_intervencion: 'Actora',
 })
 
   const menuRef = useRef<HTMLDivElement>(null)
@@ -228,29 +229,32 @@ export default function DetalleExpedientePage() {
   }
 
   function confirmarIniciarJuicio() {
-  actualizarExpediente(exp!.id, {
-    numero_causa: formJuicio.numero_causa.trim() || exp!.numero_causa,
-    campos_mesa: {
-      ...exp!.campos_mesa,
-      mesa_num_causa:     formJuicio.numero_causa,
-      mesa_juzgado:       formJuicio.juzgado,
-      mesa_secretaria:    formJuicio.secretaria,
-      mesa_caratula:      formJuicio.caratula,
-      mesa_abogado_contr: formJuicio.abogado_contraria,
-      mesa_parte_actora:  formJuicio.parte_actora,
-      mesa_parte_dem:     formJuicio.parte_demandada,
-      mesa_coactores:     formJuicio.coactores,
-      mesa_codemandados:  formJuicio.codemandados,
-      mesa_fecha_inicio:  formJuicio.fecha_inicio,
-      mesa_juicio:        formJuicio.tipo_juicio,
-      mesa_monto:         formJuicio.monto,
-      mesa_oficio_judicial: formJuicio.oficio_judicial,
-      mesa_tipo_intervencion: formJuicio.tipo_intervencion,
-    },
-  })
-  toast.success('Juicio iniciado y datos registrados.')
-  setAccion(null)
-}
+    actualizarExpediente(exp!.id, {
+      numero_causa: formJuicio.numero_causa.trim() || exp!.numero_causa,
+      es_juicio_iniciado: true,
+      fecha_inicio_juicio: new Date().toISOString().split('T')[0],
+      fecha_ultimo_impulsorio: undefined,
+      campos_mesa: {
+        ...exp!.campos_mesa,
+        mesa_num_causa:     formJuicio.numero_causa,
+        mesa_juzgado:       formJuicio.juzgado,
+        mesa_secretaria:    formJuicio.secretaria,
+        mesa_caratula:      formJuicio.caratula,
+        mesa_abogado_contr: formJuicio.abogado_contraria,
+        mesa_parte_actora:  formJuicio.parte_actora,
+        mesa_parte_dem:     formJuicio.parte_demandada,
+        mesa_coactores:     formJuicio.coactores,
+        mesa_codemandados:  formJuicio.codemandados,
+        mesa_fecha_inicio:  formJuicio.fecha_inicio,
+        mesa_juicio:        formJuicio.tipo_juicio,
+        mesa_monto:         formJuicio.monto,
+        mesa_oficio_judicial: formJuicio.oficio_judicial,
+        mesa_tipo_intervencion: formJuicio.tipo_intervencion,
+      },
+    })
+    toast.success('Juicio iniciado y datos registrados.')
+    setAccion(null)
+  }
 
   const alerta = getAlertaExpediente(exp.id, tareasMap)
 
@@ -674,15 +678,14 @@ export default function DetalleExpedientePage() {
                 onChange={e => setFormJuicio(p => ({ ...p, oficio_judicial: e.target.value }))} />
             </div>
             <div>
-              <label className="field-label">Tipo de Intervención <span className="text-[#b91c1c]">*</span></label>
-              <select className="field-input w-full"
-                value={formJuicio.tipo_intervencion}
-                onChange={e => setFormJuicio(p => ({ ...p, tipo_intervencion: e.target.value }))}>
-                <option value="">— Seleccioná —</option>
-                <option>Actora</option>
-                <option>Demandada</option>
-                <option>Sin Intervención</option>
-              </select>
+              <label className="field-label">Tipo de Intervención</label>
+              <input
+                type="text"
+                className="field-input w-full opacity-60 cursor-not-allowed"
+                value="Actora"
+                readOnly
+              />
+              <p className="text-[10px] text-[#7a9ab4] mt-1">Pre-seleccionado según tipo de gestión. No editable.</p>
             </div>
             <div>
               <label className="field-label">Secretaría</label>

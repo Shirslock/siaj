@@ -105,6 +105,9 @@ export interface Expediente {
   es_principal?: boolean
   es_urgente?: boolean
   estadoProcesal?: string
+  es_juicio_iniciado?: boolean
+  fecha_inicio_juicio?: string
+  fecha_ultimo_impulsorio?: string
 }
 
 export interface VinculoExpediente {
@@ -186,6 +189,7 @@ export interface Actividad {
   activo: boolean
   adjunto_nombre?: string | null
   tareasSnapshot?: Tarea[]
+  es_movimiento_impulsorio?: boolean
 }
 
 export interface AgendaEvent {

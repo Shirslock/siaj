@@ -64,6 +64,8 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     juzgado: 'JUZ_002',
     abogado_id: 'UR_007',
     fecha_recepcion: '2026-03-01',
+    es_juicio_iniciado: true,
+    fecha_inicio_juicio: (() => { const d = new Date(); d.setDate(d.getDate() - 76); return d.toISOString().split('T')[0] })(),
     campos_mesa: { juzgado: 'JUZ_002', caracter_oficio: 'Informativo', documental: 'Completo', plazo_respuesta: '2026-06-01' },
     campos_abogado: { estado_tramite: 'EN ANÁLISIS' },
     vinculos: [

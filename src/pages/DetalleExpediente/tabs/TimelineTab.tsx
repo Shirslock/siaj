@@ -726,7 +726,7 @@ export function TimelineTab({ exp }: Props) {
 
   const {
     tareasMap, inicializarTareas, actualizarTarea,
-    agregarActividad,
+    agregarActividad, actualizarExpediente,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
@@ -735,6 +735,7 @@ export function TimelineTab({ exp }: Props) {
   const [modalNuevaActividad, setModalNuevaActividad] = useState(false)
   const [formAct, setFormAct] = useState(BLANK_ACT)
   const [adjuntoNuevaAct, setAdjuntoNuevaAct] = useState<File | null>(null)
+  const [esImpulsorio, setEsImpulsorio] = useState(false)
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
   const [menuExport, setMenuExport] = useState(false)
@@ -878,12 +879,19 @@ export function TimelineTab({ exp }: Props) {
       subitems: [],
       activo: false,
       creado_por: usuarioActivo?.id,
+      es_movimiento_impulsorio: esImpulsorio || undefined,
     }
     agregarActividad(exp.id, act)
+    if (esImpulsorio) {
+      actualizarExpediente(exp.id, {
+        fecha_ultimo_impulsorio: formAct.fecha || new Date().toISOString().split('T')[0],
+      })
+    }
     toast.success('Actividad registrada.')
     setModalNuevaActividad(false)
     setFormAct(BLANK_ACT)
     setAdjuntoNuevaAct(null)
+    setEsImpulsorio(false)
   }
 
   const nombreArchivo = `timeline_${exp.id.replace('/', '-')}_${new Date().toISOString().split('T')[0]}`
@@ -1205,12 +1213,12 @@ export function TimelineTab({ exp }: Props) {
       {/* ── Modal nueva actividad ── */}
       <Modal
         open={modalNuevaActividad}
-        onClose={() => setModalNuevaActividad(false)}
+        onClose={() => { setModalNuevaActividad(false); setEsImpulsorio(false) }}
         titulo="Nueva actividad"
         size="md"
         footer={
           <>
-            <button onClick={() => setModalNuevaActividad(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => { setModalNuevaActividad(false); setEsImpulsorio(false) }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
@@ -1278,6 +1286,37 @@ export function TimelineTab({ exp }: Props) {
               </label>
             )}
           </div>
+
+          {exp.es_juicio_iniciado && (
+            <div className="pt-3 border-t border-[rgba(0,0,0,0.08)]">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 accent-[#1b3a57] w-4 h-4 flex-shrink-0"
+                  checked={esImpulsorio}
+                  onChange={e => setEsImpulsorio(e.target.checked)}
+                />
+                <div>
+                  <p className="text-sm font-semibold text-[#1b3a57] group-hover:text-[#2a5278]">
+                    Marcar como movimiento impulsorio
+                  </p>
+                  <p className="text-xs text-[#7a9ab4] mt-0.5">
+                    Resetea el timer de 3 meses desde la fecha de esta actividad.
+                  </p>
+                </div>
+              </label>
+              {esImpulsorio && (
+                <div className="mt-2 flex items-start gap-2 px-3 py-2.5 bg-[#C4DFE8] rounded-xl">
+                  <Icon name="schedule" size={14} className="text-[#1b3a57] flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-[#1b3a57]">
+                    El plazo procesal se reiniciará a partir del{' '}
+                    <span className="font-bold">{formAct.fecha || 'hoy'}</span>.
+                    Nueva alerta: en 75 días.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Modal>
     </div>

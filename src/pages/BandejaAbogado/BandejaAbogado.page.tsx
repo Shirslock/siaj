@@ -11,7 +11,7 @@ import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { formatFecha } from '../../utils/format'
 import { RUTAS } from '../../utils/routing'
-import { getAlertaExpediente } from '../../utils/alertas'
+import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -121,7 +121,7 @@ export default function BandejaAbogadoPage() {
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
-      if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap).activa) return false
+      if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap).activa && !getAlertaTimer(e).activa) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         return (
@@ -137,7 +137,9 @@ export default function BandejaAbogadoPage() {
   const items = useMemo(() => construirItems(expedientesFiltrados), [expedientesFiltrados])
 
   const contadorAlerta = useMemo(() =>
-    expedientesFiltrados.filter(e => getAlertaExpediente(e.id, tareasMap).activa).length
+    expedientesFiltrados.filter(e =>
+      getAlertaExpediente(e.id, tareasMap).activa || getAlertaTimer(e).activa
+    ).length
   , [expedientesFiltrados, tareasMap])
 
   const tiposUnicos = useMemo(() =>
@@ -339,15 +341,20 @@ export default function BandejaAbogadoPage() {
             </span>
           )}
           {(() => {
-            const alerta = getAlertaExpediente(exp.id, tareasMap)
-            if (!alerta.activa) return null
-            const tooltip = alerta.nombreTarea
-              ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — ${formatFecha(alerta.fechaVencimiento)}` : ''}`
-              : 'Tarea por vencer'
+            const alertaTareas = getAlertaExpediente(exp.id, tareasMap)
+            const alertaTimer  = getAlertaTimer(exp)
+            if (!alertaTareas.activa && !alertaTimer.activa) return null
+            const tooltip = alertaTimer.activa
+              ? `Plazo procesal: vence ${formatFecha(alertaTimer.fechaVencimiento!)} (${alertaTimer.diasRestantes} días restantes)`
+              : alertaTareas.nombreTarea
+                ? `Por vencer: ${alertaTareas.nombreTarea}${alertaTareas.fechaVencimiento ? ` — ${formatFecha(alertaTareas.fechaVencimiento)}` : ''}`
+                : 'Tarea por vencer'
             return (
               <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a] cursor-default">
-                <Icon name="warning" size={10} className="text-[#d97706]" />
-                <span className="text-[9px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
+                <Icon name="schedule" size={10} className="text-[#d97706]" />
+                <span className="text-[9px] font-black text-[#d97706] uppercase tracking-wide">
+                  Por vencer{alertaTimer.activa && alertaTimer.diasRestantes !== undefined ? ` · ${alertaTimer.diasRestantes}d` : ''}
+                </span>
               </div>
             )
           })()}
