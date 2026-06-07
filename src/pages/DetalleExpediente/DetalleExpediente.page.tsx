@@ -56,22 +56,21 @@ export default function DetalleExpedientePage() {
   const [nuevoAbogado, setNuevoAbogado] = useState('')
   const [motivoEstado, setMotivoEstado] = useState('')
   const [formJuicio, setFormJuicio] = useState({
-  oficio_judicial: '',
-  tipo_intervencion: '',
-  secretaria: '',
-  numero_causa: '',
-  juzgado: '',
-  caratula: '',
-  abogado_contraria: '',
-  parte_actora: '',
-  parte_demandada: 'SOFSE',
-  coactores: '',
-  codemandados: '',
-  fecha_inicio: HOY,
-  tipo_juicio: '',
-  monto: '',
-  tipo_intervencion: 'Actora',
-})
+    oficio_judicial: '',
+    tipo_intervencion: 'Actora',
+    secretaria: '',
+    numero_causa: '',
+    juzgado: '',
+    caratula: '',
+    abogado_contraria: '',
+    parte_actora: '',
+    parte_demandada: 'SOFSE',
+    coactores: '',
+    codemandados: '',
+    fecha_inicio: HOY,
+    tipo_juicio: '',
+    monto: '',
+  })
 
   const menuRef = useRef<HTMLDivElement>(null)
 

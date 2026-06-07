@@ -169,7 +169,6 @@ export default function BandejaAbogadoPage() {
     [poolBase]
   )
 
-  const mostrarLetrado = true
   const mostrarColumnaLetrado = esCoordi || esReferente
 
   const abogadosDisponibles = useMemo(() =>
