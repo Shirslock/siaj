@@ -25,6 +25,7 @@ export default function App() {
           <Route path="/dashboard"         element={<DashboardPage />} />
           <Route path="/mesa"              element={<MesaSacoPage />} />
           <Route path="/mesa/alta"         element={<AltaExpedientePage />} />
+          <Route path="/actuaciones/nueva-penal" element={<AltaExpedientePage modoAbogadoPenal />} />
           <Route path="/actuaciones"         element={<ActuacionesPage />} />
           <Route path="/bandeja/abogado"   element={<Navigate to="/actuaciones" replace />} />
           <Route path="/bandeja/area"      element={<Navigate to="/actuaciones" replace />} />

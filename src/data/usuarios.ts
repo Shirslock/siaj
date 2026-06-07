@@ -102,3 +102,11 @@ export function getUsuarioById(id: string): Usuario | undefined {
 export function getNombreCompleto(u: Usuario): string {
   return `${u.apellido}, ${u.nombre}`
 }
+
+export function esAbogadoPenal(usuario: Usuario | null | undefined): boolean {
+  if (!usuario) return false
+  return (
+    usuario.areas.includes('PENAL') &&
+    (usuario.rolSistema === 'ABOGADO' || usuario.rolSistema === 'COORDINADOR')
+  )
+}

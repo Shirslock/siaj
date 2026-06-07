@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { TIPOS_GESTION } from '../../data/catalogos'
-import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar } from '../../data/usuarios'
+import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
@@ -167,7 +167,8 @@ export default function BandejaAbogadoPage() {
     [poolBase]
   )
 
-  const mostrarLetrado = esCoordi || esReferente
+  const mostrarLetrado = true
+  const mostrarColumnaLetrado = esCoordi || esReferente
 
   const abogadosDisponibles = useMemo(() =>
     USUARIOS.filter(u =>
@@ -371,7 +372,7 @@ export default function BandejaAbogadoPage() {
           <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
         </td>
         {/* Letrado (condicional) */}
-        {mostrarLetrado && (
+        {mostrarColumnaLetrado && (
           <td className="py-3 px-3">
             <span className="text-xs text-[#4a6a84]">
               {letrado ? getNombreCompleto(letrado) : '—'}
@@ -400,7 +401,7 @@ export default function BandejaAbogadoPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
-  const colSpanTotal = mostrarLetrado ? 9 : 8
+  const colSpanTotal = mostrarColumnaLetrado ? 9 : 8
 
   return (
     <div className="p-6 space-y-4 max-w-screen-xl">
@@ -415,20 +416,31 @@ export default function BandejaAbogadoPage() {
             actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
           </p>
         </div>
-        <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1 self-start">
-          {(['activos', 'archivados'] as const).map(val => (
+        <div className="flex items-center gap-3 self-start">
+          <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1">
+            {(['activos', 'archivados'] as const).map(val => (
+              <button
+                key={val}
+                onClick={() => setTabEstado(val)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
+                  tabEstado === val
+                    ? 'bg-white text-[#1b3a57] shadow-sm'
+                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                }`}
+              >
+                {val === 'activos' ? 'Activos' : 'Archivados'}
+              </button>
+            ))}
+          </div>
+          {esAbogadoPenal(usuarioActivo) && (
             <button
-              key={val}
-              onClick={() => setTabEstado(val)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
-                tabEstado === val
-                  ? 'bg-white text-[#1b3a57] shadow-sm'
-                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
-              }`}
+              onClick={() => navigate(RUTAS.NUEVA_ACTUACION_PENAL)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#1b3a57] text-white rounded-xl text-sm font-bold hover:bg-[#2a5278] transition-colors flex-shrink-0"
             >
-              {val === 'activos' ? 'Activos' : 'Archivados'}
+              <Icon name="add" size={16} />
+              Nueva Actuación
             </button>
-          ))}
+          )}
         </div>
       </div>
 
@@ -506,7 +518,7 @@ export default function BandejaAbogadoPage() {
                   <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Carátula</th>
                   <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Área</th>
                   <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Tipo</th>
-                  {mostrarLetrado && (
+                  {mostrarColumnaLetrado && (
                     <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Letrado</th>
                   )}
                   <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Estado</th>
@@ -537,16 +549,19 @@ export default function BandejaAbogadoPage() {
                       {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
                     </select>
                   </th>
-                  {mostrarLetrado && (
-                    <th className="px-2 py-1.5">
-                      <select value={filtros.letrado} onChange={e => setFiltro('letrado', e.target.value)} className={filterInputCls}>
-                        <option value="">Todos</option>
-                        {abogadosDisponibles.map(u => (
+                  <th className="px-2 py-1.5">
+                    <select value={filtros.letrado} onChange={e => setFiltro('letrado', e.target.value)} className={filterInputCls}>
+                      <option value="">Todos</option>
+                      <option value={usuarioActivo?.id ?? ''} style={{ fontWeight: 'bold' }}>★ Mis actuaciones</option>
+                      <option disabled>──────────────</option>
+                      {abogadosDisponibles
+                        .filter(u => u.id !== usuarioActivo?.id)
+                        .map(u => (
                           <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
-                        ))}
-                      </select>
-                    </th>
-                  )}
+                        ))
+                      }
+                    </select>
+                  </th>
                   <th className="px-2 py-1.5">
                     <select value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} className={filterInputCls}>
                       <option value="">Todos</option>
@@ -618,7 +633,7 @@ export default function BandejaAbogadoPage() {
                               Causa judicial
                             </span>
                           </td>
-                          {mostrarLetrado && <td className="py-3 px-3" />}
+                          {mostrarColumnaLetrado && <td className="py-3 px-3" />}
                           <td className="py-3 px-3">
                             <EstadoBadge code={principal.estado} label={principal.estado} />
                           </td>

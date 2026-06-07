@@ -1,11 +1,12 @@
 import { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAltaForm } from './useAltaForm'
+import { useUIStore } from '../../store/ui.store'
 import { FormularioDinamico } from '../../components/expedientes/FormularioDinamico'
 import { FormField } from '../../components/ui/FormField'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
-import { ASIGNACION_PENAL, getAbogadosFifo, getUsuarioById, getNombreCompleto } from '../../data/usuarios'
+import { USUARIOS, ASIGNACION_PENAL, getAbogadosFifo, getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import { LINEAS_FERROVIARIAS, TIPOS_GESTION } from '../../data/catalogos'
 import { CAMPOS_COMUNES_MESA, getCamposFormulario } from '../../data/formularios'
 import { RUTAS } from '../../utils/routing'
@@ -43,24 +44,26 @@ const CANAL_INFO: Record<Canal, string> = {
 }
 
 function SegmentedSelector<T extends string>({
-  options, value, onChange,
+  options, value, onChange, disabled,
 }: {
   options: { id: T; label: string }[]
   value: T | ''
   onChange: (v: T) => void
+  disabled?: boolean
 }) {
   return (
-    <div className="flex rounded-lg bg-[#e8e8e8] p-1 gap-0.5">
+    <div className={`flex rounded-lg bg-[#e8e8e8] p-1 gap-0.5 ${disabled ? 'opacity-60' : ''}`}>
       {options.map(o => (
         <button
           key={o.id}
           type="button"
+          disabled={disabled}
           onClick={() => onChange(o.id)}
           className={`flex-1 py-2 px-3 rounded-md text-sm transition-all ${
             value === o.id
               ? 'bg-white shadow-sm font-bold text-[#1b3a57]'
               : 'font-medium text-[#4a6a84] hover:text-[#1b3a57]'
-          }`}
+          } ${disabled ? 'cursor-not-allowed' : ''}`}
         >
           {o.label}
         </button>
@@ -69,19 +72,35 @@ function SegmentedSelector<T extends string>({
   )
 }
 
-export default function AltaExpedientePage() {
+interface Props {
+  modoAbogadoPenal?: boolean
+}
+
+export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) {
   const navigate = useNavigate()
+  const { usuarioActivo } = useUIStore()
   const {
     canal, area, tipo, camposMesa, errors,
     tiposFiltrados, tipoSeleccionado,
     camposComunes, camposTipo, lineaSeleccionada,
     setCanal, setArea, setTipo, setCampoMesa, setLinea, submit, validate,
-  } = useAltaForm()
+  } = useAltaForm(modoAbogadoPenal)
 
   const [letradoId, setLetradoId] = useState<string>('')
+  const [abogadoSeleccionado, setAbogadoSeleccionado] = useState<string>('')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [modalRevision, setModalRevision] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const abogadosPenales = useMemo(
+    () => USUARIOS.filter(u =>
+      u.areas.includes('PENAL') &&
+      (u.rolSistema === 'ABOGADO' || u.rolSistema === 'COORDINADOR')
+    ).sort((a, b) => a.apellido.localeCompare(b.apellido)),
+    []
+  )
+
+  const rutaVolver = modoAbogadoPenal ? RUTAS.ACTUACIONES : RUTAS.MESA
 
   function confirmarAlta() {
     setModalRevision(false)
@@ -115,21 +134,23 @@ export default function AltaExpedientePage() {
           <nav className="text-xs text-[#4a6a84] mb-1 flex items-center gap-1">
             <button
               className="hover:text-[#1b3a57] transition-colors"
-              onClick={() => navigate(RUTAS.MESA)}
+              onClick={() => navigate(rutaVolver)}
             >
-              Mesa SACO
+              {modoAbogadoPenal ? 'Actuaciones' : 'Mesa SACO'}
             </button>
             <span>›</span>
-            <span className="text-[#1b3a57]">Nueva Actuación</span>
+            <span className="text-[#1b3a57]">
+              {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nueva Actuación'}
+            </span>
           </nav>
           <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">
-            Nuevo Ingreso de Expediente
+            {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nuevo Ingreso de Expediente'}
           </h1>
           <p className="text-sm text-[#4a6a84] mt-1">
             Completá los datos según el canal y tipo de gestión.
           </p>
         </div>
-        <Button variant="ghost" onClick={() => navigate(RUTAS.MESA)}>
+        <Button variant="ghost" onClick={() => navigate(rutaVolver)}>
           Cancelar
         </Button>
       </div>
@@ -176,6 +197,7 @@ export default function AltaExpedientePage() {
               options={AREAS}
               value={area}
               onChange={(a) => setArea(a)}
+              disabled={modoAbogadoPenal}
             />
           </div>
 
@@ -266,7 +288,22 @@ export default function AltaExpedientePage() {
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
-                {area === 'PENAL' ? (
+                {modoAbogadoPenal ? (
+                  <FormField label="Letrado asignado" required>
+                    <select
+                      className="field-input w-full"
+                      value={abogadoSeleccionado}
+                      onChange={e => setAbogadoSeleccionado(e.target.value)}
+                    >
+                      <option value="">Seleccionar letrado...</option>
+                      {abogadosPenales.map(u => (
+                        <option key={u.id} value={u.id}>
+                          {getNombreCompleto(u)}{u.id === usuarioActivo?.id ? ' (yo)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                ) : area === 'PENAL' ? (
                   <>
                     <FormField label="Línea Ferroviaria">
                       <select
@@ -374,7 +411,7 @@ export default function AltaExpedientePage() {
 
           {/* BOTONES DE ACCIÓN */}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => navigate(RUTAS.MESA)}>
+            <Button variant="ghost" onClick={() => navigate(rutaVolver)}>
               Cancelar
             </Button>
             <Button variant="primary" icon="task_alt" onClick={() => { if (validate()) setModalRevision(true) }}>

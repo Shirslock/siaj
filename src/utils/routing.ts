@@ -9,4 +9,5 @@ export const RUTAS = {
   ACTIVIDADES:     (id: string) => `/expediente/${id}/actividades`,
   CAUSA:           (numeroCausa: string) => `/causa/${numeroCausa}`,
   AGENDA:          '/agenda',
+  NUEVA_ACTUACION_PENAL: '/actuaciones/nueva-penal',
 } as const

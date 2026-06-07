@@ -14,13 +14,17 @@ import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
 import { toast } from 'react-toastify'
 
-export function useAltaForm() {
+const TIPOS_PENAL_ABOGADO = new Set([
+  'QUERELLA', 'DEFENSA_PENAL', 'CARTA_SUCESO', 'OFICIO', 'PEDIDO_CAUSA_PENAL',
+])
+
+export function useAltaForm(modoAbogadoPenal = false) {
   const navigate = useNavigate()
   const {} = useUIStore()
   const { expedientes } = useExpedientesStore()
 
   const [canal, setCanalState] = useState<Canal | ''>('EE_GDE')
-  const [area, setAreaState] = useState<Area | ''>('')
+  const [area, setAreaState] = useState<Area | ''>(modoAbogadoPenal ? 'PENAL' : '')
   const [tipo, setTipoState] = useState<TipoGestion | ''>('')
   const [lineaSeleccionada, setLineaSeleccionada] = useState('')
   const [camposMesa, setCamposMesaState] = useState<Record<string, unknown>>({})
@@ -30,7 +34,8 @@ export function useAltaForm() {
     () => TIPOS_GESTION.filter(t =>
       !!area &&
       t.areas.includes(area as Area) &&
-      (canal ? t.canales.includes(canal as Canal) : true)
+      (canal ? t.canales.includes(canal as Canal) : true) &&
+      (!modoAbogadoPenal || TIPOS_PENAL_ABOGADO.has(t.code))
     ),
     [area, canal]
   )
@@ -94,7 +99,7 @@ export function useAltaForm() {
     const count = expedientes.filter(e => e.area === (area as Area)).length + 1
     const newId = numerador(area as Area, count, new Date().getFullYear())
     toast.success(`Expediente ${newId} registrado y derivado correctamente.`)
-    navigate(RUTAS.MESA)
+    navigate(modoAbogadoPenal ? RUTAS.ACTUACIONES : RUTAS.MESA)
   }
 
   const tipoSeleccionado = useMemo(

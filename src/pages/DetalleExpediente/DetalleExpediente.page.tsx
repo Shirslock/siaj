@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
-import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
+import { USUARIOS, getNombreCompleto, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
 import { getEtapasPenales } from '../../data/etapasPenales'
@@ -19,9 +19,10 @@ import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente } from '../../utils/alertas'
+import { RUTAS } from '../../utils/routing'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
-type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio'
+type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_actuacion_penal'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
@@ -40,6 +41,7 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
 ]
 
 export default function DetalleExpedientePage() {
+  const navigate = useNavigate()
   const params = useParams()
   const expId = params['*'] ?? ''
 
@@ -114,6 +116,7 @@ export default function DetalleExpedientePage() {
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
+    if (a === 'nueva_actuacion_penal') { navigate(RUTAS.NUEVA_ACTUACION_PENAL); return }
     if (a === 'estado') {
       if (exp!.area === 'PENAL') {
         setNuevoEstado('')
@@ -331,6 +334,7 @@ export default function DetalleExpedientePage() {
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-card-lg z-10 overflow-hidden border border-[rgba(0,0,0,0.10)]">
                 {[
+                  { key: 'nueva_actuacion_penal' as AccionMenu, icon: 'add_circle', label: 'Nueva Actuación', show: esAbogadoPenal(usuarioActivo) },
                   { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
