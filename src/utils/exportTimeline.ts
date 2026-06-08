@@ -16,6 +16,17 @@ export interface FilaTimelineExport {
   area?: string
 }
 
+function sanitizarParaPDF(texto: string): string {
+  return texto
+    .replace(/→/g, '->')
+    .replace(/←/g, '<-')
+    .replace(/✓/g, '[OK]')
+    .replace(/⊘/g, '[N/P]')
+    .replace(/⏱/g, '[..]')
+    .replace(/○/g, '[-]')
+    .replace(/[^\x00-\xFF]/g, '?')
+}
+
 function labelEstadoTarea(e: EstadoTarea): string {
   const map: Record<EstadoTarea, string> = {
     sin_estado:    'Sin estado',
@@ -42,7 +53,7 @@ export function actividadesToFilas(
                       : '○'
           return `${icono} ${t.nombre}`
         })
-        .join(' | ')
+        .join('\n')
     }
     return {
       fecha:            act.fecha ?? '',
@@ -53,7 +64,17 @@ export function actividadesToFilas(
       descripcion:      act.descripcion ?? '',
       docGde:           act.doc_gde ?? '',
       estado:           act.estado ?? '',
-      estadoExpediente: act.estadoExpediente ?? '',
+      estadoExpediente: (() => {
+        if (
+          act.estadoExpediente &&
+          (act.titulo.startsWith('Cambio de estado:') ||
+           act.titulo.startsWith('Retroceso de estado:'))
+        ) {
+          const match = act.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
+          if (match?.[1]) return match[1].trim()
+        }
+        return act.estadoExpediente ?? ''
+      })(),
       tareasDetalle,
       expediente:       expedienteId,
       area:             area,
@@ -111,10 +132,34 @@ export function exportarExcel(
     ...(incluirExpediente ? [{ wch: 15 }, { wch: 10 }] : []),
   ]
 
+  const colTareas = 7
+
+  for (let r = 1; r <= datos.length; r++) {
+    const cellAddr = XLSX.utils.encode_cell({ r, c: colTareas })
+    if (ws[cellAddr]) {
+      ws[cellAddr].s = {
+        alignment: { wrapText: true, vertical: 'top' },
+      }
+    }
+  }
+
   encabezados.forEach((_, i) => {
     const cell = XLSX.utils.encode_cell({ r: 0, c: i })
-    if (ws[cell]) ws[cell].s = { font: { bold: true } }
+    if (ws[cell]) {
+      ws[cell].s = {
+        font: { bold: true },
+        alignment: { wrapText: true, vertical: 'center' },
+      }
+    }
   })
+
+  const rowHeights: { hpt: number }[] = [{ hpt: 20 }]
+  datos.forEach((fila) => {
+    const tareas = fila[colTareas] as string ?? ''
+    const lineas = tareas ? tareas.split('\n').length : 1
+    rowHeights.push({ hpt: Math.max(20, lineas * 16) })
+  })
+  ws['!rows'] = rowHeights
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Timeline')
@@ -161,10 +206,17 @@ export function exportarPDF(
       : []),
   ]
 
+  const filasSanitizadas = filas.map(f => ({
+    ...f,
+    titulo:        sanitizarParaPDF(f.titulo),
+    descripcion:   sanitizarParaPDF(f.descripcion),
+    tareasDetalle: f.tareasDetalle ? sanitizarParaPDF(f.tareasDetalle) : '',
+  }))
+
   autoTable(doc, {
     startY: 38,
     columns: columnas,
-    body: filas as unknown as RowInput[],
+    body: filasSanitizadas as unknown as RowInput[],
     styles:             { font: 'helvetica', fontSize: 8, cellPadding: 3, textColor: [27, 58, 87] },
     headStyles:         { fillColor: [27, 58, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
     alternateRowStyles: { fillColor: [245, 245, 245] },
@@ -172,7 +224,20 @@ export function exportarPDF(
       titulo:        { cellWidth: 35 },
       descripcion:   { cellWidth: 40 },
       docGde:        { cellWidth: 30 },
-      tareasDetalle: { cellWidth: 55 },
+      tareasDetalle: {
+        cellWidth: 55,
+        overflow: 'linebreak',
+        splitRegex: /\n/,
+        cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
+      },
+    },
+    didParseCell: (data) => {
+      if (data.column.dataKey === 'tareasDetalle' && data.cell.raw) {
+        const texto = String(data.cell.raw)
+        if (texto.includes('\n')) {
+          data.cell.text = texto.split('\n')
+        }
+      }
     },
     didDrawPage: (data) => {
       doc.setFontSize(7)

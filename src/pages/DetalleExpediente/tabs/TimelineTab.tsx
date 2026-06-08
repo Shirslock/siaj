@@ -422,7 +422,8 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
     NOTA_RESPUESTA: 'edit_note',
     OTRO:           'more_horiz',
   }
-  const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
+  const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
+    (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
 
   return (
     <div className="flex flex-col mb-3">
@@ -506,9 +507,15 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
       {isSistema && tareasHistoricas.length > 0 && snapshotOpen && (
         <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
           <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
-              Tareas del estado anterior — Solo lectura
-            </span>
+            {(() => {
+              const matchEstado = act.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
+              const labelEstadoAnterior = matchEstado?.[1]?.trim() ?? 'estado anterior'
+              return (
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+                  TAREAS DEL ESTADO: {labelEstadoAnterior.toUpperCase()}
+                </span>
+              )
+            })()}
             <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
           </div>
 
@@ -652,11 +659,16 @@ function TareasBlock({
       {/* Header bloque tareas */}
       <div className="px-5 py-3 flex items-center gap-3 bg-[#f0f0f0] border-b border-[rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
-            progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-[#C4DFE8] text-[#1b3a57]'
-          }`}>
-            {estadoProcesal.label.toUpperCase()}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold text-[#4a6a84] uppercase tracking-wide">
+              Estado actual:
+            </span>
+            <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
+              progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-[#C4DFE8] text-[#1b3a57]'
+            }`}>
+              {estadoProcesal.label.toUpperCase()}
+            </span>
+          </div>
           <span className="text-xs text-[#4a6a84]">{completadas}/{total} tareas</span>
           {/* Barra de progreso */}
           <div className="flex-1 bg-[#e8e8e8] h-1.5 rounded-full max-w-[100px]">
@@ -790,10 +802,14 @@ export function TimelineTab({ exp }: Props) {
 
   // Filtrar feed
   const feedFiltrado = sorted.filter(act => {
-    const esSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente && act.titulo.startsWith('Cambio de estado')
+    if (act.tipo === 'RECEPCION') return false  // se renderiza por separado
+    const esSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
+      (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
     const esActividad = !esSistema
     const esHija = esActividad && !!act.estadoExpediente && sorted.some(
-      padre => padre !== act && padre.tipo === 'MOVIMIENTO' && padre.titulo.startsWith('Cambio de estado') && padre.estadoExpediente === act.estadoExpediente
+      padre => padre !== act && padre.tipo === 'MOVIMIENTO' &&
+        (padre.titulo.startsWith('Cambio de estado') || padre.titulo.startsWith('Retroceso de estado')) &&
+        padre.estadoExpediente === act.estadoExpediente
     )
     if (filtroTab === 'sistema') return esSistema
     if (filtroTab === 'actividades') return esActividad
@@ -909,10 +925,14 @@ export function TimelineTab({ exp }: Props) {
               : t.estado === 'en_curso' ? '⏱'
               : '○'
             return `${icono} ${t.nombre}`
-          }).join(' | ')
+          }).join('\n')
         : ''
       return { ...fila, tareasDetalle }
     })
+    const recepcion = gruposFeed.entradaRecepcion
+    if (recepcion) {
+      filasActividades.push(...actividadesToFilas([recepcion], exp.id, exp.area))
+    }
     const filasTareas = tareasToFilas(tareas, estadoCodigo, exp.id, exp.area)
     if (filtroTab === 'tareas')      return filasTareas
     if (filtroTab === 'sistema' || filtroTab === 'actividades') return filasActividades
@@ -1123,16 +1143,61 @@ export function TimelineTab({ exp }: Props) {
 
                     {/* Snapshot tareas */}
                     {snapshotOpen && tareasHist.length > 0 && (
-                      <div className="border-t border-[rgba(0,0,0,0.06)] bg-[#f9f9f9]">
-                        <ActividadFeedItem
-                          act={sistema}
-                          idx={gi}
-                          isLast={false}
-                          hijas={[]}
-                          snapshotOpen={true}
-                          onToggleSnapshot={() => toggleSnapshot(gi)}
-                          tareasHistoricas={tareasHist}
-                        />
+                      <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
+                        <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+                            {(() => {
+                              const match = sistema.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
+                              const label = match?.[1]?.trim() ?? 'estado anterior'
+                              return `TAREAS DEL ESTADO: ${label.toUpperCase()}`
+                            })()}
+                          </span>
+                          <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
+                        </div>
+                        {tareasHist.map(tarea => {
+                          const dimmed = tarea.estado === 'sin_estado'
+                          return (
+                            <div key={tarea.id} className={`flex items-start gap-3 px-4 py-2 border-b border-[rgba(0,0,0,0.04)] last:border-0 ${dimmed ? 'opacity-40' : ''}`}>
+                              <div className="flex-shrink-0 mt-0.5">
+                                {tarea.estado === 'cumplido' && (
+                                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                                    <span className="text-green-600 text-[10px]">✓</span>
+                                  </div>
+                                )}
+                                {tarea.estado === 'no_procedente' && (
+                                  <div className="w-4 h-4 rounded-full bg-[#e8e8e8] flex items-center justify-center text-[#4a6a84] text-[10px]">⊘</div>
+                                )}
+                                {tarea.estado === 'en_curso' && (
+                                  <div className="w-4 h-4 rounded-full bg-[#C4DFE8] flex items-center justify-center">
+                                    <Icon name="schedule" size={10} className="text-[#1b3a57]" />
+                                  </div>
+                                )}
+                                {tarea.estado === 'sin_estado' && (
+                                  <div className="w-4 h-4 rounded-full border-2 border-[rgba(0,0,0,0.15)]" />
+                                )}
+                              </div>
+                              <p className={`text-xs flex-1 ${
+                                tarea.estado === 'cumplido' ? 'line-through text-[#7a9ab4]'
+                                : tarea.estado === 'no_procedente' ? 'text-[#7a9ab4]'
+                                : 'text-[#1b3a57]'
+                              }`}>
+                                {tarea.nombre}
+                              </p>
+                              {tarea.estado !== 'sin_estado' && (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                                  tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
+                                  : tarea.estado === 'en_curso' ? 'bg-[#C4DFE8] text-[#1b3a57]'
+                                  : 'bg-[#e8e8e8] text-[#4a6a84]'
+                                }`}>
+                                  {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
+                                </span>
+                              )}
+                              {tarea.observaciones && (
+                                <p className="text-[10px] text-[#7a9ab4] mt-0.5 italic w-full pl-7">{tarea.observaciones}</p>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
 
