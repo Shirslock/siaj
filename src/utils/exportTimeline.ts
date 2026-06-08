@@ -227,7 +227,6 @@ export function exportarPDF(
       tareasDetalle: {
         cellWidth: 55,
         overflow: 'linebreak',
-        splitRegex: /\n/,
         cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
       },
     },
