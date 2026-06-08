@@ -121,7 +121,7 @@ export default function BandejaAbogadoPage() {
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
-      if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap).activa && !getAlertaTimer(e).activa) return false
+      if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap, e.timeline).activa && !getAlertaTimer(e).activa) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         return (
@@ -138,7 +138,7 @@ export default function BandejaAbogadoPage() {
 
   const contadorAlerta = useMemo(() =>
     expedientesFiltrados.filter(e =>
-      getAlertaExpediente(e.id, tareasMap).activa || getAlertaTimer(e).activa
+      getAlertaExpediente(e.id, tareasMap, e.timeline).activa || getAlertaTimer(e).activa
     ).length
   , [expedientesFiltrados, tareasMap])
 
@@ -340,7 +340,7 @@ export default function BandejaAbogadoPage() {
             </span>
           )}
           {(() => {
-            const alertaTareas = getAlertaExpediente(exp.id, tareasMap)
+            const alertaTareas = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
             const alertaTimer  = getAlertaTimer(exp)
             if (!alertaTareas.activa && !alertaTimer.activa) return null
             const tooltip = alertaTimer.activa

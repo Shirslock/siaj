@@ -2,7 +2,8 @@ import {
   PlusIcon, ArrowLeftIcon, ArrowRightIcon, ArrowPathIcon,
   ArrowDownTrayIcon, ArrowUpTrayIcon, ArrowsRightLeftIcon,
   ArrowTrendingUpIcon, ArrowTopRightOnSquareIcon,
-  ArrowTurnDownRightIcon, ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
+  ArrowTurnDownRightIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
+  ChatBubbleLeftEllipsisIcon,
   CheckIcon, CheckBadgeIcon, CheckCircleIcon, ChevronRightIcon, ChevronUpDownIcon,
   ChevronDownIcon, ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisVerticalIcon,
@@ -42,6 +43,8 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   swap_horiz:            ArrowsRightLeftIcon,
   open_in_new:           ArrowTopRightOnSquareIcon,
   forward:               ArrowUturnRightIcon,
+  reply:                 ArrowUturnLeftIcon,
+  notes:                 ChatBubbleLeftEllipsisIcon,
 
   // Acciones
   add_circle:            PlusCircleIcon,

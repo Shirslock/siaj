@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable, { type RowInput } from 'jspdf-autotable'
 import type { Actividad, Tarea, EstadoTarea } from '../types'
+import { getUsuarioById, getNombreCompleto } from '../data/usuarios'
 
 export interface FilaTimelineExport {
   fecha: string
@@ -42,7 +43,8 @@ export function actividadesToFilas(
   expedienteId?: string,
   area?: string,
 ): FilaTimelineExport[] {
-  return actividades.map(act => {
+  const filas: FilaTimelineExport[] = []
+  for (const act of actividades) {
     let tareasDetalle = ''
     if (act.tareasSnapshot && act.tareasSnapshot.length > 0) {
       tareasDetalle = act.tareasSnapshot
@@ -55,7 +57,7 @@ export function actividadesToFilas(
         })
         .join('\n')
     }
-    return {
+    filas.push({
       fecha:            act.fecha ?? '',
       tipo:             act.estadoExpediente && act.titulo.startsWith('Cambio')
                           ? 'Sistema'
@@ -78,8 +80,27 @@ export function actividadesToFilas(
       tareasDetalle,
       expediente:       expedienteId,
       area:             area,
+    })
+    for (const reply of act.replies ?? []) {
+      const autorU = getUsuarioById(reply.autor_id)
+      const nombreAutor = autorU ? getNombreCompleto(autorU) : reply.autor_id
+      filas.push({
+        fecha:            reply.fecha,
+        tipo:             'Comentario',
+        titulo:           `-> ${nombreAutor}`,
+        descripcion:      reply.texto,
+        docGde:           reply.doc_gde ?? '',
+        estado:           '',
+        estadoExpediente: '',
+        tareasDetalle:    reply.fecha_vencimiento
+          ? `Vence: ${reply.fecha_vencimiento}${reply.fecha_aviso ? ` - Aviso: ${reply.fecha_aviso}` : ''}`
+          : '',
+        expediente:       expedienteId,
+        area:             area,
+      })
     }
-  })
+  }
+  return filas
 }
 
 export function tareasToFilas(

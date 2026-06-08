@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal } from '../types'
-import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK } from '../data/expedientes.mock'
+import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
+import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK } from '../data/expedientes.mock'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -26,6 +26,7 @@ interface ExpedientesState {
   actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
   actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => void
   eliminarDocumento: (expedienteId: string, index: number) => void
+  agregarReply: (expId: string, actividadIdx: number, reply: Omit<Reply, 'id' | 'created_at'>) => void
   agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
   actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
   eliminarRegistroPenal: (expId: string, registroId: string) => void
@@ -41,10 +42,16 @@ function applyToActivo(activo: Expediente | null, id: string, fn: (e: Expediente
 
 export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   queue: QUEUE_MESA,
-  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, ...EXPEDIENTES_ABOGADO],
+  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK, ...EXPEDIENTES_ABOGADO],
   expedienteActivo: null,
   filtros: {},
-  tareasMap: {},
+  tareasMap: {
+    'C-0026/2026__EN_PRUEBA': [
+      { id: 'DC_EP_01', nombre: 'Producción de prueba documental',  estado: 'en_curso',   fecha: null, fechaVencimiento: '2026-06-23', fecha_aviso: '2026-05-20', alertaActiva: true,  diasAlerta: 34, observaciones: '', docGde: null },
+      { id: 'DC_EP_02', nombre: 'Seguimiento de peritos',           estado: 'cumplido',   fecha: '2026-04-10', fechaVencimiento: null, fecha_aviso: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      { id: 'DC_EP_03', nombre: 'Control de audiencias de prueba',  estado: 'sin_estado', fecha: null, fechaVencimiento: null, fecha_aviso: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+    ],
+  },
   registrosPenales: {},
 
   setExpedienteActivo: (id) => {
@@ -176,6 +183,25 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     const fn = (e: Expediente) => ({
       ...e,
       timeline: e.timeline.map((t, i) => i === actividadIndex ? { ...t, checklist } : t),
+    })
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+    }
+  }),
+
+  agregarReply: (expId, actividadIdx, replyData) => set(s => {
+    const fn = (e: Expediente) => ({
+      ...e,
+      timeline: e.timeline.map((act, idx) => {
+        if (idx !== actividadIdx) return act
+        const nuevoReply: Reply = {
+          ...replyData,
+          id: `reply_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          created_at: new Date().toISOString(),
+        }
+        return { ...act, replies: [...(act.replies ?? []), nuevoReply] }
+      }),
     })
     return {
       expedientes: applyToArr(s.expedientes, expId, fn),

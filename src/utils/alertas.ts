@@ -1,4 +1,4 @@
-import type { Tarea, Expediente } from '../types'
+import type { Tarea, Expediente, Reply } from '../types'
 
 const HOY = new Date().toISOString().split('T')[0]
 
@@ -10,7 +10,8 @@ export interface AlertaExpediente {
 
 export function getAlertaExpediente(
   expId: string,
-  tareasMap: Record<string, Tarea[]>
+  tareasMap: Record<string, Tarea[]>,
+  timeline?: Expediente['timeline'],
 ): AlertaExpediente {
   const tareasConAlerta = Object.keys(tareasMap)
     .filter(k => k.startsWith(`${expId}__`))
@@ -27,11 +28,32 @@ export function getAlertaExpediente(
       return a.fechaVencimiento.localeCompare(b.fechaVencimiento)
     })
 
-  if (tareasConAlerta.length === 0) return { activa: false }
+  const repliesConAlerta: Reply[] = (timeline ?? [])
+    .flatMap(act => act.replies ?? [])
+    .filter(r =>
+      r.fecha_aviso &&
+      r.fecha_aviso <= HOY &&
+      r.fecha_vencimiento != null &&
+      r.fecha_vencimiento >= HOY
+    )
+    .sort((a, b) => (a.fecha_vencimiento ?? '').localeCompare(b.fecha_vencimiento ?? ''))
+
+  if (tareasConAlerta.length === 0 && repliesConAlerta.length === 0) return { activa: false }
+
+  // Elegir el más urgente entre tareas y replies
+  const fechaTarea = tareasConAlerta[0]?.fechaVencimiento ?? null
+  const fechaReply = repliesConAlerta[0]?.fecha_vencimiento ?? null
+  if (fechaTarea && (!fechaReply || fechaTarea <= fechaReply)) {
+    return {
+      activa: true,
+      fechaVencimiento: fechaTarea,
+      nombreTarea: tareasConAlerta[0].nombre,
+    }
+  }
   return {
     activa: true,
-    fechaVencimiento: tareasConAlerta[0].fechaVencimiento ?? undefined,
-    nombreTarea: tareasConAlerta[0].nombre,
+    fechaVencimiento: fechaReply ?? undefined,
+    nombreTarea: 'Comentario con vencimiento',
   }
 }
 

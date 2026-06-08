@@ -278,7 +278,7 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
-  const alerta = getAlertaExpediente(exp.id, tareasMap)
+  const alerta = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
 
   const tareasEstadoActual = tareasMap[`${exp.id}__${exp.estadoProcesal ?? exp.estado}`] ?? []
   const tieneTareasPendientes = tareasEstadoActual.length > 0 && tareasEstadoActual.some(t => t.estado === 'en_curso')

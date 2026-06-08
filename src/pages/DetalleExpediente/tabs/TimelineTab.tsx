@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { Expediente, Actividad, TipoActividad, Tarea } from '../../../types'
+import type { Expediente, Actividad, TipoActividad, Tarea, Reply } from '../../../types'
+import { getUsuarioById, getNombreCompleto } from '../../../data/usuarios'
 import { TimelinePenal } from './TimelinePenal'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { useUIStore } from '../../../store/ui.store'
@@ -729,6 +730,46 @@ function TareasBlock({
   )
 }
 
+// ── Lista de replies ─────────────────────────────────────────────────────────
+
+function ReplyList({ replies }: { replies: Reply[] }) {
+  if (!replies.length) return null
+  return (
+    <div className="ml-10 mr-4 mb-2 space-y-1.5">
+      {replies.map(reply => {
+        const autorU = getUsuarioById(reply.autor_id)
+        return (
+          <div key={reply.id} className="pl-4 border-l-2 border-[#C4DFE8]">
+            <div className="bg-[#f9f9f9] rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-bold text-[#1b3a57]">
+                  {autorU ? getNombreCompleto(autorU) : reply.autor_id}
+                </span>
+                <span className="text-[10px] text-[#7a9ab4]">{formatFecha(reply.fecha)}</span>
+              </div>
+              <p className="text-xs text-[#1b3a57] whitespace-pre-wrap">{reply.texto}</p>
+              {reply.doc_gde && (
+                <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
+                  <Icon name="attach_file" size={11} />
+                  {reply.doc_gde}
+                </p>
+              )}
+              {reply.fecha_vencimiento && (
+                <div className="flex items-center gap-3 mt-1.5">
+                  <span className="text-[10px] text-[#4a6a84]">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
+                  {reply.fecha_aviso && (
+                    <span className="text-[10px] text-[#d97706]">Aviso: {formatFecha(reply.fecha_aviso)}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export function TimelineTab({ exp }: Props) {
@@ -738,7 +779,7 @@ export function TimelineTab({ exp }: Props) {
 
   const {
     tareasMap, inicializarTareas, actualizarTarea,
-    agregarActividad, actualizarExpediente,
+    agregarActividad, actualizarExpediente, agregarReply,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
@@ -753,6 +794,27 @@ export function TimelineTab({ exp }: Props) {
   const [menuExport, setMenuExport] = useState(false)
   const [snapshotsExpandidos, setSnapshotsExpandidos] = useState<Set<number>>(new Set())
   const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
+  const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
+  const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+
+  function limpiarFormReply() {
+    setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  }
+
+  function confirmarReply() {
+    if (!replyTarget || !formReply.texto.trim()) return
+    agregarReply(exp.id, replyTarget.globalIdx, {
+      autor_id:           usuarioActivo?.id ?? '',
+      texto:              formReply.texto.trim(),
+      fecha:              formReply.fecha,
+      doc_gde:            formReply.doc_gde || undefined,
+      fecha_vencimiento:  formReply.fecha_vencimiento || undefined,
+      fecha_aviso:        formReply.fecha_aviso || undefined,
+    })
+    limpiarFormReply()
+    setReplyTarget(null)
+    toast.success('Comentario agregado.')
+  }
 
   const toggleEstado = (idx: number) =>
     setEstadosExpandidos(prev => {
@@ -879,6 +941,12 @@ export function TimelineTab({ exp }: Props) {
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
     toast.success('Tarea actualizada.')
     setTareaSeleccionada(null)
+  }
+
+  const esLetrado = !!usuarioActivo && usuarioActivo.id === exp.abogado_id
+
+  function globalIdxDe(act: Actividad): number {
+    return exp.timeline.indexOf(act)
   }
 
   function agregarNuevaActividad() {
@@ -1098,16 +1166,29 @@ export function TimelineTab({ exp }: Props) {
                         </div>
                       )}
                       {actividades.map((a, ai) => (
-                        <ActividadFeedItem
-                          key={a.id ?? ai}
-                          act={a}
-                          idx={ai}
-                          isLast={ai === actividades.length - 1}
-                          hijas={[]}
-                          snapshotOpen={false}
-                          onToggleSnapshot={() => {}}
-                          tareasHistoricas={[]}
-                        />
+                        <div key={a.id ?? ai}>
+                          <ActividadFeedItem
+                            act={a}
+                            idx={ai}
+                            isLast={ai === actividades.length - 1}
+                            hijas={[]}
+                            snapshotOpen={false}
+                            onToggleSnapshot={() => {}}
+                            tareasHistoricas={[]}
+                          />
+                          {esLetrado && (
+                            <div className="pl-14 pb-2 -mt-2">
+                              <button
+                                onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
+                                className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                              >
+                                <Icon name="reply" size={13} />
+                                Comentar
+                              </button>
+                            </div>
+                          )}
+                          <ReplyList replies={a.replies ?? []} />
+                        </div>
                       ))}
                     </div>
                   )
@@ -1208,21 +1289,37 @@ export function TimelineTab({ exp }: Props) {
                           <p className="px-16 py-3 text-xs text-[#7a9ab4] italic">Sin actividades en este período.</p>
                         ) : (
                           actividades.map((a, ai) => (
-                            <div key={a.id ?? ai} className="flex items-start gap-3 px-5 py-3 border-b border-[rgba(0,0,0,0.04)] last:border-0 ml-10">
-                              <div className="w-7 h-7 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0">
-                                <Icon name="description" size={14} className="text-[#4a6a84]" />
+                            <div key={a.id ?? ai}>
+                              <div className="flex items-start gap-3 px-5 py-3 border-b border-[rgba(0,0,0,0.04)] last:border-0 ml-10">
+                                <div className="w-7 h-7 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0">
+                                  <Icon name="description" size={14} className="text-[#4a6a84]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
+                                  {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
+                                  {(a.doc_gde || a.adjunto_nombre) && (
+                                    <div className="flex flex-wrap gap-3 mt-1">
+                                      {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]"><Icon name="description" size={12} />{a.doc_gde}</span>}
+                                      {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
+                                    </div>
+                                  )}
+                                  {esLetrado && (
+                                    <button
+                                      onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
+                                      className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium mt-1.5"
+                                    >
+                                      <Icon name="reply" size={13} />
+                                      Comentar
+                                    </button>
+                                  )}
+                                </div>
+                                <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
-                                {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
-                                {(a.doc_gde || a.adjunto_nombre) && (
-                                  <div className="flex flex-wrap gap-3 mt-1">
-                                    {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]"><Icon name="description" size={12} />{a.doc_gde}</span>}
-                                    {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
-                                  </div>
-                                )}
-                              </div>
-                              <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
+                              {(a.replies ?? []).length > 0 && (
+                                <div className="ml-20 mr-5 mb-2 space-y-1.5">
+                                  <ReplyList replies={a.replies ?? []} />
+                                </div>
+                              )}
                             </div>
                           ))
                         )}
@@ -1380,6 +1477,82 @@ export function TimelineTab({ exp }: Props) {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* ── Modal agregar comentario (reply) ── */}
+      <Modal
+        open={!!replyTarget}
+        onClose={() => { setReplyTarget(null); limpiarFormReply() }}
+        titulo="Agregar comentario"
+        size="sm"
+        footer={
+          <>
+            <button onClick={() => { setReplyTarget(null); limpiarFormReply() }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarReply}
+              disabled={!formReply.texto.trim()}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Guardar
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          {replyTarget && (
+            <div className="bg-[#f5f5f5] rounded-xl px-3 py-2 flex items-start gap-2">
+              <Icon name="reply" size={14} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-[#4a6a84] line-clamp-2">{replyTarget.act.titulo}</p>
+            </div>
+          )}
+          <div>
+            <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+            <textarea
+              className="field-input w-full resize-none"
+              style={{ minHeight: 80 }}
+              placeholder="Escribí tu comentario..."
+              value={formReply.texto}
+              onChange={e => setFormReply(p => ({ ...p, texto: e.target.value }))}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="field-label">Fecha</label>
+            <input type="date" className="field-input w-full" value={formReply.fecha} onChange={e => setFormReply(p => ({ ...p, fecha: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Documento GDE (opcional)</label>
+            <input type="text" className="field-input w-full font-mono" placeholder="EX-2026-..." value={formReply.doc_gde} onChange={e => setFormReply(p => ({ ...p, doc_gde: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Fecha de vencimiento (opcional)</label>
+            <input
+              type="date"
+              className="field-input w-full"
+              value={formReply.fecha_vencimiento}
+              onChange={e => setFormReply(p => ({
+                ...p,
+                fecha_vencimiento: e.target.value,
+                fecha_aviso: e.target.value ? p.fecha_aviso : '',
+              }))}
+            />
+          </div>
+          {formReply.fecha_vencimiento && (
+            <div>
+              <label className="field-label">Fecha de aviso (opcional)</label>
+              <p className="text-[10px] text-[#7a9ab4] mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
+              <input
+                type="date"
+                className="field-input w-full"
+                max={formReply.fecha_vencimiento}
+                value={formReply.fecha_aviso}
+                onChange={e => setFormReply(p => ({ ...p, fecha_aviso: e.target.value }))}
+              />
             </div>
           )}
         </div>

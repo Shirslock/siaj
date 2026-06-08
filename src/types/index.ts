@@ -172,6 +172,17 @@ export interface SubActividad {
   doc_gde?: string | null
 }
 
+export interface Reply {
+  id:                 string
+  autor_id:           string
+  texto:              string
+  fecha:              string
+  doc_gde?:           string
+  fecha_vencimiento?: string
+  fecha_aviso?:       string
+  created_at:         string
+}
+
 export interface Actividad {
   id?: string
   expediente_id?: string
@@ -190,6 +201,7 @@ export interface Actividad {
   adjunto_nombre?: string | null
   tareasSnapshot?: Tarea[]
   es_movimiento_impulsorio?: boolean
+  replies?: Reply[]
 }
 
 export interface AgendaEvent {
