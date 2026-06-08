@@ -225,6 +225,7 @@ export interface EstadoProcesal {
   label: string
   siguiente?: string
   tareas: Tarea[]
+  esArchivado?: boolean
 }
 
 export type EntradaTimeline =

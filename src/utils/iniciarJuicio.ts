@@ -1,0 +1,13 @@
+export const MAPA_INICIAR_JUICIO: Record<string, string> = {
+  COBRO_CANON:     'DEMANDA_CIVIL_ACTORA',
+  RECLAMO_CONTRAT: 'DEMANDA_CIVIL_ACTORA',
+  RECUPERO:        'DEMANDA_CIVIL_ACTORA',
+  EJECUCION_GAR:   'DEMANDA_CIVIL_ACTORA',
+  LANZAMIENTO:     'LANZAMIENTO_JUDICIALIZADO',
+  CONSIGNACION:    'DEMANDA_LABORAL_ACTORA',
+  DESAFUERO:       'DEMANDA_LABORAL_ACTORA',
+}
+
+export function getTipoDocumentoNuevo(tipoOrigen: string): string | null {
+  return MAPA_INICIAR_JUICIO[tipoOrigen] ?? null
+}

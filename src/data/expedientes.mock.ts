@@ -234,6 +234,37 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
   },
 ]
 
+export const EXPEDIENTE_COBRO_CANON_MOCK: Expediente = {
+  id: 'C-0025/2026',
+  tipo: 'COBRO_CANON' as TipoGestion,
+  area: 'CIVIL' as Area,
+  estado: 'EN_TRAMITE',
+  estadoProcesal: 'ASIGNADO',
+  caratula: 'COBRO DE CÁNONES — PERMISIONARIO EJEMPLO S.A.',
+  numero_ee_gde: 'EX-2026-11111-APN-DGJYA',
+  numero_causa: null,
+  abogado_id: 'UR_004',
+  fecha_recepcion: '2026-04-01',
+  campos_mesa: {},
+  campos_abogado: {},
+  timeline: [
+    {
+      tipo: 'RECEPCION' as TipoActividad,
+      titulo: 'Expediente recibido y asignado',
+      descripcion: 'Cobro de cánones recibido por Mesa SACO y asignado al letrado.',
+      fecha: '2026-04-01',
+      id: 'CC_REC_01',
+      expediente_id: 'C-0025/2026',
+      activo: true,
+      subitems: [],
+      doc_gde: null,
+    },
+  ],
+  intervinientes: [],
+  documentos: [],
+  vinculos: [],
+}
+
 export const EXPEDIENTE_CERRADO_MOCK: Expediente = {
   id: 'C-0020/2025',
   tipo: 'OFICIO',

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal } from '../types'
-import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK } from '../data/expedientes.mock'
+import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK } from '../data/expedientes.mock'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -41,7 +41,7 @@ function applyToActivo(activo: Expediente | null, id: string, fn: (e: Expediente
 
 export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   queue: QUEUE_MESA,
-  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, ...EXPEDIENTES_ABOGADO],
+  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, ...EXPEDIENTES_ABOGADO],
   expedienteActivo: null,
   filtros: {},
   tareasMap: {},

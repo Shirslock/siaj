@@ -8,6 +8,7 @@ import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from
 import { USUARIOS, getNombreCompleto, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
+import { MAPA_INICIAR_JUICIO } from '../../utils/iniciarJuicio'
 import { getEtapasPenales } from '../../data/etapasPenales'
 import { DatosTab }          from './tabs/DatosTab'
 import { VinculosTab }       from './tabs/VinculosTab'
@@ -27,9 +28,19 @@ type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_jui
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
 const TIPOS_CON_JUICIO = new Set([
-  'COBRO_CANON', 'RECLAMO_CONTRAT', 'LANZAMIENTO', 'RECUPERO',
-  'CONSIGNACION', 'DESAFUERO', 'EJECUCION_GAR', 'QUERELLA',
+  'COBRO_CANON', 'RECLAMO_CONTRAT', 'RECUPERO', 'EJECUCION_GAR',
+  'LANZAMIENTO', 'CONSIGNACION', 'DESAFUERO',
 ])
+
+const ESTADOS_DESDE_EN_ANALISIS: Record<string, string[]> = {
+  COBRO_CANON:     ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+  RECLAMO_CONTRAT: ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+  RECUPERO:        ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+  EJECUCION_GAR:   ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+  LANZAMIENTO:     ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+  CONSIGNACION:    ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+  DESAFUERO:       ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+}
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'datos',          label: 'Datos',          icon: 'info' },
@@ -112,7 +123,7 @@ export default function DetalleExpedientePage() {
   const siguienteEstadoProcesal = estadoProcesalActual?.siguiente
     ? getEstadoProcesal(exp.tipo, estadoProcesalActual.siguiente)
     : undefined
-  const esFlujoProcesal = !!siguienteEstadoProcesal
+  const esFlujoProcesal = !!siguienteEstadoProcesal || !!(ESTADOS_DESDE_EN_ANALISIS[exp.tipo] && (exp.estadoProcesal ?? exp.estado) === 'EN_ANALISIS')
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
@@ -122,9 +133,15 @@ export default function DetalleExpedientePage() {
         setNuevoEstado('')
       } else if (esFlujoProcesal) {
         const todosEstados = getEstadosProcesales(exp!.tipo)
-        const idxActual = todosEstados.findIndex(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
-        const porDefecto = todosEstados[idxActual + 1]?.codigo ?? ''
-        setNuevoEstado(porDefecto)
+        const estadoCod = exp!.estadoProcesal ?? exp!.estado
+        const ramificados = ESTADOS_DESDE_EN_ANALISIS[exp!.tipo]
+        if (estadoCod === 'EN_ANALISIS' && ramificados) {
+          setNuevoEstado(ramificados[0])
+        } else {
+          const idxActual = todosEstados.findIndex(e => e.codigo === estadoCod)
+          const porDefecto = todosEstados[idxActual + 1]?.codigo ?? ''
+          setNuevoEstado(porDefecto)
+        }
       } else {
         setNuevoEstado(exp!.estado)
       }
@@ -197,6 +214,12 @@ export default function DetalleExpedientePage() {
       actualizarEstado(exp!.id, destCodigo)
       actualizarExpediente(exp!.id, { estadoProcesal: destCodigo })
       toast.success(`Estado actualizado a ${destEstado.label}`)
+      if (destCodigo === 'JUICIO_INICIADO' && MAPA_INICIAR_JUICIO[exp!.tipo]) {
+        toast.info(
+          "La actuación pasó a Juicio iniciado. Podés ejecutar 'Iniciar Juicio' desde el botón + del encabezado.",
+          { autoClose: 6000 }
+        )
+      }
       setNuevoEstado('')
       setMotivoEstado('')
       setAccion(null)
@@ -342,7 +365,7 @@ export default function DetalleExpedientePage() {
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
-                  { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) },
+                  { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' },
                 ]
                 .filter(item => item.show)
                 .map(item => (
@@ -459,10 +482,14 @@ export default function DetalleExpedientePage() {
             const esAsignado = estadoCodigo === 'ASIGNADO'
             const todos = getEstadosProcesales(exp.tipo)
             const idxActual = todos.findIndex(e => e.codigo === estadoCodigo)
-            const anteriores = todos.slice(0, idxActual)
-            const siguientes = todos[idxActual + 1] ? [todos[idxActual + 1]] : []
+            const anteriores = todos.slice(0, idxActual).filter(e => !e.esArchivado)
+            const esEnAnalisis = estadoCodigo === 'EN_ANALISIS'
+            const codigosRamificados = esEnAnalisis ? (ESTADOS_DESDE_EN_ANALISIS[exp.tipo] ?? null) : null
+            const siguientes = codigosRamificados
+              ? codigosRamificados.map(cod => todos.find(e => e.codigo === cod)).filter(Boolean) as typeof todos
+              : todos[idxActual + 1] ? [todos[idxActual + 1]] : []
             const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
-            const esRetroceso = !esAsignado && idxDest < idxActual
+            const esRetroceso = !esAsignado && !codigosRamificados && idxDest < idxActual
             return (
               <div className="space-y-3">
                 {!esAsignado && !esRetroceso && tieneTareasPendientes && (
