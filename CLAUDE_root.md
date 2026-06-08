@@ -117,17 +117,24 @@ Agregar el import de Heroicons y la entrada en ICON_MAP. Ver `src/components/ui/
 
 | Rol en BD | Rol sistema | Permisos | Ruta inicio |
 |-----------|-------------|----------|-------------|
-| `gerente` | REFERENTE | Todo: dashboard, todas las áreas | /dashboard |
-| `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar | /actuaciones |
+| `gerente` | REFERENTE | Todo: dashboard, todas las áreas. Solo lectura en bandeja — no puede reasignar. | /dashboard |
+| `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar desde bandeja y botón + del detalle | /actuaciones |
 | `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /actuaciones |
-| `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente) | /actuaciones |
-| `adm_mesa` | ADMINISTRATIVO | Mesa SIAJ solamente | /mesa |
+| `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente de definición con cliente) | /actuaciones |
+| `adm_mesa` | ADMINISTRATIVO | Mesa SIAJ solamente. Solo lectura en todos los tabs del detalle. Sin botón Editar ni botón +. | /mesa |
 
 **Multi-rol:** UR_032 BUÑIRIGO tiene `roles: ['adm_mesa', 'asistente_jurídico']`.
 El sidebar muestra la unión de nav items de todos sus roles.
 Ver `src/data/CLAUDE.md` para detalles.
 
-**Reasignar:** solo `rolBD === 'abogado_coordinador'`. Usar helper `puedeReasignar(usuario)`.
+**Reasignar:** solo `rolBD === 'abogado_coordinador'` o `rolBD === 'gerente'`. Desde la bandeja o desde el botón + del detalle. Usar helper `puedeReasignar(usuario)`.
+
+**Desagrupar:** cualquier rol con acceso a la actuación (Abogado, Asistente, Coordinador).
+
+**Botón + del detalle — opciones por rol:**
+- Abogado / Asistente: Cambiar estado — Desagrupar — Nueva Actuación (solo Penal)
+- Coordinador: Cambiar estado — Desagrupar — Nueva Actuación (solo Penal) — Reasignar
+- Mesa SACO / Gerente: no ven el botón +
 
 **Página Actuaciones (`/actuaciones`):** punto de entrada unificado que enruta por rol:
 - REFERENTE → `BandejaAreaPage` directamente
@@ -142,19 +149,27 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 
 - **Único campo obligatorio al alta:** N° EE/Memo GDE. Todos los demás opcionales.
 - **SS = "Sin Siniestro"** en el campo N° Causa.
-- **Numeración:** C-0001/2026 (Civil), L-0001/2026 (Laboral), P-0001/2026 (Penal).
+- **Numeración:** C-0001/2026 (Civil), L-0001/2026 (Laboral), P-0001/2026 (Penal). Incremental por área, reinicia en 0001 cada año.
 - **Asignación Civil/Laboral:** FIFO secuencial por área (ver `usuarios.ts → fifoOrder`).
 - **Asignación Penal:** por línea ferroviaria (ver `ASIGNACION_PENAL` en `usuarios.ts`).
-- **Edición de campos:** abogados y asistentes editan TODOS los campos del expediente.
+- **Asistentes Jurídicos:** solo pueden asignarse en Oficio Civil/Laboral, Oficio Penal, Carta Documento y BLG. Para esos tipos la asignación es manual (sin FIFO).
+- **Edición de campos:** abogados y asistentes editan TODOS los campos de la actuación, incluidos los completados por Mesa SACO.
 - **sessionStorage:** único uso de storage permitido — solo para usuario activo.
 - **Sin backend, sin AI, sin integración automática PJN/SIGEJ** (fuera de scope v1).
 - **Orden en AltaExpediente:** Canal → Área → Tipo (en ese orden).
-- **Estado inicial:** todos los expedientes arrancan en "ASIGNADO" al crearse.
+- **Estado inicial:** todas las actuaciones arrancan en "ASIGNADO" al crearse.
 - **Terminología UI:** el término visible al usuario es siempre **"Actuación/es"** — nunca "Expediente/s". Los nombres de variables, tipos y rutas internas siguen usando `expediente` (no cambiar).
 - **`es_urgente`:** flag opcional en `Expediente`. Toggle en el header del detalle; filtro "Urgentes" en BandejaAbogado lo usa directamente.
-- **Badge "Por vencer":** se muestra en fila de BandejaAbogado y en el header del detalle cuando alguna tarea O reply del expediente tiene `fecha_aviso <= hoy` y no está cumplida/no_procedente. Lógica en `src/utils/alertas.ts` — función `getAlertaExpediente(expId, tareasMap, exp.timeline)`.
-- **`esArchivado`:** flag opcional en `EstadoProcesal`. Marca estados terminales no progresivos (DEVUELTO_SECTOR_REQUIRENTE, FINALIZADO). El modal de cambio de estado los excluye del optgroup "Retroceder".
+- **Badge "Por vencer":** se muestra en fila de BandejaAbogado y en el header del detalle cuando alguna tarea O reply del expediente tiene `fecha_aviso <= hoy` y no está cumplida/no_procedente. Lógica en `src/utils/alertas.ts`.
+- **`esArchivado`:** flag opcional en `EstadoProcesal`. Marca estados terminales (DEVUELTO_SECTOR_REQUIRENTE, FINALIZADO). El modal de cambio de estado los excluye del optgroup "Retroceder".
+- **Cambio de estado Civil/Laboral:** avance secuencial (solo al siguiente estado). Retroceso permitido a CUALQUIER estado anterior, no solo al inmediatamente previo.
+- **Cambio de estado Penal:** navegación libre entre etapas. Sin bloqueo por hitos. RECHAZADO es rama alternativa desde ACEPTADO.
+- **Tipo de Intervención afecta tareas:** Actora y Demandada tienen conjuntos de tareas distintos para el mismo tipo de gestión y estado procesal.
 - **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'` y el tipo está en `TIPOS_CON_JUICIO`. Ver Sección 13.
+- **Timer Iniciar Juicio:** 3 meses calendario desde la fecha de creación del documento nuevo. Alerta a los 75 días (2,5 meses). El timer se resetea con cada movimiento impulsorio registrado.
+- **Movimiento impulsorio:** checkbox en modal de Nueva Actividad Genérica. Solo visible en documentos generados por Iniciar Juicio (Demanda parte actora y Lanzamiento judicializado).
+- **Nueva Actuación Penal:** Abogado Penalista, Asistente Jurídico Penal y Coordinador pueden crear actuaciones Penales sin pasar por Mesa SACO. Área pre-seleccionada en Penal (no editable). Letrado selección manual. Mesa SACO recibe notificación en campana al crearse.
+- **Reasignación:** al reasignar, el letrado nuevo recibe notificación de asignación y el anterior recibe notificación de desasignación.
 
 ---
 
@@ -162,38 +177,45 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 
 El timeline del expediente tiene DOS capas:
 
-**Capa 1 — Tareas estructuradas por estado procesal:**
+**Capa 1 — Tareas estructuradas por estado procesal (Civil/Laboral):**
 - Definidas en `src/data/estadosProcesales.ts`
-- Cada estado tiene tareas obligatorias con 3 estados: en_curso / cumplido / no_procedente
-- El botón "Avanzar →" se habilita cuando todas las tareas están cumplido o no_procedente
+- Cada estado tiene tareas con 3 estados posibles: en_curso / cumplido / no_procedente
+- Todas las tareas arrancan en **en_curso** al inicializarse. No existe estado vacío.
+- Cuando todas las tareas están en cumplido o no_procedente → leyenda verde "Ya podés pasar de Estado". El cambio de estado se ejecuta siempre desde el menú +. **No existe botón "Avanzar →".**
 - El estado ASIGNADO no tiene tareas — avanza desde Acciones → Cambiar estado
 - Las tareas viven en `tareasMap` del expedientes.store
+- Al avanzar de estado: se guarda snapshot inmutable de las tareas del estado anterior. Las tareas del nuevo estado se inicializan todas en en_curso.
 
 **Capa 2 — Actividades genéricas:**
 - Libres, no bloquean el avance de estado
-- Se agregan con "+ Nueva actividad genérica"
+- Se agregan desde el modal Nueva Actividad → solapa Actividades Genéricas
 - Viven en `exp.timeline[]`
+- Soportan replies: texto + PDF adjunto opcional
+
+**Penal — Hitos procesales:**
+- No hay tareas obligatorias. El abogado registra hitos cuando ocurren en la causa.
+- Hitos opcionales, no secuenciales. Solo aparecen los no registrados aún en el estado actual.
+- Tipos: SI/NO, HAY ACUERDO / NO HAY ACUERDO, LIBRE.
+- Estado inicial de todo hito: en_curso (automático).
+- Algunos hitos tienen consecuencias al quedar firmes: Finaliza causa o Avanza de estado. El sistema muestra aviso antes de guardar.
+- Feed Penal tiene tabs: Todo | Sistema | Procesales | Genéricas
 
 **Feed del timeline (TimelineTab):**
-- Se renderiza desde `gruposFeed` (useMemo), NO desde `feedFiltrado`
-- `gruposFeed` agrupa entradas de sistema (Cambio/Retroceso de estado) con sus actividades del período
+- Se renderiza desde `gruposFeed` (useMemo) — agrupa entradas de sistema con sus actividades del período
 - Entrada de RECEPCION se renderiza por separado al final, fuera de los grupos
 - `feedFiltrado` se usa solo para export y contadores de tabs
-- Al expandir un grupo → panel inline de tareas históricas (NO reutiliza ActividadFeedItem)
-- Header del snapshot muestra el estado ORIGEN extraído del título: `TAREAS DEL ESTADO: {ESTADO}`
+- Al expandir un grupo → panel inline de tareas históricas (solo lectura)
 
 **Sistema de Replies:**
-- Cada actividad puede tener `replies?: Reply[]` — comentarios del letrado asignado
+- Cada actividad puede tener `replies?: Reply[]`
 - Botón "Comentar" visible solo para `usuarioActivo.id === exp.abogado_id`
-- Acción en store: `agregarReply(expId, actividadIdx, replyData)` — `actividadIdx` es `exp.timeline.indexOf(act)`
+- Acción en store: `agregarReply(expId, actividadIdx, replyData)`
 - Reply soporta: texto, fecha, doc_gde, fecha_vencimiento y fecha_aviso opcionales
-- `actividadesToFilas()` emite filas de tipo `'Comentario'` por cada reply en la exportación
 
 **Export timeline:**
 - `actividadesToFilas()` en `exportTimeline.ts` construye filas para Excel/PDF
-- `tareasDetalle` usa `\n` como separador; PDF aplica `didParseCell` para forzar multilínea
-- Caracteres Unicode (→, ✓, etc.) se sanitizan con `sanitizarParaPDF()` antes de jsPDF (Helvetica es latin-1)
-- `estadoExpediente` en filas de cambio/retroceso muestra el estado ORIGEN (antes de la flecha)
+- Caracteres Unicode se sanitizan con `sanitizarParaPDF()` antes de jsPDF
+- `estadoExpediente` en filas de cambio/retroceso muestra el estado ORIGEN
 
 ---
 
@@ -219,8 +241,8 @@ El timeline del expediente tiene DOS capas:
 | MesaSaco/ | /mesa | ADMINISTRATIVO | Filtros embebidos en thead |
 | AltaExpediente/ | /mesa/alta | ADMINISTRATIVO | Canal→Área→Tipo + modal confirmación |
 | Actuaciones/ | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | Router por rol — ver Sección 6 |
-| BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer |
-| BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes |
+| BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer; tabs Activos/Archivados |
+| BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes; filtro por área preseleccionado |
 | DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 6 tabs |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
@@ -246,44 +268,39 @@ Lo que deben adaptar:
 ## 13. Ciclos procesales por tipo de gestión
 
 ### Tipos con flujo secuencial
-| Tipo | Array en estadosProcesales.ts | Estados |
-|------|-------------------------------|---------|
-| DEMANDA_CIVIL / DEMANDA_LABORAL | ESTADOS_DEMANDA_CIVIL | ASIGNADO → INICIO → TRABA_LITIS → EN_PRUEBA → ALEGATOS → SENTENCIA → CERRADO |
-| DEMANDA_CIVIL_ACTORA | ESTADOS_DEMANDA_CIVIL_ACTORA | ASIGNADO → INICIO → TRABA_LITIS → PRUEBA → ALEGATO → SENTENCIA_1_FAV/DESFAV → ... → FINALIZADO |
-| DEMANDA_LABORAL_ACTORA | ESTADOS_DEMANDA_LABORAL_ACTORA | Ídem con tareas laborales |
-| LANZAMIENTO_JUDICIALIZADO | ESTADOS_LANZAMIENTO_JUDICIALIZADO | ASIGNADO → INICIO → SENTENCIA_LANZAMIENTO → ... → FINALIZADO |
+| Tipo | Estados |
+|------|---------|
+| DEMANDA_CIVIL / DEMANDA_LABORAL (parte demandada) | ASIGNADO → INICIO → TRABA_LITIS → PRUEBA → ALEGATO → SENTENCIA_1_FAV / SENTENCIA_1_DESFAV → APELACION → SENTENCIA_2_FAV / SENTENCIA_2_DESFAV → REF → RECURSO_QUEJA → EJECUCION_SENTENCIA → FINALIZADO |
+| DEMANDA_CIVIL_ACTORA / DEMANDA_LABORAL_ACTORA | Ídem con tareas de parte actora |
+| LANZAMIENTO_JUDICIALIZADO | ASIGNADO → INICIO → SENTENCIA_LANZAMIENTO → SENTENCIA_2_FAV / SENTENCIA_2_DESFAV → REF → FINALIZADO |
 
-### Tipos con bifurcación desde EN_ANALISIS (Ciclo A)
+### Tipos con bifurcación desde EN_ANALISIS (Ciclo A — con acuerdo extrajudicial)
 Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `ACUERDO_EXTRAJUDICIAL` | `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`
 
-| Tipo | Array |
-|------|-------|
-| COBRO_CANON | ESTADOS_COBRO_CANON |
-| RECLAMO_CONTRAT | ESTADOS_RECLAMO_CONTRAT |
-| RECUPERO | ESTADOS_RECUPERO |
-| EJECUCION_GAR | ESTADOS_EJECUCION_GAR |
-| LANZAMIENTO | ESTADOS_LANZAMIENTO |
+Tipos: COBRO_CANON, RECLAMO_CONTRAT, RECUPERO, EJECUCION_GAR, LANZAMIENTO
 
 ### Tipos con bifurcación desde EN_ANALISIS (Ciclo B — sin acuerdo extrajudicial)
 Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`
 
-| Tipo | Array |
-|------|-------|
-| CONSIGNACION | ESTADOS_CONSIGNACION |
-| DESAFUERO | ESTADOS_DESAFUERO |
+Tipos: CONSIGNACION, DESAFUERO
 
 ### Bifurcación en el modal de cambio de estado
-- `ESTADOS_DESDE_EN_ANALISIS` en `DetalleExpediente.page.tsx` define los destinos por tipo
-- Cuando `estadoProcesal === 'EN_ANALISIS'` el optgroup "Avanzar" muestra las opciones ramificadas
 - `EN_ANALISIS` tiene `siguiente: undefined` — no es flujo lineal
+- Cuando `estadoProcesal === 'EN_ANALISIS'` el optgroup "Avanzar" muestra las opciones ramificadas según tipo
 
 ### Flujo "Iniciar Juicio"
-1. Avanzar a `JUICIO_INICIADO` → toast informativo aparece
+1. Avanzar a `JUICIO_INICIADO` → toast informativo
 2. Botón "Iniciar Juicio" en menú + se activa
-3. `getTipoDocumentoNuevo(tipo)` devuelve el tipo del documento judicial a crear:
+3. `getTipoDocumentoNuevo(tipo)` devuelve el tipo del documento a crear:
    - COBRO_CANON / RECLAMO_CONTRAT / RECUPERO / EJECUCION_GAR → `DEMANDA_CIVIL_ACTORA`
    - LANZAMIENTO → `LANZAMIENTO_JUDICIALIZADO`
    - CONSIGNACION / DESAFUERO → `DEMANDA_LABORAL_ACTORA`
+4. El documento nuevo activa timer de 3 meses. Ver Sección 7 — Timer Iniciar Juicio.
+
+### Ciclos Penales
+- QUERELLA / DEFENSA_PENAL: ASIGNADO → EN_ANALISIS → ACEPTADO → INSTRUCCION → JUICIO → EJECUCION_PENAL → ARCHIVO. Rama alternativa: RECHAZADO (desde ACEPTADO).
+- CARTA_SAE_SUCESO: ASIGNADO → EN_ANALISIS → PROCEDE → FORMULA_DENUNCIA → ARCHIVO
+- Navegación libre entre etapas — sin bloqueo por hitos.
 
 ---
 
@@ -296,11 +313,26 @@ Funciones en `src/utils/exportTimeline.ts`:
 - `exportarExcel(filas, nombre, incluirExpediente)` — genera .xlsx con wrapText en columna tareas.
 - `exportarPDF(filas, nombre, titulo, subtitulo, incluirExpediente)` — genera .pdf landscape con autoTable. Aplica `sanitizarParaPDF()` sobre título, descripción y tareas (Helvetica no soporta Unicode).
 
-**Columna "Tareas realizadas":** `\n` entre tareas; `didParseCell` splitea el string en array para que autoTable renderice cada tarea en su propia línea.
+**Columna "Tareas realizadas":** `\n` entre tareas; `didParseCell` splitea el string para multilínea en PDF.
+
+**Timeline de causa:** exportación incluye columnas adicionales `N° Actuación` y `Área`. Nombre de archivo: `timeline_causa_{N°_causa}_{fecha}.xlsx/.pdf`.
 
 ---
 
-## 15. Checklist antes de entregar
+## 15. Pendientes de definición (confirmar con cliente antes de implementar)
+
+- Comportamiento exacto al vencer el plazo de 3 meses de Iniciar Juicio (¿cambia estado? ¿notificación adicional?).
+- Criterio para seleccionar nuevo expediente principal al desagrupar cuando el principal es el desagrupado.
+- Si los hitos Penales registrados en el feed tienen opción de Reply.
+- Si las actividades genéricas Penales tienen fecha de vencimiento y fecha de aviso (como Civil/Laboral).
+- Si el ícono "Por vencer" aplica a expedientes Penales.
+- Si el tab "Procesales" en el timeline de causa se muestra siempre o solo cuando hay actuaciones penales.
+- Si al hacer click en una entrada del feed de causa navega al detalle de la actuación de origen.
+- Distinción exacta entre rol `asistente_jurídico` y `abogado` (actualmente idénticos en el sistema).
+
+---
+
+## 16. Checklist antes de entregar
 
 - [ ] `npx tsc --noEmit` sin errores
 - [ ] `npm run build` sin errores
