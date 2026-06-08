@@ -7,7 +7,7 @@
 | `catalogos.ts` | Todos los catálogos con IDs oficiales | Tablas Codificadoras Excel |
 | `formularios.ts` | Campos por tipo (mesa + abogado) | FORMULARIOS.md |
 | `usuarios.ts` | 31 usuarios reales con roles y asignaciones | Roles.xlsx |
-| `expedientes.mock.ts` | Datos de ejemplo para el prototipo | Creado manualmente |
+| `expedientes.mock.ts` | Datos de ejemplo para el prototipo — ver mocks disponibles abajo | Creado manualmente |
 | `estadosProcesales.ts` | Estados y tareas por tipo de gestión | Diseño funcional |
 
 ---
@@ -95,6 +95,20 @@ import { tieneRol, puedeReasignar } from './usuarios'
 tieneRol(usuario, 'adm_mesa')        // → boolean
 puedeReasignar(usuario)              // → true solo si abogado_coordinador
 ```
+
+---
+
+## Mocks disponibles (expedientes.mock.ts)
+
+| ID | Tipo | Estado procesal | Notas |
+|----|------|-----------------|-------|
+| C-0023/2026 | DEMANDA_CIVIL | EN_PRUEBA | Mock principal — timeline completo, cambios de estado, actividades |
+| C-0025/2026 | COBRO_CANON | ASIGNADO | Para probar ciclos A (bifurcación EN_ANALISIS); abogado UR_004 |
+| C-0026/2026 | DEMANDA_CIVIL | EN_PRUEBA | `es_juicio_iniciado: true`, `fecha_ultimo_impulsorio: '2026-03-25'` (timer activo); tarea con `fecha_aviso` para badge "Por vencer"; `tareasMap` pre-populado |
+| P-0012/2026 | QUERELLA | — | Mock penal con TimelinePenal |
+| C-0020/2025 | DEMANDA_CIVIL | CERRADO | Mock expediente cerrado |
+
+**`tareasMap` inicial en el store:** pre-populado para `C-0026/2026__EN_PRUEBA` con 3 tareas demo (una en_curso con `fecha_aviso`, una cumplida, una sin_estado).
 
 ---
 

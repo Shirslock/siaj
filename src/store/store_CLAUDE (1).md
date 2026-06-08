@@ -28,6 +28,7 @@ asignarAbogado(expedienteId, abogadoId)
 // Timeline / actividades genéricas
 agregarActividad(expedienteId, actividad)
 agregarSubitem(expId, actividadIndex, subitem)
+agregarReply(expId, actividadIdx, replyData)    // replyData: Omit<Reply, 'id' | 'created_at'>
 
 // Tareas estructuradas (por estado procesal)
 inicializarTareas(expId, estadoCodigo, tareas)
@@ -96,7 +97,8 @@ const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 **Campos de alerta en `Tarea`:**
 - `fecha_aviso?: string` — fecha ISO desde la cual mostrar el badge "Por vencer"; se configura con el date picker en TimelineTab (no hardcodeado en mock)
 - `fechaVencimiento?: string` — fecha límite real de la tarea (se muestra en el tooltip)
-- La alerta activa se calcula con `getAlertaExpediente(expId, tareasMap)` de `src/utils/alertas.ts`
+- La alerta activa se calcula con `getAlertaExpediente(expId, tareasMap, exp.timeline)` de `src/utils/alertas.ts`
+- El tercer parámetro `timeline` es opcional; si se pasa, también considera replies con `fecha_aviso <= hoy` y `fecha_vencimiento >= hoy`
 - Usada en BandejaAbogado (fila + filtro) y en DetalleExpediente (badge en header)
 
 **`tareasMap` inicial:** arranca vacío `{}`. Las tareas se inicializan con `inicializarTareas(expId, estadoCodigo, tareas)` al abrir un estado en TimelineTab.

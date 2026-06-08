@@ -75,6 +75,16 @@ Orden de renderizado en tab "Todo":
 2. **Feed colapsable** por estado (abajo)
 3. **Entrada RECEPCION** fija al final
 
+## Sistema de Replies (comentarios anidados)
+
+- Botón "Comentar" visible **solo para el letrado asignado** (`usuarioActivo.id === exp.abogado_id`)
+- Al hacer click → modal con: texto (obligatorio), fecha, doc GDE opcional, fecha vencimiento y fecha aviso opcionales
+- Los replies se almacenan en `act.replies?: Reply[]` vía `agregarReply(expId, actividadIdx, replyData)` en el store
+- `actividadIdx` es la posición en `exp.timeline` (usar `exp.timeline.indexOf(act)`)
+- Se renderizan con `<ReplyList>` debajo de cada actividad, con línea azul lateral (`border-l-2 border-[#C4DFE8]`)
+- Aplica tanto en el período actual como en los bloques colapsables de períodos anteriores
+- Exportación: `actividadesToFilas()` emite filas de tipo `'Comentario'` con título `-> NOMBRE_AUTOR` por cada reply
+
 ---
 
 ## Filtros embebidos — patrón estándar

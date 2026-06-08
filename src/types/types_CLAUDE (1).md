@@ -27,7 +27,8 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
 | `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal |
 | `Expediente` | Entidad principal — incluye estadoProcesal |
-| `Actividad` | Actividad genérica del letrado en el timeline |
+| `Actividad` | Actividad genérica del letrado en el timeline — incluye `replies?: Reply[]` |
+| `Reply` | Comentario anidado en una actividad — autor, texto, fecha, doc_gde, fecha_vencimiento, fecha_aviso |
 | `ChecklistItem` | Ítem de checklist dentro de una actividad |
 | `SubActividad` | Seguimiento dentro de una actividad |
 | `Interviniente` | Parte del expediente |
@@ -43,6 +44,16 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 
 - `es_urgente?: boolean` — marcado manualmente desde el detalle; usado por filtro "Urgentes" en BandejaAbogado
 - `es_principal?: boolean` — badge verde "Principal · PJN" en la fila de bandeja
+
+## Campos destacados de EstadoProcesal
+
+- `esArchivado?: boolean` — marca estados terminales no progresivos (DEVUELTO_SECTOR_REQUIRENTE, FINALIZADO). El modal de cambio de estado los excluye del optgroup "Retroceder".
+
+## Campos destacados de Actividad
+
+- `replies?: Reply[]` — comentarios anidados agregados por el letrado asignado
+- `tareasSnapshot?: Tarea[]` — snapshot de tareas al momento del cambio de estado
+- `es_movimiento_impulsorio?: boolean` — marca el movimiento como impulsorio procesal
 
 ## Cómo agregar un tipo nuevo
 

@@ -62,7 +62,7 @@ npm run build      # build de producción
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
-| `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap)` — calcula alerta "Por vencer" de tareas. |
+| `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
 | `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
@@ -152,7 +152,7 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 - **Estado inicial:** todos los expedientes arrancan en "ASIGNADO" al crearse.
 - **Terminología UI:** el término visible al usuario es siempre **"Actuación/es"** — nunca "Expediente/s". Los nombres de variables, tipos y rutas internas siguen usando `expediente` (no cambiar).
 - **`es_urgente`:** flag opcional en `Expediente`. Toggle en el header del detalle; filtro "Urgentes" en BandejaAbogado lo usa directamente.
-- **Badge "Por vencer":** se muestra en fila de BandejaAbogado y en el header del detalle cuando alguna tarea del expediente tiene `fecha_aviso <= hoy` y no está cumplida/no_procedente. Lógica en `src/utils/alertas.ts`.
+- **Badge "Por vencer":** se muestra en fila de BandejaAbogado y en el header del detalle cuando alguna tarea O reply del expediente tiene `fecha_aviso <= hoy` y no está cumplida/no_procedente. Lógica en `src/utils/alertas.ts` — función `getAlertaExpediente(expId, tareasMap, exp.timeline)`.
 - **`esArchivado`:** flag opcional en `EstadoProcesal`. Marca estados terminales no progresivos (DEVUELTO_SECTOR_REQUIRENTE, FINALIZADO). El modal de cambio de estado los excluye del optgroup "Retroceder".
 - **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'` y el tipo está en `TIPOS_CON_JUICIO`. Ver Sección 13.
 
@@ -181,6 +181,13 @@ El timeline del expediente tiene DOS capas:
 - `feedFiltrado` se usa solo para export y contadores de tabs
 - Al expandir un grupo → panel inline de tareas históricas (NO reutiliza ActividadFeedItem)
 - Header del snapshot muestra el estado ORIGEN extraído del título: `TAREAS DEL ESTADO: {ESTADO}`
+
+**Sistema de Replies:**
+- Cada actividad puede tener `replies?: Reply[]` — comentarios del letrado asignado
+- Botón "Comentar" visible solo para `usuarioActivo.id === exp.abogado_id`
+- Acción en store: `agregarReply(expId, actividadIdx, replyData)` — `actividadIdx` es `exp.timeline.indexOf(act)`
+- Reply soporta: texto, fecha, doc_gde, fecha_vencimiento y fecha_aviso opcionales
+- `actividadesToFilas()` emite filas de tipo `'Comentario'` por cada reply en la exportación
 
 **Export timeline:**
 - `actividadesToFilas()` en `exportTimeline.ts` construye filas para Excel/PDF
