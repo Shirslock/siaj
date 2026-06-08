@@ -1,6 +1,6 @@
 # CLAUDE.md — SIAJ Frontend
 # Sistema Integral de Asuntos Jurídicos — SOFSA / Trenes Argentinos
-# Rama activa: feat/design-system-devs
+# Rama activa: feat/ux-refinements
 
 > Fuente de verdad para Claude Code. Leer completo antes de escribir código.
 > Cada subcarpeta tiene su propio CLAUDE.md con documentación específica.
@@ -49,7 +49,7 @@ npm run build      # build de producción
 | `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). |
 | `src/data/usuarios.ts` | 31 usuarios reales UR_001–UR_032, roles y asignaciones. |
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
-| `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión (DEMANDA_CIVIL completo). |
+| `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión. 12 ciclos definidos (ver Sección 13). |
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
@@ -63,6 +63,8 @@ npm run build      # build de producción
 | `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap)` — calcula alerta "Por vencer" de tareas. |
+| `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
+| `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
 | `vercel.json` | Rewrites para SPA en Vercel. |
 | `deploy.sh` | Script de deploy para GH Pages. |
@@ -151,6 +153,8 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 - **Terminología UI:** el término visible al usuario es siempre **"Actuación/es"** — nunca "Expediente/s". Los nombres de variables, tipos y rutas internas siguen usando `expediente` (no cambiar).
 - **`es_urgente`:** flag opcional en `Expediente`. Toggle en el header del detalle; filtro "Urgentes" en BandejaAbogado lo usa directamente.
 - **Badge "Por vencer":** se muestra en fila de BandejaAbogado y en el header del detalle cuando alguna tarea del expediente tiene `fecha_aviso <= hoy` y no está cumplida/no_procedente. Lógica en `src/utils/alertas.ts`.
+- **`esArchivado`:** flag opcional en `EstadoProcesal`. Marca estados terminales no progresivos (DEVUELTO_SECTOR_REQUIRENTE, FINALIZADO). El modal de cambio de estado los excluye del optgroup "Retroceder".
+- **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'` y el tipo está en `TIPOS_CON_JUICIO`. Ver Sección 13.
 
 ---
 
@@ -169,6 +173,20 @@ El timeline del expediente tiene DOS capas:
 - Libres, no bloquean el avance de estado
 - Se agregan con "+ Nueva actividad genérica"
 - Viven en `exp.timeline[]`
+
+**Feed del timeline (TimelineTab):**
+- Se renderiza desde `gruposFeed` (useMemo), NO desde `feedFiltrado`
+- `gruposFeed` agrupa entradas de sistema (Cambio/Retroceso de estado) con sus actividades del período
+- Entrada de RECEPCION se renderiza por separado al final, fuera de los grupos
+- `feedFiltrado` se usa solo para export y contadores de tabs
+- Al expandir un grupo → panel inline de tareas históricas (NO reutiliza ActividadFeedItem)
+- Header del snapshot muestra el estado ORIGEN extraído del título: `TAREAS DEL ESTADO: {ESTADO}`
+
+**Export timeline:**
+- `actividadesToFilas()` en `exportTimeline.ts` construye filas para Excel/PDF
+- `tareasDetalle` usa `\n` como separador; PDF aplica `didParseCell` para forzar multilínea
+- Caracteres Unicode (→, ✓, etc.) se sanitizan con `sanitizarParaPDF()` antes de jsPDF (Helvetica es latin-1)
+- `estadoExpediente` en filas de cambio/retroceso muestra el estado ORIGEN (antes de la flecha)
 
 ---
 
@@ -218,7 +236,64 @@ Lo que deben adaptar:
 
 ---
 
-## 12. Checklist antes de entregar
+## 13. Ciclos procesales por tipo de gestión
+
+### Tipos con flujo secuencial
+| Tipo | Array en estadosProcesales.ts | Estados |
+|------|-------------------------------|---------|
+| DEMANDA_CIVIL / DEMANDA_LABORAL | ESTADOS_DEMANDA_CIVIL | ASIGNADO → INICIO → TRABA_LITIS → EN_PRUEBA → ALEGATOS → SENTENCIA → CERRADO |
+| DEMANDA_CIVIL_ACTORA | ESTADOS_DEMANDA_CIVIL_ACTORA | ASIGNADO → INICIO → TRABA_LITIS → PRUEBA → ALEGATO → SENTENCIA_1_FAV/DESFAV → ... → FINALIZADO |
+| DEMANDA_LABORAL_ACTORA | ESTADOS_DEMANDA_LABORAL_ACTORA | Ídem con tareas laborales |
+| LANZAMIENTO_JUDICIALIZADO | ESTADOS_LANZAMIENTO_JUDICIALIZADO | ASIGNADO → INICIO → SENTENCIA_LANZAMIENTO → ... → FINALIZADO |
+
+### Tipos con bifurcación desde EN_ANALISIS (Ciclo A)
+Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `ACUERDO_EXTRAJUDICIAL` | `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`
+
+| Tipo | Array |
+|------|-------|
+| COBRO_CANON | ESTADOS_COBRO_CANON |
+| RECLAMO_CONTRAT | ESTADOS_RECLAMO_CONTRAT |
+| RECUPERO | ESTADOS_RECUPERO |
+| EJECUCION_GAR | ESTADOS_EJECUCION_GAR |
+| LANZAMIENTO | ESTADOS_LANZAMIENTO |
+
+### Tipos con bifurcación desde EN_ANALISIS (Ciclo B — sin acuerdo extrajudicial)
+Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`
+
+| Tipo | Array |
+|------|-------|
+| CONSIGNACION | ESTADOS_CONSIGNACION |
+| DESAFUERO | ESTADOS_DESAFUERO |
+
+### Bifurcación en el modal de cambio de estado
+- `ESTADOS_DESDE_EN_ANALISIS` en `DetalleExpediente.page.tsx` define los destinos por tipo
+- Cuando `estadoProcesal === 'EN_ANALISIS'` el optgroup "Avanzar" muestra las opciones ramificadas
+- `EN_ANALISIS` tiene `siguiente: undefined` — no es flujo lineal
+
+### Flujo "Iniciar Juicio"
+1. Avanzar a `JUICIO_INICIADO` → toast informativo aparece
+2. Botón "Iniciar Juicio" en menú + se activa
+3. `getTipoDocumentoNuevo(tipo)` devuelve el tipo del documento judicial a crear:
+   - COBRO_CANON / RECLAMO_CONTRAT / RECUPERO / EJECUCION_GAR → `DEMANDA_CIVIL_ACTORA`
+   - LANZAMIENTO → `LANZAMIENTO_JUDICIALIZADO`
+   - CONSIGNACION / DESAFUERO → `DEMANDA_LABORAL_ACTORA`
+
+---
+
+## 14. Exportación de timeline
+
+Funciones en `src/utils/exportTimeline.ts`:
+
+- `actividadesToFilas(actividades, expId, area)` — convierte actividades a filas exportables. Para cambios/retrocesos de estado, `estadoExpediente` muestra el estado ORIGEN.
+- `tareasToFilas(tareas, estadoProcesal, expId, area)` — convierte tareas a filas.
+- `exportarExcel(filas, nombre, incluirExpediente)` — genera .xlsx con wrapText en columna tareas.
+- `exportarPDF(filas, nombre, titulo, subtitulo, incluirExpediente)` — genera .pdf landscape con autoTable. Aplica `sanitizarParaPDF()` sobre título, descripción y tareas (Helvetica no soporta Unicode).
+
+**Columna "Tareas realizadas":** `\n` entre tareas; `didParseCell` splitea el string en array para que autoTable renderice cada tarea en su propia línea.
+
+---
+
+## 15. Checklist antes de entregar
 
 - [ ] `npx tsc --noEmit` sin errores
 - [ ] `npm run build` sin errores
@@ -227,3 +302,4 @@ Lo que deben adaptar:
 - [ ] Sin texto en inglés visible al usuario
 - [ ] Reglas de negocio de la Sección 7 respetadas
 - [ ] Datos mock coherentes con el dominio SIAJ
+- [ ] Sin `console.log` temporales de debugging
