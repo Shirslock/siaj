@@ -19,7 +19,7 @@ import { PrevisionTab }      from './tabs/PrevisionTab'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
 import { formatFecha } from '../../utils/format'
-import { getAlertaExpediente } from '../../utils/alertas'
+import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
@@ -278,7 +278,8 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
-  const alerta = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
+  const alerta      = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
+  const alertaTimer = getAlertaTimer(exp)
 
   const tareasEstadoActual = tareasMap[`${exp.id}__${exp.estadoProcesal ?? exp.estado}`] ?? []
   const tieneTareasPendientes = tareasEstadoActual.length > 0 && tareasEstadoActual.some(t => t.estado === 'en_curso')
@@ -308,15 +309,30 @@ export default function DetalleExpedientePage() {
               <span className="font-mono font-bold text-lg text-[#1b3a57]">{exp.id}</span>
               <AreaBadge area={exp.area} />
               <EstadoBadge code={exp.estado} label={exp.estado} />
-              {alerta.activa && (
-                <div
-                  title={alerta.nombreTarea ? `Por vencer: ${alerta.nombreTarea}${alerta.fechaVencimiento ? ` — vence ${formatFecha(alerta.fechaVencimiento)}` : ''}` : 'Tarea por vencer'}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a]"
-                >
-                  <Icon name="schedule" size={11} className="text-[#d97706]" />
-                  <span className="text-[10px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
-                </div>
-              )}
+              {(alerta.activa || alertaTimer.activa) && (() => {
+                const timerVencido = alertaTimer.activa && alertaTimer.diasRestantes !== undefined && alertaTimer.diasRestantes <= 0
+                const esVencido = alerta.estado === 'vencido' || timerVencido
+                if (esVencido) {
+                  return (
+                    <div
+                      title={alerta.nombreElemento ? `Vencido: ${alerta.nombreElemento}` : 'Plazo vencido'}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]"
+                    >
+                      <Icon name="warning" size={11} className="text-[#b91c1c]" />
+                      <span className="text-[10px] font-black text-[#b91c1c] uppercase tracking-wide">Vencido</span>
+                    </div>
+                  )
+                }
+                return (
+                  <div
+                    title={alerta.nombreElemento ? `Por vencer: ${alerta.nombreElemento}${alerta.fechaVencimiento ? ` — vence ${formatFecha(alerta.fechaVencimiento)}` : ''}` : 'Tarea por vencer'}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a]"
+                  >
+                    <Icon name="schedule" size={11} className="text-[#d97706]" />
+                    <span className="text-[10px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
+                  </div>
+                )
+              })()}
               <button
                 onClick={() => actualizarExpediente(exp.id, { es_urgente: !exp.es_urgente })}
                 title={exp.es_urgente ? 'Marcar como no urgente' : 'Marcar como urgente'}

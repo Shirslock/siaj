@@ -32,11 +32,13 @@ const TIPOS: { value: TipoActividad; label: string }[] = [
 const HOY = new Date().toISOString().split('T')[0]
 
 const BLANK_ACT = {
-  tipo: 'MOVIMIENTO' as TipoActividad,
-  titulo: '',
-  descripcion: '',
-  fecha: HOY,
-  doc_gde: '',
+  tipo:              'MOVIMIENTO' as TipoActividad,
+  titulo:            '',
+  descripcion:       '',
+  fecha:             HOY,
+  doc_gde:           '',
+  fecha_vencimiento: '',
+  fecha_aviso:       '',
 }
 
 type FiltroTab = 'todo' | 'sistema' | 'actividades' | 'tareas'
@@ -964,7 +966,9 @@ export function TimelineTab({ exp }: Props) {
       activo: false,
       creado_por: usuarioActivo?.id,
       es_movimiento_impulsorio: esImpulsorio || undefined,
-    }
+      ...(formAct.fecha_vencimiento ? { fecha_vencimiento: formAct.fecha_vencimiento } : {}),
+      ...(formAct.fecha_aviso       ? { fecha_aviso:       formAct.fecha_aviso       } : {}),
+    } as Actividad
     agregarActividad(exp.id, act)
     if (esImpulsorio) {
       actualizarExpediente(exp.id, {
@@ -1422,6 +1426,34 @@ export function TimelineTab({ exp }: Props) {
               onChange={e => setFormAct(p => ({ ...p, doc_gde: e.target.value }))}
             />
           </div>
+          <div>
+            <label className="field-label">Fecha de vencimiento (opcional)</label>
+            <input
+              type="date"
+              className="field-input w-full"
+              value={formAct.fecha_vencimiento}
+              onChange={e => setFormAct(p => ({
+                ...p,
+                fecha_vencimiento: e.target.value,
+                fecha_aviso: e.target.value ? p.fecha_aviso : '',
+              }))}
+            />
+          </div>
+          {formAct.fecha_vencimiento && (
+            <div>
+              <label className="field-label">Fecha de aviso (opcional)</label>
+              <p className="text-[10px] text-[#7a9ab4] mb-1">
+                A partir de qué fecha recibir el aviso de proximidad al vencimiento.
+              </p>
+              <input
+                type="date"
+                className="field-input w-full"
+                max={formAct.fecha_vencimiento}
+                value={formAct.fecha_aviso}
+                onChange={e => setFormAct(p => ({ ...p, fecha_aviso: e.target.value }))}
+              />
+            </div>
+          )}
           <div>
             <label className="field-label">Adjunto</label>
             {adjuntoNuevaAct ? (
