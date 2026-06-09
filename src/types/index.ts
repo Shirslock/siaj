@@ -202,6 +202,8 @@ export interface Actividad {
   tareasSnapshot?: Tarea[]
   es_movimiento_impulsorio?: boolean
   replies?: Reply[]
+  fecha_vencimiento?: string
+  fecha_aviso?: string
 }
 
 export interface AgendaEvent {

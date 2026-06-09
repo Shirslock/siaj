@@ -1,5 +1,11 @@
 import type { ItemQueue, Expediente, TipoActividad, TipoGestion, Area } from '../types'
 
+function addDays(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
+
 export const QUEUE_MESA: ItemQueue[] = [
   {
     id: 'QM_001',
@@ -316,6 +322,18 @@ export const EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK: Expediente = {
       es_movimiento_impulsorio: true,
       doc_gde: 'NO-2026-18450-APN-DGJYA',
     },
+    {
+      tipo: 'PRESENTACION' as TipoActividad,
+      titulo: 'Pericial contable — plazo vencido',
+      descripcion: 'Presentación de puntos de pericia. Plazo expirado.',
+      fecha: addDays(-7),
+      id: 'DC26_VENC_01',
+      expediente_id: 'C-0026/2026',
+      activo: true,
+      subitems: [],
+      doc_gde: null,
+      fecha_vencimiento: addDays(-5),
+    },
   ],
   intervinientes: [],
   documentos: [],
@@ -410,6 +428,20 @@ export const EXPEDIENTE_DETALLE: Expediente = {
       estadoExpediente: 'ASIGNADO',
       doc_gde: 'EX-2026-00923-APN-DGJYA',
       creado_por: 'UR_028',
+    },
+    {
+      id: 'ACT_C023_DEMO_PV',
+      expediente_id: 'C-0023/2026',
+      tipo: 'NOTIFICACION' as TipoActividad,
+      titulo: 'Contestación de demanda — plazo próximo a vencer',
+      descripcion: 'Plazo para presentar contestación de demanda.',
+      fecha: addDays(-3),
+      activo: true,
+      subitems: [],
+      doc_gde: null,
+      fecha_vencimiento: addDays(10),
+      fecha_aviso:       addDays(-2),
+      creado_por: 'UR_004',
     },
   ],
   vinculos: [

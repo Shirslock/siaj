@@ -11,7 +11,7 @@ import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { formatFecha } from '../../utils/format'
 import { RUTAS } from '../../utils/routing'
-import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
+import { getAlertaExpediente, getAlertaTimer, type EstadoAlerta } from '../../utils/alertas'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -342,11 +342,29 @@ export default function BandejaAbogadoPage() {
           {(() => {
             const alertaTareas = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
             const alertaTimer  = getAlertaTimer(exp)
-            if (!alertaTareas.activa && !alertaTimer.activa) return null
+            const timerVencido = alertaTimer.activa && alertaTimer.diasRestantes !== undefined && alertaTimer.diasRestantes <= 0
+            const estadoFinal: EstadoAlerta =
+              alertaTareas.estado === 'vencido' || timerVencido
+                ? 'vencido'
+                : alertaTareas.estado === 'por_vencer' || alertaTimer.activa
+                  ? 'por_vencer'
+                  : 'ninguna'
+            if (estadoFinal === 'ninguna') return null
+            if (estadoFinal === 'vencido') {
+              const tooltip = alertaTareas.nombreElemento
+                ? `Vencido: ${alertaTareas.nombreElemento}`
+                : 'Plazo vencido'
+              return (
+                <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5] cursor-default">
+                  <Icon name="warning" size={10} className="text-[#b91c1c]" />
+                  <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Vencido</span>
+                </div>
+              )
+            }
             const tooltip = alertaTimer.activa
               ? `Plazo procesal: vence ${formatFecha(alertaTimer.fechaVencimiento!)} (${alertaTimer.diasRestantes} días restantes)`
-              : alertaTareas.nombreTarea
-                ? `Por vencer: ${alertaTareas.nombreTarea}${alertaTareas.fechaVencimiento ? ` — ${formatFecha(alertaTareas.fechaVencimiento)}` : ''}`
+              : alertaTareas.nombreElemento
+                ? `Por vencer: ${alertaTareas.nombreElemento}${alertaTareas.fechaVencimiento ? ` — ${formatFecha(alertaTareas.fechaVencimiento)}` : ''}`
                 : 'Tarea por vencer'
             return (
               <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a] cursor-default">
@@ -495,7 +513,7 @@ export default function BandejaAbogadoPage() {
                 }`}
               >
                 <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#4a6a84]'} />
-                Por vencer
+                Alertas
                 {contadorAlerta > 0 && (
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
                     filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#e8e8e8] text-[#4a6a84]'
