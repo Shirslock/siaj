@@ -256,6 +256,7 @@ export type TipoCampo =
   | 'linea'
   | 'juzgado'
   | 'select'
+  | 'multiselect'
 
 export interface CampoFormulario {
   id: string

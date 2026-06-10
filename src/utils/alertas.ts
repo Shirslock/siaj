@@ -31,13 +31,13 @@ export function getAlertaExpediente(
     .filter(k => k.startsWith(`${expId}__`))
     .flatMap(k => tareasMap[k] ?? [])
     .filter(t =>
-      t.fecha_vencimiento &&
+      t.fechaVencimiento &&
       t.estado !== 'cumplido' &&
       t.estado !== 'no_procedente'
     )
     .forEach(t => elementos.push({
-      fecha_vencimiento: t.fecha_vencimiento!,
-      fecha_aviso:       t.fecha_aviso,
+      fecha_vencimiento: t.fechaVencimiento!,
+      fecha_aviso:       t.fecha_aviso ?? undefined,
       nombre:            t.nombre,
     }))
 

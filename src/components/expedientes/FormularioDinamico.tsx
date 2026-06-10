@@ -1,5 +1,6 @@
 import type { CampoFormulario } from '../../types'
 import { FormField } from '../ui/FormField'
+import Icon from '../ui/Icon'
 import { JUZGADOS, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 
 interface Props {
@@ -63,6 +64,65 @@ export function FormularioDinamico({ campos, valores, onChange }: Props) {
                 <option value="">Seleccionar…</option>
                 {LINEAS_FERROVIARIAS.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
               </select>
+            </FormField>
+          )
+        }
+
+        if (campo.type === 'multiselect' && campo.options) {
+          const opts = campo.options as string[]
+          const raw = valores[campo.id]
+          const slots: string[] = Array.isArray(raw) && raw.length > 0 ? raw as string[] : ['']
+
+          const commit = (newSlots: string[]) =>
+            onChange(campo.id, newSlots.filter(v => v !== ''))
+
+          return (
+            <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
+              <div className="space-y-2">
+                {slots.map((slotVal, si) => (
+                  <div key={si} className="flex items-center gap-2">
+                    <select
+                      value={slotVal}
+                      onChange={e => {
+                        const nuevos = [...slots]
+                        nuevos[si] = e.target.value
+                        commit(nuevos)
+                      }}
+                      className="field-input flex-1"
+                    >
+                      <option value="">Seleccioná una opción…</option>
+                      {opts.map(opt => (
+                        <option
+                          key={opt}
+                          value={opt}
+                          disabled={slots.some((v, i) => i !== si && v === opt)}
+                        >
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                    {slots.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => commit(slots.filter((_, i) => i !== si))}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0"
+                      >
+                        <Icon name="close" size={14} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {slots.filter(v => v !== '').length < opts.length && (
+                  <button
+                    type="button"
+                    onClick={() => commit([...slots, ''])}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1"
+                  >
+                    <Icon name="add" size={14} />
+                    Agregar otro
+                  </button>
+                )}
+              </div>
             </FormField>
           )
         }

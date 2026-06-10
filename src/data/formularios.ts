@@ -26,7 +26,9 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
     ],
     variante_penal: {
       mesa: [
-        { id:'mesa_num_causa',      label:'N° Causa / Sumario / IPP', type:'causa',   mono:true },
+        { id:'mesa_num_causa',   label:'N° de Causa',   type:'text', mono:true, placeholder:'Ej: 12345/2026' },
+        { id:'mesa_num_sumario', label:'N° de Sumario', type:'text', mono:true, placeholder:'Ej: SUM-2026-001' },
+        { id:'mesa_num_ipp',     label:'N° de IPP',     type:'text', mono:true, placeholder:'Ej: IPP-1234/2026' },
         { id:'mesa_caratula',       label:'Carátula',                  type:'text',    full:true },
         { id:'mesa_juzgado',        label:'Juzgado',                   type:'juzgado' },
         { id:'mesa_fiscalia',       label:'Fiscalía',                  type:'juzgado' },
@@ -41,8 +43,8 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
         { id:'abg_lugar_hecho',    label:'Lugar del hecho',           type:'text',    full:true },
         { id:'abg_damnificado',    label:'Parte damnificada',         type:'text' },
         { id:'abg_imputado',       label:'Parte imputada',            type:'text' },
-        { id:'abg_tipo_hecho',     label:'Tipo de hecho',             type:'select',  options:['APEDREO','APEDREO CON LESIONES','APEDREO CON DAÑO','DAÑO BIENES FFCC','ROBO BIENES FFCC','LESIONES','OTROS'] },
-        { id:'abg_tipo_solicitud', label:'Tipo de solicitud',         type:'select',  options:['Informativo','Urgente','Reiteratorio'] },
+        { id:'abg_tipo_hecho',     label:'Tipo de hecho',    type:'multiselect', options:['APEDREO','APEDREO CON LESIONES','APEDREO CON DAÑO','DAÑO BIENES FFCC','ROBO BIENES FFCC','LESIONES','OTROS'] },
+        { id:'abg_tipo_solicitud', label:'Tipo de solicitud', type:'multiselect', options:['Informativo','Urgente','Reiteratorio'] },
       ],
     },
   },

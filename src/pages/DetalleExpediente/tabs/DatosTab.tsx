@@ -17,13 +17,25 @@ function getLineaLabel(id: string): string {
   return LINEAS_FERROVIARIAS.find(l => l.id === id)?.label ?? id
 }
 
-function valorDisplay(campo: CampoFormulario, val: unknown): string {
+function valorDisplay(campo: CampoFormulario, val: unknown): React.ReactNode {
   if (val === null || val === undefined || val === '') return '—'
   if (campo.type === 'date')    return formatFecha(String(val))
   if (campo.type === 'money')   return formatMonto(Number(val))
   if (campo.type === 'boolean') return Boolean(val) ? 'Sí' : 'No'
   if (campo.type === 'juzgado') return getJuzgadoLabel(String(val))
   if (campo.type === 'linea')   return getLineaLabel(String(val))
+  if (campo.type === 'multiselect') {
+    if (!Array.isArray(val) || val.length === 0) return '—'
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {(val as string[]).map(v => (
+          <span key={v} className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
+            {v}
+          </span>
+        ))}
+      </div>
+    )
+  }
   return String(val)
 }
 
@@ -135,6 +147,46 @@ export function DatosTab({ exp }: Props) {
           <option value="">Seleccionar…</option>
           {LINEAS_FERROVIARIAS.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
         </select>
+      )
+    }
+    if (campo.type === 'multiselect' && campo.options) {
+      const opts = campo.options as string[]
+      const raw = draft[campo.id]
+      const slots: string[] = Array.isArray(raw) && raw.length > 0 ? raw as string[] : ['']
+      const commit = (newSlots: string[]) =>
+        setDraft(p => ({ ...p, [campo.id]: newSlots.filter(v => v !== '') }))
+      return (
+        <div className="space-y-2 w-full">
+          {slots.map((slotVal, si) => (
+            <div key={si} className="flex items-center gap-2">
+              <select
+                value={slotVal}
+                onChange={e => { const n = [...slots]; n[si] = e.target.value; commit(n) }}
+                className="field-input flex-1 text-sm"
+              >
+                <option value="">Seleccioná una opción…</option>
+                {opts.map(opt => (
+                  <option key={opt} value={opt} disabled={slots.some((v, i) => i !== si && v === opt)}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              {slots.length > 1 && (
+                <button type="button" onClick={() => commit(slots.filter((_, i) => i !== si))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0">
+                  <Icon name="close" size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+          {slots.filter(v => v !== '').length < opts.length && (
+            <button type="button" onClick={() => commit([...slots, ''])}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1">
+              <Icon name="add" size={14} />
+              Agregar otro
+            </button>
+          )}
+        </div>
       )
     }
     if (campo.type === 'boolean') {

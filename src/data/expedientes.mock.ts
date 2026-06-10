@@ -238,6 +238,45 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     ],
     es_principal: false,
   },
+  {
+    id: 'P-0020/2026',
+    tipo: 'OFICIO' as TipoGestion,
+    area: 'PENAL' as Area,
+    estado: 'EN_TRAMITE',
+    estadoProcesal: 'EN_ANALISIS',
+    caratula: 'JUZ. FEDERAL PENAL N°3 — OFICIO S/ INFORMES LÍNEA ROCA',
+    numero_ee_gde: 'EX-2026-05432-APN-DGJYA',
+    numero_causa: null,
+    abogado_id: 'UR_004',
+    fecha_recepcion: '2026-05-15',
+    campos_mesa: {
+      mesa_num_causa:   '12890/2026',
+      mesa_num_sumario: 'SUM-2026-045',
+      mesa_num_ipp:     'IPP-1234/2026',
+    },
+    campos_abogado: {
+      abg_tipo_hecho:     ['APEDREO CON DAÑO', 'DAÑO BIENES FFCC'],
+      abg_tipo_solicitud: ['Informativo', 'Urgente'],
+    },
+    timeline: [
+      {
+        tipo: 'RECEPCION' as TipoActividad,
+        titulo: 'Actuación recibida y asignada',
+        descripcion: 'Oficio Penal recibido por Mesa SACO y asignado al letrado.',
+        fecha: '2026-05-15',
+        id: 'OP_REC_01',
+        expediente_id: 'P-0020/2026',
+        activo: false,
+        subitems: [],
+        estadoExpediente: 'ASIGNADO',
+        doc_gde: 'EX-2026-05432-APN-DGJYA',
+        tareasSnapshot: [],
+      },
+    ],
+    intervinientes: [],
+    documentos: [],
+    vinculos: [],
+  },
 ]
 
 export const EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK: Expediente = {
