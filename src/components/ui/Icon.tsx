@@ -8,7 +8,7 @@ import {
   ChevronDownIcon, ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisVerticalIcon,
   ExclamationCircleIcon, ExclamationTriangleIcon, EyeIcon,
-  ChartBarIcon,
+  ChartBarIcon, TableCellsIcon,
   FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon, FolderPlusIcon,
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
@@ -33,6 +33,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   arrow_forward:         ArrowRightIcon,
   chevron_right:         ChevronRightIcon,
   close:                 XMarkIcon,
+  drag_indicator:        Bars3Icon,
   menu:                  Bars3Icon,
   menu_open:             XMarkIcon,
   more_vert:             EllipsisVerticalIcon,
@@ -70,6 +71,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   attach_file:           PaperClipIcon,
   description:           DocumentTextIcon,
   picture_as_pdf:        DocumentIcon,
+  table_chart:           TableCellsIcon,
 
   // Carpetas
   create_new_folder:     FolderPlusIcon,

@@ -68,7 +68,7 @@ export function VinculosTab({ exp }: Props) {
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             <Icon name="add_link" size={18} />
-            Vincular expediente
+            Vincular actuación
           </button>
         </div>
 

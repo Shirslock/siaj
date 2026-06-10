@@ -136,6 +136,7 @@ export interface Interviniente {
 }
 
 export interface Documento {
+  id: string
   nombre: string
   tipo: string
   fecha: string

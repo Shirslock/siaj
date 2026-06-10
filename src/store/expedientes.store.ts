@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Actividad, ChecklistItem, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
+import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK } from '../data/expedientes.mock'
 
 interface ExpedientesState {
@@ -21,11 +21,14 @@ interface ExpedientesState {
   desvincularExpediente: (expedienteId: string, vinculoId: string) => void
   agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => void
   eliminarInterviniente: (expedienteId: string, intervinienteId: string) => void
+  editarInterviniente: (expId: string, intId: string, cambios: Partial<Interviniente>) => void
   setFiltros: (filtros: FiltrosExpediente) => void
   inicializarTareas: (expId: string, estadoCodigo: string, tareas: Tarea[]) => void
   actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
   actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => void
-  eliminarDocumento: (expedienteId: string, index: number) => void
+  agregarDocumento: (expId: string, doc: Documento) => void
+  eliminarDocumento: (expedienteId: string, docId: string) => void
+  reordenarDocumentos: (expId: string, ordenNuevo: string[]) => void
   agregarReply: (expId: string, actividadIdx: number, reply: Omit<Reply, 'id' | 'created_at'>) => void
   agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
   actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
@@ -154,11 +157,43 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     }
   }),
 
-  eliminarDocumento: (expedienteId, index) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, documentos: e.documentos.filter((_, i) => i !== index) })
+  editarInterviniente: (expId, intId, cambios) => set(s => {
+    const fn = (e: Expediente) => ({
+      ...e,
+      intervinientes: e.intervinientes.map(i => i.id !== intId ? i : { ...i, ...cambios }),
+    })
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+    }
+  }),
+
+  agregarDocumento: (expId, doc) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, documentos: [...e.documentos, doc] })
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+    }
+  }),
+
+  eliminarDocumento: (expedienteId, docId) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, documentos: e.documentos.filter(d => d.id !== docId) })
     return {
       expedientes: applyToArr(s.expedientes, expedienteId, fn),
       expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+    }
+  }),
+
+  reordenarDocumentos: (expId, ordenNuevo) => set(s => {
+    const fn = (e: Expediente) => {
+      const ordenados = ordenNuevo
+        .map(id => e.documentos.find(d => d.id === id))
+        .filter(Boolean) as Documento[]
+      return { ...e, documentos: ordenados }
+    }
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
     }
   }),
 
