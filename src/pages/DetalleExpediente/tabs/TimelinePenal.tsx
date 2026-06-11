@@ -593,6 +593,18 @@ export function TimelinePenal({ exp }: Props) {
     }) as EntradaHistorial[]
   }, [exp.timeline, registros, exp.tipo])
 
+  const getTituloEntrada = (entrada: EntradaHistorial): string => {
+    if (entrada.kind === 'sistema')  return `${entrada.etapaAnteriorLabel ?? ''} → ${entrada.etapaNuevaLabel ?? ''}`
+    if (entrada.kind === 'generica') return entrada.titulo ?? ''
+    if (entrada.kind === 'procesal') return entrada.nombre ?? ''
+    return ''
+  }
+
+  const getDescripcionEntrada = (entrada: EntradaHistorial): string => {
+    if (entrada.kind === 'generica') return entrada.descripcion ?? ''
+    return ''
+  }
+
   const historialFiltrado = useMemo(() => {
     return historialCompleto.filter(e => {
       if (filtroHistorial !== 'todo') {
@@ -601,13 +613,7 @@ export function TimelinePenal({ exp }: Props) {
       }
       if (busquedaHistorial.trim()) {
         const q = busquedaHistorial.toLowerCase()
-        const titulo = e.kind === 'procesal'
-          ? e.nombre
-          : e.kind === 'generica'
-          ? e.titulo
-          : `${e.etapaAnteriorLabel} → ${e.etapaNuevaLabel}`
-        const descripcion = e.kind === 'generica' ? e.descripcion : ''
-        if (!`${titulo} ${descripcion}`.toLowerCase().includes(q)) return false
+        if (!`${getTituloEntrada(e)} ${getDescripcionEntrada(e)}`.toLowerCase().includes(q)) return false
       }
       return true
     })
