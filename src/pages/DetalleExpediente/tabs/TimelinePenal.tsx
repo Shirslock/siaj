@@ -882,11 +882,11 @@ export function TimelinePenal({ exp }: Props) {
                       <div className="flex items-center gap-2 mb-0.5">
                         <Icon name="swap_horiz" size={14} className="text-[#1b7a8a] flex-shrink-0" />
                         <p className="text-sm font-semibold text-[#1b3a57] truncate">
-                          {grupo.sistema.etapaAnteriorLabel} → {grupo.sistema.etapaNuevaLabel}
+                          {getTituloEntrada(grupo.sistema)}
                         </p>
                       </div>
-                      {grupo.sistema.descripcion && (
-                        <p className="text-xs text-[#4a6a84]">{grupo.sistema.descripcion}</p>
+                      {getDescripcionEntrada(grupo.sistema) && (
+                        <p className="text-xs text-[#4a6a84]">{getDescripcionEntrada(grupo.sistema)}</p>
                       )}
                       {grupo.actividades.length > 0 && (
                         <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold text-[#4a6a84] bg-[#e8e8e8] px-2 py-0.5 rounded-full">
