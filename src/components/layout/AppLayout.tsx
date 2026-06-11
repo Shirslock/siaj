@@ -13,7 +13,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/bandeja/area':    'Actuaciones',
   '/agenda':          'Agenda',
   '/configuracion':   'Configuración del Sistema',
-  '/configuracion':   'Configuración del Sistema',
 }
 
 const PAGE_ACTIVE: Record<string, string> = {

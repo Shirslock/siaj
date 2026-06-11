@@ -41,7 +41,7 @@ interface ConfiguracionState {
   usuarios:                 typeof USUARIOS
 
   agregarItem:    (tabla: string, item: CatalogoItem) => void
-  editarItem:     (tabla: string, id: string, cambios: Partial<CatalogoItem>) => void
+  editarItem:     (tabla: string, id: string, cambios: Partial<CatalogoItemExtended> | Record<string, unknown>) => void
   desactivarItem: (tabla: string, id: string) => void
 }
 

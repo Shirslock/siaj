@@ -4,7 +4,7 @@ import { DATOS_SOLO_LECTURA } from './tablas.config'
 import { useConfiguracionStore } from '../../store/configuracion.store'
 import { Modal } from '../../components/ui/Modal'
 import Icon from '../../components/ui/Icon'
-import type { CatalogoItem, CatalogoItemExtended, TipoGestionItem, Area, Canal } from '../../types'
+import type { CatalogoItem, CatalogoItemExtended, TipoGestionItem } from '../../types'
 
 interface Props { tabla: TablaConfig }
 
@@ -15,8 +15,7 @@ const AREA_BADGES: Record<string, string> = {
 }
 
 const TIPOS_ORGANISMO = ['Juzgado', 'Tribunal', 'Fiscalía', 'UFI', 'Comisaría']
-const AREAS: Area[] = ['CIVIL', 'LABORAL', 'PENAL']
-const CANALES: Canal[] = ['EE_GDE', 'MEMO_GDE', 'OTROS']
+
 
 function BadgeActivo({ activo }: { activo?: boolean }) {
   const inactivo = activo === false
