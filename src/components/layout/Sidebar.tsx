@@ -7,9 +7,10 @@ import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
-  { key: 'dashboard',       icon: 'dashboard',    label: 'Dashboard',     ruta: '/dashboard' },
-  { key: 'mesa',            icon: 'inbox',         label: 'Mesa SACO',     ruta: '/mesa' },
-  { key: 'actuaciones',     icon: 'work',          label: 'Actuaciones',          ruta: '/actuaciones' },
+  { key: 'dashboard',      icon: 'dashboard',    label: 'Dashboard',              ruta: '/dashboard' },
+  { key: 'mesa',           icon: 'inbox',        label: 'Mesa SACO',              ruta: '/mesa' },
+  { key: 'actuaciones',    icon: 'work',         label: 'Actuaciones',            ruta: '/actuaciones' },
+  { key: 'configuracion',  icon: 'settings',     label: 'Configuración',          ruta: '/configuracion' },
 ]
 
 const AVATAR_COLORS: Record<RolSistema, string> = {

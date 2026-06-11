@@ -51,6 +51,7 @@ export type TipoGestion =
 export interface CatalogoItem {
   id: string
   label: string
+  activo?: boolean
 }
 
 export interface CatalogoItemExtended extends CatalogoItem {

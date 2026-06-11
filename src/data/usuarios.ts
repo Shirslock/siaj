@@ -62,7 +62,7 @@ export function getAbogadosFifo(area: 'CIVIL' | 'LABORAL'): Usuario[] {
 
 export const ROL_ACCESOS: Record<RolSistema, AccesosRol> = {
   REFERENTE: {
-    nav: ['dashboard', 'actuaciones'],
+    nav: ['dashboard', 'actuaciones', 'configuracion'],
     puedeReasignar: false,
     verTodaBandeja: true,
     inicio: '/dashboard',

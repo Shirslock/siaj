@@ -6,6 +6,7 @@ import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
 import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
+import ConfiguracionPage from './pages/Configuracion/Configuracion.page'
 
 function PagePlaceholder({ nombre }: { nombre: string }) {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/causa/*"           element={<CausaDetallePage />} />
           <Route path="/penal"             element={<Navigate to="/" replace />} />
           <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
+          <Route path="/configuracion"     element={<ConfiguracionPage />} />
         </Routes>
       </AppLayout>
     </>

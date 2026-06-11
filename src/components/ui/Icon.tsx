@@ -14,7 +14,7 @@ import {
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
   ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
-  UsersIcon, WrenchScrewdriverIcon, XMarkIcon,
+  UsersIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -102,6 +102,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   account_tree:          RectangleGroupIcon,
   block:                 NoSymbolIcon,
   construction:          WrenchScrewdriverIcon,
+  settings:              Cog6ToothIcon,
   dashboard:             Squares2X2Icon,
   gavel:                 ScaleIcon,
   local_police:          ShieldCheckIcon,
