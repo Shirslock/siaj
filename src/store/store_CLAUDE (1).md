@@ -10,6 +10,7 @@ Solo sessionStorage para ID del usuario activo.
 |-------|-----------|------|
 | `expedientes.store.ts` | Expedientes, queue, tareas, filtros | `useExpedientesStore()` |
 | `ui.store.ts` | Usuario activo, sidebar, sessionStorage | `useUIStore()` |
+| `configuracion.store.ts` | Catálogos editables del sistema + usuarios | `useConfiguracionStore()` |
 
 > actividades.store.ts y agenda.store.ts no existen aún — pendientes para sprint de agenda.
 
@@ -39,7 +40,18 @@ actualizarChecklist(expId, actividadIndex, checklist)
 vincularExpediente(expId, vinculo)
 desvincularExpediente(expId, vinculoId)
 agregarInterviniente(expId, interviniente)
+editarInterviniente(expId, intId, cambios)      // Partial<Interviniente>
 eliminarInterviniente(expId, intervinienteId)
+
+// Documentos
+agregarDocumento(expId, doc)                    // doc: Documento (con id obligatorio)
+eliminarDocumento(expedienteId, docId)          // por id string, no por índice
+reordenarDocumentos(expId, ordenNuevo)          // ordenNuevo: string[] (array de ids)
+
+// Registros penales
+agregarRegistroPenal(expId, registro)
+actualizarRegistroPenal(expId, registroId, cambios)
+eliminarRegistroPenal(expId, registroId)
 
 // Filtros
 setFiltros(filtros)
@@ -52,6 +64,16 @@ setUsuarioActivo(id)   // persiste en sessionStorage
 toggleSidebar()
 // Toasts: NO usar showToast — usar toast.* de react-toastify directamente
 ```
+
+## Acciones — configuracion.store.ts
+
+```ts
+agregarItem(tabla: string, item: CatalogoItem)
+editarItem(tabla: string, id: string, cambios: Partial<CatalogoItem>)
+desactivarItem(tabla: string, id: string)   // setea activo: false, no elimina
+```
+
+`tabla` es la clave del store (ej: `'lineas'`, `'juzgados'`, `'tiposHechoPenal'`).
 
 ---
 
@@ -102,3 +124,10 @@ const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 - Usada en BandejaAbogado (fila + filtro) y en DetalleExpediente (badge en header)
 
 **`tareasMap` inicial:** arranca vacío `{}`. Las tareas se inicializan con `inicializarTareas(expId, estadoCodigo, tareas)` al abrir un estado en TimelineTab.
+
+## Nota sobre Documento
+
+`Documento` tiene campo `id: string` obligatorio desde feat/ux-refinements.
+`eliminarDocumento` recibe `docId: string`, no índice numérico.
+Los documentos del mock tienen IDs del tipo `DOC_C023_001`.
+Al subir un archivo nuevo: `id: \`DOC_${Date.now()}\``.
