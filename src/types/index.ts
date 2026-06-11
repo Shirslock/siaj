@@ -193,6 +193,8 @@ export interface Actividad {
   descripcion: string
   estado?: EstadoActividad
   estadoExpediente?: string
+  etapaAnteriorLabel?: string
+  etapaNuevaLabel?: string
   fecha: string
   vencimiento?: string
   doc_gde?: string | null

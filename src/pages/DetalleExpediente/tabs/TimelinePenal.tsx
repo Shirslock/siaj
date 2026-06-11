@@ -47,7 +47,7 @@ const BLANK_ACT = {
 // ── Tipos del historial unificado ────────────────────
 
 type EntradaHistorial =
-  | { kind: 'sistema';  fecha: string; titulo: string; descripcion: string; doc_gde?: string | null }
+  | { kind: 'sistema';  fecha: string; etapaAnteriorLabel: string; etapaNuevaLabel: string; descripcion: string; doc_gde?: string | null }
   | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null }
   | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; etapaCodigo: string; resultado: string | null }
 
@@ -509,7 +509,9 @@ export function TimelinePenal({ exp }: Props) {
       fecha:         HOY,
       activo:        true,
       subitems:      [],
-      estadoExpediente: etapaDestino.codigo,
+      estadoExpediente:  etapaDestino.codigo,
+      etapaAnteriorLabel: etapaActual?.label ?? etapaCodigo,
+      etapaNuevaLabel:    etapaDestino.label,
       doc_gde:       null,
       tareasSnapshot: [],
     })
@@ -550,11 +552,20 @@ export function TimelinePenal({ exp }: Props) {
     exp.timeline.forEach(act => {
       const esSistema =
         act.tipo === 'MOVIMIENTO' && act.titulo.startsWith('Cambio de estado')
-      entradas.push(
-        esSistema
-          ? { kind: 'sistema', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', doc_gde: act.doc_gde, _idx: entradas.length }
-          : { kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, _idx: entradas.length }
-      )
+      if (esSistema) {
+        const parts = act.titulo.replace('Cambio de estado: ', '').split(' → ')
+        entradas.push({
+          kind: 'sistema',
+          fecha: act.fecha,
+          etapaAnteriorLabel: act.etapaAnteriorLabel ?? parts[0] ?? '',
+          etapaNuevaLabel:    act.etapaNuevaLabel    ?? parts[1] ?? '',
+          descripcion: act.descripcion ?? '',
+          doc_gde: act.doc_gde,
+          _idx: entradas.length,
+        })
+      } else {
+        entradas.push({ kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, _idx: entradas.length })
+      }
     })
 
     registros.forEach(r => {
@@ -590,10 +601,13 @@ export function TimelinePenal({ exp }: Props) {
       }
       if (busquedaHistorial.trim()) {
         const q = busquedaHistorial.toLowerCase()
-        const texto = e.kind === 'procesal'
-          ? `${e.numero} ${e.nombre} ${e.etapaLabel}`
-          : `${e.titulo} ${e.descripcion}`
-        if (!texto.toLowerCase().includes(q)) return false
+        const titulo = e.kind === 'procesal'
+          ? e.nombre
+          : e.kind === 'generica'
+          ? e.titulo
+          : `${e.etapaAnteriorLabel} → ${e.etapaNuevaLabel}`
+        const descripcion = e.kind === 'generica' ? e.descripcion : ''
+        if (!`${titulo} ${descripcion}`.toLowerCase().includes(q)) return false
       }
       return true
     })
@@ -602,8 +616,10 @@ export function TimelinePenal({ exp }: Props) {
   const gruposHistorial = useMemo(() => {
     const entradaRecepcion = historialFiltrado.find(
       e => e.kind === 'sistema' &&
-           (e.titulo.toLowerCase().includes('recib') ||
-            e.titulo.toLowerCase().includes('asignado'))
+           (e.etapaNuevaLabel?.toLowerCase().includes('recib') ||
+            e.etapaNuevaLabel?.toLowerCase().includes('asignado') ||
+            e.etapaAnteriorLabel?.toLowerCase().includes('recib') ||
+            e.etapaAnteriorLabel?.toLowerCase().includes('asignado'))
     )
 
     const sinRecepcion = historialFiltrado.filter(e => e !== entradaRecepcion)
@@ -658,7 +674,9 @@ export function TimelinePenal({ exp }: Props) {
             <Icon name="swap_horiz" size={16} className="text-[#1b3a57]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
+            <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">
+              {entrada.etapaAnteriorLabel} → {entrada.etapaNuevaLabel}
+            </p>
             {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
             {entrada.doc_gde && (
               <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
@@ -857,7 +875,9 @@ export function TimelinePenal({ exp }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <Icon name="swap_horiz" size={14} className="text-[#1b7a8a] flex-shrink-0" />
-                        <p className="text-sm font-semibold text-[#1b3a57] truncate">{grupo.sistema.titulo}</p>
+                        <p className="text-sm font-semibold text-[#1b3a57] truncate">
+                          {grupo.sistema.etapaAnteriorLabel} → {grupo.sistema.etapaNuevaLabel}
+                        </p>
                       </div>
                       {grupo.sistema.descripcion && (
                         <p className="text-xs text-[#4a6a84]">{grupo.sistema.descripcion}</p>

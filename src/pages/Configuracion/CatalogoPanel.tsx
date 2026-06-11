@@ -359,8 +359,11 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2 mb-4">
         <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#f0f0f0] px-2 py-0.5 rounded-full">
+          <Icon name="block" size={12} /> Solo lectura
+        </span>
       </div>
       <div className="bg-white rounded-2xl shadow-card overflow-hidden">
         <table className="w-full text-sm">
