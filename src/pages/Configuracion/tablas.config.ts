@@ -76,12 +76,19 @@ export const GRUPOS_CONFIG: GrupoConfig[] = [
   },
   {
     id: 'personal',
-    label: 'Personal e Intervinientes',
+    label: 'Abogados / Usuarios',
+    icono: 'group',
+    tablas: [
+      { id: 'usuarios', label: 'Abogados / Usuarios', storeKey: 'usuarios', tipo: 'usuario' },
+    ],
+  },
+  {
+    id: 'intervinientes',
+    label: 'Catálogos de Intervinientes',
     icono: 'people',
     tablas: [
-      { id: 'usuarios',              label: 'Abogados / Usuarios',           storeKey: 'usuarios',              tipo: 'usuario' },
-      { id: 'rolesInterviniente',    label: 'Intervinientes — Rol Procesal',  storeKey: 'rolesInterviniente',    tipo: 'simple' },
-      { id: 'tiposDocInterviniente', label: 'Intervinientes — Tipo Documento', storeKey: 'tiposDocInterviniente', tipo: 'simple' },
+      { id: 'rolesInterviniente',    label: 'Rol Procesal',      storeKey: 'rolesInterviniente',    tipo: 'simple' },
+      { id: 'tiposDocInterviniente', label: 'Tipo de Documento', storeKey: 'tiposDocInterviniente', tipo: 'simple' },
     ],
   },
 ]
