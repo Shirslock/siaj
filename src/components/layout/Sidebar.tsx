@@ -10,6 +10,8 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'dashboard',      icon: 'dashboard',    label: 'Dashboard',              ruta: '/dashboard' },
   { key: 'mesa',           icon: 'inbox',        label: 'Mesa SACO',              ruta: '/mesa' },
   { key: 'actuaciones',    icon: 'work',         label: 'Actuaciones',            ruta: '/actuaciones' },
+  { key: 'agenda',         icon: 'calendar',     label: 'Agenda',                 ruta: '/agenda' },
+  { key: 'tareas',         icon: 'task',         label: 'Tareas',                 ruta: '/tareas' },
   { key: 'configuracion',  icon: 'settings',     label: 'Configuración',          ruta: '/configuracion' },
 ]
 

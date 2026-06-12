@@ -7,15 +7,8 @@ import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
 import ConfiguracionPage from './pages/Configuracion/Configuracion.page'
-
-function PagePlaceholder({ nombre }: { nombre: string }) {
-  return (
-    <div className="p-8">
-      <p className="font-headline text-2xl text-[#1b3a57] font-bold">{nombre}</p>
-      <p className="text-[#4a6a84] mt-2 text-sm">Página en construcción — Fase siguiente</p>
-    </div>
-  )
-}
+import AgendaPage from './pages/Agenda/Agenda.page'
+import TareasPage from './pages/Tareas/tareas.page'
 
 export default function App() {
   return (
@@ -33,7 +26,8 @@ export default function App() {
           <Route path="/expediente/*"      element={<DetalleExpedientePage />} />
           <Route path="/causa/*"           element={<CausaDetallePage />} />
           <Route path="/penal"             element={<Navigate to="/" replace />} />
-          <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
+          <Route path="/agenda"            element={<AgendaPage />} />
+          <Route path="/tareas"            element={<TareasPage />} />
           <Route path="/configuracion"     element={<ConfiguracionPage />} />
         </Routes>
       </AppLayout>
