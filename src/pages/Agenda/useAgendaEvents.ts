@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import { useTareasStore } from '../../store/tareas.store'
 import type { AgendaEvent } from '../../types'
 
 export function useAgendaEvents() {
   const { expedientes, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const tareasKanban = useTareasStore(s => s.tareas)
 
   return useMemo(() => {
     const eventos: AgendaEvent[] = []
@@ -48,10 +50,33 @@ export function useAgendaEvents() {
       })
     })
 
-    if (!usuarioActivo) return eventos
-    if (usuarioActivo.rolSistema === 'REFERENTE' || usuarioActivo.rolSistema === 'COORDINADOR') {
-      return eventos
-    }
-    return eventos.filter(e => e.abogado_id === usuarioActivo.id)
-  }, [expedientes, tareasMap, usuarioActivo])
+    const esReferente = usuarioActivo?.rolSistema === 'REFERENTE'
+    const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'
+
+    const eventosBase = !usuarioActivo || esReferente || esCoordinador
+      ? eventos
+      : eventos.filter(e => e.abogado_id === usuarioActivo.id)
+
+    // Tareas Kanban con "mostrar en agenda" activado
+    const eventosKanban: AgendaEvent[] = tareasKanban
+      .filter(t =>
+        t.mostrar_en_agenda &&
+        t.fecha_limite &&
+        (esReferente || esCoordinador ||
+         t.asignado_a === usuarioActivo?.id ||
+         t.creado_por === usuarioActivo?.id)
+      )
+      .map(t => ({
+        id: `KANBAN_${t.id}`,
+        expediente_id: t.expediente_id,
+        actividad_id: t.id,
+        titulo: t.titulo,
+        fecha_vencimiento: t.fecha_limite!,
+        estado: 'PENDIENTE',
+        abogado_id: t.asignado_a,
+        area: t.expediente_area,
+      }))
+
+    return [...eventosBase, ...eventosKanban]
+  }, [expedientes, tareasMap, usuarioActivo, tareasKanban])
 }

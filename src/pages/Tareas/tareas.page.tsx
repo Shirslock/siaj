@@ -2,6 +2,10 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import {
+  useTareasStore, PERSONAS_POR_AREA,
+  type TareaKanban, type PrioridadTarea, type EstadoTareaKanban, type AreaDestinataria,
+} from '../../store/tareas.store'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { AreaBadge } from '../../components/ui/Badge'
@@ -14,94 +18,9 @@ import type { Area } from '../../types'
 
 // ── Tipos locales ─────────────────────────────────────────────────────────────
 
-type PrioridadTarea = 'alta' | 'media' | 'baja'
-type EstadoTarea = 'pendiente' | 'en_curso' | 'completada'
-
-interface TareaKanban {
-  id: string
-  titulo: string
-  descripcion: string
-  expediente_id: string
-  expediente_caratula: string
-  expediente_area: Area
-  asignado_a: string        // usuario id
-  creado_por: string        // usuario id
-  fecha_limite: string | null
-  prioridad: PrioridadTarea
-  estado: EstadoTarea
-  mostrar_en_agenda: boolean
-  etiquetas: string[]
-  created_at: string
-}
-
-// ── Mock inicial ──────────────────────────────────────────────────────────────
-
-const TAREAS_MOCK: TareaKanban[] = [
-  {
-    id: 'TK_001',
-    titulo: 'Presentar contestación de demanda',
-    descripcion: 'Redactar y presentar el escrito de contestación ante el Juzgado Federal Civil N°1.',
-    expediente_id: 'C-0023/2026',
-    expediente_caratula: 'RODRIGUEZ MARIO OSCAR C/ SOFSA SA S/ DAÑOS Y PERJUICIOS',
-    expediente_area: 'CIVIL',
-    asignado_a: 'UR_004',
-    creado_por: 'UR_013',
-    fecha_limite: '2026-06-15',
-    prioridad: 'alta',
-    estado: 'pendiente',
-    mostrar_en_agenda: true,
-    etiquetas: ['Escrito', 'Urgente'],
-    created_at: '2026-05-10',
-  },
-  {
-    id: 'TK_002',
-    titulo: 'Revisar peritos propuestos',
-    descripcion: 'Analizar los peritos propuestos por la parte actora y evaluar impugnar.',
-    expediente_id: 'C-0026/2026',
-    expediente_caratula: 'GOMEZ CARLOS ALBERTO C/ SOFSA SA S/ DAÑOS Y PERJUICIOS',
-    expediente_area: 'CIVIL',
-    asignado_a: 'UR_004',
-    creado_por: 'UR_004',
-    fecha_limite: '2026-06-20',
-    prioridad: 'media',
-    estado: 'en_curso',
-    mostrar_en_agenda: false,
-    etiquetas: ['Peritos'],
-    created_at: '2026-05-12',
-  },
-  {
-    id: 'TK_003',
-    titulo: 'Solicitar filmaciones a Seguridad',
-    descripcion: 'Oficiar a la comisaría para obtener filmaciones del incidente ferroviario.',
-    expediente_id: 'P-0012/2026',
-    expediente_caratula: 'APEDREO CON DAÑO — Línea Roca Km 27 Est. Temperley',
-    expediente_area: 'PENAL',
-    asignado_a: 'UR_019',
-    creado_por: 'UR_022',
-    fecha_limite: '2026-06-10',
-    prioridad: 'alta',
-    estado: 'en_curso',
-    mostrar_en_agenda: true,
-    etiquetas: ['Oficio'],
-    created_at: '2026-05-08',
-  },
-  {
-    id: 'TK_004',
-    titulo: 'Cargar datos del acuerdo extrajudicial',
-    descripcion: 'Registrar en el sistema los términos del acuerdo alcanzado.',
-    expediente_id: 'C-0021/2026',
-    expediente_caratula: 'JUZ. FED. CIVIL N°2 — OFICIO S/ MARTINEZ PAULA SILVANA',
-    expediente_area: 'CIVIL',
-    asignado_a: 'UR_007',
-    creado_por: 'UR_013',
-    fecha_limite: '2026-05-30',
-    prioridad: 'baja',
-    estado: 'completada',
-    mostrar_en_agenda: false,
-    etiquetas: ['Acuerdo'],
-    created_at: '2026-05-01',
-  },
-]
+type EstadoTarea = EstadoTareaKanban
+type GrupoAsignacion = 'CIVIL' | 'LABORAL' | 'PENAL' | 'RRHH' | 'COMERCIAL' | 'SEGUROS' | ''
+type TipoFiltro = 'mis_tareas' | 'creadas_por_mi' | 'letrado' | 'area_externa' | ''
 
 // ── Configuración de columnas ─────────────────────────────────────────────────
 
@@ -128,6 +47,9 @@ const BLANK_TAREA = {
   prioridad: 'media' as PrioridadTarea,
   mostrar_en_agenda: false,
   etiquetas: [] as string[],
+  area_destinataria: '' as AreaDestinataria,
+  persona_contacto_id: '',
+  persona_contacto: '',
 }
 
 // ── Card de tarea ─────────────────────────────────────────────────────────────
@@ -232,6 +154,30 @@ function TareaCard({
         </div>
       )}
 
+      {/* Interno SIAJ — letrado asignado */}
+      {tarea.asignado_a && (
+        <div className="flex items-center gap-1 mt-1.5">
+          <Icon name="person" size={11} className="text-[#4a6a84]" />
+          <span className="text-[10px] text-[#4a6a84] truncate">
+            {getNombreCompleto(getUsuarioById(tarea.asignado_a)!)}
+          </span>
+        </div>
+      )}
+
+      {/* Externo SIAJ — área + persona de contacto */}
+      {tarea.area_destinataria && (
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#e8e8e8] text-[#4a6a84]">
+            {tarea.area_destinataria}
+          </span>
+          {tarea.persona_contacto && (
+            <span className="text-[10px] text-[#4a6a84] truncate">
+              {tarea.persona_contacto}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-[rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-2">
@@ -248,12 +194,14 @@ function TareaCard({
           )}
         </div>
         {/* Avatar asignado */}
-        <div
-          title={asignado ? getNombreCompleto(asignado) : 'Sin asignar'}
-          className="w-6 h-6 rounded-full bg-[#1b3a57] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-        >
-          {initials}
-        </div>
+        {asignado && (
+          <div
+            title={getNombreCompleto(asignado)}
+            className="w-6 h-6 rounded-full bg-[#1b3a57] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+          >
+            {initials}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -264,27 +212,47 @@ function TareaCard({
 export default function TareasPage() {
   const { expedientes } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { tareas, agregarTarea, editarTarea, moverTarea: moverTareaStore, eliminarTarea: eliminarTareaStore } = useTareasStore()
 
-  const [tareas, setTareas] = useState<TareaKanban[]>(TAREAS_MOCK)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [tareaEditando, setTareaEditando] = useState<TareaKanban | null>(null)
   const [form, setForm] = useState(BLANK_TAREA)
-  const [filtroAsignado, setFiltroAsignado] = useState<string>(usuarioActivo?.id ?? '')
+  const [grupoAsignacion, setGrupoAsignacion] = useState<GrupoAsignacion>('')
+  const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>('mis_tareas')
+  const [filtroLetrado, setFiltroLetrado] = useState('')
+  const [filtroAreaExt, setFiltroAreaExt] = useState('')
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
   const [filtroExpediente, setFiltroExpediente] = useState('')
   const [busqueda, setBusqueda] = useState('')
 
   // Filtrar tareas
   const tareasFiltradas = useMemo(() => {
+    const uid = usuarioActivo?.id ?? ''
     return tareas.filter(t => {
-      if (filtroAsignado && t.asignado_a !== filtroAsignado) return false
+      // Filtro por tipo de vista
+      if (tipoFiltro === 'mis_tareas') {
+        if (t.creado_por !== uid && t.asignado_a !== uid) return false
+      }
+      if (tipoFiltro === 'creadas_por_mi') {
+        if (t.creado_por !== uid) return false
+      }
+      if (tipoFiltro === 'letrado') {
+        if (!filtroLetrado) return false
+        if (t.asignado_a !== filtroLetrado) return false
+      }
+      if (tipoFiltro === 'area_externa') {
+        if (!filtroAreaExt) return false
+        if (t.area_destinataria !== filtroAreaExt) return false
+      }
+
+      // Filtros de texto y prioridad existentes
       if (filtroPrioridad && t.prioridad !== filtroPrioridad) return false
       if (filtroExpediente && !t.expediente_id.toLowerCase().includes(filtroExpediente.toLowerCase()) &&
           !t.expediente_caratula.toLowerCase().includes(filtroExpediente.toLowerCase())) return false
       if (busqueda && !t.titulo.toLowerCase().includes(busqueda.toLowerCase())) return false
       return true
     })
-  }, [tareas, filtroAsignado, filtroPrioridad, filtroExpediente, busqueda])
+  }, [tareas, tipoFiltro, filtroLetrado, filtroAreaExt, filtroPrioridad, filtroExpediente, busqueda, usuarioActivo])
 
   const tareasPorEstado = useMemo(() => {
     const map: Record<EstadoTarea, TareaKanban[]> = { pendiente: [], en_curso: [], completada: [] }
@@ -294,7 +262,8 @@ export default function TareasPage() {
 
   function abrirNueva() {
     setTareaEditando(null)
-    setForm({ ...BLANK_TAREA, asignado_a: usuarioActivo?.id ?? '' })
+    setForm({ ...BLANK_TAREA, asignado_a: '' })
+    setGrupoAsignacion('')
     setModalAbierto(true)
   }
 
@@ -309,25 +278,56 @@ export default function TareasPage() {
       prioridad: t.prioridad,
       mostrar_en_agenda: t.mostrar_en_agenda,
       etiquetas: t.etiquetas,
+      area_destinataria: t.area_destinataria ?? '',
+      persona_contacto_id: t.persona_contacto_id ?? '',
+      persona_contacto: t.persona_contacto ?? '',
     })
+    if (t.area_destinataria) {
+      setGrupoAsignacion(t.area_destinataria)
+    } else if (t.asignado_a) {
+      const u = getUsuarioById(t.asignado_a)
+      const areaJuridica = u?.areas.find(a => ['CIVIL', 'LABORAL', 'PENAL'].includes(a))
+      setGrupoAsignacion((areaJuridica as GrupoAsignacion) ?? '')
+    } else {
+      setGrupoAsignacion('')
+    }
     setModalAbierto(true)
+  }
+
+  function getPersonasGrupo(grupo: GrupoAsignacion): { id: string; nombre: string }[] {
+    if (!grupo) return []
+    if (['CIVIL', 'LABORAL', 'PENAL'].includes(grupo)) {
+      return USUARIOS
+        .filter(u =>
+          (u.rolSistema === 'ABOGADO' || u.rolSistema === 'COORDINADOR') &&
+          u.areas.includes(grupo as Area)
+        )
+        .map(u => ({
+          id: u.id,
+          nombre: `${u.apellido}, ${u.nombre}${u.id === usuarioActivo?.id ? ' (yo)' : ''}`,
+        }))
+    }
+    return PERSONAS_POR_AREA
+      .filter(p => p.area === grupo)
+      .map(p => ({ id: p.id, nombre: p.nombre }))
   }
 
   function guardarTarea() {
     if (!form.titulo.trim() || !form.expediente_id) return
     const expObj = expedientes.find(e => e.id === form.expediente_id)
     if (tareaEditando) {
-      setTareas(prev => prev.map(t => t.id === tareaEditando.id ? {
-        ...t,
+      editarTarea(tareaEditando.id, {
         ...form,
         fecha_limite: form.fecha_limite || null,
-        expediente_caratula: expObj?.caratula ?? t.expediente_caratula,
-        expediente_area: expObj?.area ?? t.expediente_area,
-      } : t))
+        expediente_caratula: expObj?.caratula ?? tareaEditando.expediente_caratula,
+        expediente_area: expObj?.area ?? tareaEditando.expediente_area,
+        area_destinataria: form.area_destinataria || undefined,
+        persona_contacto_id: form.persona_contacto_id || undefined,
+        persona_contacto: form.persona_contacto || undefined,
+      })
       toast.success('Tarea actualizada.')
     } else {
-      const nueva: TareaKanban = {
-        id: `TK_${Date.now()}`,
+      agregarTarea({
         ...form,
         fecha_limite: form.fecha_limite || null,
         expediente_caratula: expObj?.caratula ?? '',
@@ -335,22 +335,39 @@ export default function TareasPage() {
         creado_por: usuarioActivo?.id ?? '',
         estado: 'pendiente',
         created_at: HOY,
-      }
-      setTareas(prev => [nueva, ...prev])
+        area_destinataria: form.area_destinataria || undefined,
+        persona_contacto_id: form.persona_contacto_id || undefined,
+        persona_contacto: form.persona_contacto || undefined,
+      })
       toast.success('Tarea asignada.')
     }
     setModalAbierto(false)
   }
 
   function moverTarea(id: string, estado: EstadoTarea) {
-    setTareas(prev => prev.map(t => t.id === id ? { ...t, estado } : t))
+    moverTareaStore(id, estado)
     toast.success(`Tarea movida a ${COLUMNAS.find(c => c.key === estado)?.label}.`)
   }
 
   function eliminarTarea(id: string) {
-    setTareas(prev => prev.filter(t => t.id !== id))
+    eliminarTareaStore(id)
     toast.success('Tarea eliminada.')
   }
+
+  function limpiarFiltros() {
+    setTipoFiltro('mis_tareas')
+    setFiltroLetrado('')
+    setFiltroAreaExt('')
+    setBusqueda('')
+    setFiltroExpediente('')
+    setFiltroPrioridad('')
+  }
+
+  const hayFiltrosActivos =
+    tipoFiltro !== 'mis_tareas' ||
+    busqueda !== '' ||
+    filtroExpediente !== '' ||
+    filtroPrioridad !== ''
 
   const abogados = USUARIOS.filter(u => u.rolSistema === 'ABOGADO' || u.rolSistema === 'COORDINADOR')
 
@@ -396,19 +413,55 @@ export default function TareasPage() {
           />
         </div>
 
-        {/* Asignado */}
-        <select
-          className="field-input text-sm"
-          value={filtroAsignado}
-          onChange={e => setFiltroAsignado(e.target.value)}
-        >
-          <option value="">Todos los letrados</option>
-          <option value={usuarioActivo?.id ?? ''} style={{ fontWeight: 'bold' }}>★ Mis tareas</option>
-          <option disabled>──────────</option>
-          {abogados.filter(u => u.id !== usuarioActivo?.id).map(u => (
-            <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
-          ))}
-        </select>
+        {/* Tipo de filtro */}
+        <div className="flex gap-2 flex-wrap">
+          {/* Select principal de tipo de filtro */}
+          <select
+            className="field-input text-sm"
+            value={tipoFiltro}
+            onChange={e => {
+              setTipoFiltro(e.target.value as TipoFiltro)
+              setFiltroLetrado('')
+              setFiltroAreaExt('')
+            }}
+          >
+            <option value="mis_tareas">★ Mis tareas</option>
+            <option value="creadas_por_mi">Creadas por mí</option>
+            <option value="letrado">Por letrado</option>
+            <option value="area_externa">Por área externa</option>
+            <option value="">Todas</option>
+          </select>
+
+          {/* Segundo select — letrado */}
+          {tipoFiltro === 'letrado' && (
+            <select
+              className="field-input text-sm"
+              value={filtroLetrado}
+              onChange={e => setFiltroLetrado(e.target.value)}
+            >
+              <option value="">Seleccionar letrado...</option>
+              {abogados.map(u => (
+                <option key={u.id} value={u.id}>
+                  {getNombreCompleto(u)}{u.id === usuarioActivo?.id ? ' (yo)' : ''}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Segundo select — área externa */}
+          {tipoFiltro === 'area_externa' && (
+            <select
+              className="field-input text-sm"
+              value={filtroAreaExt}
+              onChange={e => setFiltroAreaExt(e.target.value)}
+            >
+              <option value="">Seleccionar área...</option>
+              <option value="RRHH">RRHH</option>
+              <option value="COMERCIAL">Comercial</option>
+              <option value="SEGUROS">Seguros</option>
+            </select>
+          )}
+        </div>
 
         {/* Prioridad */}
         <select
@@ -422,9 +475,9 @@ export default function TareasPage() {
           <option value="baja">Baja</option>
         </select>
 
-        {(busqueda || filtroExpediente || filtroPrioridad || filtroAsignado !== (usuarioActivo?.id ?? '')) && (
+        {hayFiltrosActivos && (
           <button
-            onClick={() => { setBusqueda(''); setFiltroExpediente(''); setFiltroPrioridad(''); setFiltroAsignado(usuarioActivo?.id ?? '') }}
+            onClick={limpiarFiltros}
             className="flex items-center gap-1 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
           >
             <Icon name="filter_alt_off" size={14} />
@@ -556,19 +609,69 @@ export default function TareasPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Asignar a */}
-            <div>
+            {/* Asignar a — selector en dos pasos */}
+            <div className="space-y-2">
               <label className="field-label">Asignar a</label>
+
+              {/* Paso 1 — Grupo/Área */}
               <select
                 className="field-input w-full"
-                value={form.asignado_a}
-                onChange={e => setForm(p => ({ ...p, asignado_a: e.target.value }))}
+                value={grupoAsignacion}
+                onChange={e => {
+                  const g = e.target.value as GrupoAsignacion
+                  setGrupoAsignacion(g)
+                  setForm(p => ({
+                    ...p,
+                    asignado_a: '',
+                    area_destinataria: (['RRHH', 'COMERCIAL', 'SEGUROS'] as GrupoAsignacion[]).includes(g) ? g as AreaDestinataria : '',
+                    persona_contacto_id: '',
+                    persona_contacto: '',
+                  }))
+                }}
               >
                 <option value="">Sin asignar</option>
-                {abogados.map(u => (
-                  <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
-                ))}
+                <optgroup label="Interno SIAJ">
+                  <option value="CIVIL">Civil</option>
+                  <option value="LABORAL">Laboral</option>
+                  <option value="PENAL">Penal</option>
+                </optgroup>
+                <optgroup label="Externo SIAJ">
+                  <option value="RRHH">RRHH</option>
+                  <option value="COMERCIAL">Comercial</option>
+                  <option value="SEGUROS">Seguros</option>
+                </optgroup>
               </select>
+
+              {/* Paso 2 — Persona (solo si hay grupo) */}
+              {grupoAsignacion && (
+                <select
+                  className="field-input w-full"
+                  value={
+                    ['CIVIL', 'LABORAL', 'PENAL'].includes(grupoAsignacion)
+                      ? form.asignado_a
+                      : form.persona_contacto_id
+                  }
+                  onChange={e => {
+                    const val = e.target.value
+                    const esInterno = ['CIVIL', 'LABORAL', 'PENAL'].includes(grupoAsignacion)
+                    if (esInterno) {
+                      setForm(p => ({ ...p, asignado_a: val }))
+                    } else {
+                      const persona = PERSONAS_POR_AREA.find(p => p.id === val)
+                      setForm(p => ({
+                        ...p,
+                        persona_contacto_id: val,
+                        persona_contacto: persona?.nombre ?? '',
+                      }))
+                    }
+                  }}
+                >
+                  <option value="">Seleccioná una persona...</option>
+                  {getPersonasGrupo(grupoAsignacion).map(p => (
+                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Prioridad */}

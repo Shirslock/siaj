@@ -13,7 +13,7 @@ import {
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
-  ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
+  ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserIcon, UserPlusIcon,
   UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
 } from '@heroicons/react/24/outline'
 
@@ -92,6 +92,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   error:                 ExclamationCircleIcon,
 
   // Personas
+  person:                UserIcon,
   person_add:            UserPlusIcon,
   person_search:         UserCircleIcon,
   people:                UsersIcon,

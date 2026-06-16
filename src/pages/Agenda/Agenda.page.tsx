@@ -1,8 +1,14 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAgendaEvents } from './useAgendaEvents'
+import { useAgendaStore, COLOR_EVENTO } from '../../store/agenda.store'
+import type { TipoEventoCustom, EventoCustom } from '../../store/agenda.store'
+import { useUIStore } from '../../store/ui.store'
+import { Modal } from '../../components/ui/Modal'
+import { Button } from '../../components/ui/Button'
 import { RUTAS } from '../../utils/routing'
 import Icon from '../../components/ui/Icon'
+import { toast } from 'react-toastify'
 
 const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -17,12 +23,25 @@ function getDiasDelMes(year: number, month: number) {
   return dias
 }
 
+const BLANK_EVENTO = {
+  titulo: '',
+  descripcion: '',
+  fecha: '',
+  hora: '',
+  tipo: 'reunion' as TipoEventoCustom,
+}
+
 export default function AgendaPage() {
   const navigate = useNavigate()
   const eventos = useAgendaEvents()
+  const { usuarioActivo } = useUIStore()
+  const { eventosCustom, agregarEvento, eliminarEvento } = useAgendaStore()
   const [fechaRef, setFechaRef] = useState(new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null)
   const [filtro, setFiltro] = useState<'todas' | 'tareas' | 'sistema'>('todas')
+  const [modalEvento, setModalEvento] = useState(false)
+  const [eventoDetalle, setEventoDetalle] = useState<EventoCustom | null>(null)
+  const [formEvento, setFormEvento] = useState(BLANK_EVENTO)
 
   const year = fechaRef.getFullYear()
   const month = fechaRef.getMonth()
@@ -30,12 +49,22 @@ export default function AgendaPage() {
 
   const eventosFiltrados = useMemo(() => {
     if (filtro === 'todas') return eventos
-    if (filtro === 'tareas') return eventos.filter(e => e.id.startsWith('TAREA_'))
+    if (filtro === 'tareas') return eventos.filter(e => e.id.startsWith('TAREA_') || e.id.startsWith('KANBAN_'))
     return eventos.filter(e => e.id.startsWith('ACT_'))
   }, [eventos, filtro])
 
   function eventosDelDia(fecha: string) {
     return eventosFiltrados.filter(e => e.fecha_vencimiento === fecha)
+  }
+
+  function eventosCustomDelDia(fecha: string) {
+    return eventosCustom.filter(e => e.fecha === fecha)
+  }
+
+  function handleClickDia(fecha: string) {
+    setDiaSeleccionado(fecha)
+    setFormEvento({ ...BLANK_EVENTO, fecha })
+    setModalEvento(true)
   }
 
   const hoy = new Date().toISOString().split('T')[0]
@@ -95,12 +124,13 @@ export default function AgendaPage() {
               if (!fecha) return <div key={idx} className="border-b border-r border-[rgba(0,0,0,0.05)] min-h-[100px] bg-[#fafafa]" />
               const iso = fecha.toISOString().split('T')[0]
               const evs = eventosDelDia(iso)
+              const evsCustom = eventosCustomDelDia(iso)
               const isToday = iso === hoy
               const isSelected = iso === diaSeleccionado
               return (
                 <div
                   key={iso}
-                  onClick={() => setDiaSeleccionado(iso)}
+                  onClick={() => handleClickDia(iso)}
                   className={`border-b border-r border-[rgba(0,0,0,0.05)] min-h-[100px] p-2 cursor-pointer transition-colors hover:bg-[#f0f0f0] ${
                     isSelected ? 'bg-[rgba(196,223,232,0.30)]' : ''
                   }`}
@@ -115,7 +145,7 @@ export default function AgendaPage() {
                       <div
                         key={ev.id}
                         className={`text-[10px] font-medium px-1.5 py-0.5 rounded truncate ${
-                          ev.id.startsWith('TAREA_') ? 'bg-[#dbeafe] text-[#1b3a57]' : 'bg-[#C4DFE8] text-[#1b3a57]'
+                          ev.id.startsWith('TAREA_') || ev.id.startsWith('KANBAN_') ? 'bg-[#dbeafe] text-[#1b3a57]' : 'bg-[#C4DFE8] text-[#1b3a57]'
                         }`}
                       >
                         {ev.titulo}
@@ -124,6 +154,16 @@ export default function AgendaPage() {
                     {evs.length > 2 && (
                       <p className="text-[9px] text-[#4a6a84] font-bold">+{evs.length - 2} más</p>
                     )}
+                    {evsCustom.map(ev => (
+                      <div
+                        key={ev.id}
+                        onClick={e => { e.stopPropagation(); setEventoDetalle(ev) }}
+                        className={`text-[10px] font-semibold px-1.5 py-0.5 rounded truncate cursor-pointer ${COLOR_EVENTO[ev.tipo]}`}
+                      >
+                        {ev.hora && <span className="mr-1 opacity-70">{ev.hora}</span>}
+                        {ev.titulo}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )
@@ -148,7 +188,7 @@ export default function AgendaPage() {
           ) : (
             <div className="space-y-2">
               {eventosPanel.map(ev => {
-                const esTarea = ev.id.startsWith('TAREA_')
+                const esTarea = ev.id.startsWith('TAREA_') || ev.id.startsWith('KANBAN_')
                 return (
                   <div
                     key={ev.id}
@@ -169,6 +209,155 @@ export default function AgendaPage() {
           )}
         </div>
       </div>
+
+      {/* Modal nuevo evento */}
+      <Modal
+        open={modalEvento}
+        onClose={() => { setModalEvento(false); setFormEvento(BLANK_EVENTO) }}
+        titulo="Nuevo evento"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setModalEvento(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!formEvento.titulo.trim()}
+              onClick={() => {
+                agregarEvento({
+                  ...formEvento,
+                  color: COLOR_EVENTO[formEvento.tipo],
+                  creado_por: usuarioActivo?.id ?? '',
+                })
+                setModalEvento(false)
+                setFormEvento(BLANK_EVENTO)
+                toast.success('Evento creado.')
+              }}
+            >
+              Crear evento
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          {/* Tipo */}
+          <div>
+            <label className="field-label">Tipo de evento</label>
+            <div className="flex gap-1 flex-wrap">
+              {([
+                ['reunion', 'Reunión'],
+                ['recordatorio', 'Recordatorio'],
+                ['vencimiento', 'Vencimiento'],
+                ['otro', 'Otro'],
+              ] as const).map(([val, lbl]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setFormEvento(p => ({ ...p, tipo: val }))}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border ${
+                    formEvento.tipo === val
+                      ? 'bg-[#1b3a57] text-white border-[#1b3a57]'
+                      : 'bg-white text-[#4a6a84] border-[rgba(0,0,0,0.12)]'
+                  }`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Título */}
+          <div>
+            <label className="field-label">Título *</label>
+            <input
+              type="text"
+              className="field-input w-full"
+              placeholder="Ej: Reunión con RRHH"
+              autoFocus
+              value={formEvento.titulo}
+              onChange={e => setFormEvento(p => ({ ...p, titulo: e.target.value }))}
+            />
+          </div>
+
+          {/* Fecha + Hora */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="field-label">Fecha</label>
+              <input
+                type="date"
+                className="field-input w-full"
+                value={formEvento.fecha}
+                onChange={e => setFormEvento(p => ({ ...p, fecha: e.target.value }))}
+              />
+            </div>
+            <div className="w-32">
+              <label className="field-label">Hora</label>
+              <input
+                type="time"
+                className="field-input w-full"
+                value={formEvento.hora}
+                onChange={e => setFormEvento(p => ({ ...p, hora: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          {/* Descripción */}
+          <div>
+            <label className="field-label">Descripción</label>
+            <textarea
+              className="field-input w-full min-h-[60px] resize-none"
+              placeholder="Detalles del evento..."
+              value={formEvento.descripcion}
+              onChange={e => setFormEvento(p => ({ ...p, descripcion: e.target.value }))}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal detalle evento custom */}
+      <Modal
+        open={!!eventoDetalle}
+        onClose={() => setEventoDetalle(null)}
+        titulo={eventoDetalle?.titulo ?? ''}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (eventoDetalle) {
+                  eliminarEvento(eventoDetalle.id)
+                  setEventoDetalle(null)
+                  toast.success('Evento eliminado.')
+                }
+              }}
+            >
+              Eliminar
+            </Button>
+            <Button variant="secondary" onClick={() => setEventoDetalle(null)}>
+              Cerrar
+            </Button>
+          </>
+        }
+      >
+        {eventoDetalle && (
+          <div className="space-y-2 py-1">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${COLOR_EVENTO[eventoDetalle.tipo]}`}>
+                {eventoDetalle.tipo.charAt(0).toUpperCase() + eventoDetalle.tipo.slice(1)}
+              </span>
+            </div>
+            <p className="text-sm text-[#4a6a84]">
+              📅 {eventoDetalle.fecha}
+              {eventoDetalle.hora && ` · ${eventoDetalle.hora}`}
+            </p>
+            {eventoDetalle.descripcion && (
+              <p className="text-sm text-[#1b3a57]">{eventoDetalle.descripcion}</p>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
