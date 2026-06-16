@@ -1,5 +1,17 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  useDroppable,
+  useDraggable,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import {
@@ -20,7 +32,7 @@ import type { Area } from '../../types'
 
 type EstadoTarea = EstadoTareaKanban
 type GrupoAsignacion = 'CIVIL' | 'LABORAL' | 'PENAL' | 'RRHH' | 'COMERCIAL' | 'SEGUROS' | ''
-type TipoFiltro = 'mis_tareas' | 'creadas_por_mi' | 'letrado' | 'area_externa' | ''
+type TipoFiltro = 'mis_tareas' | 'creadas_por_mi' | 'interna' | 'externa' | ''
 
 // ── Configuración de columnas ─────────────────────────────────────────────────
 
@@ -207,6 +219,62 @@ function TareaCard({
   )
 }
 
+// ── Drag and drop ─────────────────────────────────────────────────────────────
+
+function ColumnaDroppable({
+  id,
+  children,
+  className,
+}: {
+  id: string
+  children: React.ReactNode
+  className?: string
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${className ?? ''} ${isOver ? 'ring-2 ring-[#1b3a57] ring-offset-2 rounded-2xl' : ''} transition-all`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function TareaCardDraggable({
+  tarea,
+  ...props
+}: {
+  tarea: TareaKanban
+  onMover: (id: string, estado: EstadoTarea) => void
+  onEditar: (t: TareaKanban) => void
+  onEliminar: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: tarea.id })
+
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`relative ${isDragging ? 'opacity-40 cursor-grabbing' : 'cursor-grab'}`}
+    >
+      {/* Handle de drag — ícono en el header */}
+      <div
+        {...listeners}
+        className="absolute top-2 right-8 w-6 h-6 flex items-center justify-center text-[#c0c0c0] hover:text-[#4a6a84] cursor-grab active:cursor-grabbing touch-none z-10"
+      >
+        <Icon name="drag_indicator" size={14} />
+      </div>
+      <TareaCard tarea={tarea} {...props} />
+    </div>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 
 export default function TareasPage() {
@@ -224,6 +292,15 @@ export default function TareasPage() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
   const [filtroExpediente, setFiltroExpediente] = useState('')
   const [busqueda, setBusqueda] = useState('')
+  const [tareaArrastrada, setTareaArrastrada] = useState<TareaKanban | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // px mínimos antes de activar
+      },
+    })
+  )
 
   // Filtrar tareas
   const tareasFiltradas = useMemo(() => {
@@ -236,13 +313,17 @@ export default function TareasPage() {
       if (tipoFiltro === 'creadas_por_mi') {
         if (t.creado_por !== uid) return false
       }
-      if (tipoFiltro === 'letrado') {
-        if (!filtroLetrado) return false
-        if (t.asignado_a !== filtroLetrado) return false
+      if (tipoFiltro === 'interna') {
+        // Tiene asignado_a (letrado interno)
+        if (!t.asignado_a) return false
+        // Si hay filtroLetrado específico, aplicarlo
+        if (filtroLetrado && t.asignado_a !== filtroLetrado) return false
       }
-      if (tipoFiltro === 'area_externa') {
-        if (!filtroAreaExt) return false
-        if (t.area_destinataria !== filtroAreaExt) return false
+      if (tipoFiltro === 'externa') {
+        // Tiene area_destinataria (RRHH/COM/SEG)
+        if (!t.area_destinataria) return false
+        // Si hay filtroAreaExt específico, aplicarlo
+        if (filtroAreaExt && t.area_destinataria !== filtroAreaExt) return false
       }
 
       // Filtros de texto y prioridad existentes
@@ -354,6 +435,24 @@ export default function TareasPage() {
     toast.success('Tarea eliminada.')
   }
 
+  function handleDragStart(event: DragStartEvent) {
+    const tarea = tareas.find(t => t.id === event.active.id)
+    setTareaArrastrada(tarea ?? null)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setTareaArrastrada(null)
+    if (!over) return
+    const tareaId = active.id as string
+    const columnaDestino = over.id as EstadoTarea
+    if (!['pendiente', 'en_curso', 'completada'].includes(columnaDestino)) return
+    const tarea = tareas.find(t => t.id === tareaId)
+    if (!tarea) return
+    if (tarea.estado === columnaDestino) return
+    moverTarea(tareaId, columnaDestino)
+  }
+
   function limpiarFiltros() {
     setTipoFiltro('mis_tareas')
     setFiltroLetrado('')
@@ -426,20 +525,20 @@ export default function TareasPage() {
             }}
           >
             <option value="mis_tareas">★ Mis tareas</option>
-            <option value="creadas_por_mi">Creadas por mí</option>
-            <option value="letrado">Por letrado</option>
-            <option value="area_externa">Por área externa</option>
+            <option value="creadas_por_mi">Mis pedidos</option>
+            <option value="interna">Interna SIAJ</option>
+            <option value="externa">Externa SIAJ</option>
             <option value="">Todas</option>
           </select>
 
-          {/* Segundo select — letrado */}
-          {tipoFiltro === 'letrado' && (
+          {/* Segundo select — interna (letrado) */}
+          {tipoFiltro === 'interna' && (
             <select
               className="field-input text-sm"
               value={filtroLetrado}
               onChange={e => setFiltroLetrado(e.target.value)}
             >
-              <option value="">Seleccionar letrado...</option>
+              <option value="">Todos los letrados</option>
               {abogados.map(u => (
                 <option key={u.id} value={u.id}>
                   {getNombreCompleto(u)}{u.id === usuarioActivo?.id ? ' (yo)' : ''}
@@ -448,14 +547,14 @@ export default function TareasPage() {
             </select>
           )}
 
-          {/* Segundo select — área externa */}
-          {tipoFiltro === 'area_externa' && (
+          {/* Segundo select — externa (área) */}
+          {tipoFiltro === 'externa' && (
             <select
               className="field-input text-sm"
               value={filtroAreaExt}
               onChange={e => setFiltroAreaExt(e.target.value)}
             >
-              <option value="">Seleccionar área...</option>
+              <option value="">Todas las áreas</option>
               <option value="RRHH">RRHH</option>
               <option value="COMERCIAL">Comercial</option>
               <option value="SEGUROS">Seguros</option>
@@ -487,57 +586,79 @@ export default function TareasPage() {
       </div>
 
       {/* Kanban */}
-      <div className="grid grid-cols-3 gap-5 items-start">
-        {COLUMNAS.map(col => {
-          const items = tareasPorEstado[col.key]
-          return (
-            <div key={col.key} className="space-y-3">
-              {/* Header columna */}
-              <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${col.color}`}>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-                  <span className="text-xs font-black uppercase tracking-widest text-[#1b3a57]">
-                    {col.label}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-3 gap-5 items-start">
+          {COLUMNAS.map(col => {
+            const items = tareasPorEstado[col.key]
+            return (
+              <ColumnaDroppable key={col.key} id={col.key} className="space-y-3">
+                {/* Header columna */}
+                <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${col.color}`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${col.dot}`} />
+                    <span className="text-xs font-black uppercase tracking-widest text-[#1b3a57]">
+                      {col.label}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-[#4a6a84] bg-white/60 px-2 py-0.5 rounded-full">
+                    {items.length}
                   </span>
                 </div>
-                <span className="text-xs font-bold text-[#4a6a84] bg-white/60 px-2 py-0.5 rounded-full">
-                  {items.length}
-                </span>
-              </div>
 
-              {/* Cards */}
-              <div className="space-y-3">
-                {items.length === 0 ? (
-                  <div className="bg-white/60 border border-dashed border-[rgba(0,0,0,0.12)] rounded-xl p-6 text-center">
-                    <p className="text-xs text-[#7a9ab4]">Sin tareas</p>
-                  </div>
-                ) : (
-                  items.map(t => (
-                    <TareaCard
+                {/* Cards */}
+                <div className="space-y-3 min-h-[120px]">
+                  {items.map(t => (
+                    <TareaCardDraggable
                       key={t.id}
                       tarea={t}
                       onMover={moverTarea}
                       onEditar={abrirEditar}
                       onEliminar={eliminarTarea}
                     />
-                  ))
-                )}
-              </div>
+                  ))}
 
-              {/* Botón agregar en columna pendiente */}
-              {col.key === 'pendiente' && (
-                <button
-                  onClick={abrirNueva}
-                  className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:text-[#1b3a57] hover:border-[#1b3a57] hover:bg-white transition-all text-xs font-medium"
-                >
-                  <Icon name="add" size={14} />
-                  Agregar tarea
-                </button>
-              )}
+                  {/* Zona de drop vacía visible */}
+                  {items.length === 0 && (
+                    <div className="h-20 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.08)] flex items-center justify-center text-xs text-[#c0c0c0]">
+                      Soltá aquí
+                    </div>
+                  )}
+                </div>
+
+                {/* Botón agregar en columna pendiente */}
+                {col.key === 'pendiente' && (
+                  <button
+                    onClick={abrirNueva}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:text-[#1b3a57] hover:border-[#1b3a57] hover:bg-white transition-all text-xs font-medium"
+                  >
+                    <Icon name="add" size={14} />
+                    Agregar tarea
+                  </button>
+                )}
+              </ColumnaDroppable>
+            )
+          })}
+        </div>
+
+        {/* Overlay — preview flotante al arrastrar */}
+        <DragOverlay>
+          {tareaArrastrada && (
+            <div className="opacity-95 rotate-1 shadow-2xl rounded-xl">
+              <TareaCard
+                tarea={tareaArrastrada}
+                onMover={() => {}}
+                onEditar={() => {}}
+                onEliminar={() => {}}
+              />
             </div>
-          )
-        })}
-      </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {/* Modal nueva/editar tarea */}
       <Modal
