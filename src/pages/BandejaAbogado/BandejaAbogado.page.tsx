@@ -54,7 +54,7 @@ const filterInputCls =
 
 export default function BandejaAbogadoPage() {
   const navigate = useNavigate()
-  const { expedientes, actualizarExpediente, asignarAbogado, tareasMap } = useExpedientesStore()
+  const { expedientes, cargarExpedientes, cargando, actualizarExpediente, asignarAbogado, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
   const rolSistema  = usuarioActivo?.rolSistema
@@ -84,6 +84,8 @@ export default function BandejaAbogadoPage() {
   const [expADesagrupar,  setExpADesagrupar]  = useState<Expediente | null>(null)
   const [modalReasignar,  setModalReasignar]  = useState<Expediente | null>(null)
   const [nuevoAbogadoId,  setNuevoAbogadoId]  = useState('')
+
+  useEffect(() => { cargarExpedientes() }, [])
 
   // Resetear filtros cuando cambia el usuario activo
   useEffect(() => {
@@ -429,6 +431,10 @@ export default function BandejaAbogadoPage() {
 
   return (
     <div className="p-6 space-y-4 max-w-screen-xl">
+
+      {cargando && (
+        <p className="text-sm text-[#4a6a84]">Cargando actuaciones...</p>
+      )}
 
       {/* HEADER */}
       <div className="flex items-start justify-between flex-wrap gap-3 mb-4">

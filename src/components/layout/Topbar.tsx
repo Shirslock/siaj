@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { useNotificacionesStore } from '../../store/notificaciones.store'
-import { getNombreCompleto } from '../../data/usuarios'
 import type { RolSistema } from '../../types'
 import Icon from '../ui/Icon'
 import { RUTAS } from '../../utils/routing'
@@ -36,7 +35,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const [panelAbierto, setPanelAbierto] = useState(false)
 
-  const { sidebarCollapsed, usuarioActivo } = useUIStore()
+  const { sidebarCollapsed, usuarioActivo, logout } = useUIStore()
   const { notificaciones, marcarLeida, marcarTodasLeidas, descartar } =
     useNotificacionesStore()
 
@@ -60,6 +59,11 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
     ? `${usuarioActivo.apellido.charAt(0)}${usuarioActivo.nombre.charAt(0)}`
     : '?'
 
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <header
       className={`fixed top-0 right-0 h-16 bg-[#63B2DA] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
@@ -82,7 +86,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-white leading-tight">
-                {getNombreCompleto(usuarioActivo)}
+                {usuarioActivo.apellido}, {usuarioActivo.nombre}
               </p>
               <p className="text-xs text-[#C4DFE8] leading-tight">
                 {ROL_LABEL[usuarioActivo.rolSistema]}
@@ -91,6 +95,13 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {initials}
             </div>
+            <button
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Icon name="logout" size={18} className="text-white opacity-80" />
+            </button>
           </div>
         )}
 

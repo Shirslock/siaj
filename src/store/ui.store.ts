@@ -1,28 +1,44 @@
 import { create } from 'zustand'
 import type { Usuario } from '../types'
-import { USUARIOS } from '../data/usuarios'
+import { login, getMe } from '../api/auth'
 
 interface UIState {
   usuarioActivo: Usuario | null
+  token: string | null
   sidebarCollapsed: boolean
-  setUsuarioActivo: (id: string) => void
   toggleSidebar: () => void
+  loginAsync: (email: string, password: string) => Promise<void>
+  logout: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  usuarioActivo: USUARIOS.find(u => u.id === 'UR_018') ?? null,
+  usuarioActivo: null,
+  token: null,
   sidebarCollapsed: false,
 
-  setUsuarioActivo: (id) => {
-    const usuario = USUARIOS.find(u => u.id === id) ?? null
-    if (usuario) {
-      try { sessionStorage.setItem('siaj_usuario_activo', id) } catch { /* storage no disponible */ }
-    }
-    set({ usuarioActivo: usuario })
+  toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+
+  loginAsync: async (email, password) => {
+    const res = await login(email, password)
+    const { token, usuario } = res.data
+    sessionStorage.setItem('siaj_token', token)
+    set({ token, usuarioActivo: usuario as unknown as Usuario })
   },
 
-  toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  logout: () => {
+    sessionStorage.removeItem('siaj_token')
+    set({ usuarioActivo: null, token: null })
+  },
 }))
 
-const savedId = (() => { try { return sessionStorage.getItem('siaj_usuario_activo') } catch { return null } })()
-if (savedId) useUIStore.getState().setUsuarioActivo(savedId)
+// Rehidratación al cargar si hay token
+const savedToken = (() => { try { return sessionStorage.getItem('siaj_token') } catch { return null } })()
+if (savedToken) {
+  useUIStore.setState({ token: savedToken })
+  getMe().then(res => {
+    useUIStore.setState({ usuarioActivo: res.data as unknown as Usuario })
+  }).catch(() => {
+    sessionStorage.removeItem('siaj_token')
+    useUIStore.setState({ token: null })
+  })
+}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { AreaBadge } from '../../components/ui/Badge'
@@ -26,8 +26,10 @@ const FILTROS_INIT = {
 
 export default function MesaSacoPage() {
   const navigate = useNavigate()
-  const { expedientes } = useExpedientesStore()
+  const { expedientes, cargarExpedientes, cargando } = useExpedientesStore()
   const [filtros, setFiltros] = useState(FILTROS_INIT)
+
+  useEffect(() => { cargarExpedientes() }, [])
 
   function setFiltro(key: keyof typeof filtros, value: string) {
     setFiltros(f => ({ ...f, [key]: value }))
@@ -100,6 +102,10 @@ export default function MesaSacoPage() {
           Nuevo Expediente
         </Button>
       </div>
+
+      {cargando && (
+        <p className="text-sm text-[#4a6a84]">Cargando actuaciones...</p>
+      )}
 
       {/* ── Tabla de expedientes ── */}
       <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)] overflow-hidden">

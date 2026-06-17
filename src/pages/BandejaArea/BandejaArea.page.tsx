@@ -55,7 +55,7 @@ const filterInputCls =
 
 export default function BandejaAreaPage() {
   const navigate = useNavigate()
-  const { expedientes, actualizarExpediente, asignarAbogado } = useExpedientesStore()
+  const { expedientes, cargarExpedientes, cargando, actualizarExpediente, asignarAbogado } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
   const [filtros, setFiltros] = useState({
@@ -70,6 +70,8 @@ export default function BandejaAreaPage() {
   const [inputCausa,     setInputCausa]     = useState('')
   const [modalReasignar, setModalReasignar] = useState<string | null>(null)
   const [nuevoAbogadoId, setNuevoAbogadoId] = useState('')
+
+  useEffect(() => { cargarExpedientes() }, [])
 
   // Close menu on outside click
   useEffect(() => {
@@ -339,6 +341,10 @@ export default function BandejaAreaPage() {
 
   return (
     <div className="p-6 space-y-4 max-w-screen-xl">
+
+      {cargando && (
+        <p className="text-sm text-[#4a6a84]">Cargando actuaciones...</p>
+      )}
 
       {/* HEADER */}
       <div className="flex items-start justify-between flex-wrap gap-3">

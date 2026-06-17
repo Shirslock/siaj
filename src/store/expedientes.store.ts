@@ -1,15 +1,18 @@
 import { create } from 'zustand'
-import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
-import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK } from '../data/expedientes.mock'
+import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
+import { getExpedientes, getExpediente, getQueue } from '../api/expedientes'
 
 interface ExpedientesState {
-  queue: ItemQueue[]
+  queue: Expediente[]
   expedientes: Expediente[]
   expedienteActivo: Expediente | null
   filtros: FiltrosExpediente
   tareasMap: Record<string, Tarea[]>
   registrosPenales: Record<string, RegistroActividadPenal[]>
-  setExpedienteActivo: (id: string) => void
+  cargando: boolean
+  cargarExpedientes: (filtros?: FiltrosExpediente) => Promise<void>
+  cargarQueue: () => Promise<void>
+  setExpedienteActivo: (id: string) => Promise<void>
   actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
   actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
   actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => void
@@ -44,22 +47,41 @@ function applyToActivo(activo: Expediente | null, id: string, fn: (e: Expediente
 }
 
 export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
-  queue: QUEUE_MESA,
-  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK, ...EXPEDIENTES_ABOGADO],
+  queue: [],
+  expedientes: [],
   expedienteActivo: null,
   filtros: {},
-  tareasMap: {
-    'C-0026/2026__EN_PRUEBA': [
-      { id: 'DC_EP_01', nombre: 'Producción de prueba documental',  estado: 'en_curso',   fecha: null, fechaVencimiento: '2026-06-23', fecha_aviso: '2026-05-20', alertaActiva: true,  diasAlerta: 34, observaciones: '', docGde: null },
-      { id: 'DC_EP_02', nombre: 'Seguimiento de peritos',           estado: 'cumplido',   fecha: '2026-04-10', fechaVencimiento: null, fecha_aviso: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_EP_03', nombre: 'Control de audiencias de prueba',  estado: 'sin_estado', fecha: null, fechaVencimiento: null, fecha_aviso: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-    ],
-  },
+  tareasMap: {},
   registrosPenales: {},
+  cargando: false,
 
-  setExpedienteActivo: (id) => {
-    const exp = get().expedientes.find(e => e.id === id) ?? null
-    set({ expedienteActivo: exp })
+  cargarExpedientes: async (filtros?) => {
+    set({ cargando: true })
+    try {
+      const res = await getExpedientes(filtros ?? get().filtros)
+      set({ expedientes: res.data.items })
+    } finally {
+      set({ cargando: false })
+    }
+  },
+
+  cargarQueue: async () => {
+    set({ cargando: true })
+    try {
+      const res = await getQueue()
+      set({ queue: res.data })
+    } finally {
+      set({ cargando: false })
+    }
+  },
+
+  setExpedienteActivo: async (id) => {
+    const cached = get().expedientes.find(e => e.id === id) ?? get().queue.find(e => e.id === id)
+    if (cached) {
+      set({ expedienteActivo: cached })
+    }
+    const res = await getExpediente(id)
+    set({ expedienteActivo: res.data })
   },
 
   actualizarExpediente: (id, patch) => set(s => {

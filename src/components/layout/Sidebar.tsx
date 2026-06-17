@@ -1,9 +1,8 @@
-import { useState, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
 import type { RolSistema } from '../../types'
-import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
@@ -33,9 +32,7 @@ interface SidebarProps {
 
 export function Sidebar({ activePage }: SidebarProps) {
   const { usuarioActivo, sidebarCollapsed, toggleSidebar } = useUIStore()
-  const [showSwitcher, setShowSwitcher] = useState(false)
   const location = useLocation()
-  const switcherButtonRef = useRef<HTMLButtonElement>(null)
 
   const visibleItems = useMemo(() => {
     if (!usuarioActivo) return []
@@ -122,28 +119,6 @@ export function Sidebar({ activePage }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer — cambiar usuario */}
-      <div className="relative flex-shrink-0 border-t border-black/10">
-        {showSwitcher && (
-          <UserSwitcher
-            onClose={() => setShowSwitcher(false)}
-            triggerRef={switcherButtonRef}
-          />
-        )}
-        <button
-          ref={switcherButtonRef}
-          onClick={() => setShowSwitcher(v => !v)}
-          title="Cambiar usuario"
-          className={`w-full flex items-center gap-3 px-4 py-3 text-[#1b3a57] hover:bg-[#d8d8d8] transition-colors ${
-            sidebarCollapsed ? 'justify-center' : ''
-          }`}
-        >
-          <Icon name="swap_horiz" className="flex-shrink-0" size={22} />
-          {!sidebarCollapsed && (
-            <span className="text-sm font-medium">Cambiar usuario</span>
-          )}
-        </button>
-      </div>
     </aside>
   )
 }

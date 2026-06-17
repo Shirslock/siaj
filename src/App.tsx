@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import DashboardPage from './pages/Dashboard/Dashboard.page'
 import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
@@ -7,6 +8,9 @@ import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
 import ConfiguracionPage from './pages/Configuracion/Configuracion.page'
+import LoginPage from './pages/Login/Login.page'
+import { useUIStore } from './store/ui.store'
+import { getMe } from './api/auth'
 
 function PagePlaceholder({ nombre }: { nombre: string }) {
   return (
@@ -17,26 +21,63 @@ function PagePlaceholder({ nombre }: { nombre: string }) {
   )
 }
 
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+  const usuarioActivo = useUIStore(s => s.usuarioActivo)
+  const token = useUIStore(s => s.token)
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('siaj_token')
+    if (!stored) {
+      navigate('/login', { replace: true })
+      return
+    }
+    if (stored && !usuarioActivo) {
+      getMe().then(res => {
+        useUIStore.setState({ usuarioActivo: res.data as never, token: stored })
+      }).catch(() => {
+        sessionStorage.removeItem('siaj_token')
+        useUIStore.setState({ token: null })
+        navigate('/login', { replace: true })
+      })
+    }
+  }, [usuarioActivo, token, navigate])
+
+  const stored = sessionStorage.getItem('siaj_token')
+  if (!stored) return null
+  if (!usuarioActivo) return null
+
+  return <>{children}</>
+}
+
 export default function App() {
   return (
-    <>
-      <AppLayout>
-        <Routes>
-          <Route path="/"                  element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard"         element={<DashboardPage />} />
-          <Route path="/mesa"              element={<MesaSacoPage />} />
-          <Route path="/mesa/alta"         element={<AltaExpedientePage />} />
-          <Route path="/actuaciones/nueva-penal" element={<AltaExpedientePage modoAbogadoPenal />} />
-          <Route path="/actuaciones"         element={<ActuacionesPage />} />
-          <Route path="/bandeja/abogado"   element={<Navigate to="/actuaciones" replace />} />
-          <Route path="/bandeja/area"      element={<Navigate to="/actuaciones" replace />} />
-          <Route path="/expediente/*"      element={<DetalleExpedientePage />} />
-          <Route path="/causa/*"           element={<CausaDetallePage />} />
-          <Route path="/penal"             element={<Navigate to="/" replace />} />
-          <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
-          <Route path="/configuracion"     element={<ConfiguracionPage />} />
-        </Routes>
-      </AppLayout>
-    </>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/*"
+        element={
+          <AuthGuard>
+            <AppLayout>
+              <Routes>
+                <Route path="/"                  element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard"         element={<DashboardPage />} />
+                <Route path="/mesa"              element={<MesaSacoPage />} />
+                <Route path="/mesa/alta"         element={<AltaExpedientePage />} />
+                <Route path="/actuaciones/nueva-penal" element={<AltaExpedientePage modoAbogadoPenal />} />
+                <Route path="/actuaciones"       element={<ActuacionesPage />} />
+                <Route path="/bandeja/abogado"   element={<Navigate to="/actuaciones" replace />} />
+                <Route path="/bandeja/area"      element={<Navigate to="/actuaciones" replace />} />
+                <Route path="/expediente/*"      element={<DetalleExpedientePage />} />
+                <Route path="/causa/*"           element={<CausaDetallePage />} />
+                <Route path="/penal"             element={<Navigate to="/" replace />} />
+                <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
+                <Route path="/configuracion"     element={<ConfiguracionPage />} />
+              </Routes>
+            </AppLayout>
+          </AuthGuard>
+        }
+      />
+    </Routes>
   )
 }
