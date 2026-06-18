@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAltaForm } from './useAltaForm'
 import { useUIStore } from '../../store/ui.store'
+import { useExpedientesStore } from '../../store/expedientes.store'
 import { FormularioDinamico } from '../../components/expedientes/FormularioDinamico'
 import { FormField } from '../../components/ui/FormField'
 import { Button } from '../../components/ui/Button'
@@ -12,6 +13,7 @@ import { CAMPOS_COMUNES_MESA, getCamposFormulario } from '../../data/formularios
 import { RUTAS } from '../../utils/routing'
 import type { Area, Canal, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
+import { toast } from 'react-toastify'
 
 const AREAS: { id: Area; label: string }[] = [
   { id: 'CIVIL',   label: 'Civil' },
@@ -86,10 +88,12 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
     setCanal, setArea, setTipo, setCampoMesa, setLinea, submit, validate,
   } = useAltaForm(modoAbogadoPenal)
 
+  const { altaExpediente } = useExpedientesStore()
   const [letradoId, setLetradoId] = useState<string>('')
   const [abogadoSeleccionado, setAbogadoSeleccionado] = useState<string>('')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [modalRevision, setModalRevision] = useState(false)
+  const [guardando, setGuardando] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const abogadosPenales = useMemo(
@@ -102,9 +106,28 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
 
   const rutaVolver = modoAbogadoPenal ? RUTAS.ACTUACIONES : RUTAS.MESA
 
-  function confirmarAlta() {
-    setModalRevision(false)
-    submit()
+  async function confirmarAlta() {
+    setGuardando(true)
+    try {
+      const { numero_ee_gde, linea: lineaCampo, abogado_id: abogadoCampo, ...restoCampos } = camposMesa
+      const body = {
+        area: area as Area,
+        tipo: tipo as TipoGestion,
+        numero_ee_gde: numero_ee_gde as string,
+        ...(lineaSeleccionada ? { linea: lineaSeleccionada } : lineaCampo ? { linea: lineaCampo as string } : {}),
+        ...(letradoId ? { abogado_id: letradoId } : {}),
+        ...(modoAbogadoPenal && abogadoSeleccionado ? { abogado_id: abogadoSeleccionado } : {}),
+        ...(!letradoId && !abogadoSeleccionado && abogadoCampo ? { abogado_id: abogadoCampo as string } : {}),
+        campos_mesa: restoCampos,
+      }
+      const expediente = await altaExpediente(body)
+      setModalRevision(false)
+      navigate(RUTAS.EXPEDIENTE(expediente.id))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'No se pudo registrar la actuación. Intentá nuevamente.')
+    } finally {
+      setGuardando(false)
+    }
   }
 
   const lineaValue = camposMesa['linea'] as string | undefined
@@ -429,11 +452,11 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setModalRevision(false)}>
+            <Button variant="secondary" onClick={() => setModalRevision(false)} disabled={guardando}>
               Volver a editar
             </Button>
-            <Button variant="primary" onClick={confirmarAlta}>
-              Confirmar y Registrar
+            <Button variant="primary" onClick={confirmarAlta} disabled={guardando}>
+              {guardando ? 'Guardando...' : 'Confirmar y Registrar'}
             </Button>
           </>
         }

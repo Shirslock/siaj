@@ -85,8 +85,12 @@ export default function DetalleExpedientePage() {
 
   const menuRef = useRef<HTMLDivElement>(null)
 
+  const [cargandoDetalle, setCargandoDetalle] = useState(false)
+
   useEffect(() => {
-    if (expId) setExpedienteActivo(expId)
+    if (!expId) return
+    setCargandoDetalle(true)
+    setExpedienteActivo(expId).finally(() => setCargandoDetalle(false))
   }, [expId, setExpedienteActivo])
 
   useEffect(() => {
@@ -100,6 +104,13 @@ export default function DetalleExpedientePage() {
   }, [])
 
   if (!exp) {
+    if (cargandoDetalle) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <p className="text-[#4a6a84]">Cargando actuación...</p>
+        </div>
+      )
+    }
     return (
       <div className="p-6">
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
@@ -278,17 +289,17 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
-  const alerta      = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
+  const alerta      = getAlertaExpediente(exp.id, tareasMap, exp.timeline ?? [])
   const alertaTimer = getAlertaTimer(exp)
 
   const tareasEstadoActual = tareasMap[`${exp.id}__${exp.estadoProcesal ?? exp.estado}`] ?? []
   const tieneTareasPendientes = tareasEstadoActual.length > 0 && tareasEstadoActual.some(t => t.estado === 'en_curso')
 
   const tabCounters: Partial<Record<Tab, number>> = {
-    vinculos:       exp.vinculos.length,
-    intervinientes: exp.intervinientes.length,
-    timeline:       exp.timeline.length,
-    docs:           exp.documentos.length,
+    vinculos:       (exp.vinculos       ?? []).length,
+    intervinientes: (exp.intervinientes ?? []).length,
+    timeline:       (exp.timeline       ?? []).length,
+    docs:           (exp.documentos     ?? []).length,
   }
 
   return (

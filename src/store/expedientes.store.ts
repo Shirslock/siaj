@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
-import { getExpedientes, getExpediente, getQueue } from '../api/expedientes'
+import { getExpedientes, getExpediente, getQueue, crearExpediente } from '../api/expedientes'
 
 interface ExpedientesState {
   queue: Expediente[]
@@ -10,6 +10,7 @@ interface ExpedientesState {
   tareasMap: Record<string, Tarea[]>
   registrosPenales: Record<string, RegistroActividadPenal[]>
   cargando: boolean
+  altaExpediente: (body: Partial<Expediente>) => Promise<Expediente>
   cargarExpedientes: (filtros?: FiltrosExpediente) => Promise<void>
   cargarQueue: () => Promise<void>
   setExpedienteActivo: (id: string) => Promise<void>
@@ -54,6 +55,13 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   tareasMap: {},
   registrosPenales: {},
   cargando: false,
+
+  altaExpediente: async (body) => {
+    const res = await crearExpediente(body)
+    const nuevo = res.data
+    set(s => ({ expedientes: [nuevo, ...s.expedientes] }))
+    return nuevo
+  },
 
   cargarExpedientes: async (filtros?) => {
     set({ cargando: true })

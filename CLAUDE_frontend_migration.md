@@ -190,11 +190,11 @@ y verificadas. Hacerlo spec por spec genera conflictos innecesarios.
 - ✅ BandejaAbogado.page — carga expedientes propios
 - ✅ BandejaArea.page — carga expedientes del área
 
-### SPEC-FE-03 — Alta de actuación ⬜
-- ⬜ `src/api/expedientes.ts` — agregar `crearExpediente(body)`
-- ⬜ `src/store/expedientes.store.ts` — acción `altaExpediente(body)` conectada al backend
-- ⬜ `AltaExpediente.page.tsx` — al confirmar el alta llama al backend, redirige al detalle real
-- ⬜ Verificado: crear actuación desde la UI aparece en la DB y en la bandeja
+### SPEC-FE-03 — Alta de actuación ✅
+- ✅ `src/api/expedientes.ts` — `crearExpediente(body)` ya existía, confirmado
+- ✅ `src/store/expedientes.store.ts` — acción `altaExpediente(body)` conectada al backend
+- ✅ `AltaExpediente.page.tsx` — al confirmar el alta llama al backend, redirige al detalle real
+- ✅ Verificado: crear actuación desde la UI aparece en la DB y en la bandeja
 
 ### SPEC-FE-04 — Detalle: DatosTab y edición de campos ⬜
 - ⬜ `actualizarExpediente` → PATCH /api/expedientes/:serie/:anio
