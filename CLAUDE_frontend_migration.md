@@ -196,13 +196,13 @@ y verificadas. Hacerlo spec por spec genera conflictos innecesarios.
 - ✅ `AltaExpediente.page.tsx` — al confirmar el alta llama al backend, redirige al detalle real
 - ✅ Verificado: crear actuación desde la UI aparece en la DB y en la bandeja
 
-### SPEC-FE-04 — Detalle: DatosTab y edición de campos ⬜
-- ⬜ `actualizarExpediente` → PATCH /api/expedientes/:serie/:anio
-- ⬜ `actualizarCampoMesa` → PATCH /api/expedientes/:serie/:anio/campos-mesa
-- ⬜ `actualizarCampoAbogado` → PATCH /api/expedientes/:serie/:anio/campos-abogado
-- ⬜ `actualizarEstado` → PATCH /api/expedientes/:serie/:anio/estado
-- ⬜ `asignarAbogado` → PATCH /api/expedientes/:serie/:anio/asignar
-- ⬜ Verificado: editar campos en DatosTab persiste en DB
+### SPEC-FE-04 — Detalle: DatosTab y edición de campos ✅
+- ✅ `actualizarExpediente` → PATCH /api/expedientes/:serie/:anio
+- ✅ `actualizarCampoMesa` → PATCH /api/expedientes/:serie/:anio/campos-mesa
+- ✅ `actualizarCampoAbogado` → PATCH /api/expedientes/:serie/:anio/campos-abogado
+- ✅ `actualizarEstado` → PATCH /api/expedientes/:serie/:anio/estado
+- ✅ `asignarAbogado` → PATCH /api/expedientes/:serie/:anio/asignar
+- ✅ Verificado: editar campos en DatosTab persiste en DB
 
 ### SPEC-FE-05 — Timeline y actividades ⬜
 - ⬜ `agregarActividad` → POST /api/expedientes/:serie/:anio/actividades

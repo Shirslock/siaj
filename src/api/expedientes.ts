@@ -39,3 +39,28 @@ export async function crearExpediente(body: Partial<Expediente>): Promise<Expedi
 export async function getQueue(): Promise<{ data: Expediente[] }> {
   return api.get('/api/expedientes/queue')
 }
+
+export async function actualizarExpediente(id: string, patch: Partial<Expediente>): Promise<ExpedienteResponse> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}`, patch)
+}
+
+export async function actualizarCampoMesa(id: string, campo: string, valor: unknown): Promise<ExpedienteResponse> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/campos-mesa`, { campo, valor })
+}
+
+export async function actualizarCampoAbogado(id: string, campo: string, valor: unknown): Promise<ExpedienteResponse> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/campos-abogado`, { campo, valor })
+}
+
+export async function actualizarEstado(id: string, estadoProcesal: string): Promise<ExpedienteResponse> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/estado`, { estadoProcesal })
+}
+
+export async function asignarAbogado(id: string, abogado_id: string): Promise<ExpedienteResponse> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/asignar`, { abogado_id })
+}

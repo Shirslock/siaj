@@ -88,7 +88,7 @@ export const ROL_ACCESOS: Record<RolSistema, AccesosRol> = {
 }
 
 export function puedeReasignar(usuario: Usuario | null | undefined): boolean {
-  return usuario?.rolBD === 'abogado_coordinador'
+  return usuario?.rolBD === 'abogado_coordinador' || usuario?.rolBD === 'gerente'
 }
 
 export function tieneRol(usuario: Usuario, rol: RolBD): boolean {

@@ -1,6 +1,16 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
-import { getExpedientes, getExpediente, getQueue, crearExpediente } from '../api/expedientes'
+import {
+  getExpedientes,
+  getExpediente,
+  getQueue,
+  crearExpediente,
+  actualizarExpediente as actualizarExpedienteApi,
+  actualizarCampoMesa as actualizarCampoMesaApi,
+  actualizarCampoAbogado as actualizarCampoAbogadoApi,
+  actualizarEstado as actualizarEstadoApi,
+  asignarAbogado as asignarAbogadoApi,
+} from '../api/expedientes'
 
 interface ExpedientesState {
   queue: Expediente[]
@@ -14,11 +24,11 @@ interface ExpedientesState {
   cargarExpedientes: (filtros?: FiltrosExpediente) => Promise<void>
   cargarQueue: () => Promise<void>
   setExpedienteActivo: (id: string) => Promise<void>
-  actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
-  actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
-  actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => void
-  actualizarEstado: (id: string, estado: string) => void
-  asignarAbogado: (expedienteId: string, abogadoId: string) => void
+  actualizarExpediente: (id: string, patch: Partial<Expediente>) => Promise<void>
+  actualizarCampoMesa: (id: string, campo: string, valor: unknown) => Promise<void>
+  actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => Promise<void>
+  actualizarEstado: (id: string, estado: string) => Promise<void>
+  asignarAbogado: (expedienteId: string, abogadoId: string) => Promise<void>
   agregarActividad: (expedienteId: string, actividad: Actividad) => void
   agregarSubitem: (expedienteId: string, actividadId: string, subitem: SubActividad) => void
   vincularExpediente: (expedienteId: string, vinculo: VinculoExpediente) => void
@@ -92,45 +102,45 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     set({ expedienteActivo: res.data })
   },
 
-  actualizarExpediente: (id, patch) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, ...patch })
-    return {
-      expedientes: applyToArr(s.expedientes, id, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
-    }
-  }),
+  actualizarExpediente: async (id, patch) => {
+    set(s => ({
+      expedientes: applyToArr(s.expedientes, id, e => ({ ...e, ...patch })),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, e => ({ ...e, ...patch })),
+    }))
+    await actualizarExpedienteApi(id, patch)
+  },
 
-  actualizarCampoMesa: (id, campo, valor) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, campos_mesa: { ...e.campos_mesa, [campo]: valor } })
-    return {
-      expedientes: applyToArr(s.expedientes, id, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
-    }
-  }),
+  actualizarCampoMesa: async (id, campo, valor) => {
+    set(s => ({
+      expedientes: applyToArr(s.expedientes, id, e => ({ ...e, campos_mesa: { ...e.campos_mesa, [campo]: valor } })),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, e => ({ ...e, campos_mesa: { ...e.campos_mesa, [campo]: valor } })),
+    }))
+    await actualizarCampoMesaApi(id, campo, valor)
+  },
 
-  actualizarCampoAbogado: (id, campo, valor) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, campos_abogado: { ...e.campos_abogado, [campo]: valor } })
-    return {
-      expedientes: applyToArr(s.expedientes, id, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
-    }
-  }),
+  actualizarCampoAbogado: async (id, campo, valor) => {
+    set(s => ({
+      expedientes: applyToArr(s.expedientes, id, e => ({ ...e, campos_abogado: { ...e.campos_abogado, [campo]: valor } })),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, e => ({ ...e, campos_abogado: { ...e.campos_abogado, [campo]: valor } })),
+    }))
+    await actualizarCampoAbogadoApi(id, campo, valor)
+  },
 
-  actualizarEstado: (id, estado) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, estado })
-    return {
-      expedientes: applyToArr(s.expedientes, id, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
-    }
-  }),
+  actualizarEstado: async (id, estadoProcesal) => {
+    set(s => ({
+      expedientes: applyToArr(s.expedientes, id, e => ({ ...e, estadoProcesal })),
+      expedienteActivo: applyToActivo(s.expedienteActivo, id, e => ({ ...e, estadoProcesal })),
+    }))
+    await actualizarEstadoApi(id, estadoProcesal)
+  },
 
-  asignarAbogado: (expedienteId, abogadoId) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, abogado_id: abogadoId })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
+  asignarAbogado: async (expedienteId, abogadoId) => {
+    set(s => ({
+      expedientes: applyToArr(s.expedientes, expedienteId, e => ({ ...e, abogado_id: abogadoId })),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, e => ({ ...e, abogado_id: abogadoId })),
+    }))
+    await asignarAbogadoApi(expedienteId, abogadoId)
+  },
 
   agregarActividad: (expedienteId, actividad) => set(s => {
     const fn = (e: Expediente) => ({ ...e, timeline: [...e.timeline, actividad] })

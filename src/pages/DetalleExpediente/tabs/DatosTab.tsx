@@ -100,6 +100,7 @@ export function DatosTab({ exp }: Props) {
   function save() {
     actualizarExpediente(exp.id, {
       numero_ee_gde:  String(draftTop['numero_ee_gde'] ?? exp.numero_ee_gde),
+      caratula:       String(draftMesa['mesa_caratula'] ?? draftAbogado['abg_caratula'] ?? exp.caratula),
       campos_mesa:    draftMesa,
       campos_abogado: draftAbogado,
     })

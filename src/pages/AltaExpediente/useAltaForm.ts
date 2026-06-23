@@ -58,12 +58,12 @@ export function useAltaForm(modoAbogadoPenal = false) {
   function setArea(a: Area | '') {
     setAreaState(a)
     setTipoState('')
-    setCamposMesaState({})
+    setCamposMesaState(prev => ({ numero_ee_gde: prev['numero_ee_gde'] }))
   }
 
   function setTipo(t: TipoGestion | '') {
     setTipoState(t)
-    setCamposMesaState({})
+    setCamposMesaState(prev => ({ numero_ee_gde: prev['numero_ee_gde'] }))
     if (t) {
       const td = TIPOS_GESTION.find(x => x.code === t)
       if (td && canal && td.canal !== canal) {
