@@ -10,6 +10,10 @@ import {
   actualizarCampoAbogado as actualizarCampoAbogadoApi,
   actualizarEstado as actualizarEstadoApi,
   asignarAbogado as asignarAbogadoApi,
+  agregarActividad as agregarActividadApi,
+  agregarReply as agregarReplyApi,
+  actualizarChecklist as actualizarChecklistApi,
+  agregarSubitem as agregarSubitemApi,
 } from '../api/expedientes'
 
 interface ExpedientesState {
@@ -29,8 +33,8 @@ interface ExpedientesState {
   actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => Promise<void>
   actualizarEstado: (id: string, estado: string) => Promise<void>
   asignarAbogado: (expedienteId: string, abogadoId: string) => Promise<void>
-  agregarActividad: (expedienteId: string, actividad: Actividad) => void
-  agregarSubitem: (expedienteId: string, actividadId: string, subitem: SubActividad) => void
+  agregarActividad: (expedienteId: string, actividad: Actividad) => Promise<void>
+  agregarSubitem: (expedienteId: string, actividadId: string, subitem: SubActividad) => Promise<void>
   vincularExpediente: (expedienteId: string, vinculo: VinculoExpediente) => void
   desvincularExpediente: (expedienteId: string, vinculoId: string) => void
   agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => void
@@ -39,11 +43,11 @@ interface ExpedientesState {
   setFiltros: (filtros: FiltrosExpediente) => void
   inicializarTareas: (expId: string, estadoCodigo: string, tareas: Tarea[]) => void
   actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
-  actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => void
+  actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => Promise<void>
   agregarDocumento: (expId: string, doc: Documento) => void
   eliminarDocumento: (expedienteId: string, docId: string) => void
   reordenarDocumentos: (expId: string, ordenNuevo: string[]) => void
-  agregarReply: (expId: string, actividadIdx: number, reply: Omit<Reply, 'id' | 'created_at'>) => void
+  agregarReply: (expId: string, actividadIdx: number, reply: Omit<Reply, 'id' | 'created_at'>) => Promise<void>
   agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
   actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
   eliminarRegistroPenal: (expId: string, registroId: string) => void
@@ -142,28 +146,25 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     await asignarAbogadoApi(expedienteId, abogadoId)
   },
 
-  agregarActividad: (expedienteId, actividad) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, timeline: [...e.timeline, actividad] })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
+  agregarActividad: async (expedienteId, actividad) => {
+    set(s => ({
+      expedienteActivo: s.expedienteActivo?.id === expedienteId
+        ? { ...s.expedienteActivo, timeline: [...(s.expedienteActivo.timeline ?? []), { ...actividad, replies: [] }] }
+        : s.expedienteActivo,
+    }))
+    await agregarActividadApi(expedienteId, actividad)
+    const res = await getExpediente(expedienteId)
+    set({ expedienteActivo: res.data })
+  },
 
-  agregarSubitem: (expedienteId, actividadId, subitem) => set(s => {
-    const fn = (e: Expediente) => ({
-      ...e,
-      timeline: e.timeline.map(act =>
-        act.id === actividadId
-          ? { ...act, subitems: [...(act.subitems ?? []), subitem] }
-          : act
-      ),
-    })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
+  agregarSubitem: async (expId, actividadId, subitem) => {
+    const actividades = useExpedientesStore.getState().expedienteActivo?.timeline ?? []
+    const actividadIdx = actividades.findIndex(a => a.id === actividadId)
+    if (actividadIdx === -1) return
+    await agregarSubitemApi(expId, actividadId, subitem)
+    const res = await getExpediente(expId)
+    set({ expedienteActivo: res.data })
+  },
 
   vincularExpediente: (expedienteId, vinculo) => set(s => {
     const fn = (e: Expediente) => ({ ...e, vinculos: [...e.vinculos, vinculo] })
@@ -254,35 +255,29 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     }
   }),
 
-  actualizarChecklist: (expId, actividadIndex, checklist) => set(s => {
-    const fn = (e: Expediente) => ({
-      ...e,
-      timeline: e.timeline.map((t, i) => i === actividadIndex ? { ...t, checklist } : t),
-    })
-    return {
-      expedientes: applyToArr(s.expedientes, expId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
-    }
-  }),
+  actualizarChecklist: async (expId, actividadIndex, checklist) => {
+    const actividades = useExpedientesStore.getState().expedienteActivo?.timeline ?? []
+    const actividad = actividades[actividadIndex]
+    if (!actividad?.id) return
+    set(s => ({
+      expedienteActivo: s.expedienteActivo ? {
+        ...s.expedienteActivo,
+        timeline: s.expedienteActivo.timeline?.map((a, i) =>
+          i === actividadIndex ? { ...a, checklist } : a
+        ) ?? [],
+      } : null,
+    }))
+    await actualizarChecklistApi(expId, actividad.id, checklist)
+  },
 
-  agregarReply: (expId, actividadIdx, replyData) => set(s => {
-    const fn = (e: Expediente) => ({
-      ...e,
-      timeline: e.timeline.map((act, idx) => {
-        if (idx !== actividadIdx) return act
-        const nuevoReply: Reply = {
-          ...replyData,
-          id: `reply_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          created_at: new Date().toISOString(),
-        }
-        return { ...act, replies: [...(act.replies ?? []), nuevoReply] }
-      }),
-    })
-    return {
-      expedientes: applyToArr(s.expedientes, expId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
-    }
-  }),
+  agregarReply: async (expId, actividadIdx, replyData) => {
+    const actividades = useExpedientesStore.getState().expedienteActivo?.timeline ?? []
+    const actividad = actividades[actividadIdx]
+    if (!actividad?.id) return
+    await agregarReplyApi(expId, actividad.id, replyData)
+    const res = await getExpediente(expId)
+    set({ expedienteActivo: res.data })
+  },
 
   agregarRegistroPenal: (expId, registro) => set(s => ({
     registrosPenales: {

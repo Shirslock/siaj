@@ -204,12 +204,12 @@ y verificadas. Hacerlo spec por spec genera conflictos innecesarios.
 - ✅ `asignarAbogado` → PATCH /api/expedientes/:serie/:anio/asignar
 - ✅ Verificado: editar campos en DatosTab persiste en DB
 
-### SPEC-FE-05 — Timeline y actividades ⬜
-- ⬜ `agregarActividad` → POST /api/expedientes/:serie/:anio/actividades
-- ⬜ `agregarReply` → POST actividades/:actId/replies
-- ⬜ `actualizarChecklist` → PATCH actividades/:actId/checklist
-- ⬜ `agregarSubitem` → POST actividades/:actId/subitems
-- ⬜ Verificado: nueva actividad aparece en el timeline real
+### SPEC-FE-05 — Timeline y actividades ✅
+- ✅ `agregarActividad` → POST /api/expedientes/:serie/:anio/actividades
+- ✅ `agregarReply` → POST actividades/:actId/replies
+- ✅ `actualizarChecklist` → PATCH actividades/:actId/checklist
+- ✅ `agregarSubitem` → POST actividades/:actId/subitems
+- ✅ Verificado: nueva actividad aparece en el timeline real
 
 ### SPEC-FE-06 — Tareas, intervinientes, documentos, vínculos ⬜
 - ⬜ `inicializarTareas` → POST tareas/:estadoCodigo

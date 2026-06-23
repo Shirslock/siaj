@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Expediente, FiltrosExpediente } from '../types'
+import type { Actividad, ChecklistItem, Expediente, FiltrosExpediente, Reply, SubActividad } from '../types'
 
 export interface ListaExpedientesResponse {
   data: {
@@ -27,9 +27,28 @@ export async function getExpedientes(filtros: FiltrosExpediente & { page?: numbe
   return api.get(`/api/expedientes${qs ? `?${qs}` : ''}`)
 }
 
+// El backend retorna 'actividades' y 'vinculos_origen'/'vinculos_destino';
+// el frontend espera 'timeline' y 'vinculos'.
+function normalizarExpediente(raw: Record<string, unknown>): Expediente {
+  const { actividades, vinculos_origen, vinculos_destino, ...rest } = raw as {
+    actividades?: unknown[]
+    vinculos_origen?: unknown[]
+    vinculos_destino?: unknown[]
+    [k: string]: unknown
+  }
+  return {
+    ...rest,
+    timeline: (actividades ?? []) as Expediente['timeline'],
+    vinculos: [...(vinculos_origen ?? []), ...(vinculos_destino ?? [])] as Expediente['vinculos'],
+    intervinientes: (rest.intervinientes ?? []) as Expediente['intervinientes'],
+    documentos: (rest.documentos ?? []) as Expediente['documentos'],
+  } as Expediente
+}
+
 export async function getExpediente(id: string): Promise<ExpedienteResponse> {
   const [serie, anio] = id.split('/')
-  return api.get(`/api/expedientes/${serie}/${anio}`)
+  const res = await api.get<{ data: Record<string, unknown> }>(`/api/expedientes/${serie}/${anio}`)
+  return { data: normalizarExpediente(res.data) }
 }
 
 export async function crearExpediente(body: Partial<Expediente>): Promise<ExpedienteResponse> {
@@ -63,4 +82,24 @@ export async function actualizarEstado(id: string, estadoProcesal: string): Prom
 export async function asignarAbogado(id: string, abogado_id: string): Promise<ExpedienteResponse> {
   const [serie, anio] = id.split('/')
   return api.patch(`/api/expedientes/${serie}/${anio}/asignar`, { abogado_id })
+}
+
+export async function agregarActividad(id: string, actividad: Partial<Actividad>): Promise<{ data: Actividad }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/actividades`, actividad)
+}
+
+export async function agregarReply(id: string, actividadId: string, reply: Partial<Reply>): Promise<{ data: Reply }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}/replies`, reply)
+}
+
+export async function actualizarChecklist(id: string, actividadId: string, checklist: ChecklistItem[]): Promise<{ data: Actividad }> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}/checklist`, { checklist })
+}
+
+export async function agregarSubitem(id: string, actividadId: string, subitem: SubActividad): Promise<{ data: Actividad }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}/subitems`, subitem)
 }

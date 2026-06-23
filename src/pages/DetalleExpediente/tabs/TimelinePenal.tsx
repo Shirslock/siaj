@@ -549,7 +549,7 @@ export function TimelinePenal({ exp }: Props) {
     type EntradaConIdx = EntradaHistorial & { _idx: number }
     const entradas: EntradaConIdx[] = []
 
-    exp.timeline.forEach(act => {
+    ;(exp.timeline ?? []).forEach(act => {
       const esSistema =
         act.tipo === 'MOVIMIENTO' && act.titulo.startsWith('Cambio de estado')
       if (esSistema) {

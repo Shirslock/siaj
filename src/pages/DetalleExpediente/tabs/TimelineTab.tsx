@@ -852,17 +852,19 @@ export function TimelineTab({ exp }: Props) {
   const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
   const total = tareas.length
 
+  const timeline = exp.timeline ?? []
+
   const estadoFueAvanzado = useMemo(() =>
     estadoProcesal
-      ? exp.timeline.some(act =>
+      ? timeline.some(act =>
           act.tipo === 'MOVIMIENTO' &&
           (act.titulo.startsWith(`Cambio de estado: ${estadoProcesal.label} →`) ||
            act.titulo.startsWith(`Retroceso de estado: ${estadoProcesal.label} →`))
         )
       : false
-  , [exp.timeline, estadoProcesal])
+  , [timeline, estadoProcesal])
 
-  const sorted = [...exp.timeline].sort((a, b) => a.fecha.localeCompare(b.fecha))
+  const sorted = [...timeline].sort((a, b) => a.fecha.localeCompare(b.fecha))
 
   // Filtrar feed
   const feedFiltrado = sorted.filter(act => {
@@ -948,7 +950,7 @@ export function TimelineTab({ exp }: Props) {
   const esLetrado = !!usuarioActivo && usuarioActivo.id === exp.abogado_id
 
   function globalIdxDe(act: Actividad): number {
-    return exp.timeline.indexOf(act)
+    return timeline.indexOf(act)
   }
 
   function agregarNuevaActividad() {
