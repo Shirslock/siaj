@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
+import { useConfiguracionStore } from '../../store/configuracion.store'
 import { GRUPOS_CONFIG } from './tablas.config'
 import type { TablaConfig } from './tablas.config'
 import { CatalogoPanel } from './CatalogoPanel'
@@ -9,10 +10,16 @@ import Icon from '../../components/ui/Icon'
 
 export default function ConfiguracionPage() {
   const { usuarioActivo } = useUIStore()
+  const { cargarCatalogos, cargarUsuarios } = useConfiguracionStore()
 
   const primeraTabla = GRUPOS_CONFIG[0].tablas[3] // lineas — primera editable
   const [tablaActiva, setTablaActiva] = useState<TablaConfig>(primeraTabla)
   const [gruposColapsados, setGruposColapsados] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    cargarCatalogos()
+    cargarUsuarios()
+  }, [])
 
   if (usuarioActivo?.rolSistema !== 'REFERENTE') {
     return <Navigate to="/actuaciones" replace />

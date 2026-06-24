@@ -838,7 +838,9 @@ export function TimelineTab({ exp }: Props) {
   const esEstadoInicial = estadoCodigo === 'ASIGNADO'
 
   useEffect(() => {
-    if (!tareasMap[key] && estadoProcesal) {
+    const tareasExistentes = tareasMap[key] ?? []
+    // Solo inicializar si NO hay tareas ya cargadas del backend
+    if (tareasExistentes.length === 0 && estadoProcesal) {
       inicializarTareas(exp.id, estadoCodigo, estadoProcesal.tareas)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -942,6 +944,7 @@ export function TimelineTab({ exp }: Props) {
 
   function guardarTarea() {
     if (!tareaSeleccionada) return
+    console.log('[guardarTarea] key usada:', `${exp.id}__${estadoCodigo}`)
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
     toast.success('Tarea actualizada.')
     setTareaSeleccionada(null)

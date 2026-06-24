@@ -211,30 +211,35 @@ y verificadas. Hacerlo spec por spec genera conflictos innecesarios.
 - ✅ `agregarSubitem` → POST actividades/:actId/subitems
 - ✅ Verificado: nueva actividad aparece en el timeline real
 
-### SPEC-FE-06 — Tareas, intervinientes, documentos, vínculos ⬜
-- ⬜ `inicializarTareas` → POST tareas/:estadoCodigo
-- ⬜ `actualizarTarea` → PATCH tareas/:estadoCodigo/:tareaId
-- ⬜ `agregarInterviniente` → POST intervinientes
-- ⬜ `editarInterviniente` → PATCH intervinientes/:intId
-- ⬜ `eliminarInterviniente` → DELETE intervinientes/:intId
-- ⬜ `agregarDocumento` → POST documentos
-- ⬜ `eliminarDocumento` → DELETE documentos/:docId
-- ⬜ `reordenarDocumentos` → PATCH documentos/reordenar
-- ⬜ `vincularExpediente` → POST vinculos
-- ⬜ `desvincularExpediente` → DELETE vinculos/:vinculoId
+### SPEC-FE-06 — Tareas, intervinientes, documentos, vínculos ✅
+> Nota: el upload real de archivos se implementará cuando se integre Supabase Storage (módulo IA). Por ahora la metadata del documento se persiste correctamente en la DB.
+- ✅ `inicializarTareas` → POST tareas/:estadoCodigo
+- ✅ `actualizarTarea` → PATCH tareas/:estadoCodigo/:tareaId
+- ✅ `agregarInterviniente` → POST intervinientes
+- ✅ `editarInterviniente` → PATCH intervinientes/:intId
+- ✅ `eliminarInterviniente` → DELETE intervinientes/:intId
+- ✅ `agregarDocumento` → POST documentos
+- ✅ `eliminarDocumento` → DELETE documentos/:docId
+- ✅ `reordenarDocumentos` → PATCH documentos/reordenar
+- ✅ `vincularExpediente` → POST vinculos
+- ✅ `desvincularExpediente` → DELETE vinculos/:vinculoId
 
-### SPEC-FE-07 — Registros penales y notificaciones ⬜
-- ⬜ `agregarRegistroPenal` → POST registros-penales
-- ⬜ `actualizarRegistroPenal` → PATCH registros-penales/:regId
-- ⬜ `eliminarRegistroPenal` → DELETE registros-penales/:regId
-- ⬜ Campana de notificaciones → GET /api/notificaciones
-- ⬜ Marcar leída → PATCH /api/notificaciones/:id/leida
-- ⬜ Marcar todas → PATCH /api/notificaciones/marcar-todas
+### SPEC-FE-07 — Registros penales y notificaciones ✅
+- ✅ `agregarRegistroPenal` → POST registros-penales
+- ✅ `actualizarRegistroPenal` → PATCH registros-penales/:regId
+- ✅ `eliminarRegistroPenal` → DELETE registros-penales/:regId
+- ✅ Campana de notificaciones → GET /api/notificaciones
+- ✅ Marcar leída → PATCH /api/notificaciones/:id/leida
+- ✅ Marcar todas → PATCH /api/notificaciones/marcar-todas
 
-### SPEC-FE-08 — Panel de configuración ⬜
-- ⬜ `src/store/configuracion.store.ts` — catálogos desde GET /api/catalogos/:tipo
-- ⬜ Edición de catálogos → POST/PATCH /api/catalogos/:tipo
-- ⬜ Lista de usuarios → GET /api/usuarios
+### SPEC-FE-08 — Panel de configuración ✅
+- ✅ `src/api/catalogos.ts` — getCatalogo, agregarItemCatalogo, editarItemCatalogo, getUsuarios
+- ✅ `src/store/configuracion.store.ts` — cargarCatalogos (21 tipos en paralelo), cargarUsuarios, agregarItem/editarItem/desactivarItem al backend
+- ✅ `src/pages/Configuracion/Configuracion.page.tsx` — useEffect que llama cargarCatalogos + cargarUsuarios al montar
+- ✅ Backend SPEC-12: POST /api/catalogos/:tipo — alta con validación de duplicados → 201
+- ✅ Backend SPEC-12: PATCH /api/catalogos/:tipo/:id — edición y soft-delete (activo:false)
+- ✅ Tipos TIPO_HECHO_DEMANDA_CIVIL / LABORAL / CARTA_SUCESO agregados a TIPOS_VALIDOS y sembrados en DB
+- ✅ Lista de usuarios → GET /api/usuarios — 32 usuarios reales
 
 ### SPEC-FE-09 — Limpieza final de mocks ⬜
 - ⬜ Eliminar imports de `expedientes.mock.ts` del store

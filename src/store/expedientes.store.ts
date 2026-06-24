@@ -14,6 +14,20 @@ import {
   agregarReply as agregarReplyApi,
   actualizarChecklist as actualizarChecklistApi,
   agregarSubitem as agregarSubitemApi,
+  getTareas as getTareasApi,
+  inicializarTareas as inicializarTareasApi,
+  actualizarTarea as actualizarTareaApi,
+  agregarInterviniente as agregarIntervinienteApi,
+  editarInterviniente as editarIntervinienteApi,
+  eliminarInterviniente as eliminarIntervinienteApi,
+  agregarDocumento as agregarDocumentoApi,
+  eliminarDocumento as eliminarDocumentoApi,
+  reordenarDocumentos as reordenarDocumentosApi,
+  vincularExpediente as vincularExpedienteApi,
+  desvincularExpediente as desvincularExpedienteApi,
+  agregarRegistroPenal as agregarRegistroPenalApi,
+  actualizarRegistroPenal as actualizarRegistroPenalApi,
+  eliminarRegistroPenal as eliminarRegistroPenalApi,
 } from '../api/expedientes'
 
 interface ExpedientesState {
@@ -35,22 +49,27 @@ interface ExpedientesState {
   asignarAbogado: (expedienteId: string, abogadoId: string) => Promise<void>
   agregarActividad: (expedienteId: string, actividad: Actividad) => Promise<void>
   agregarSubitem: (expedienteId: string, actividadId: string, subitem: SubActividad) => Promise<void>
-  vincularExpediente: (expedienteId: string, vinculo: VinculoExpediente) => void
-  desvincularExpediente: (expedienteId: string, vinculoId: string) => void
-  agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => void
-  eliminarInterviniente: (expedienteId: string, intervinienteId: string) => void
-  editarInterviniente: (expId: string, intId: string, cambios: Partial<Interviniente>) => void
+  vincularExpediente: (expedienteId: string, vinculo: VinculoExpediente) => Promise<void>
+  desvincularExpediente: (expedienteId: string, vinculoId: string) => Promise<void>
+  agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => Promise<void>
+  eliminarInterviniente: (expedienteId: string, intervinienteId: string) => Promise<void>
+  editarInterviniente: (expId: string, intId: string, cambios: Partial<Interviniente>) => Promise<void>
   setFiltros: (filtros: FiltrosExpediente) => void
-  inicializarTareas: (expId: string, estadoCodigo: string, tareas: Tarea[]) => void
-  actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => void
+  inicializarTareas: (expId: string, estadoCodigo: string, tareas: Tarea[]) => Promise<void>
+  actualizarTarea: (expId: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>) => Promise<void>
   actualizarChecklist: (expId: string, actividadIndex: number, checklist: ChecklistItem[]) => Promise<void>
-  agregarDocumento: (expId: string, doc: Documento) => void
-  eliminarDocumento: (expedienteId: string, docId: string) => void
-  reordenarDocumentos: (expId: string, ordenNuevo: string[]) => void
+  agregarDocumento: (expId: string, doc: Documento) => Promise<void>
+  eliminarDocumento: (expedienteId: string, docId: string) => Promise<void>
+  reordenarDocumentos: (expId: string, ordenNuevo: string[]) => Promise<void>
   agregarReply: (expId: string, actividadIdx: number, reply: Omit<Reply, 'id' | 'created_at'>) => Promise<void>
-  agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
-  actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
-  eliminarRegistroPenal: (expId: string, registroId: string) => void
+  agregarRegistroPenal: (expId: string, registro: Partial<RegistroActividadPenal>) => Promise<void>
+  actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => Promise<void>
+  eliminarRegistroPenal: (expId: string, registroId: string) => Promise<void>
+}
+
+// El backend devuelve tarea_id (canónico) e id (UUID de fila) — normalizar a id canónico
+function normalizarTareasBackend(tareas: (Tarea & { tarea_id?: string })[]): Tarea[] {
+  return tareas.map(t => ({ ...t, id: t.tarea_id ?? t.id }))
 }
 
 function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
@@ -99,11 +118,23 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
 
   setExpedienteActivo: async (id) => {
     const cached = get().expedientes.find(e => e.id === id) ?? get().queue.find(e => e.id === id)
-    if (cached) {
-      set({ expedienteActivo: cached })
-    }
+    if (cached) set({ expedienteActivo: cached })
     const res = await getExpediente(id)
-    set({ expedienteActivo: res.data })
+    const exp = res.data
+    set({ expedienteActivo: exp })
+    console.log('[setExpedienteActivo] estadoProcesal:', exp.estadoProcesal)
+    if (exp.estadoProcesal) {
+      try {
+        console.log('[setExpedienteActivo] cargando tareas para key:', `${id}__${exp.estadoProcesal}`)
+        const tareasRes = await getTareasApi(id, exp.estadoProcesal)
+        console.log('[setExpedienteActivo] key buscada:', `${id}__${exp.estadoProcesal}`)
+        console.log('[setExpedienteActivo] tareas recibidas del backend:', tareasRes.data)
+        // Siempre actualizar — aunque sea array vacío; normalizar tarea_id → id
+        const tareas = normalizarTareasBackend(tareasRes.data)
+        console.log('[setExpedienteActivo] tareas normalizadas:', tareas)
+        set(s => ({ tareasMap: { ...s.tareasMap, [`${id}__${exp.estadoProcesal}`]: tareas } }))
+      } catch { /* sin tareas todavía — normal */ }
+    }
   },
 
   actualizarExpediente: async (id, patch) => {
@@ -136,6 +167,13 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
       expedienteActivo: applyToActivo(s.expedienteActivo, id, e => ({ ...e, estadoProcesal })),
     }))
     await actualizarEstadoApi(id, estadoProcesal)
+    try {
+      const tareasRes = await getTareasApi(id, estadoProcesal)
+      const tareas = normalizarTareasBackend(tareasRes.data)
+      if (tareas.length > 0) {
+        set(s => ({ tareasMap: { ...s.tareasMap, [`${id}__${estadoProcesal}`]: tareas } }))
+      }
+    } catch { /* estado nuevo sin tareas todavía — normal */ }
   },
 
   asignarAbogado: async (expedienteId, abogadoId) => {
@@ -166,94 +204,164 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     set({ expedienteActivo: res.data })
   },
 
-  vincularExpediente: (expedienteId, vinculo) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, vinculos: [...e.vinculos, vinculo] })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
-
-  desvincularExpediente: (expedienteId, vinculoId) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, vinculos: e.vinculos.filter(v => v.id !== vinculoId) })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
-
-  agregarInterviniente: (expedienteId, interviniente) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, intervinientes: [...e.intervinientes, interviniente] })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
-
-  eliminarInterviniente: (expedienteId, intervinienteId) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, intervinientes: e.intervinientes.filter(i => i.id !== intervinienteId) })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
-
-  editarInterviniente: (expId, intId, cambios) => set(s => {
-    const fn = (e: Expediente) => ({
-      ...e,
-      intervinientes: e.intervinientes.map(i => i.id !== intId ? i : { ...i, ...cambios }),
+  vincularExpediente: async (expedienteId, vinculo) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, vinculos: [...(e.vinculos ?? []), vinculo] })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
     })
-    return {
-      expedientes: applyToArr(s.expedientes, expId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
-    }
-  }),
+    const res = await vincularExpedienteApi(expedienteId, vinculo)
+    const created = res.data
+    set(s => {
+      const fn = (e: Expediente) => ({
+        ...e,
+        vinculos: [...(e.vinculos ?? []).filter(v => v.id !== vinculo.id), created],
+      })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+  },
 
-  agregarDocumento: (expId, doc) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, documentos: [...e.documentos, doc] })
-    return {
-      expedientes: applyToArr(s.expedientes, expId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
-    }
-  }),
+  desvincularExpediente: async (expedienteId, vinculoId) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, vinculos: (e.vinculos ?? []).filter(v => v.id !== vinculoId) })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+    await desvincularExpedienteApi(expedienteId, vinculoId)
+  },
 
-  eliminarDocumento: (expedienteId, docId) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, documentos: e.documentos.filter(d => d.id !== docId) })
-    return {
-      expedientes: applyToArr(s.expedientes, expedienteId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
-    }
-  }),
+  agregarInterviniente: async (expedienteId, interviniente) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, intervinientes: [...(e.intervinientes ?? []), interviniente] })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+    const res = await agregarIntervinienteApi(expedienteId, interviniente)
+    const created = res.data
+    set(s => {
+      const fn = (e: Expediente) => ({
+        ...e,
+        intervinientes: [...(e.intervinientes ?? []).filter(i => i.id !== interviniente.id), created],
+      })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+  },
 
-  reordenarDocumentos: (expId, ordenNuevo) => set(s => {
-    const fn = (e: Expediente) => {
-      const ordenados = ordenNuevo
-        .map(id => e.documentos.find(d => d.id === id))
-        .filter(Boolean) as Documento[]
-      return { ...e, documentos: ordenados }
-    }
-    return {
-      expedientes: applyToArr(s.expedientes, expId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
-    }
-  }),
+  eliminarInterviniente: async (expedienteId, intervinienteId) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, intervinientes: (e.intervinientes ?? []).filter(i => i.id !== intervinienteId) })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+    await eliminarIntervinienteApi(expedienteId, intervinienteId)
+  },
+
+  editarInterviniente: async (expId, intId, cambios) => {
+    set(s => {
+      const fn = (e: Expediente) => ({
+        ...e,
+        intervinientes: (e.intervinientes ?? []).map(i => i.id !== intId ? i : { ...i, ...cambios }),
+      })
+      return {
+        expedientes: applyToArr(s.expedientes, expId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+      }
+    })
+    await editarIntervinienteApi(expId, intId, cambios)
+  },
+
+  agregarDocumento: async (expId, doc) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, documentos: [...(e.documentos ?? []), doc] })
+      return {
+        expedientes: applyToArr(s.expedientes, expId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+      }
+    })
+    const res = await agregarDocumentoApi(expId, doc)
+    const created = res.data
+    set(s => {
+      const fn = (e: Expediente) => ({
+        ...e,
+        documentos: [...(e.documentos ?? []).filter(d => d.id !== doc.id), created],
+      })
+      return {
+        expedientes: applyToArr(s.expedientes, expId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+      }
+    })
+  },
+
+  eliminarDocumento: async (expedienteId, docId) => {
+    set(s => {
+      const fn = (e: Expediente) => ({ ...e, documentos: (e.documentos ?? []).filter(d => d.id !== docId) })
+      return {
+        expedientes: applyToArr(s.expedientes, expedienteId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expedienteId, fn),
+      }
+    })
+    await eliminarDocumentoApi(expedienteId, docId)
+  },
+
+  reordenarDocumentos: async (expId, ordenNuevo) => {
+    set(s => {
+      const fn = (e: Expediente) => {
+        const ordenados = ordenNuevo
+          .map(id => (e.documentos ?? []).find(d => d.id === id))
+          .filter(Boolean) as Documento[]
+        return { ...e, documentos: ordenados }
+      }
+      return {
+        expedientes: applyToArr(s.expedientes, expId, fn),
+        expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+      }
+    })
+    await reordenarDocumentosApi(expId, ordenNuevo)
+  },
 
   setFiltros: (filtros) => set({ filtros }),
 
-  inicializarTareas: (expId, estadoCodigo, tareas) => set(s => ({
-    tareasMap: { ...s.tareasMap, [`${expId}__${estadoCodigo}`]: tareas },
-  })),
+  inicializarTareas: async (expId, estadoCodigo, tareas) => {
+    set(s => ({
+      tareasMap: { ...s.tareasMap, [`${expId}__${estadoCodigo}`]: tareas },
+    }))
+    const res = await inicializarTareasApi(expId, estadoCodigo, tareas)
+    set(s => ({
+      tareasMap: { ...s.tareasMap, [`${expId}__${estadoCodigo}`]: normalizarTareasBackend(res.data) },
+    }))
+  },
 
-  actualizarTarea: (expId, estadoCodigo, tareaId, cambios) => set(s => {
+  actualizarTarea: async (expId, estadoCodigo, tareaId, cambios) => {
+    console.log('[actualizarTarea] expId:', expId)
+    console.log('[actualizarTarea] estadoCodigo:', estadoCodigo)
+    console.log('[actualizarTarea] tareaId:', tareaId)
+    console.log('[actualizarTarea] cambios:', cambios)
     const key = `${expId}__${estadoCodigo}`
-    const tareas = s.tareasMap[key] ?? []
-    return {
-      tareasMap: {
-        ...s.tareasMap,
-        [key]: tareas.map(t => t.id === tareaId ? { ...t, ...cambios } : t),
-      },
-    }
-  }),
+    set(s => {
+      const tareas = s.tareasMap[key] ?? []
+      return {
+        tareasMap: {
+          ...s.tareasMap,
+          [key]: tareas.map(t => t.id === tareaId ? { ...t, ...cambios } : t),
+        },
+      }
+    })
+    await actualizarTareaApi(expId, estadoCodigo, tareaId, cambios)
+  },
 
   actualizarChecklist: async (expId, actividadIndex, checklist) => {
     const actividades = useExpedientesStore.getState().expedienteActivo?.timeline ?? []
@@ -279,26 +387,35 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     set({ expedienteActivo: res.data })
   },
 
-  agregarRegistroPenal: (expId, registro) => set(s => ({
-    registrosPenales: {
-      ...s.registrosPenales,
-      [expId]: [...(s.registrosPenales[expId] ?? []), registro],
-    },
-  })),
+  agregarRegistroPenal: async (expId, registro) => {
+    const res = await agregarRegistroPenalApi(expId, registro)
+    set(s => ({
+      registrosPenales: {
+        ...s.registrosPenales,
+        [expId]: [...(s.registrosPenales[expId] ?? []), res.data],
+      },
+    }))
+  },
 
-  actualizarRegistroPenal: (expId, registroId, cambios) => set(s => ({
-    registrosPenales: {
-      ...s.registrosPenales,
-      [expId]: (s.registrosPenales[expId] ?? []).map(r =>
-        r.id === registroId ? { ...r, ...cambios } : r
-      ),
-    },
-  })),
+  actualizarRegistroPenal: async (expId, registroId, cambios) => {
+    set(s => ({
+      registrosPenales: {
+        ...s.registrosPenales,
+        [expId]: (s.registrosPenales[expId] ?? []).map(r =>
+          r.id === registroId ? { ...r, ...cambios } : r
+        ),
+      },
+    }))
+    await actualizarRegistroPenalApi(expId, registroId, cambios)
+  },
 
-  eliminarRegistroPenal: (expId, registroId) => set(s => ({
-    registrosPenales: {
-      ...s.registrosPenales,
-      [expId]: (s.registrosPenales[expId] ?? []).filter(r => r.id !== registroId),
-    },
-  })),
+  eliminarRegistroPenal: async (expId, registroId) => {
+    set(s => ({
+      registrosPenales: {
+        ...s.registrosPenales,
+        [expId]: (s.registrosPenales[expId] ?? []).filter(r => r.id !== registroId),
+      },
+    }))
+    await eliminarRegistroPenalApi(expId, registroId)
+  },
 }))

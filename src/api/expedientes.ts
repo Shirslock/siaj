@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Actividad, ChecklistItem, Expediente, FiltrosExpediente, Reply, SubActividad } from '../types'
+import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Interviniente, RegistroActividadPenal, Reply, SubActividad, Tarea, VinculoExpediente } from '../types'
 
 export interface ListaExpedientesResponse {
   data: {
@@ -102,4 +102,79 @@ export async function actualizarChecklist(id: string, actividadId: string, check
 export async function agregarSubitem(id: string, actividadId: string, subitem: SubActividad): Promise<{ data: Actividad }> {
   const [serie, anio] = id.split('/')
   return api.post(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}/subitems`, subitem)
+}
+
+// Tareas
+export async function getTareas(id: string, estadoCodigo: string): Promise<{ data: Tarea[] }> {
+  const [serie, anio] = id.split('/')
+  return api.get(`/api/expedientes/${serie}/${anio}/tareas/${estadoCodigo}`)
+}
+
+export async function inicializarTareas(id: string, estadoCodigo: string, tareas: Tarea[]): Promise<{ data: Tarea[] }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/tareas/${estadoCodigo}`, { tareas })
+}
+
+export async function actualizarTarea(id: string, estadoCodigo: string, tareaId: string, cambios: Partial<Tarea>): Promise<{ data: Tarea }> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/tareas/${estadoCodigo}/${tareaId}`, cambios)
+}
+
+// Intervinientes
+export async function agregarInterviniente(id: string, interviniente: Partial<Interviniente>): Promise<{ data: Interviniente }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/intervinientes`, interviniente)
+}
+
+export async function editarInterviniente(id: string, intId: string, cambios: Partial<Interviniente>): Promise<{ data: Interviniente }> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/intervinientes/${intId}`, cambios)
+}
+
+export async function eliminarInterviniente(id: string, intId: string): Promise<{ ok: boolean }> {
+  const [serie, anio] = id.split('/')
+  return api.delete(`/api/expedientes/${serie}/${anio}/intervinientes/${intId}`)
+}
+
+// Documentos
+export async function agregarDocumento(id: string, doc: Partial<Documento>): Promise<{ data: Documento }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/documentos`, doc)
+}
+
+export async function eliminarDocumento(id: string, docId: string): Promise<{ ok: boolean }> {
+  const [serie, anio] = id.split('/')
+  return api.delete(`/api/expedientes/${serie}/${anio}/documentos/${docId}`)
+}
+
+export async function reordenarDocumentos(id: string, orden: string[]): Promise<{ ok: boolean }> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/documentos/reordenar`, { orden })
+}
+
+// Registros penales
+export async function agregarRegistroPenal(id: string, registro: Partial<RegistroActividadPenal>): Promise<{ data: RegistroActividadPenal }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/registros-penales`, registro)
+}
+
+export async function actualizarRegistroPenal(id: string, regId: string, cambios: Partial<RegistroActividadPenal>): Promise<{ data: RegistroActividadPenal }> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/registros-penales/${regId}`, cambios)
+}
+
+export async function eliminarRegistroPenal(id: string, regId: string): Promise<{ ok: boolean }> {
+  const [serie, anio] = id.split('/')
+  return api.delete(`/api/expedientes/${serie}/${anio}/registros-penales/${regId}`)
+}
+
+// Vínculos
+export async function vincularExpediente(id: string, vinculo: Partial<VinculoExpediente>): Promise<{ data: VinculoExpediente }> {
+  const [serie, anio] = id.split('/')
+  return api.post(`/api/expedientes/${serie}/${anio}/vinculos`, vinculo)
+}
+
+export async function desvincularExpediente(id: string, vinculoId: string): Promise<{ ok: boolean }> {
+  const [serie, anio] = id.split('/')
+  return api.delete(`/api/expedientes/${serie}/${anio}/vinculos/${vinculoId}`)
 }

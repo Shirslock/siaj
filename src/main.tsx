@@ -5,11 +5,6 @@ import { ToastContainer } from 'react-toastify'
 import App from './App'
 import './index.css'
 import 'react-toastify/dist/ReactToastify.css'
-import { useNotificacionesStore } from './store/notificaciones.store'
-import { NOTIFICACIONES_MOCK } from './data/notificaciones.mock'
-
-useNotificacionesStore.setState({ notificaciones: NOTIFICACIONES_MOCK })
-
 // Restaurar ruta desde redirect de 404.html (solo GH Pages)
 const params = new URLSearchParams(window.location.search)
 const redirect = params.get('p')

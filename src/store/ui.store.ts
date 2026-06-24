@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Usuario } from '../types'
 import { login, getMe } from '../api/auth'
+import { useNotificacionesStore } from './notificaciones.store'
 
 interface UIState {
   usuarioActivo: Usuario | null
@@ -23,6 +24,7 @@ export const useUIStore = create<UIState>((set) => ({
     const { token, usuario } = res.data
     sessionStorage.setItem('siaj_token', token)
     set({ token, usuarioActivo: usuario as unknown as Usuario })
+    useNotificacionesStore.getState().cargarNotificaciones().catch(() => {})
   },
 
   logout: () => {
@@ -37,6 +39,7 @@ if (savedToken) {
   useUIStore.setState({ token: savedToken })
   getMe().then(res => {
     useUIStore.setState({ usuarioActivo: res.data as unknown as Usuario })
+    useNotificacionesStore.getState().cargarNotificaciones().catch(() => {})
   }).catch(() => {
     sessionStorage.removeItem('siaj_token')
     useUIStore.setState({ token: null })

@@ -1,16 +1,36 @@
 import { create } from 'zustand'
-import {
-  LINEAS_FERROVIARIAS, TIPOS_GESTION,
-  TIPOS_JUICIO, AREAS_REQUIRENTE, DOCUMENTAL,
-  CARACTERES_OFICIO, TIPOS_MEDIACION,
-  TOPES_CONVENIO, JURISDICCIONES_CS,
-  JUZGADOS, TRIBUNALES, FISCALIAS, UFIS,
-  COMISARIAS, TIPOS_HECHO_PENAL,
-  TIPOS_HECHO_DESAFUERO, SANCIONES,
-  ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE,
-} from '../data/catalogos'
-import { USUARIOS } from '../data/usuarios'
+import { getCatalogo, agregarItemCatalogo, editarItemCatalogo, getUsuarios } from '../api/catalogos'
+import { TIPOS_GESTION } from '../data/catalogos'
 import type { CatalogoItem, CatalogoItemExtended, TipoGestionItem } from '../types'
+
+const TABLA_A_TIPO: Record<string, string> = {
+  lineas:                    'LINEA',
+  juzgados:                  'JUZGADO',
+  tribunales:                'TRIBUNAL',
+  fiscalias:                 'FISCALIA',
+  ufis:                      'UFI',
+  comisarias:                'COMISARIA',
+  tiposGestion:              'TIPO_GESTION',
+  tiposJuicio:               'TIPO_JUICIO',
+  tiposHechoPenal:           'TIPO_HECHO_PENAL',
+  tiposHechoDesafuero:       'TIPO_HECHO_DESAFUERO',
+  tiposHechoDemandaCivil:    'TIPO_HECHO_DEMANDA_CIVIL',
+  tiposHechoDemandaLaboral:  'TIPO_HECHO_DEMANDA_LABORAL',
+  tiposHechoCartaSuceso:     'TIPO_HECHO_CARTA_SUCESO',
+  sanciones:                 'SANCION',
+  tiposMediacion:            'MEDIACION',
+  topesConvenio:             'TOPE_CONVENIO',
+  jurisdiccionesCS:          'JURISDICCION_CS',
+  areasRequirente:           'AREA_REQUIRENTE',
+  documental:                'DOCUMENTAL',
+  caracteresOficio:          'CARACTER_OFICIO',
+  rolesInterviniente:        'ROL_INTERVINIENTE',
+  tiposDocInterviniente:     'TIPO_DOC_INTERVINIENTE',
+}
+
+function tablaNombre(tabla: string): string {
+  return TABLA_A_TIPO[tabla] ?? tabla.toUpperCase()
+}
 
 type Tabla = CatalogoItem[] | CatalogoItemExtended[] | TipoGestionItem[]
 
@@ -38,24 +58,51 @@ interface ConfiguracionState {
   sanciones:                CatalogoItem[]
   rolesInterviniente:       CatalogoItem[]
   tiposDocInterviniente:    CatalogoItem[]
-  usuarios:                 typeof USUARIOS
+  usuarios:                 any[]
 
-  agregarItem:    (tabla: string, item: CatalogoItem) => void
-  editarItem:     (tabla: string, id: string, cambios: Partial<CatalogoItemExtended> | Record<string, unknown>) => void
-  desactivarItem: (tabla: string, id: string) => void
+  cargarCatalogos: () => Promise<void>
+  cargarUsuarios:  () => Promise<void>
+  agregarItem:    (tabla: string, item: CatalogoItem) => Promise<void>
+  editarItem:     (tabla: string, id: string, cambios: Partial<CatalogoItemExtended> | Record<string, unknown>) => Promise<void>
+  desactivarItem: (tabla: string, id: string) => Promise<void>
 }
 
+const TIPOS_CARGA = [
+  ['LINEA',                    'lineas'],
+  ['JUZGADO',                  'juzgados'],
+  ['TRIBUNAL',                 'tribunales'],
+  ['FISCALIA',                 'fiscalias'],
+  ['UFI',                      'ufis'],
+  ['COMISARIA',                'comisarias'],
+  // TIPO_GESTION se mantiene como mock: el campo `code` no existe en catalogo_items
+  ['TIPO_JUICIO',              'tiposJuicio'],
+  ['TIPO_HECHO_PENAL',         'tiposHechoPenal'],
+  ['TIPO_HECHO_DESAFUERO',     'tiposHechoDesafuero'],
+  ['TIPO_HECHO_DEMANDA_CIVIL', 'tiposHechoDemandaCivil'],
+  ['TIPO_HECHO_DEMANDA_LABORAL', 'tiposHechoDemandaLaboral'],
+  ['TIPO_HECHO_CARTA_SUCESO',  'tiposHechoCartaSuceso'],
+  ['SANCION',                  'sanciones'],
+  ['MEDIACION',                'tiposMediacion'],
+  ['TOPE_CONVENIO',            'topesConvenio'],
+  ['JURISDICCION_CS',          'jurisdiccionesCS'],
+  ['AREA_REQUIRENTE',          'areasRequirente'],
+  ['DOCUMENTAL',               'documental'],
+  ['CARACTER_OFICIO',          'caracteresOficio'],
+  ['ROL_INTERVINIENTE',        'rolesInterviniente'],
+  ['TIPO_DOC_INTERVINIENTE',   'tiposDocInterviniente'],
+] as const
+
 export const useConfiguracionStore = create<ConfiguracionState>((set) => ({
-  lineas:                LINEAS_FERROVIARIAS,
-  tiposGestion:          TIPOS_GESTION,
-  tiposJuicio:           TIPOS_JUICIO,
-  areasRequirente:       AREAS_REQUIRENTE,
-  documental:            DOCUMENTAL,
-  caracteresOficio:      CARACTERES_OFICIO,
-  tiposMediacion:        TIPOS_MEDIACION,
-  topesConvenio:         TOPES_CONVENIO,
-  jurisdiccionesCS:      JURISDICCIONES_CS,
-  tiposSolicitudOficioP: [
+  lineas:                   [],
+  tiposGestion:             TIPOS_GESTION,
+  tiposJuicio:              [],
+  areasRequirente:          [],
+  documental:               [],
+  caracteresOficio:         [],
+  tiposMediacion:           [],
+  topesConvenio:            [],
+  jurisdiccionesCS:         [],
+  tiposSolicitudOficioP:    [
     { id: 'TSO_001', label: 'Solicitud de información' },
     { id: 'TSO_002', label: 'Solicitud de filmaciones' },
     { id: 'TSO_003', label: 'Solicitud de intervención' },
@@ -63,54 +110,58 @@ export const useConfiguracionStore = create<ConfiguracionState>((set) => ({
     { id: 'TSO_005', label: 'Solicitud de asistencia a MARC' },
     { id: 'TSO_006', label: 'Otros' },
   ],
-  juzgados:                 JUZGADOS,
-  tribunales:               TRIBUNALES,
-  fiscalias:                FISCALIAS,
-  ufis:                     UFIS,
-  comisarias:               COMISARIAS,
-  tiposHechoPenal:          TIPOS_HECHO_PENAL,
-  tiposHechoDesafuero:      TIPOS_HECHO_DESAFUERO,
-  tiposHechoDemandaCivil: [
-    { id: 'THC_001', label: 'ACCIDENTE - ACCIÓN CIVIL' },
-    { id: 'THC_002', label: 'DAÑOS Y PERJUICIOS' },
-    { id: 'THC_003', label: 'COBRO DE SUMAS DE DINERO' },
-    { id: 'THC_004', label: 'AMPARO' },
-    { id: 'THC_005', label: 'OTROS' },
-  ],
-  tiposHechoDemandaLaboral: [
-    { id: 'THL_001', label: 'DESPIDO' },
-    { id: 'THL_002', label: 'ACCIDENTE DE TRABAJO' },
-    { id: 'THL_003', label: 'ENFERMEDAD PROFESIONAL' },
-    { id: 'THL_004', label: 'DIFERENCIAS SALARIALES' },
-    { id: 'THL_005', label: 'OTROS' },
-  ],
-  tiposHechoCartaSuceso: [
-    { id: 'THX_001', label: 'APEDREO' },
-    { id: 'THX_002', label: 'APEDREO CON DAÑO' },
-    { id: 'THX_003', label: 'DAÑO BIENES FFCC' },
-    { id: 'THX_004', label: 'ROBO BIENES FFCC' },
-    { id: 'THX_005', label: 'LESIONES' },
-    { id: 'THX_006', label: 'OTROS' },
-  ],
-  sanciones:             SANCIONES,
-  rolesInterviniente:    ROLES_INTERVINIENTE,
-  tiposDocInterviniente: TIPOS_DOC_INTERVINIENTE,
-  usuarios:              [...USUARIOS],
+  juzgados:                 [],
+  tribunales:               [],
+  fiscalias:                [],
+  ufis:                     [],
+  comisarias:               [],
+  tiposHechoPenal:          [],
+  tiposHechoDesafuero:      [],
+  tiposHechoDemandaCivil:   [],
+  tiposHechoDemandaLaboral: [],
+  tiposHechoCartaSuceso:    [],
+  sanciones:                [],
+  rolesInterviniente:       [],
+  tiposDocInterviniente:    [],
+  usuarios:                 [],
 
-  agregarItem: (tabla, item) =>
-    set(state => ({
-      [tabla]: [...(state[tabla as keyof ConfiguracionState] as Tabla), item],
-    })),
+  cargarCatalogos: async () => {
+    const resultados = await Promise.all(
+      TIPOS_CARGA.map(([tipo]) => getCatalogo(tipo).catch(() => ({ data: [] })))
+    )
+    const updates: Record<string, any[]> = {}
+    TIPOS_CARGA.forEach(([, key], i) => {
+      updates[key] = resultados[i].data
+    })
+    set(updates)
+  },
 
-  editarItem: (tabla, id, cambios) =>
-    set(state => ({
-      [tabla]: (state[tabla as keyof ConfiguracionState] as CatalogoItem[])
+  cargarUsuarios: async () => {
+    const res = await getUsuarios()
+    set({ usuarios: res.data })
+  },
+
+  agregarItem: async (tabla, item) => {
+    const tipo = tablaNombre(tabla)
+    const res = await agregarItemCatalogo(tipo, item)
+    set(s => ({ [tabla]: [...(s[tabla as keyof ConfiguracionState] as Tabla), res.data] }))
+  },
+
+  editarItem: async (tabla, id, cambios) => {
+    const tipo = tablaNombre(tabla)
+    set(s => ({
+      [tabla]: (s[tabla as keyof ConfiguracionState] as CatalogoItem[])
         .map(i => i.id === id ? { ...i, ...cambios } : i),
-    })),
+    }))
+    await editarItemCatalogo(tipo, id, cambios as Partial<CatalogoItem>)
+  },
 
-  desactivarItem: (tabla, id) =>
-    set(state => ({
-      [tabla]: (state[tabla as keyof ConfiguracionState] as CatalogoItem[])
-        .map(i => i.id === id ? { ...i, activo: false } : i),
-    })),
+  desactivarItem: async (tabla, id) => {
+    const tipo = tablaNombre(tabla)
+    set(s => ({
+      [tabla]: (s[tabla as keyof ConfiguracionState] as CatalogoItem[])
+        .filter(i => i.id !== id),
+    }))
+    await editarItemCatalogo(tipo, id, { activo: false })
+  },
 }))

@@ -319,7 +319,10 @@ export default function DetalleExpedientePage() {
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <span className="font-mono font-bold text-lg text-[#1b3a57]">{exp.id}</span>
               <AreaBadge area={exp.area} />
-              <EstadoBadge code={exp.estado} label={exp.estado} />
+              <EstadoBadge
+                code={exp.estadoProcesal ?? exp.estado}
+                label={estadoProcesalActual?.label ?? exp.estadoProcesal ?? exp.estado}
+              />
               {(alerta.activa || alertaTimer.activa) && (() => {
                 const timerVencido = alertaTimer.activa && alertaTimer.diasRestantes !== undefined && alertaTimer.diasRestantes <= 0
                 const esVencido = alerta.estado === 'vencido' || timerVencido
