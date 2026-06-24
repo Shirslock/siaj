@@ -16,13 +16,15 @@ import { IntervinientesTab } from './tabs/IntervinientesTab'
 import { TimelineTab }       from './tabs/TimelineTab'
 import { DocumentosTab }     from './tabs/DocumentosTab'
 import { PrevisionTab }      from './tabs/PrevisionTab'
+import { AsistenteTab }      from './tabs/AsistenteTab'
+import { useAIStore }        from '../../store/ai.store'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
-type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
+type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente'
 type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_actuacion_penal'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
@@ -42,13 +44,14 @@ const ESTADOS_DESDE_EN_ANALISIS: Record<string, string[]> = {
   DESAFUERO:       ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
 }
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
+const TABS: { key: Tab; label: string; icon: string; soloRoles?: string[] }[] = [
   { key: 'datos',          label: 'Datos',          icon: 'info' },
   { key: 'timeline',       label: 'Timeline',       icon: 'timeline' },
   { key: 'intervinientes', label: 'Intervinientes', icon: 'people' },
   { key: 'docs',           label: 'Documentos',     icon: 'folder' },
   { key: 'prevision',      label: 'Previsión',      icon: 'trending_up' },
   { key: 'vinculos',       label: 'Vinculados',     icon: 'account_tree' },
+  { key: 'asistente',      label: 'Asistente',      icon: 'psychology', soloRoles: ['ABOGADO', 'COORDINADOR', 'REFERENTE', 'GERENTE'] },
 ]
 
 export default function DetalleExpedientePage() {
@@ -58,6 +61,7 @@ export default function DetalleExpedientePage() {
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, tareasMap, inicializarTareas } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { limpiarChat } = useAIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -89,6 +93,7 @@ export default function DetalleExpedientePage() {
 
   useEffect(() => {
     if (!expId) return
+    limpiarChat()
     setCargandoDetalle(true)
     setExpedienteActivo(expId).finally(() => setCargandoDetalle(false))
   }, [expId, setExpedienteActivo])
@@ -416,25 +421,28 @@ export default function DetalleExpedientePage() {
 
       {/* Tabs */}
       <div className="flex gap-0 border-b border-[rgba(0,0,0,0.10)] w-full">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
-              tab === t.key
-                ? 'border-[#1b3a57] text-[#1b3a57]'
-                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
-            }`}
-          >
-            <Icon name={t.icon} size={16} />
-            {t.label}
-            {tabCounters[t.key] !== undefined && (
-              <span className="text-xs bg-[#e0e0e0] rounded-full px-1.5 py-0.5 text-[#4a6a84]">
-                {tabCounters[t.key]}
-              </span>
-            )}
-          </button>
-        ))}
+        {TABS
+          .filter(t => !t.soloRoles || t.soloRoles.includes(usuarioActivo?.rolSistema ?? ''))
+          .map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
+                tab === t.key
+                  ? 'border-[#1b3a57] text-[#1b3a57]'
+                  : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}
+            >
+              <Icon name={t.icon} size={16} />
+              {t.label}
+              {tabCounters[t.key] !== undefined && (
+                <span className="text-xs bg-[#e0e0e0] rounded-full px-1.5 py-0.5 text-[#4a6a84]">
+                  {tabCounters[t.key]}
+                </span>
+              )}
+            </button>
+          ))
+        }
       </div>
 
       {/* Tab content */}
@@ -444,6 +452,7 @@ export default function DetalleExpedientePage() {
       {tab === 'timeline'       && <TimelineTab        exp={exp} />}
       {tab === 'docs'           && <DocumentosTab      exp={exp} />}
       {tab === 'prevision'      && <PrevisionTab       exp={exp} />}
+      {tab === 'asistente'      && <AsistenteTab       exp={exp} />}
 
       {/* Modal: Cambiar estado */}
       <Modal

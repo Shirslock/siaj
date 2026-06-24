@@ -2,7 +2,7 @@ import {
   PlusIcon, ArrowLeftIcon, ArrowRightIcon, ArrowPathIcon,
   ArrowDownTrayIcon, ArrowUpTrayIcon, ArrowsRightLeftIcon,
   ArrowTrendingUpIcon, ArrowTopRightOnSquareIcon,
-  ArrowTurnDownRightIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
+  ArrowTurnDownRightIcon, ArrowUpIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, Bars3Icon, BellIcon, BriefcaseIcon,
   ChatBubbleLeftEllipsisIcon,
   CheckIcon, CheckBadgeIcon, CheckCircleIcon, ChevronRightIcon, ChevronUpDownIcon,
   ChevronDownIcon, ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
@@ -13,7 +13,7 @@ import {
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
-  ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
+  ScaleIcon, ShieldCheckIcon, SparklesIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
   UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 
@@ -96,6 +96,11 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   person_search:         UserCircleIcon,
   people:                UsersIcon,
   group:                 UserGroupIcon,
+
+  // IA / Asistente
+  arrow_upward:          ArrowUpIcon,
+  auto_awesome:          SparklesIcon,
+  psychology:            UserCircleIcon,
 
   radio_button_unchecked: RadioButtonUncheckedIcon,
 
