@@ -55,6 +55,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 - `replies?: Reply[]` — comentarios anidados agregados por el letrado asignado
 - `tareasSnapshot?: Tarea[]` — snapshot de tareas al momento del cambio de estado
 - `es_movimiento_impulsorio?: boolean` — marca el movimiento como impulsorio procesal
+- `tipo?: 'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'` — clasificación para el módulo Agenda (`AgendaEvent`)
 
 ## Campos destacados de Documento
 

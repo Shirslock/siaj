@@ -108,6 +108,33 @@ Clases disponibles en index.css:
 
 ---
 
+---
+
+## SolicitudForm (`src/components/SolicitudForm.tsx`)
+
+Componente compartido para crear solicitudes internas desde el timeline.
+Usado en `TimelineTab` (Civil/Laboral) y `TimelinePenal` como tab "Nueva Solicitud".
+
+```tsx
+import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
+// GrupoAsig exportado: 'CIVIL' | 'LABORAL' | 'PENAL' | 'RRHH' | 'COMERCIAL' | 'SEGUROS' | ''
+
+const [formSolicitud, setFormSolicitud] = useState(BLANK_SOLICITUD)
+
+<SolicitudForm
+  form={formSolicitud}
+  setForm={setFormSolicitud}
+  usuarioActivo={usuarioActivo}
+/>
+```
+
+- Sin campo "Expediente asociado" — el `expediente_id` lo pasa el padre.
+- Selector en dos pasos: grupo → persona.
+- Prioridad con 3 botones de colores (alta/media/baja).
+- Fecha límite opcional.
+
+---
+
 ## Toasts
 
 NO hay componente Toast propio. Usar react-toastify directamente:
