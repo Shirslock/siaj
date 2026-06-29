@@ -104,7 +104,7 @@ export default function AgendaPage() {
   const eventos   = useAgendaEvents()
   const { usuarioActivo } = useUIStore()
   const { expedientes }   = useExpedientesStore()
-  const { eventosCustom, agregarEvento, eliminarEvento } = useAgendaStore()
+  const { eventosCustom, eliminarEvento } = useAgendaStore()
 
   const [vista,           setVista]           = useState<Vista>('mes')
   const [fechaRef,        setFechaRef]        = useState(new Date())
@@ -112,10 +112,8 @@ export default function AgendaPage() {
   const [filtroTipo,      setFiltroTipo]      = useState<TipoFiltro>('todas')
   const [filtroAbogado,   setFiltroAbogado]   = useState('')
   const [filtroArea,      setFiltroArea]      = useState('')
-  const [modalEvento,     setModalEvento]     = useState(false)
   const [eventoDetalle,   setEventoDetalle]   = useState<EventoCustom | null>(null)
   const [agendaEvDetalle, setAgendaEvDetalle] = useState<AgendaEvent | null>(null)
-  const [formEvento,      setFormEvento]      = useState(BLANK_EVENTO)
 
   const esReferente   = usuarioActivo?.rolSistema === 'REFERENTE'
   const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'
@@ -212,11 +210,11 @@ export default function AgendaPage() {
         {/* Grilla — solo lun-vie */}
         <div className="grid grid-cols-5">
           {dias
-            .filter((_, idx) => {
+            .filter((_) => {
               // Eliminar sábado (idx%7===5) y domingo (idx%7===6) del array original de 7 cols
               return true // ya filtramos abajo
             })
-            .reduce<(Date | null)[][]>((acc, d, idx) => {
+            .reduce<(Date | null)[][]>((acc, _d, _idx) => {
               // Agrupamos en semanas de 7 y tomamos solo lun-vie
               return acc
             }, [])
