@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { useTareasStore } from '../../store/tareas.store'
+import { AUDIENCIAS_MOCK } from '../../data/audiencias.mock'
 import type { AgendaEvent } from '../../types'
 
 export function useAgendaEvents() {
@@ -13,7 +14,6 @@ export function useAgendaEvents() {
     const eventos: AgendaEvent[] = []
 
     expedientes.forEach(exp => {
-      // Tareas con fechaVencimiento
       Object.entries(tareasMap)
         .filter(([k]) => k.startsWith(`${exp.id}__`))
         .forEach(([, tareas]) => {
@@ -28,12 +28,12 @@ export function useAgendaEvents() {
                 estado: 'EN_CURSO',
                 abogado_id: exp.abogado_id ?? '',
                 area: exp.area,
+                tipo: 'TAREA',
               })
             }
           })
         })
 
-      // Actividades del timeline con fecha_vencimiento
       exp.timeline.forEach(act => {
         if (act.fecha_vencimiento) {
           eventos.push({
@@ -45,19 +45,37 @@ export function useAgendaEvents() {
             estado: act.estado ?? 'PENDIENTE',
             abogado_id: exp.abogado_id ?? '',
             area: exp.area,
+            tipo: act.tipo === 'AUDIENCIA' ? 'AUDIENCIA' : 'ACTIVIDAD',
           })
         }
       })
     })
 
-    const esReferente = usuarioActivo?.rolSistema === 'REFERENTE'
-    const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'
+    const esReferente    = usuarioActivo?.rolSistema === 'REFERENTE'
+    const esCoordinador  = usuarioActivo?.rolSistema === 'COORDINADOR'
 
-    const eventosBase = !usuarioActivo || esReferente || esCoordinador
-      ? eventos
-      : eventos.filter(e => e.abogado_id === usuarioActivo.id)
+    // Filtro base por rol
+    let eventosBase: AgendaEvent[]
+    if (!usuarioActivo || esReferente) {
+      eventosBase = eventos
+    } else if (esCoordinador) {
+      // Coordinador ve su área
+      const misAreas = usuarioActivo.areas ?? []
+      eventosBase = eventos.filter(e => misAreas.includes(e.area))
+    } else {
+      // Abogado: solo los suyos
+      eventosBase = eventos.filter(e => e.abogado_id === usuarioActivo.id)
+    }
 
-    // Tareas Kanban con "mostrar en agenda" activado
+    // Audiencias mock: abogado ve las suyas + audiencias de su área
+    const audiencias: AgendaEvent[] = AUDIENCIAS_MOCK.filter(a => {
+      if (!usuarioActivo || esReferente) return true
+      if (esCoordinador) return (usuarioActivo.areas ?? []).includes(a.area)
+      // Abogado: las propias + audiencias del área (para poder filtrar)
+      return a.area === (expedientes.find(e => e.abogado_id === usuarioActivo.id)?.area ?? a.area)
+    })
+
+    // Kanban
     const eventosKanban: AgendaEvent[] = tareasKanban
       .filter(t =>
         t.mostrar_en_agenda &&
@@ -75,8 +93,9 @@ export function useAgendaEvents() {
         estado: 'PENDIENTE',
         abogado_id: t.asignado_a,
         area: t.expediente_area,
+        tipo: 'TAREA' as const,
       }))
 
-    return [...eventosBase, ...eventosKanban]
+    return [...eventosBase, ...audiencias, ...eventosKanban]
   }, [expedientes, tareasMap, usuarioActivo, tareasKanban])
 }
