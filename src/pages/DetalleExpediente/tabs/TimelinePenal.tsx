@@ -18,6 +18,8 @@ import { formatFecha } from '../../../utils/format'
 import { getEtapasPenales, getEtapaPenal } from '../../../data/etapasPenales'
 import { getNombreCompleto } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
+import { useTareasStore } from '../../../store/tareas.store'
+import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 
 interface Props { exp: Expediente }
 
@@ -403,6 +405,7 @@ export function TimelinePenal({ exp }: Props) {
     agregarActividad, actualizarEstado, actualizarExpediente,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { agregarTarea } = useTareasStore()
 
   const registros = registrosPenales[exp.id] ?? []
 
@@ -418,10 +421,11 @@ export function TimelinePenal({ exp }: Props) {
   const [modalCambiarEstado, setModalCambiarEstado] = useState(false)
   const [etapaDestino,       setEtapaDestino]       = useState<EtapaPenal | null>(null)
 
-  // Estado para modal dual (procesales + genéricas)
-  const [modalNueva, setModalNueva] = useState(false)
-  const [tabNueva,   setTabNueva]   = useState<'procesales' | 'genericas'>('procesales')
-  const [formAct,    setFormAct]    = useState(BLANK_ACT)
+  // Estado para modal dual (procesales + genéricas + solicitud)
+  const [modalNueva,     setModalNueva]     = useState(false)
+  const [tabNueva,       setTabNueva]       = useState<'procesales' | 'genericas' | 'solicitud'>('procesales')
+  const [formAct,        setFormAct]        = useState(BLANK_ACT)
+  const [formSolicitud,  setFormSolicitud]  = useState(BLANK_SOLICITUD)
 
   // Estado para modal de detalle de actividad procesal
   const [modalDetalle, setModalDetalle] = useState(false)
@@ -448,6 +452,32 @@ export function TimelinePenal({ exp }: Props) {
     setModalNueva(false)
     resetProcesales()
     setFormAct(BLANK_ACT)
+    setTabNueva('procesales')
+    setFormSolicitud(BLANK_SOLICITUD)
+  }
+
+  function guardarSolicitudPenal() {
+    if (!formSolicitud.titulo.trim()) return
+    agregarTarea({
+      titulo:              formSolicitud.titulo,
+      descripcion:         formSolicitud.descripcion,
+      expediente_id:       exp.id,
+      expediente_caratula: exp.caratula,
+      expediente_area:     exp.area,
+      asignado_a:          formSolicitud.asignado_a,
+      creado_por:          usuarioActivo?.id ?? '',
+      fecha_limite:        formSolicitud.fecha_limite || null,
+      prioridad:           formSolicitud.prioridad,
+      estado:              'pendiente',
+      mostrar_en_agenda:   false,
+      area_destinataria:   formSolicitud.area_destinataria || undefined,
+      persona_contacto_id: formSolicitud.persona_contacto_id || undefined,
+      persona_contacto:    formSolicitud.persona_contacto || undefined,
+      etiquetas:           [],
+      created_at:          new Date().toISOString(),
+    })
+    toast.success('Solicitud creada.')
+    closeModalNueva()
   }
 
   // ── Acción: registrar actividad procesal ────────────
@@ -1030,7 +1060,7 @@ export function TimelinePenal({ exp }: Props) {
                 Registrar
               </button>
             </>
-          ) : (
+          ) : tabNueva === 'genericas' ? (
             <>
               <button
                 onClick={closeModalNueva}
@@ -1044,6 +1074,22 @@ export function TimelinePenal({ exp }: Props) {
                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 Guardar
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={closeModalNueva}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarSolicitudPenal}
+                disabled={!formSolicitud.titulo.trim()}
+                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
+                Crear solicitud
               </button>
             </>
           )
@@ -1070,6 +1116,16 @@ export function TimelinePenal({ exp }: Props) {
             }`}
           >
             Actividades Genéricas
+          </button>
+          <button
+            onClick={() => setTabNueva('solicitud')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tabNueva === 'solicitud'
+                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
+                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+            }`}
+          >
+            Nueva Solicitud
           </button>
         </div>
 
@@ -1213,6 +1269,15 @@ export function TimelinePenal({ exp }: Props) {
               </div>
             </div>
           )
+        )}
+
+        {/* ── Tab: Nueva Solicitud ── */}
+        {tabNueva === 'solicitud' && (
+          <SolicitudForm
+            form={formSolicitud}
+            setForm={setFormSolicitud}
+            usuarioActivo={usuarioActivo}
+          />
         )}
 
         {/* ── Tab: Genéricas ── */}
