@@ -8,13 +8,13 @@ import {
   ChevronDownIcon, ChevronUpIcon, ClockIcon, CloudArrowUpIcon, ClipboardDocumentListIcon,
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisVerticalIcon,
   ExclamationCircleIcon, ExclamationTriangleIcon, EyeIcon,
-  ChartBarIcon,
+  ChartBarIcon, TableCellsIcon,
   FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon, FolderPlusIcon,
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
-  ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
-  UsersIcon, WrenchScrewdriverIcon, XMarkIcon,
+  ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserIcon, UserPlusIcon,
+  UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
 } from '@heroicons/react/24/outline'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -33,6 +33,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   arrow_forward:         ArrowRightIcon,
   chevron_right:         ChevronRightIcon,
   close:                 XMarkIcon,
+  drag_indicator:        Bars3Icon,
   menu:                  Bars3Icon,
   menu_open:             XMarkIcon,
   more_vert:             EllipsisVerticalIcon,
@@ -70,6 +71,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   attach_file:           PaperClipIcon,
   description:           DocumentTextIcon,
   picture_as_pdf:        DocumentIcon,
+  table_chart:           TableCellsIcon,
 
   // Carpetas
   create_new_folder:     FolderPlusIcon,
@@ -90,9 +92,11 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   error:                 ExclamationCircleIcon,
 
   // Personas
+  person:                UserIcon,
   person_add:            UserPlusIcon,
   person_search:         UserCircleIcon,
   people:                UsersIcon,
+  group:                 UserGroupIcon,
 
   radio_button_unchecked: RadioButtonUncheckedIcon,
 
@@ -100,6 +104,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   account_tree:          RectangleGroupIcon,
   block:                 NoSymbolIcon,
   construction:          WrenchScrewdriverIcon,
+  settings:              Cog6ToothIcon,
   dashboard:             Squares2X2Icon,
   gavel:                 ScaleIcon,
   local_police:          ShieldCheckIcon,
@@ -107,6 +112,12 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   timeline:              ChartBarIcon,
   trending_up:           ArrowTrendingUpIcon,
   work:                  BriefcaseIcon,
+
+  // Agenda
+  calendar:             CalendarIcon,
+
+  // Tareas
+  task:                  CheckBadgeIcon,
 }
 
 interface IconProps {

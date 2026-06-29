@@ -124,6 +124,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     ],
     documentos: [
       {
+        id: 'DOC_C020_001',
         nombre: 'Cédula de Notificación — Demanda',
         tipo: 'PDF',
         fecha: '2026-01-20',
@@ -132,6 +133,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
         color: 'text-red-600',
       },
       {
+        id: 'DOC_C020_002',
         nombre: 'Escrito de Contestación de Demanda',
         tipo: 'DOCX',
         fecha: '2026-02-20',
@@ -140,6 +142,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
         color: 'text-blue-600',
       },
       {
+        id: 'DOC_C020_003',
         nombre: 'Resolución — Audiencia Preliminar',
         tipo: 'PDF',
         fecha: '2026-03-10',
@@ -212,6 +215,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     ],
     documentos: [
       {
+        id: 'DOC_C022_001',
         nombre: 'Cédula de Notificación — Demanda',
         tipo: 'PDF',
         fecha: '2026-01-20',
@@ -220,6 +224,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
         color: 'text-red-600',
       },
       {
+        id: 'DOC_C022_002',
         nombre: 'Escrito de Contestación de Demanda',
         tipo: 'DOCX',
         fecha: '2026-02-20',
@@ -228,6 +233,7 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
         color: 'text-blue-600',
       },
       {
+        id: 'DOC_C022_003',
         nombre: 'Resolución — Audiencia Preliminar',
         tipo: 'PDF',
         fecha: '2026-03-10',
@@ -256,7 +262,8 @@ export const EXPEDIENTES_ABOGADO: Expediente[] = [
     },
     campos_abogado: {
       abg_tipo_hecho:     ['APEDREO CON DAÑO', 'DAÑO BIENES FFCC'],
-      abg_tipo_solicitud: ['Informativo', 'Urgente'],
+      abg_tipo_solicitud: ['Solicitud de información', 'Solicitud de filmaciones'],
+      observaciones:      'Oficio recibido el 15/05/2026.',
     },
     timeline: [
       {
@@ -518,28 +525,31 @@ export const EXPEDIENTE_DETALLE: Expediente = {
   ],
   documentos: [
     {
+      id: 'DOC_C023_001',
       nombre: 'Cédula de Notificación — Demanda',
       tipo: 'PDF',
       fecha: '2026-01-20',
       size: '245 KB',
-      icon: 'description',
-      color: 'text-red-600',
+      icon: 'picture_as_pdf',
+      color: 'text-red-500',
     },
     {
+      id: 'DOC_C023_002',
       nombre: 'Escrito de Contestación de Demanda',
       tipo: 'DOCX',
       fecha: '2026-02-20',
       size: '128 KB',
-      icon: 'article',
-      color: 'text-blue-600',
+      icon: 'description',
+      color: 'text-blue-500',
     },
     {
-      nombre: 'Resolución — Audiencia Preliminar',
-      tipo: 'PDF',
+      id: 'DOC_C023_003',
+      nombre: 'Liquidación de Honorarios',
+      tipo: 'XLSX',
       fecha: '2026-03-10',
       size: '87 KB',
-      icon: 'gavel',
-      color: 'text-orange-600',
+      icon: 'table_chart',
+      color: 'text-green-600',
     },
   ],
   observaciones: 'Accidente ferroviario. Demanda por daños y perjuicios.',

@@ -12,6 +12,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/bandeja/abogado': 'Actuaciones',
   '/bandeja/area':    'Actuaciones',
   '/agenda':          'Agenda',
+  '/configuracion':   'Configuración del Sistema',
 }
 
 const PAGE_ACTIVE: Record<string, string> = {
@@ -22,6 +23,7 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/bandeja/abogado': 'actuaciones',
   '/bandeja/area':    'actuaciones',
   '/agenda':          'agenda',
+  '/configuracion':   'configuracion',
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -41,6 +43,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
     activePage = 'actuaciones'
   }
 
+  // si el pathname es exactamente /configuracion, el main se muestra a pantalla completa (sin max-width ni centrado)
+  const esConfiguracion = pathname === '/configuracion'
+
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
       <Sidebar activePage={activePage} />
@@ -50,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           sidebarCollapsed ? 'ml-16' : 'ml-64'
         }`}
       >
-        <div className="max-w-screen-xl mx-auto">
+        <div className={esConfiguracion ? 'w-full' : 'max-w-screen-xl mx-auto'}>
           {children}
         </div>
       </main>

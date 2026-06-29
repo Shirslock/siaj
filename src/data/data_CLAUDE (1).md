@@ -6,7 +6,7 @@
 |---------|-----------|--------|
 | `catalogos.ts` | Todos los catálogos con IDs oficiales | Tablas Codificadoras Excel |
 | `formularios.ts` | Campos por tipo (mesa + abogado) | FORMULARIOS.md |
-| `usuarios.ts` | 31 usuarios reales con roles y asignaciones | Roles.xlsx |
+| `usuarios.ts` | 32 usuarios reales con roles y asignaciones | Roles.xlsx |
 | `expedientes.mock.ts` | Datos de ejemplo para el prototipo — ver mocks disponibles abajo | Creado manualmente |
 | `estadosProcesales.ts` | Estados y tareas por tipo de gestión | Diseño funcional |
 
@@ -22,6 +22,7 @@
 | `THP_` | Tipos de hecho penal (THP_001 a THP_020) |
 | `JUI_` | Tipos de juicio (JUI_001 a JUI_010) |
 | `UR_` | Usuarios (UR_001 a UR_032) |
+| `DOC_` | Documentos en mock (DOC_C023_001, etc.) |
 
 ---
 
@@ -102,15 +103,38 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 
 | ID | Tipo | Estado procesal | Notas |
 |----|------|-----------------|-------|
-| C-0023/2026 | DEMANDA_CIVIL | EN_PRUEBA | Mock principal — timeline completo, cambios de estado, actividades |
+| C-0023/2026 | DEMANDA_CIVIL | EN_PRUEBA | Mock principal — timeline completo, cambios de estado, actividades, 3 documentos (PDF/DOCX/XLSX) |
 | C-0025/2026 | COBRO_CANON | ASIGNADO | Para probar ciclos A (bifurcación EN_ANALISIS); abogado UR_004 |
 | C-0026/2026 | DEMANDA_CIVIL | EN_PRUEBA | `es_juicio_iniciado: true`, `fecha_ultimo_impulsorio: '2026-03-25'` (timer activo); tarea con `fecha_aviso` para badge "Por vencer"; `tareasMap` pre-populado |
 | P-0012/2026 | QUERELLA | — | Mock penal con TimelinePenal |
+| P-0020/2026 | OFICIO PENAL | EN_TRAMITE | Mock oficio penal; `campos_abogado` con `abg_tipo_solicitud` (nuevos valores) y `abg_num_siniestro` |
 | C-0020/2025 | DEMANDA_CIVIL | CERRADO | Mock expediente cerrado |
 
 **`tareasMap` inicial en el store:** pre-populado para `C-0026/2026__EN_PRUEBA` con 3 tareas demo (una en_curso con `fecha_aviso`, una cumplida, una sin_estado).
 
+**Documentos en el mock:** todos los documentos tienen campo `id` obligatorio (`DOC_C020_001`, etc.).
+
 ---
+
+## formularios.ts — Oficio Penal (variante_penal)
+
+La sección `variante_penal` del OFICIO en área PENAL tiene:
+
+**Mesa:**
+- `mesa_num_causa`, `mesa_num_sumario`, `mesa_num_ipp` — números de causa
+- `mesa_caratula`, `mesa_juzgado`, `mesa_fiscalia`, `mesa_comisaria`, `mesa_tribunal`
+- `mesa_linea` — línea ferroviaria
+- `mesa_fecha_recep_of` — fecha recepción de oficio
+- **Sin** `caracter_oficio` (ese campo es exclusivo de Civil/Laboral)
+
+**Abogado:**
+- `abg_datos_contacto`, `abg_fecha_hecho`, `abg_lugar_hecho`
+- `abg_damnificado`, `abg_imputado`
+- `abg_tipo_hecho` — multiselect con 7 opciones penales
+- `abg_tipo_solicitud` — multiselect con 6 opciones:
+  Solicitud de información / Solicitud de filmaciones / Solicitud de intervención /
+  Citaciones / Solicitud de asistencia a MARC / Otros
+- `abg_num_siniestro` — "Accidente Ferroviario (N° Siniestro)", type text, mono
 
 ## Reglas de formularios
 

@@ -18,6 +18,8 @@ import { formatFecha } from '../../../utils/format'
 import { getEtapasPenales, getEtapaPenal } from '../../../data/etapasPenales'
 import { getNombreCompleto } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
+import { useTareasStore } from '../../../store/tareas.store'
+import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 
 interface Props { exp: Expediente }
 
@@ -47,7 +49,7 @@ const BLANK_ACT = {
 // ── Tipos del historial unificado ────────────────────
 
 type EntradaHistorial =
-  | { kind: 'sistema';  fecha: string; titulo: string; descripcion: string; doc_gde?: string | null }
+  | { kind: 'sistema';  fecha: string; etapaAnteriorLabel: string; etapaNuevaLabel: string; descripcion: string; doc_gde?: string | null }
   | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null }
   | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; etapaCodigo: string; resultado: string | null }
 
@@ -403,6 +405,7 @@ export function TimelinePenal({ exp }: Props) {
     agregarActividad, actualizarEstado, actualizarExpediente,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { agregarTarea } = useTareasStore()
 
   const registros = registrosPenales[exp.id] ?? []
 
@@ -418,10 +421,11 @@ export function TimelinePenal({ exp }: Props) {
   const [modalCambiarEstado, setModalCambiarEstado] = useState(false)
   const [etapaDestino,       setEtapaDestino]       = useState<EtapaPenal | null>(null)
 
-  // Estado para modal dual (procesales + genéricas)
-  const [modalNueva, setModalNueva] = useState(false)
-  const [tabNueva,   setTabNueva]   = useState<'procesales' | 'genericas'>('procesales')
-  const [formAct,    setFormAct]    = useState(BLANK_ACT)
+  // Estado para modal dual (procesales + genéricas + solicitud)
+  const [modalNueva,     setModalNueva]     = useState(false)
+  const [tabNueva,       setTabNueva]       = useState<'procesales' | 'genericas' | 'solicitud'>('procesales')
+  const [formAct,        setFormAct]        = useState(BLANK_ACT)
+  const [formSolicitud,  setFormSolicitud]  = useState(BLANK_SOLICITUD)
 
   // Estado para modal de detalle de actividad procesal
   const [modalDetalle, setModalDetalle] = useState(false)
@@ -448,6 +452,32 @@ export function TimelinePenal({ exp }: Props) {
     setModalNueva(false)
     resetProcesales()
     setFormAct(BLANK_ACT)
+    setTabNueva('procesales')
+    setFormSolicitud(BLANK_SOLICITUD)
+  }
+
+  function guardarSolicitudPenal() {
+    if (!formSolicitud.titulo.trim()) return
+    agregarTarea({
+      titulo:              formSolicitud.titulo,
+      descripcion:         formSolicitud.descripcion,
+      expediente_id:       exp.id,
+      expediente_caratula: exp.caratula,
+      expediente_area:     exp.area,
+      asignado_a:          formSolicitud.asignado_a,
+      creado_por:          usuarioActivo?.id ?? '',
+      fecha_limite:        formSolicitud.fecha_limite || null,
+      prioridad:           formSolicitud.prioridad,
+      estado:              'pendiente',
+      mostrar_en_agenda:   false,
+      area_destinataria:   formSolicitud.area_destinataria || undefined,
+      persona_contacto_id: formSolicitud.persona_contacto_id || undefined,
+      persona_contacto:    formSolicitud.persona_contacto || undefined,
+      etiquetas:           [],
+      created_at:          new Date().toISOString(),
+    })
+    toast.success('Solicitud creada.')
+    closeModalNueva()
   }
 
   // ── Acción: registrar actividad procesal ────────────
@@ -509,7 +539,9 @@ export function TimelinePenal({ exp }: Props) {
       fecha:         HOY,
       activo:        true,
       subitems:      [],
-      estadoExpediente: etapaDestino.codigo,
+      estadoExpediente:  etapaDestino.codigo,
+      etapaAnteriorLabel: etapaActual?.label ?? etapaCodigo,
+      etapaNuevaLabel:    etapaDestino.label,
       doc_gde:       null,
       tareasSnapshot: [],
     })
@@ -533,6 +565,15 @@ export function TimelinePenal({ exp }: Props) {
   const [filtroHistorial, setFiltroHistorial] =
     useState<'todo' | 'sistema' | 'procesales' | 'genericas'>('todo')
   const [busquedaHistorial, setBusquedaHistorial] = useState('')
+  const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
+
+  function toggleGrupo(idx: number) {
+    setEstadosExpandidos(prev => {
+      const next = new Set(prev)
+      next.has(idx) ? next.delete(idx) : next.add(idx)
+      return next
+    })
+  }
 
   const historialCompleto = useMemo((): EntradaHistorial[] => {
     type EntradaConIdx = EntradaHistorial & { _idx: number }
@@ -541,11 +582,20 @@ export function TimelinePenal({ exp }: Props) {
     exp.timeline.forEach(act => {
       const esSistema =
         act.tipo === 'MOVIMIENTO' && act.titulo.startsWith('Cambio de estado')
-      entradas.push(
-        esSistema
-          ? { kind: 'sistema', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', doc_gde: act.doc_gde, _idx: entradas.length }
-          : { kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, _idx: entradas.length }
-      )
+      if (esSistema) {
+        const parts = act.titulo.replace('Cambio de estado: ', '').split(' → ')
+        entradas.push({
+          kind: 'sistema',
+          fecha: act.fecha,
+          etapaAnteriorLabel: act.etapaAnteriorLabel ?? parts[0] ?? '',
+          etapaNuevaLabel:    act.etapaNuevaLabel    ?? parts[1] ?? '',
+          descripcion: act.descripcion ?? '',
+          doc_gde: act.doc_gde,
+          _idx: entradas.length,
+        })
+      } else {
+        entradas.push({ kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, _idx: entradas.length })
+      }
     })
 
     registros.forEach(r => {
@@ -566,9 +616,24 @@ export function TimelinePenal({ exp }: Props) {
     return entradas.sort((a, b) => {
       const diff = b.fecha.localeCompare(a.fecha)
       if (diff !== 0) return diff
-      return b._idx - a._idx
+      // En misma fecha: sistema siempre antes que procesal/generica
+      const aSistema = a.kind === 'sistema' ? 0 : 1
+      const bSistema = b.kind === 'sistema' ? 0 : 1
+      return aSistema - bSistema
     }) as EntradaHistorial[]
   }, [exp.timeline, registros, exp.tipo])
+
+  const getTituloEntrada = (entrada: EntradaHistorial): string => {
+    if (entrada.kind === 'sistema')  return `${entrada.etapaAnteriorLabel ?? ''} → ${entrada.etapaNuevaLabel ?? ''}`
+    if (entrada.kind === 'generica') return entrada.titulo ?? ''
+    if (entrada.kind === 'procesal') return entrada.nombre ?? ''
+    return ''
+  }
+
+  const getDescripcionEntrada = (entrada: EntradaHistorial): string => {
+    if (entrada.kind === 'generica') return entrada.descripcion ?? ''
+    return ''
+  }
 
   const historialFiltrado = useMemo(() => {
     return historialCompleto.filter(e => {
@@ -578,18 +643,142 @@ export function TimelinePenal({ exp }: Props) {
       }
       if (busquedaHistorial.trim()) {
         const q = busquedaHistorial.toLowerCase()
-        const texto = e.kind === 'procesal'
-          ? `${e.numero} ${e.nombre} ${e.etapaLabel}`
-          : `${e.titulo} ${e.descripcion}`
-        if (!texto.toLowerCase().includes(q)) return false
+        if (!`${getTituloEntrada(e)} ${getDescripcionEntrada(e)}`.toLowerCase().includes(q)) return false
       }
       return true
     })
   }, [historialCompleto, filtroHistorial, busquedaHistorial])
 
+  const gruposHistorial = useMemo(() => {
+    const entradaRecepcion = historialFiltrado.find(
+      e => e.kind === 'sistema' &&
+           (e.etapaNuevaLabel?.toLowerCase().includes('recib') ||
+            e.etapaNuevaLabel?.toLowerCase().includes('asignado') ||
+            e.etapaAnteriorLabel?.toLowerCase().includes('recib') ||
+            e.etapaAnteriorLabel?.toLowerCase().includes('asignado'))
+    )
+
+    const sinRecepcion = historialFiltrado.filter(e => e !== entradaRecepcion)
+
+    const sistemasIdx = sinRecepcion
+      .map((e, i) => ({ e, i }))
+      .filter(({ e }) => e.kind === 'sistema')
+      .map(({ i }) => i)
+
+    if (sistemasIdx.length === 0) {
+      return {
+        grupos: [],
+        actividadesActuales: sinRecepcion.filter(e => e.kind !== 'sistema'),
+        entradaRecepcion,
+      }
+    }
+
+    // Orden descendente: sistema[gi+1] es el más antiguo (índice mayor)
+    const grupos = sistemasIdx.map((si, gi) => {
+      const sistema = sinRecepcion[si]
+      const idxNext = gi < sistemasIdx.length - 1
+        ? sistemasIdx[gi + 1]
+        : sinRecepcion.length
+      const actividades = sinRecepcion
+        .slice(si + 1, idxNext)
+        .filter(e => e.kind !== 'sistema')
+      return { sistema, actividades }
+    })
+
+    const actividadesActuales = sinRecepcion
+      .slice(0, sistemasIdx[0])
+      .filter(e => e.kind !== 'sistema')
+
+    return {
+      grupos,
+      actividadesActuales,
+      entradaRecepcion,
+    }
+  }, [historialFiltrado])
+
   const countSistema    = historialCompleto.filter(e => e.kind === 'sistema').length
   const countProcesales = historialCompleto.filter(e => e.kind === 'procesal').length
   const countGenericas  = historialCompleto.filter(e => e.kind === 'generica').length
+
+  // ── Render de una entrada individual ────────────────
+
+  function renderEntrada(entrada: EntradaHistorial) {
+    if (entrada.kind === 'sistema') {
+      return (
+        <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Icon name="swap_horiz" size={16} className="text-[#1b3a57]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">
+              {entrada.etapaAnteriorLabel} → {entrada.etapaNuevaLabel}
+            </p>
+            {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
+            {entrada.doc_gde && (
+              <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                <Icon name="attach_file" size={12} />{entrada.doc_gde}
+              </p>
+            )}
+          </div>
+          <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+        </div>
+      )
+    }
+    if (entrada.kind === 'generica') {
+      return (
+        <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Icon name="description" size={16} className="text-[#4a6a84]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
+            {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
+            {entrada.doc_gde && (
+              <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                <Icon name="attach_file" size={12} />{entrada.doc_gde}
+              </p>
+            )}
+          </div>
+          <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+        </div>
+      )
+    }
+    // procesal
+    return (
+      <div
+        onClick={() => {
+          const reg = registros.find(r => r.numero === entrada.numero && r.etapaCodigo === entrada.etapaCodigo)
+          if (reg) { setRegistroSeleccionado(reg); setModalDetalle(true) }
+        }}
+        className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-[rgba(27,58,87,0.08)] flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Icon name="gavel" size={16} className="text-[#1b3a57]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <p className="text-sm font-semibold text-[#1b3a57]">{entrada.numero} {entrada.nombre}</p>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
+              {entrada.etapaLabel}
+            </span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+              entrada.estado === 'cumplido'        ? 'bg-green-100 text-green-700'
+              : entrada.estado === 'en_curso'      ? 'bg-[#C4DFE8] text-[#1b3a57]'
+              : entrada.estado === 'no_procedente' ? 'bg-[#e8e8e8] text-[#4a6a84]'
+              : 'bg-[#f5f5f5] text-[#7a9ab4]'
+            }`}>
+              {entrada.estado === 'cumplido' ? 'Cumplido'
+                : entrada.estado === 'en_curso' ? 'En curso'
+                : entrada.estado === 'no_procedente' ? 'No proc.'
+                : 'Sin estado'}
+            </span>
+          </div>
+          {entrada.resultado && <p className="text-xs text-[#4a6a84]">Resultado: {entrada.resultado}</p>}
+        </div>
+        <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+      </div>
+    )
+  }
 
   // ── Render ──────────────────────────────────────────
 
@@ -687,7 +876,7 @@ export function TimelinePenal({ exp }: Props) {
           </div>
         )}
 
-        {/* Feed unificado */}
+        {/* Feed unificado con agrupación colapsable */}
         {etapaCodigo !== 'ASIGNADO' && (
           historialFiltrado.length === 0 ? (
             <div className="px-5 py-12 text-center">
@@ -696,86 +885,74 @@ export function TimelinePenal({ exp }: Props) {
             </div>
           ) : (
             <div className="divide-y divide-[rgba(0,0,0,0.05)]">
-              {historialFiltrado.map((entrada, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    if (entrada.kind === 'procesal') {
-                      const reg = registros.find(
-                        r => r.numero === entrada.numero && r.etapaCodigo === entrada.etapaCodigo
-                      )
-                      if (reg) { setRegistroSeleccionado(reg); setModalDetalle(true) }
-                    }
-                  }}
-                  className={`flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors ${
-                    entrada.kind === 'procesal' ? 'cursor-pointer' : ''
-                  }`}
-                >
-                  {/* Ícono */}
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    entrada.kind === 'sistema'
-                      ? 'bg-[#C4DFE8]'
-                      : entrada.kind === 'procesal'
-                      ? 'bg-[rgba(27,58,87,0.08)]'
-                      : 'bg-[#e8e8e8]'
-                  }`}>
-                    <Icon
-                      name={entrada.kind === 'sistema' ? 'swap_horiz' : entrada.kind === 'procesal' ? 'gavel' : 'description'}
-                      size={16}
-                      className={entrada.kind === 'generica' ? 'text-[#4a6a84]' : 'text-[#1b3a57]'}
-                    />
-                  </div>
 
-                  {/* Contenido */}
-                  <div className="flex-1 min-w-0">
-                    {(entrada.kind === 'sistema' || entrada.kind === 'generica') && (
-                      <>
-                        <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
-                        {entrada.descripcion && (
-                          <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>
-                        )}
-                        {entrada.doc_gde && (
-                          <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
-                            <Icon name="attach_file" size={12} />
-                            {entrada.doc_gde}
-                          </p>
-                        )}
-                      </>
-                    )}
-                    {entrada.kind === 'procesal' && (
-                      <>
-                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                          <p className="text-sm font-semibold text-[#1b3a57]">
-                            {entrada.numero} {entrada.nombre}
-                          </p>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
-                            {entrada.etapaLabel}
-                          </span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            entrada.estado === 'cumplido'        ? 'bg-green-100 text-green-700'
-                            : entrada.estado === 'en_curso'      ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                            : entrada.estado === 'no_procedente' ? 'bg-[#e8e8e8] text-[#4a6a84]'
-                            : 'bg-[#f5f5f5] text-[#7a9ab4]'
-                          }`}>
-                            {entrada.estado === 'cumplido' ? 'Cumplido'
-                              : entrada.estado === 'en_curso' ? 'En curso'
-                              : entrada.estado === 'no_procedente' ? 'No proc.'
-                              : 'Sin estado'}
-                          </span>
-                        </div>
-                        {entrada.resultado && (
-                          <p className="text-xs text-[#4a6a84]">Resultado: {entrada.resultado}</p>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Fecha */}
-                  <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">
-                    {formatFecha(entrada.fecha)}
-                  </span>
+              {/* A) Actividades del período actual (sin grupo) */}
+              {gruposHistorial.actividadesActuales.map((entrada, ei) => (
+                <div key={`actual-${ei}`} className="border-b border-[rgba(0,0,0,0.05)] last:border-0">
+                  {renderEntrada(entrada)}
                 </div>
               ))}
+
+              {/* B) Grupos colapsables por cambio de estado */}
+              {gruposHistorial.grupos.map((grupo, gi) => (
+                <div key={`grupo-${gi}`} className="border-b border-[rgba(0,0,0,0.05)]">
+
+                  {/* Cabecera colapsable */}
+                  <div
+                    onClick={() => toggleGrupo(gi)}
+                    className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Icon
+                        name={estadosExpandidos.has(gi) ? 'expand_less' : 'expand_more'}
+                        size={16} className="text-[#1b3a57]"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Icon name="swap_horiz" size={14} className="text-[#1b7a8a] flex-shrink-0" />
+                        <p className="text-sm font-semibold text-[#1b3a57] truncate">
+                          {getTituloEntrada(grupo.sistema)}
+                        </p>
+                      </div>
+                      {getDescripcionEntrada(grupo.sistema) && (
+                        <p className="text-xs text-[#4a6a84]">{getDescripcionEntrada(grupo.sistema)}</p>
+                      )}
+                      {grupo.actividades.length > 0 && (
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold text-[#4a6a84] bg-[#e8e8e8] px-2 py-0.5 rounded-full">
+                          <Icon name="history" size={11} />
+                          {grupo.actividades.length}{grupo.actividades.length === 1 ? ' registro' : ' registros'}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">
+                      {formatFecha(grupo.sistema.fecha)}
+                    </span>
+                  </div>
+
+                  {/* Actividades del período — colapsables */}
+                  {estadosExpandidos.has(gi) && (
+                    <div className="bg-[#fafafa] border-t border-[rgba(0,0,0,0.04)]">
+                      {grupo.actividades.length === 0 ? (
+                        <p className="px-16 py-3 text-xs text-[#7a9ab4] italic">Sin registros en este período.</p>
+                      ) : (
+                        grupo.actividades.map((entrada, ai) => (
+                          <div key={`act-${gi}-${ai}`} className="ml-10 border-b border-[rgba(0,0,0,0.04)] last:border-0">
+                            {renderEntrada(entrada)}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* C) Entrada de recepción — siempre al final */}
+              {gruposHistorial.entradaRecepcion && (
+                <div className="border-t border-[rgba(0,0,0,0.05)]">
+                  {renderEntrada(gruposHistorial.entradaRecepcion)}
+                </div>
+              )}
             </div>
           )
         )}
@@ -883,7 +1060,7 @@ export function TimelinePenal({ exp }: Props) {
                 Registrar
               </button>
             </>
-          ) : (
+          ) : tabNueva === 'genericas' ? (
             <>
               <button
                 onClick={closeModalNueva}
@@ -897,6 +1074,22 @@ export function TimelinePenal({ exp }: Props) {
                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 Guardar
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={closeModalNueva}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarSolicitudPenal}
+                disabled={!formSolicitud.titulo.trim()}
+                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
+                Crear solicitud
               </button>
             </>
           )
@@ -923,6 +1116,16 @@ export function TimelinePenal({ exp }: Props) {
             }`}
           >
             Actividades Genéricas
+          </button>
+          <button
+            onClick={() => setTabNueva('solicitud')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tabNueva === 'solicitud'
+                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
+                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+            }`}
+          >
+            Nueva Solicitud
           </button>
         </div>
 
@@ -1066,6 +1269,15 @@ export function TimelinePenal({ exp }: Props) {
               </div>
             </div>
           )
+        )}
+
+        {/* ── Tab: Nueva Solicitud ── */}
+        {tabNueva === 'solicitud' && (
+          <SolicitudForm
+            form={formSolicitud}
+            setForm={setFormSolicitud}
+            usuarioActivo={usuarioActivo}
+          />
         )}
 
         {/* ── Tab: Genéricas ── */}

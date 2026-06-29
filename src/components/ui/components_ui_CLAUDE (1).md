@@ -22,22 +22,25 @@ Agregar:
 1. Import del Heroicon correspondiente desde `@heroicons/react/24/outline`
 2. Entrada en ICON_MAP: `nombre_material_symbol: HeroIconComponent`
 
-Íconos mapeados actualmente (48+):
+Íconos mapeados actualmente (55+):
 add, add_circle, add_link, arrow_back, arrow_forward, article,
 assign_file, attach_file, check, check_circle, chevron_right,
 close, construction, create_new_folder, delete, description,
-download, edit, expand_less, expand_more, filter_alt_off,
-folder, folder_off, folder_open, folder_shared, forward, gavel,
-history, inbox, info, link, link_off, menu, menu_open, more_vert,
-notes, notifications_none, open_in_new, person_add, picture_as_pdf,
-refresh, reply, save, schedule, search, search_off,
-subdirectory_arrow_right, swap_horiz, timeline, unfold_less,
-unfold_more, upload_file, visibility, warning
+download, drag_indicator, edit, expand_less, expand_more,
+filter_alt_off, folder, folder_off, folder_open, folder_shared,
+forward, gavel, history, inbox, info, link, link_off,
+menu, menu_open, more_vert, notes, notifications_none,
+open_in_new, person_add, person_search, people, picture_as_pdf,
+radio_button_unchecked, refresh, reply, save, schedule, search,
+search_off, settings, subdirectory_arrow_right, swap_horiz,
+table_chart, timeline, trending_up, unfold_less, unfold_more,
+upload_file, visibility, warning, work
 
 Nota: `reply` → ArrowUturnLeftIcon · `notes` → ChatBubbleLeftEllipsisIcon
-
 Nota: `expand_more` → ChevronDownIcon, `expand_less` → ChevronUpIcon
-(usados en el feed colapsable de TimelineTab)
+Nota: `drag_indicator` → Bars3Icon (handle de drag en DocumentosTab)
+Nota: `table_chart` → TableCellsIcon (archivos XLSX)
+Nota: `settings` → Cog6ToothIcon
 
 ---
 

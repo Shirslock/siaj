@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Expediente, Interviniente } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { Modal } from '../../../components/ui/Modal'
 import { ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE } from '../../../data/catalogos'
 import Icon from '../../../components/ui/Icon'
+import { toast } from 'react-toastify'
 
 interface Props { exp: Expediente }
 
@@ -34,28 +35,70 @@ const BLANK: Omit<Interviniente, 'id'> = {
 }
 
 export function IntervinientesTab({ exp }: Props) {
-  const { agregarInterviniente, eliminarInterviniente } = useExpedientesStore()
-  const [modal, setModal] = useState(false)
+  const { agregarInterviniente, eliminarInterviniente, editarInterviniente } = useExpedientesStore()
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [editando, setEditando] = useState<Interviniente | null>(null)
   const [form, setForm] = useState<Omit<Interviniente, 'id'>>(BLANK)
+
+  const modoEdicion = !!editando
+
+  useEffect(() => {
+    if (editando) {
+      setForm({
+        nombre:             editando.nombre,
+        rol_procesal:       editando.rol_procesal,
+        tipo_documento:     editando.tipo_documento,
+        numero_documento:   editando.numero_documento,
+        representado_por:   editando.representado_por   ?? '',
+        contacto_telefono:  editando.contacto_telefono  ?? '',
+        contacto_email:     editando.contacto_email     ?? '',
+        contacto_domicilio: editando.contacto_domicilio ?? '',
+        observaciones:      editando.observaciones      ?? '',
+      })
+    }
+  }, [editando])
 
   function setField(k: keyof typeof BLANK, v: string) {
     setForm(p => ({ ...p, [k]: v }))
   }
 
-  function agregar() {
-    if (!form.nombre.trim() || !form.numero_documento.trim()) return
-    const nuevo: Interviniente = {
-      ...form,
-      id: `IN_${Date.now()}`,
-      contacto_email:    form.contacto_email    || undefined,
-      contacto_telefono: form.contacto_telefono || undefined,
-      contacto_domicilio: form.contacto_domicilio || undefined,
-      representado_por:  form.representado_por  || undefined,
-      observaciones:     form.observaciones     || undefined,
-    }
-    agregarInterviniente(exp.id, nuevo)
-    setModal(false)
+  function resetForm() {
     setForm(BLANK)
+  }
+
+  function cerrarModal() {
+    setEditando(null)
+    setModalAbierto(false)
+    resetForm()
+  }
+
+  function confirmar() {
+    if (modoEdicion && editando) {
+      editarInterviniente(exp.id, editando.id, {
+        ...form,
+        contacto_email:     form.contacto_email     || undefined,
+        contacto_telefono:  form.contacto_telefono  || undefined,
+        contacto_domicilio: form.contacto_domicilio || undefined,
+        representado_por:   form.representado_por   || undefined,
+        observaciones:      form.observaciones      || undefined,
+      })
+      toast.success('Interviniente actualizado.')
+      setEditando(null)
+    } else {
+      const nuevo: Interviniente = {
+        ...form,
+        id: `IN_${Date.now()}`,
+        contacto_email:     form.contacto_email     || undefined,
+        contacto_telefono:  form.contacto_telefono  || undefined,
+        contacto_domicilio: form.contacto_domicilio || undefined,
+        representado_por:   form.representado_por   || undefined,
+        observaciones:      form.observaciones      || undefined,
+      }
+      agregarInterviniente(exp.id, nuevo)
+      toast.success('Interviniente agregado.')
+      setModalAbierto(false)
+    }
+    resetForm()
   }
 
   return (
@@ -63,7 +106,7 @@ export function IntervinientesTab({ exp }: Props) {
       <div className="space-y-3">
         <div className="flex justify-end">
           <button
-            onClick={() => { setForm(BLANK); setModal(true) }}
+            onClick={() => { resetForm(); setModalAbierto(true) }}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             <Icon name="person_add" size={18} />
@@ -80,8 +123,8 @@ export function IntervinientesTab({ exp }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[rgba(0,0,0,0.12)]">
-                  {['Nombre', 'Rol', 'Documento', 'Contacto', ''].map(col => (
-                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
+                  {['Nombre', 'Rol', 'Documento', 'Letrado', 'Contacto', ''].map(col => (
+                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -92,9 +135,6 @@ export function IntervinientesTab({ exp }: Props) {
                   <tr key={int.id} className="hover:bg-[#f0f0f0] transition-colors">
                     <td className="py-3 px-4">
                       <p className="text-[#1b3a57] font-medium">{int.nombre}</p>
-                      {int.representado_por && (
-                        <p className="text-xs text-[#4a6a84] mt-0.5">Rep.: {int.representado_por}</p>
-                      )}
                     </td>
                     <td className="py-3 px-4">
                       <span className="text-xs font-bold bg-[#e8e8e8] px-2 py-0.5 rounded-full text-[#4a6a84]">
@@ -105,19 +145,36 @@ export function IntervinientesTab({ exp }: Props) {
                       <span>{DOC_LABEL[int.tipo_documento] ?? int.tipo_documento}</span>
                       <span className="font-mono ml-1">{int.numero_documento}</span>
                     </td>
+                    <td className="py-3 px-4">
+                      <span className="text-xs text-[#4a6a84]">
+                        {int.representado_por
+                          ? int.representado_por
+                          : <span className="text-[#c0c0c0]">—</span>
+                        }
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-xs text-[#4a6a84] space-y-0.5">
                       {int.contacto_email     && <p>{int.contacto_email}</p>}
                       {int.contacto_telefono  && <p>{int.contacto_telefono}</p>}
                       {int.contacto_domicilio && <p className="truncate max-w-[180px]">{int.contacto_domicilio}</p>}
                     </td>
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => eliminarInterviniente(exp.id, int.id)}
-                        title="Eliminar"
-                        className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        <Icon name="delete" size={16} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setEditando(int)}
+                          title="Editar"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                        >
+                          <Icon name="edit" size={15} />
+                        </button>
+                        <button
+                          onClick={() => eliminarInterviniente(exp.id, int.id)}
+                          title="Eliminar"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
+                        >
+                          <Icon name="delete" size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -128,24 +185,24 @@ export function IntervinientesTab({ exp }: Props) {
       </div>
 
       <Modal
-        open={modal}
-        onClose={() => setModal(false)}
-        titulo="Agregar interviniente"
+        open={modalAbierto || !!editando}
+        onClose={cerrarModal}
+        titulo={modoEdicion ? 'Editar interviniente' : 'Agregar interviniente'}
         size="lg"
         footer={
           <>
             <button
-              onClick={() => setModal(false)}
+              onClick={cerrarModal}
               className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
             >
               Cancelar
             </button>
             <button
-              onClick={agregar}
+              onClick={confirmar}
               disabled={!form.nombre.trim() || !form.numero_documento.trim()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
-              Agregar
+              {modoEdicion ? 'Guardar cambios' : 'Agregar'}
             </button>
           </>
         }

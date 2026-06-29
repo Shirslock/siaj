@@ -23,7 +23,8 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `UrgenciaTarea` | 'rojo' \| 'ambar' \| 'verde' \| 'gris' |
 | `Tarea` | Tarea estructurada de un estado procesal — incluye `fecha_aviso` y `fechaVencimiento` para alertas |
 | `EstadoProcesal` | Estado con su lista de tareas y siguiente estado |
-| `CatalogoItem` | { id, label } — base para todos los catálogos |
+| `CatalogoItem` | `{ id, label, activo? }` — base para todos los catálogos. `activo` es opcional; `undefined` equivale a activo |
+| `CatalogoItemExtended` | CatalogoItem + tipo? + provincia? + localidad? |
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
 | `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal |
 | `Expediente` | Entidad principal — incluye estadoProcesal |
@@ -32,7 +33,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `ChecklistItem` | Ítem de checklist dentro de una actividad |
 | `SubActividad` | Seguimiento dentro de una actividad |
 | `Interviniente` | Parte del expediente |
-| `Documento` | Archivo adjunto |
+| `Documento` | Archivo adjunto — tiene campo `id: string` obligatorio |
 | `VinculoExpediente` | Relación entre expedientes |
 | `CampoFormulario` | Definición de un campo dinámico |
 | `FormularioSubtipo` | Campos mesa + abogado por tipo de gestión |
@@ -54,6 +55,12 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 - `replies?: Reply[]` — comentarios anidados agregados por el letrado asignado
 - `tareasSnapshot?: Tarea[]` — snapshot de tareas al momento del cambio de estado
 - `es_movimiento_impulsorio?: boolean` — marca el movimiento como impulsorio procesal
+
+## Campos destacados de Documento
+
+- `id: string` — **obligatorio** desde feat/ux-refinements. Requerido para DnD y operaciones CRUD.
+- Los documentos del mock usan IDs `DOC_{expedienteShort}_{seq}` (ej: `DOC_C023_001`).
+- Al crear desde upload: `id: \`DOC_${Date.now()}\``
 
 ## Cómo agregar un tipo nuevo
 

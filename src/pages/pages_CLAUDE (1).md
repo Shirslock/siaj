@@ -26,6 +26,7 @@ src/pages/NombrePagina/
 | `BandejaArea/` | /bandeja/area (alias→/actuaciones) | COORDINADOR, REFERENTE | ✓ filtros embebidos |
 | `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 6 tabs |
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
+| `Configuracion/` | /configuracion | REFERENTE únicamente | ✓ panel admin con 28 tablas |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
 | `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | pendiente |
 
@@ -37,10 +38,29 @@ src/pages/NombrePagina/
 |-----|---------|--------|
 | Datos | DatosTab.tsx | ✓ edición completa |
 | Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
-| Intervinientes | IntervinientesTab.tsx | ✓ CRUD |
-| Documentos | DocumentosTab.tsx | ✓ botón carga |
+| Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo — agregar, editar (modal reutilizable), eliminar; columna Letrado |
+| Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop con @dnd-kit para reordenar |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
+
+---
+
+## Configuracion/ — Panel de Administrador
+
+Solo accesible para `rolSistema === 'REFERENTE'`. Redirect a `/actuaciones` para otros roles.
+
+Archivos:
+- `Configuracion.page.tsx` — layout dos columnas (sidebar grupos + contenido)
+- `tablas.config.ts` — definición de 5 grupos y 28 tablas
+- `CatalogoPanel.tsx` — CRUD genérico (tipos: simple / extended / tipoGestion)
+- `UsuariosPanel.tsx` — tabla de usuarios con modal edición (FIFO + líneas ferroviarias)
+
+Grupos del sidebar:
+1. Configuración Base (4 tablas — 3 solo lectura)
+2. Gestión Jurídica (9 tablas)
+3. Organismos Judiciales (5 tablas)
+4. Catálogo de Hechos y Sanciones (6 tablas)
+5. Personal e Intervinientes (3 tablas)
 
 ---
 

@@ -20,6 +20,7 @@
 | Headless UI | @headlessui/react | Modales y componentes accesibles |
 | Heroicons | @heroicons/react/24/outline | Íconos — via Icon.tsx wrapper |
 | React Toastify | react-toastify | Toasts/notificaciones |
+| @dnd-kit/core + sortable + utilities | — | Drag-and-drop (DocumentosTab) |
 
 **Sin** tailwind.config.ts — la config vive en `src/index.css` con `@theme { }`.
 **Sin** postcss.config.js — Tailwind v4 usa el plugin de Vite directamente.
@@ -47,11 +48,12 @@ npm run build      # build de producción
 | `src/types/index.ts` | TODOS los tipos del dominio. Fuente de verdad de contratos. |
 | `src/data/catalogos.ts` | TIPOS_GESTION, JUZGADOS, LINEAS y todos los catálogos de dropdowns. |
 | `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). |
-| `src/data/usuarios.ts` | 31 usuarios reales UR_001–UR_032, roles y asignaciones. |
+| `src/data/usuarios.ts` | 32 usuarios reales UR_001–UR_032, roles y asignaciones. |
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
 | `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión. 12 ciclos definidos (ver Sección 13). |
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage. |
+| `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
 | `src/components/ui/Modal.tsx` | Modal Headless UI. Props: open, onClose, titulo, size, footer. |
@@ -60,6 +62,7 @@ npm run build      # build de producción
 | `src/components/layout/` | AppLayout, Sidebar, Topbar, UserSwitcher. |
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
+| `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
 | `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
@@ -117,7 +120,7 @@ Agregar el import de Heroicons y la entrada en ICON_MAP. Ver `src/components/ui/
 
 | Rol en BD | Rol sistema | Permisos | Ruta inicio |
 |-----------|-------------|----------|-------------|
-| `gerente` | REFERENTE | Todo: dashboard, todas las áreas. Solo lectura en bandeja — no puede reasignar. | /dashboard |
+| `gerente` | REFERENTE | Todo: dashboard, todas las áreas, panel configuración. | /dashboard |
 | `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar desde bandeja y botón + del detalle | /actuaciones |
 | `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /actuaciones |
 | `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente de definición con cliente) | /actuaciones |
@@ -243,9 +246,21 @@ El timeline del expediente tiene DOS capas:
 | Actuaciones/ | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | Router por rol — ver Sección 6 |
 | BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer; tabs Activos/Archivados |
 | BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes; filtro por área preseleccionado |
-| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 6 tabs |
+| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 6 tabs — ver Sección 10a |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
+| Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
+
+### 10a. Tabs de DetalleExpediente
+
+| Tab | Archivo | Estado |
+|-----|---------|--------|
+| Datos | DatosTab.tsx | ✓ edición completa |
+| Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
+| Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo (agregar, editar, eliminar) |
+| Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
+| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
+| Vinculados | VinculosTab.tsx | ✓ modal vincular |
 
 ---
 
@@ -342,3 +357,46 @@ Funciones en `src/utils/exportTimeline.ts`:
 - [ ] Reglas de negocio de la Sección 7 respetadas
 - [ ] Datos mock coherentes con el dominio SIAJ
 - [ ] Sin `console.log` temporales de debugging
+
+---
+
+## 17. Panel de Administrador — Configuración del Sistema
+
+Ruta: `/configuracion` — solo accesible para `rolSistema === 'REFERENTE'`.
+Cualquier otro rol es redirigido a `/actuaciones`.
+
+### Archivos
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| `src/pages/Configuracion/Configuracion.page.tsx` | Layout dos columnas: sidebar de grupos + contenido |
+| `src/pages/Configuracion/tablas.config.ts` | Definición de 5 grupos y 28 tablas editables |
+| `src/pages/Configuracion/CatalogoPanel.tsx` | CRUD genérico para tipos simple/extended/tipoGestion |
+| `src/pages/Configuracion/UsuariosPanel.tsx` | Tabla y edición de usuarios del sistema |
+| `src/store/configuracion.store.ts` | Estado Zustand con catálogos + acciones agregarItem/editarItem/desactivarItem |
+
+### Tipos de tabla
+
+| Tipo | Columnas | Notas |
+|------|----------|-------|
+| `simple` | ID / Valor / Estado / Acciones | Modal nuevo (código + valor) o editar (solo valor) |
+| `extended` | Nombre / Tipo / Provincia / Localidad / Estado / Acciones | Para juzgados, tribunales, fiscalías, UFIs, comisarías |
+| `tipoGestion` | Código / Label / Áreas / Canal / Estado | Solo lectura visual (sin edición inline por complejidad) |
+| `usuario` | Nombre / Rol / Área/s / Estado / Acciones | `UsuariosPanel` — lógica especial con FIFO y líneas ferroviarias |
+
+### Tablas solo lectura
+
+Las siguientes tablas son informativas (no se editan desde el panel):
+- Área Jurídica (CIVIL / LABORAL / PENAL)
+- Canal de Ingreso (EE_GDE / MEMO_GDE / OTROS)
+- Tipo de Intervención
+
+### Campo `activo` en CatalogoItem
+
+`CatalogoItem` tiene `activo?: boolean` opcional. `undefined` equivale a activo.
+El botón 🚫 desactivar setea `activo: false` — no elimina el ítem.
+
+### Sanción con campo "Días"
+
+Cuando `tabla.especial === 'sancion'` y el nombre del ítem contiene "suspens" (case-insensitive),
+el modal de nuevo/editar muestra un campo extra "Días" numérico.

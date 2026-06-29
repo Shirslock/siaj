@@ -51,6 +51,7 @@ export type TipoGestion =
 export interface CatalogoItem {
   id: string
   label: string
+  activo?: boolean
 }
 
 export interface CatalogoItemExtended extends CatalogoItem {
@@ -136,6 +137,7 @@ export interface Interviniente {
 }
 
 export interface Documento {
+  id: string
   nombre: string
   tipo: string
   fecha: string
@@ -191,6 +193,8 @@ export interface Actividad {
   descripcion: string
   estado?: EstadoActividad
   estadoExpediente?: string
+  etapaAnteriorLabel?: string
+  etapaNuevaLabel?: string
   fecha: string
   vencimiento?: string
   doc_gde?: string | null
