@@ -114,6 +114,7 @@ export default function AgendaPage() {
   const [filtroArea,      setFiltroArea]      = useState('')
   const [eventoDetalle,   setEventoDetalle]   = useState<EventoCustom | null>(null)
   const [agendaEvDetalle, setAgendaEvDetalle] = useState<AgendaEvent | null>(null)
+  const [formEvento,      setFormEvento]      = useState(BLANK_EVENTO)
 
   const esReferente   = usuarioActivo?.rolSistema === 'REFERENTE'
   const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'

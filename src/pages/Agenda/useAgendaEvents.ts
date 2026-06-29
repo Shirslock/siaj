@@ -53,7 +53,6 @@ export function useAgendaEvents() {
 
     const esReferente    = usuarioActivo?.rolSistema === 'REFERENTE'
     const esCoordinador  = usuarioActivo?.rolSistema === 'COORDINADOR'
-    const _esAbogado     = usuarioActivo?.rolSistema === 'ABOGADO'
 
     // Filtro base por rol
     let eventosBase: AgendaEvent[]
