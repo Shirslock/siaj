@@ -28,7 +28,7 @@ src/pages/NombrePagina/
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
 | `Configuracion/` | /configuracion | REFERENTE únicamente | ✓ panel admin con 28 tablas |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
-| `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | pendiente |
+| `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | ✓ calendario mensual/semanal/día, filtros por rol, audiencias mock, eventos custom |
 
 ---
 
@@ -74,6 +74,23 @@ Modal "Cambiar estado" con lógica de flujo procesal:
 - **Retroceso siempre habilitado** → aviso amarillo informativo.
 - `tieneTareasPendientes` se calcula una sola vez antes del JSX, no inline.
 
+## Agenda/ — Lógica de negocio
+
+Archivo principal: `Agenda.page.tsx`. Hook de datos: `useAgendaEvents.ts`.
+Mock de audiencias: `src/data/audiencias.mock.ts`.
+
+Vistas: `'mes' | 'semana' | 'dia'`.
+
+**Filtros por rol:**
+- `REFERENTE`: ve todo (todos los abogados y áreas)
+- `COORDINADOR`: ve su área
+- `ABOGADO`: ve solo sus propios eventos
+
+Tipos de eventos en el feed: `'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'` (campo `tipo` de `AgendaEvent`).
+Eventos custom del usuario: via `useAgendaStore()` (`agregarEvento`, `eliminarEvento`).
+
+---
+
 ## TimelineTab — Arquitectura del feed
 
 El feed colapsable usa `gruposFeed` (useMemo sobre `sorted`):
@@ -94,6 +111,25 @@ Orden de renderizado en tab "Todo":
 1. **TareasBlock** del estado actual (arriba)
 2. **Feed colapsable** por estado (abajo)
 3. **Entrada RECEPCION** fija al final
+
+## Modal "Nueva Actividad" — tabs
+
+**Civil/Laboral (TimelineTab):** 2 tabs — `'generica'` y `'solicitud'`
+**Penal (TimelinePenal):** 3 tabs — `'procesales'`, `'genericas'` y `'solicitud'`
+
+El tab **Nueva Solicitud** usa el componente compartido `<SolicitudForm>` (`src/components/SolicitudForm.tsx`).
+- El `expediente_id` se toma automáticamente del expediente abierto — no hay campo para elegirlo.
+- Las solicitudes se guardan en `useTareasStore()` via `agregarTarea()`.
+- Selector de asignación en dos pasos: primero el grupo (Civil/Laboral/Penal/RRHH/Comercial/Seguros), luego la persona.
+- Grupos internos (Civil/Laboral/Penal) muestran abogados y coordinadores de `USUARIOS`.
+- Grupos externos (RRHH/Comercial/Seguros) muestran personas de `PERSONAS_POR_AREA` del store.
+
+```ts
+import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
+// GrupoAsig: 'CIVIL' | 'LABORAL' | 'PENAL' | 'RRHH' | 'COMERCIAL' | 'SEGUROS' | ''
+```
+
+---
 
 ## Sistema de Replies (comentarios anidados)
 

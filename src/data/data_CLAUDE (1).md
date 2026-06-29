@@ -9,6 +9,7 @@
 | `usuarios.ts` | 32 usuarios reales con roles y asignaciones | Roles.xlsx |
 | `expedientes.mock.ts` | Datos de ejemplo para el prototipo — ver mocks disponibles abajo | Creado manualmente |
 | `estadosProcesales.ts` | Estados y tareas por tipo de gestión | Diseño funcional |
+| `audiencias.mock.ts` | Audiencias de ejemplo para el módulo Agenda | Creado manualmente |
 
 ---
 
