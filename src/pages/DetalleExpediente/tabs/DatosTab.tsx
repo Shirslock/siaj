@@ -3,6 +3,7 @@ import type { Expediente, CampoFormulario } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { getCamposFormulario } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
+import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../../data/juzgadosPJN'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
@@ -114,6 +115,7 @@ export function DatosTab({ exp }: Props) {
     campo: CampoFormulario,
     draft: Record<string, unknown>,
     setDraft: (fn: (p: Record<string, unknown>) => Record<string, unknown>) => void,
+    campos: CampoFormulario[] = [],
   ): React.ReactNode {
     const val = (draft[campo.id] as string) ?? ''
     const change = (v: string) => setDraft(p => ({ ...p, [campo.id]: v }))
@@ -138,6 +140,76 @@ export function DatosTab({ exp }: Props) {
         <select className="field-input w-full text-sm" value={val} onChange={e => change(e.target.value)}>
           <option value="">Seleccionar…</option>
           {ALL_JUZGADOS.map(j => <option key={j.id} value={j.id}>{j.label}</option>)}
+        </select>
+      )
+    }
+    if (campo.type === 'fuero_select') {
+      const fuerosPorArea = exp.area === 'PENAL' ? FUEROS_PENAL : FUEROS_CIVIL_LAB
+      const baseId = campo.id.replace('_fuero', '')
+      return (
+        <select
+          className="field-input w-full text-sm"
+          value={val}
+          onChange={e => {
+            change(e.target.value)
+            setDraft(p => ({ ...p, [baseId]: '' }))
+          }}
+        >
+          <option value="">Seleccionar fuero...</option>
+          {fuerosPorArea.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+      )
+    }
+    if (campo.type === 'juzgado_filtered') {
+      const fueroIdDirecto = `${campo.id}_fuero`
+      const fueroIdHermano = `${campo.id.replace('tribunal', 'juzgado')}_fuero`
+      const fueroVal = (draft[fueroIdDirecto] as string) || (draft[fueroIdHermano] as string) || ''
+      const juzgados = fueroVal ? getJuzgadosPorFuero(fueroVal) : []
+      const secretariaHija = campos.find(c => c.type === 'secretaria_juzgado' && c.juzgadoRef === campo.id)
+      return (
+        <select
+          className="field-input w-full text-sm"
+          value={val}
+          disabled={!fueroVal}
+          onChange={e => {
+            change(e.target.value)
+            if (secretariaHija) setDraft(p => ({ ...p, [secretariaHija.id]: '' }))
+          }}
+        >
+          <option value="">{fueroVal ? 'Seleccionar juzgado / tribunal...' : 'Primero seleccioná un fuero'}</option>
+          {juzgados.map(j => <option key={j.nombre} value={j.nombre}>{j.nombre}</option>)}
+        </select>
+      )
+    }
+    if (campo.type === 'secretaria_juzgado') {
+      const juzgadoId = campo.juzgadoRef ?? campo.id.replace('secretaria', 'juzgado')
+      const fueroId = `${juzgadoId}_fuero`
+      const fueroVal = (draft[fueroId] as string) ?? ''
+      const juzgadoVal = (draft[juzgadoId] as string) ?? ''
+      const secs = fueroVal && juzgadoVal ? getSecretarias(fueroVal, juzgadoVal) : []
+
+      if (!juzgadoVal) {
+        return (
+          <input className="field-input w-full text-sm" disabled placeholder="Seleccioná primero un juzgado" value="" onChange={() => {}} />
+        )
+      }
+      if (secs.length === 1 && secs[0] === 'ÚNICA') {
+        if (val !== 'ÚNICA') {
+          setTimeout(() => change('ÚNICA'), 0)
+        }
+        return (
+          <input className="field-input w-full text-sm bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed" value="ÚNICA" readOnly />
+        )
+      }
+      if (secs.length === 1 && secs[0] === 'A COMPLETAR') {
+        return (
+          <input className="field-input w-full text-sm" placeholder="Ingresar secretaría..." value={val} onChange={e => change(e.target.value)} />
+        )
+      }
+      return (
+        <select className="field-input w-full text-sm" value={val} onChange={e => change(e.target.value)}>
+          <option value="">Seleccionar secretaría...</option>
+          {secs.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       )
     }
@@ -337,7 +409,7 @@ export function DatosTab({ exp }: Props) {
                 label={campo.label}
                 edit={edit}
                 value={valorDisplay(campo, exp.campos_mesa[campo.id])}
-                input={renderCampoInput(campo, draftMesa, setDraftMesa)}
+                input={renderCampoInput(campo, draftMesa, setDraftMesa, camposMesa)}
               />
             ))}
           </>
@@ -371,7 +443,7 @@ export function DatosTab({ exp }: Props) {
                 label={campo.label}
                 edit={edit}
                 value={valorDisplay(campo, exp.campos_abogado[campo.id])}
-                input={renderCampoInput(campo, draftAbogado, setDraftAbogado)}
+                input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
               />
             ))}
           </>
