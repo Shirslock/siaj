@@ -259,6 +259,9 @@ export type TipoCampo =
   | 'causa'
   | 'linea'
   | 'juzgado'
+  | 'fuero_select'
+  | 'juzgado_filtered'
+  | 'secretaria_juzgado'
   | 'select'
   | 'multiselect'
 
@@ -275,6 +278,7 @@ export interface CampoFormulario {
   options?: string[] | { value: string; label: string }[]
   onchange?: string
   dependsOn?: { field: string; value: string }
+  juzgadoRef?: string
 }
 
 export interface FormularioSubtipo {

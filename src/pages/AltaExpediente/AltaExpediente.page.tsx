@@ -247,6 +247,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
               campos={camposComunes}
               valores={camposMesa}
               onChange={setCampoMesa}
+              area={area}
             />
           </div>
 
@@ -273,6 +274,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
                 campos={camposTipo}
                 valores={camposMesa}
                 onChange={setCampoMesa}
+                area={area}
               />
             )}
           </div>
