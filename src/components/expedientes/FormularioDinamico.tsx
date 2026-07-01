@@ -2,14 +2,16 @@ import type { CampoFormulario } from '../../types'
 import { FormField } from '../ui/FormField'
 import Icon from '../ui/Icon'
 import { JUZGADOS, LINEAS_FERROVIARIAS } from '../../data/catalogos'
+import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../data/juzgadosPJN'
 
 interface Props {
   campos: CampoFormulario[]
   valores: Record<string, unknown>
   onChange: (id: string, valor: unknown) => void
+  area?: string
 }
 
-export function FormularioDinamico({ campos, valores, onChange }: Props) {
+export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
   if (campos.length === 0) return null
 
   return (
@@ -53,6 +55,107 @@ export function FormularioDinamico({ campos, valores, onChange }: Props) {
                 <option value="">Seleccionar…</option>
                 {JUZGADOS.map(j => <option key={j.id} value={j.id}>{j.label}</option>)}
               </select>
+            </FormField>
+          )
+        }
+
+        if (campo.type === 'fuero_select') {
+          const baseId = campo.id.replace('_fuero', '')
+          const fuerosPorArea = area === 'PENAL' ? FUEROS_PENAL : FUEROS_CIVIL_LAB
+          return (
+            <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
+              <select
+                className="field-input w-full"
+                value={valor}
+                onChange={e => {
+                  onChange(campo.id, e.target.value)
+                  onChange(baseId, '')
+                }}
+              >
+                <option value="">Seleccionar fuero...</option>
+                {fuerosPorArea.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </FormField>
+          )
+        }
+
+        if (campo.type === 'juzgado_filtered') {
+          const fueroIdDirecto = `${campo.id}_fuero`
+          const fueroIdHermano = `${campo.id.replace('tribunal', 'juzgado')}_fuero`
+          const fueroVal = (valores[fueroIdDirecto] as string) || (valores[fueroIdHermano] as string) || ''
+          const juzgados = fueroVal ? getJuzgadosPorFuero(fueroVal) : []
+          const secretariaHija = campos.find(c => c.type === 'secretaria_juzgado' && c.juzgadoRef === campo.id)
+          return (
+            <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
+              <select
+                className="field-input w-full"
+                value={valor}
+                disabled={!fueroVal}
+                onChange={e => {
+                  onChange(campo.id, e.target.value)
+                  if (secretariaHija) onChange(secretariaHija.id, '')
+                }}
+              >
+                <option value="">{fueroVal ? 'Seleccionar juzgado / tribunal...' : 'Primero seleccioná un fuero'}</option>
+                {juzgados.map(j => <option key={j.nombre} value={j.nombre}>{j.nombre}</option>)}
+              </select>
+            </FormField>
+          )
+        }
+
+        if (campo.type === 'secretaria_juzgado') {
+          const juzgadoId = campo.juzgadoRef ?? campo.id.replace('secretaria', 'juzgado')
+          const fueroId = `${juzgadoId}_fuero`
+          const fueroVal = (valores[fueroId] as string) ?? ''
+          const juzgadoVal = (valores[juzgadoId] as string) ?? ''
+          const secs = fueroVal && juzgadoVal ? getSecretarias(fueroVal, juzgadoVal) : []
+
+          let input: React.ReactNode
+          if (!juzgadoVal) {
+            input = (
+              <input
+                type="text"
+                className="field-input w-full"
+                placeholder="Seleccioná primero un juzgado"
+                disabled
+                value=""
+                onChange={() => {}}
+              />
+            )
+          } else if (secs.length === 1 && secs[0] === 'ÚNICA') {
+            if (valor !== 'ÚNICA') {
+              setTimeout(() => onChange(campo.id, 'ÚNICA'), 0)
+            }
+            input = (
+              <input
+                type="text"
+                className="field-input w-full bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed"
+                value="ÚNICA"
+                readOnly
+              />
+            )
+          } else if (secs.length === 1 && secs[0] === 'A COMPLETAR') {
+            input = (
+              <input
+                type="text"
+                className="field-input w-full"
+                placeholder="Ingresar secretaría..."
+                value={valor}
+                onChange={e => onChange(campo.id, e.target.value)}
+              />
+            )
+          } else {
+            input = (
+              <select className="field-input w-full" value={valor} onChange={e => onChange(campo.id, e.target.value)}>
+                <option value="">Seleccionar secretaría...</option>
+                {secs.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )
+          }
+
+          return (
+            <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
+              {input}
             </FormField>
           )
         }
