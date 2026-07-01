@@ -13,6 +13,8 @@ import {
   actividadesToFilas, tareasToFilas, exportarExcel, exportarPDF,
   type FilaTimelineExport,
 } from '../../../utils/exportTimeline'
+import { useTareasStore } from '../../../store/tareas.store'
+import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 
 interface Props { exp: Expediente }
 
@@ -784,6 +786,7 @@ export function TimelineTab({ exp }: Props) {
     agregarActividad, actualizarExpediente, agregarReply,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { agregarTarea } = useTareasStore()
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
   const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
@@ -798,9 +801,42 @@ export function TimelineTab({ exp }: Props) {
   const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
   const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
   const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  const [tabModal, setTabModal] = useState<'generica' | 'solicitud'>('generica')
+  const [formSolicitud, setFormSolicitud] = useState(BLANK_SOLICITUD)
 
   function limpiarFormReply() {
     setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  }
+
+  function cerrarModal() {
+    setModalNuevaActividad(false)
+    setEsImpulsorio(false)
+    setTabModal('generica')
+    setFormSolicitud(BLANK_SOLICITUD)
+  }
+
+  function guardarSolicitud() {
+    if (!formSolicitud.titulo.trim()) return
+    agregarTarea({
+      titulo:              formSolicitud.titulo,
+      descripcion:         formSolicitud.descripcion,
+      expediente_id:       exp.id,
+      expediente_caratula: exp.caratula,
+      expediente_area:     exp.area,
+      asignado_a:          formSolicitud.asignado_a,
+      creado_por:          usuarioActivo?.id ?? '',
+      fecha_limite:        formSolicitud.fecha_limite || null,
+      prioridad:           formSolicitud.prioridad,
+      estado:              'pendiente',
+      mostrar_en_agenda:   false,
+      area_destinataria:   formSolicitud.area_destinataria || undefined,
+      persona_contacto_id: formSolicitud.persona_contacto_id || undefined,
+      persona_contacto:    formSolicitud.persona_contacto || undefined,
+      etiquetas:           [],
+      created_at:          new Date().toISOString(),
+    })
+    toast.success('Solicitud creada.')
+    cerrarModal()
   }
 
   function confirmarReply() {
@@ -976,10 +1012,9 @@ export function TimelineTab({ exp }: Props) {
       })
     }
     toast.success('Actividad registrada.')
-    setModalNuevaActividad(false)
+    cerrarModal()
     setFormAct(BLANK_ACT)
     setAdjuntoNuevaAct(null)
-    setEsImpulsorio(false)
   }
 
   const nombreArchivo = `timeline_${exp.id.replace('/', '-')}_${new Date().toISOString().split('T')[0]}`
@@ -1379,25 +1414,55 @@ export function TimelineTab({ exp }: Props) {
       {/* ── Modal nueva actividad ── */}
       <Modal
         open={modalNuevaActividad}
-        onClose={() => { setModalNuevaActividad(false); setEsImpulsorio(false) }}
+        onClose={cerrarModal}
         titulo="Nueva actividad"
         size="md"
         footer={
           <>
-            <button onClick={() => { setModalNuevaActividad(false); setEsImpulsorio(false) }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrarModal} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
-              onClick={agregarNuevaActividad}
-              disabled={!formAct.titulo.trim() || !formAct.descripcion.trim()}
+              onClick={tabModal === 'generica' ? agregarNuevaActividad : guardarSolicitud}
+              disabled={
+                tabModal === 'generica'
+                  ? (!formAct.titulo.trim() || !formAct.descripcion.trim())
+                  : !formSolicitud.titulo.trim()
+              }
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
-              Agregar
+              {tabModal === 'generica' ? 'Agregar' : 'Crear solicitud'}
             </button>
           </>
         }
       >
-        <div className="space-y-3">
+        {/* Tabs */}
+        <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1 mb-4">
+          {([
+            ['generica',  'Actividad Genérica'],
+            ['solicitud', 'Nueva Solicitud'],
+          ] as const).map(([val, lbl]) => (
+            <button key={val} type="button"
+              onClick={() => setTabModal(val)}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+                tabModal === val
+                  ? 'bg-white text-[#1b3a57] shadow-sm'
+                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
+        {tabModal === 'solicitud' && (
+          <SolicitudForm
+            form={formSolicitud}
+            setForm={setFormSolicitud}
+            usuarioActivo={usuarioActivo}
+          />
+        )}
+
+        {tabModal === 'generica' && <div className="space-y-3">
           <div>
             <label className="field-label">Tipo</label>
             <select className="field-input w-full" value={formAct.tipo} onChange={e => setFormAct(p => ({ ...p, tipo: e.target.value as TipoActividad }))}>
@@ -1511,7 +1576,7 @@ export function TimelineTab({ exp }: Props) {
               )}
             </div>
           )}
-        </div>
+        </div>}
       </Modal>
 
       {/* ── Modal agregar comentario (reply) ── */}

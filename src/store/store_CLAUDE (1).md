@@ -11,8 +11,8 @@ Solo sessionStorage para ID del usuario activo.
 | `expedientes.store.ts` | Expedientes, queue, tareas, filtros | `useExpedientesStore()` |
 | `ui.store.ts` | Usuario activo, sidebar, sessionStorage | `useUIStore()` |
 | `configuracion.store.ts` | Catálogos editables del sistema + usuarios | `useConfiguracionStore()` |
-
-> actividades.store.ts y agenda.store.ts no existen aún — pendientes para sprint de agenda.
+| `agenda.store.ts` | Eventos custom del usuario en la agenda | `useAgendaStore()` |
+| `tareas.store.ts` | Tareas Kanban del módulo Tareas + solicitudes internas | `useTareasStore()` |
 
 ---
 
@@ -124,6 +124,54 @@ const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 - Usada en BandejaAbogado (fila + filtro) y en DetalleExpediente (badge en header)
 
 **`tareasMap` inicial:** arranca vacío `{}`. Las tareas se inicializan con `inicializarTareas(expId, estadoCodigo, tareas)` al abrir un estado en TimelineTab.
+
+## Acciones — agenda.store.ts
+
+```ts
+agregarEvento(ev: Omit<EventoCustom, 'id'>)   // genera id CUSTOM_${Date.now()}_${random}
+eliminarEvento(id: string)
+```
+
+Tipos exportados: `TipoEventoCustom` ('reunion' | 'recordatorio' | 'vencimiento' | 'otro'), `EventoCustom`, `COLOR_EVENTO`.
+
+## Acciones — tareas.store.ts
+
+```ts
+agregarTarea(t: Omit<TareaKanban, 'id'>)      // genera id TK_${Date.now()}
+editarTarea(id: string, cambios: Partial<TareaKanban>)
+moverTarea(id: string, estado: EstadoTareaKanban)
+eliminarTarea(id: string)
+```
+
+Tipos exportados: `TareaKanban`, `PrioridadTarea`, `EstadoTareaKanban`, `AreaDestinataria`, `PersonaArea`, `PERSONAS_POR_AREA`.
+
+`PERSONAS_POR_AREA` — 6 personas de áreas externas (RRHH ×2, COMERCIAL ×2, SEGUROS ×2), IDs `PA_001`–`PA_006`.
+
+### Crear una solicitud interna desde el timeline
+
+```ts
+const { agregarTarea } = useTareasStore()
+
+agregarTarea({
+  titulo, descripcion,
+  expediente_id:       exp.id,
+  expediente_caratula: exp.caratula,
+  expediente_area:     exp.area,
+  asignado_a:          '',           // id usuario interno (o vacío)
+  creado_por:          usuarioActivo?.id ?? '',
+  fecha_limite:        null,
+  prioridad:           'media',
+  estado:              'pendiente',
+  mostrar_en_agenda:   false,
+  area_destinataria:   'RRHH',       // si es área externa
+  persona_contacto_id: 'PA_001',     // si es área externa
+  persona_contacto:    'GARCIA, María José',
+  etiquetas:           [],
+  created_at:          new Date().toISOString(),
+})
+```
+
+---
 
 ## Nota sobre Documento
 

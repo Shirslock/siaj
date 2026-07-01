@@ -219,6 +219,7 @@ export interface AgendaEvent {
   estado: EstadoActividad
   abogado_id: string
   area: Area
+  tipo?: 'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'
 }
 
 export type EstadoTarea = 'sin_estado' | 'en_curso' | 'cumplido' | 'no_procedente'
