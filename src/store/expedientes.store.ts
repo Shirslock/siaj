@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
-import { QUEUE_MESA, EXPEDIENTES_ABOGADO, EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK } from '../data/expedientes.mock'
+import { QUEUE_MESA, EXPEDIENTES_MOCK, TAREAS_MAP_INICIAL } from '../data/expedientes.mock'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -45,16 +45,10 @@ function applyToActivo(activo: Expediente | null, id: string, fn: (e: Expediente
 
 export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   queue: QUEUE_MESA,
-  expedientes: [EXPEDIENTE_DETALLE, EXPEDIENTE_PENAL_MOCK, EXPEDIENTE_CERRADO_MOCK, EXPEDIENTE_COBRO_CANON_MOCK, EXPEDIENTE_DEMANDA_VENCIMIENTO_MOCK, ...EXPEDIENTES_ABOGADO],
+  expedientes: EXPEDIENTES_MOCK,
   expedienteActivo: null,
   filtros: {},
-  tareasMap: {
-    'C-0026/2026__EN_PRUEBA': [
-      { id: 'DC_EP_01', nombre: 'Producción de prueba documental',  estado: 'en_curso',   fecha: null, fechaVencimiento: '2026-06-23', fecha_aviso: '2026-05-20', alertaActiva: true,  diasAlerta: 34, observaciones: '', docGde: null },
-      { id: 'DC_EP_02', nombre: 'Seguimiento de peritos',           estado: 'cumplido',   fecha: '2026-04-10', fechaVencimiento: null, fecha_aviso: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_EP_03', nombre: 'Control de audiencias de prueba',  estado: 'sin_estado', fecha: null, fechaVencimiento: null, fecha_aviso: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-    ],
-  },
+  tareasMap: TAREAS_MAP_INICIAL,
   registrosPenales: {},
 
   setExpedienteActivo: (id) => {
