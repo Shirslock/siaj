@@ -10,7 +10,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
-import type { Expediente, Area } from '../../types'
+import type { Expediente, Area, Usuario } from '../../types'
 import Icon from '../../components/ui/Icon'
 
 const COLOR_AREA: Record<Area, string> = {
@@ -224,12 +224,11 @@ const CAUSAS_SIN_MOVIMIENTO_LETRADO = [
 ]
 
 function PanelLetrado({
-  expedientes, misExpedientes, setPanelActivo, usuarioActivo,
+  misExpedientes, setPanelActivo, usuarioActivo,
 }: {
-  expedientes: Expediente[]
   misExpedientes: Expediente[]
   setPanelActivo: SetPanel
-  usuarioActivo: ReturnType<typeof useUIStore>['usuarioActivo']
+  usuarioActivo: Usuario | null
 }) {
   const misExpsPorEstado = (estado: string) =>
     misExpedientes.filter(e => (e.estadoProcesal ?? e.estado) === estado)
@@ -656,7 +655,7 @@ function PanelGerencia({
             <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#4a6a84' }} axisLine={false} tickLine={false} width={110} />
             <Tooltip
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }}
-              formatter={(value: number, _name, entry) => [`${value} (${(entry.payload as { pct: number }).pct}%)`, 'Causas']}
+              formatter={(value, _name, entry) => [`${value} (${(entry.payload as { pct: number }).pct}%)`, 'Causas']}
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} cursor="pointer">
               {DATA_FUNNEL.map(d => <Cell key={d.name} fill={d.color} />)}
@@ -675,7 +674,7 @@ function PanelGerencia({
               const label = state?.activeLabel
               setPanelActivo({
                 titulo: label ? `Distribución — ${label}` : 'Distribución por área',
-                expedientes: expedientes.filter(e => e.area === (label ?? '').toUpperCase()),
+                expedientes: expedientes.filter(e => e.area === String(label ?? '').toUpperCase()),
               })
             }}
           >
@@ -815,7 +814,6 @@ export default function DashboardPage() {
             <PanelGerencia expedientes={expedientes} setPanelActivo={setPanelActivo} />
           ) : (
             <PanelLetrado
-              expedientes={expedientes}
               misExpedientes={misExpedientes}
               setPanelActivo={setPanelActivo}
               usuarioActivo={usuarioActivo}

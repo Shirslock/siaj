@@ -29,7 +29,7 @@ export function reemplazarVariables(template: EscritoTemplate, valores: Record<s
   let cuerpo = template.cuerpo
   for (const v of template.variables) {
     const valor = valores[v.id]?.trim() || `[${v.label.toUpperCase()}]`
-    cuerpo = cuerpo.replaceAll(`{{${v.id}}}`, valor)
+    cuerpo = cuerpo.split(`{{${v.id}}}`).join(valor)
   }
   return cuerpo
 }
