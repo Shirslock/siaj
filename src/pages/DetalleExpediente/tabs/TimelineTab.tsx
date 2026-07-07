@@ -15,6 +15,7 @@ import {
 } from '../../../utils/exportTimeline'
 import { useTareasStore } from '../../../store/tareas.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
+import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
 
 interface Props { exp: Expediente }
 
@@ -450,7 +451,19 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
             : 'bg-white border-[rgba(0,0,0,0.10)] shadow-card'
         }`}>
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+              {act.escrito_estado === 'GENERADO' && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                  Pendiente de aprobación externa
+                </span>
+              )}
+              {act.escrito_estado === 'APROBADO_CARGADO' && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                  Aprobado y cargado
+                </span>
+              )}
+            </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
               {isSistema && (
@@ -803,6 +816,8 @@ export function TimelineTab({ exp }: Props) {
   const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
   const [tabModal, setTabModal] = useState<'generica' | 'solicitud'>('generica')
   const [formSolicitud, setFormSolicitud] = useState(BLANK_SOLICITUD)
+  const [modalEscrito, setModalEscrito] = useState(false)
+  const [escritoIdSeleccionado, setEscritoIdSeleccionado] = useState<string | null>(null)
 
   function limpiarFormReply() {
     setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
@@ -813,6 +828,7 @@ export function TimelineTab({ exp }: Props) {
     setEsImpulsorio(false)
     setTabModal('generica')
     setFormSolicitud(BLANK_SOLICITUD)
+    setEscritoIdSeleccionado(null)
   }
 
   function guardarSolicitud() {
@@ -1002,6 +1018,8 @@ export function TimelineTab({ exp }: Props) {
       activo: false,
       creado_por: usuarioActivo?.id,
       es_movimiento_impulsorio: esImpulsorio || undefined,
+      escrito_id: escritoIdSeleccionado ?? undefined,
+      escrito_estado: escritoIdSeleccionado ? 'GENERADO' : undefined,
       ...(formAct.fecha_vencimiento ? { fecha_vencimiento: formAct.fecha_vencimiento } : {}),
       ...(formAct.fecha_aviso       ? { fecha_aviso:       formAct.fecha_aviso       } : {}),
     } as Actividad
@@ -1015,6 +1033,7 @@ export function TimelineTab({ exp }: Props) {
     cerrarModal()
     setFormAct(BLANK_ACT)
     setAdjuntoNuevaAct(null)
+    setEscritoIdSeleccionado(null)
   }
 
   const nombreArchivo = `timeline_${exp.id.replace('/', '-')}_${new Date().toISOString().split('T')[0]}`
@@ -1468,6 +1487,16 @@ export function TimelineTab({ exp }: Props) {
             <select className="field-input w-full" value={formAct.tipo} onChange={e => setFormAct(p => ({ ...p, tipo: e.target.value as TipoActividad }))}>
               {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
+            {formAct.tipo === 'PRESENTACION' && (
+              <button
+                type="button"
+                onClick={() => setModalEscrito(true)}
+                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#4a9ab5] text-[#1b3a57] text-xs font-semibold hover:bg-[rgba(27,58,87,0.05)] transition-colors"
+              >
+                <Icon name="article" size={16} />
+                Generar Escrito
+              </button>
+            )}
           </div>
           <div>
             <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
@@ -1578,6 +1607,18 @@ export function TimelineTab({ exp }: Props) {
           )}
         </div>}
       </Modal>
+
+      <GenerarEscritoModal
+        open={modalEscrito}
+        onClose={() => setModalEscrito(false)}
+        exp={exp}
+        onGenerar={({ titulo, cuerpo, escrito_id }) => {
+          setFormAct(p => ({ ...p, titulo, descripcion: cuerpo }))
+          setEscritoIdSeleccionado(escrito_id)
+          setModalEscrito(false)
+          toast.success('Word descargado. Revisá el texto y confirmá la actividad — quedará como "pendiente de aprobación".')
+        }}
+      />
 
       {/* ── Modal agregar comentario (reply) ── */}
       <Modal

@@ -235,7 +235,12 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
           id: `reply_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           created_at: new Date().toISOString(),
         }
-        return { ...act, replies: [...(act.replies ?? []), nuevoReply] }
+        const aprobado = act.escrito_estado === 'GENERADO' && !!replyData.doc_gde?.trim()
+        return {
+          ...act,
+          replies: [...(act.replies ?? []), nuevoReply],
+          ...(aprobado ? { escrito_estado: 'APROBADO_CARGADO' as const } : {}),
+        }
       }),
     })
     return {

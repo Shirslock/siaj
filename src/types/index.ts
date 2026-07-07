@@ -82,6 +82,7 @@ export interface Usuario {
     CIVIL?: number
     LABORAL?: number
   }
+  cuil?: string
 }
 
 export interface Expediente {
@@ -208,7 +209,11 @@ export interface Actividad {
   replies?: Reply[]
   fecha_vencimiento?: string
   fecha_aviso?: string
+  escrito_id?: string                    // referencia al EscritoTemplate usado, si vino del generador
+  escrito_estado?: EstadoEscritoActividad // GENERADO = se descargó el .docx y falta la aprobación externa
 }
+
+export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'
 
 export interface AgendaEvent {
   id: string
@@ -250,6 +255,61 @@ export interface EstadoProcesal {
 export type EntradaTimeline =
   | { kind: 'actividad'; data: Actividad }
   | { kind: 'estado'; estadoAnterior: string; estadoNuevo: string; fecha: string; usuarioId: string; tareas: Tarea[] }
+
+export type NivelAutomatizacionEscrito =
+  | 'AUTOMATICA'
+  | 'ASISTIDA_DATO'
+  | 'ASISTIDA_CRITERIO'
+
+export type FueroEscrito = 'CIVIL' | 'LABORAL' | 'AMBOS'
+
+export type TipoCampoVariable =
+  | 'text' | 'textarea' | 'date' | 'select' | 'interviniente'
+
+export interface VariableEscrito {
+  id: string                 // slug usado en el cuerpo como {{id}}
+  label: string
+  tipo: TipoCampoVariable
+  opciones?: string[]        // para 'select'
+  requerido?: boolean
+  esDestinatarioCedula?: boolean   // dispara auto-fill desde Intervinientes
+}
+
+export interface EscritoTemplate {
+  id: string                       // 'MT-01'...'MT-29'
+  grupo: string                    // '1. Presentación y personería', etc.
+  titulo: string                   // título EXACTO que se escribe en la actividad
+  fuero: FueroEscrito
+  nivel: NivelAutomatizacionEscrito
+  cuerpo: string                   // texto con placeholders {{variable_id}}
+  variables: VariableEscrito[]
+  linkModelo?: string              // para 'Asistida por criterio' (link a modelo completo)
+  observaciones?: string
+}
+
+export type CaracterRepresentacion = 'APODERADO' | 'PATROCINANTE' | 'DERECHO_PROPIO'
+export type RepresentadoEscrito = 'ESTADO_NACIONAL' | 'SOFSE'
+
+export interface Matricula {
+  id: string
+  abogado_id: string        // dueño de la matrícula (referencia a Usuario.id)
+  area: Area                // a qué área pertenece esta matrícula (CIVIL/LABORAL/PENAL)
+  jurisdiccion: string       // 'CABA' | 'PBA' | ...
+  tomo: string
+  folio: string
+}
+
+export interface DatosEscrito {
+  matricula_id: string        // fuente de verdad — el firmante se DERIVA de acá
+  firmante_id: string         // = matriculas.find(m => m.id === matricula_id)?.abogado_id
+  caracter: CaracterRepresentacion
+  representado: RepresentadoEscrito
+  cuil_firmante: string
+  causa: string | null
+  juzgado?: string
+  secretaria?: string
+  variables: Record<string, string>   // valores cargados por variable_id
+}
 
 export type TipoCampo =
   | 'text'
