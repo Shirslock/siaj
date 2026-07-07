@@ -183,7 +183,7 @@ export function exportarExcel(
   ws['!rows'] = rowHeights
 
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Timeline')
+  XLSX.utils.book_append_sheet(wb, ws, 'Línea de Tiempo')
   XLSX.writeFile(wb, `${nombreArchivo}.xlsx`)
 }
 

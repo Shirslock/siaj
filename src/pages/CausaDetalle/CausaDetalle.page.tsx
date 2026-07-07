@@ -24,7 +24,7 @@ interface DocEnriquecido extends Documento {
 }
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'timeline',    label: 'Timeline' },
+  { id: 'timeline',    label: 'Línea de Tiempo' },
   { id: 'expedientes', label: 'Expedientes agrupados' },
   { id: 'repositorio', label: 'Repositorio' },
   { id: 'vinculados',  label: 'Expedientes vinculados entre áreas' },
@@ -112,7 +112,7 @@ export default function CausaDetallePage() {
   const hayFiltros = filtroExpId !== '' || filtroTipo !== '' || filtroBuscar !== ''
 
   const nombreArchivoCausa = `timeline_causa_${numeroCausa.replace(/\//g, '-')}_${new Date().toISOString().split('T')[0]}`
-  const tituloCausa    = `Timeline — Causa ${numeroCausa}`
+  const tituloCausa    = `Línea de Tiempo — Causa ${numeroCausa}`
   const subtituloCausa = `${expsDeCausa.length} expediente${expsDeCausa.length !== 1 ? 's' : ''} — ${[...new Set(expsDeCausa.map(e => e.area))].join(' · ')}`
 
   function getFilasExportCausa(): FilaTimelineExport[] {

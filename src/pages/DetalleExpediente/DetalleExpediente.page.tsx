@@ -44,7 +44,7 @@ const ESTADOS_DESDE_EN_ANALISIS: Record<string, string[]> = {
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'datos',          label: 'Datos',          icon: 'info' },
-  { key: 'timeline',       label: 'Timeline',       icon: 'timeline' },
+  { key: 'timeline',       label: 'Línea de Tiempo', icon: 'timeline' },
   { key: 'intervinientes', label: 'Intervinientes', icon: 'people' },
   { key: 'docs',           label: 'Documentos',     icon: 'folder' },
   { key: 'prevision',      label: 'Previsión',      icon: 'trending_up' },

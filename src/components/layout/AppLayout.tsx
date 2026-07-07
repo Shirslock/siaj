@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard':       'Dashboard',
+  '/dashboard':       'Panel de Control',
   '/mesa':            'Mesa SACO',
   '/mesa/alta':       'Alta de Expediente',
   '/actuaciones':     'Actuaciones',
