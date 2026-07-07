@@ -1292,6 +1292,17 @@ export function TimelinePenal({ exp }: Props) {
               >
                 {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
+              {formAct.tipo === 'PRESENTACION' && (
+                <button
+                  type="button"
+                  disabled
+                  title="Catálogo de escritos Penal — próximamente"
+                  className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] text-[#4a6a84] text-xs font-semibold opacity-50 cursor-not-allowed"
+                >
+                  <Icon name="article" size={16} />
+                  Generar Escrito
+                </button>
+              )}
             </div>
             <div>
               <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>

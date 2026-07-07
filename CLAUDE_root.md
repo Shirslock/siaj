@@ -221,6 +221,13 @@ El timeline del expediente tiene DOS capas:
 - Caracteres Unicode se sanitizan con `sanitizarParaPDF()` antes de jsPDF
 - `estadoExpediente` en filas de cambio/retroceso muestra el estado ORIGEN
 
+**Generador de Escritos (Presentación):**
+- Botón "Generar Escrito" en el modal Nueva Actividad, visible cuando `formAct.tipo === 'PRESENTACION'`
+- **Civil/Laboral** (`TimelineTab.tsx`): habilitado, abre `GenerarEscritoModal` (wizard de 4 pasos — Grupo → Título → Datos → Vista previa) con catálogo de 29 plantillas (MT-01 a MT-29, `src/data/escritos.ts`). Genera y descarga un `.docx` real (`src/utils/escritoDocx.ts`, librería `docx`) y registra la actividad con `escrito_id`/`escrito_estado: 'GENERADO'`.
+- **Penal** (`TimelinePenal.tsx`): botón visible pero deshabilitado (tooltip "Catálogo de escritos Penal — próximamente") — no hay catálogo penal todavía.
+- Circuito de aprobación externa: la actividad queda `GENERADO` (badge ámbar "Pendiente de aprobación externa") hasta que el letrado adjunta el documento aprobado vía el mismo flujo de Reply (`agregarReply`) con `doc_gde` cargado — ahí pasa automáticamente a `escrito_estado: 'APROBADO_CARGADO'` (badge verde "Aprobado y cargado"). No hay backend ni AI en esta etapa (ver `claude-docs/spec_generador_escritos.md`).
+- Firmante/Matrícula: `src/data/matriculas.ts`, un solo select con sugerencia por `getMatriculaSugerida(usuarioActivo.id, exp.area)`.
+
 ---
 
 ## 9. Convenciones de código
