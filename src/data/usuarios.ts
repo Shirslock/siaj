@@ -74,7 +74,7 @@ export const ROL_ACCESOS: Record<RolSistema, AccesosRol> = {
     inicio: '/actuaciones',
   },
   ABOGADO: {
-    nav: ['actuaciones', 'agenda', 'tareas'],
+    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas'],
     puedeReasignar: false,
     verTodaBandeja: false,
     inicio: '/actuaciones',
