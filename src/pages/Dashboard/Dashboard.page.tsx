@@ -384,14 +384,97 @@ const DATA_INGRESADAS_CERRADAS = [
   { mes: 'Jun', ingresadas: 8,  cerradas: 6 },
 ]
 
-const DATA_FUNNEL = [
-  { name: 'Asignado',           value: 87, pct: 100, color: '#0b3d66' },
-  { name: 'En análisis',        value: 62, pct: 71,  color: '#144d7d' },
-  { name: 'Traba de litis',     value: 41, pct: 47,  color: '#1d5f94' },
-  { name: 'Prueba',             value: 28, pct: 32,  color: '#2a78d6' },
-  { name: 'Sentencia',          value: 14, pct: 16,  color: '#6ba5e5' },
-  { name: 'Cerrado',            value: 9,  pct: 10,  color: '#b3d1f2' },
+const FUNNEL_ESTADOS = [
+  { label: 'Asignado',       value: 87, color: '#2a78d6' },
+  { label: 'En análisis',    value: 62, color: '#1baf7a' },
+  { label: 'Traba de litis', value: 41, color: '#7F77DD' },
+  { label: 'Prueba',         value: 28, color: '#eda100' },
+  { label: 'Sentencia',      value: 14, color: '#e34948' },
+  { label: 'Cerrado',        value: 9,  color: '#888780' },
 ]
+
+function FunnelChart({ onSelect }: { onSelect?: (label: string) => void }) {
+  const data = FUNNEL_ESTADOS
+  const maxVal = data[0].value
+  const svgW = 720
+  const svgH = 220
+  const maxH = 160
+  const minH = 32
+  const blockW = 68
+  const connW = 28
+  const step = blockW + connW
+  const totalW = data.length * blockW + (data.length - 1) * connW
+  const startX = (svgW - totalW) / 2
+  const midY = svgH / 2
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: 'visible' }}>
+      {data.map((d, i) => {
+        const h = minH + (d.value / maxVal) * (maxH - minH)
+        const x = startX + i * step
+        const y = midY - h / 2
+
+        let connEl = null
+        if (i < data.length - 1) {
+          const nextH = minH + (data[i + 1].value / maxVal) * (maxH - minH)
+          const x1 = x + blockW
+          const x2 = x1 + connW
+          const y1top = midY - h / 2
+          const y1bot = midY + h / 2
+          const y2top = midY - nextH / 2
+          const y2bot = midY + nextH / 2
+
+          connEl = (
+            <polygon
+              key={`conn-${i}`}
+              points={`${x1},${y1top} ${x2},${y2top} ${x2},${y2bot} ${x1},${y1bot}`}
+              fill={d.color}
+              opacity={0.35}
+            />
+          )
+        }
+
+        return (
+          <g key={i} onClick={() => onSelect?.(d.label)} cursor={onSelect ? 'pointer' : 'default'}>
+            <rect x={x} y={y} width={blockW} height={h} rx={3} fill={d.color} />
+            {connEl}
+            <text
+              x={x + blockW / 2}
+              y={midY - maxH / 2 - 20}
+              textAnchor="middle"
+              fontSize={10}
+              fill="#4a6a84"
+              fontFamily="system-ui,sans-serif"
+            >
+              {d.label}
+            </text>
+            <text
+              x={x + blockW / 2}
+              y={midY + maxH / 2 + 18}
+              textAnchor="middle"
+              fontSize={13}
+              fontWeight={600}
+              fill={d.color}
+              fontFamily="system-ui,sans-serif"
+            >
+              {d.value}
+            </text>
+            <text
+              x={x + blockW / 2}
+              y={midY + maxH / 2 + 30}
+              textAnchor="middle"
+              fontSize={9}
+              fill="#7a9ab4"
+              fontFamily="system-ui,sans-serif"
+            >
+              causas
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
 
 const DATA_STACKED_AREA = [
   { area: 'Civil',   'En análisis': 8,  'Traba de litis': 6, 'Prueba': 4, 'Sentencia': 2 },
@@ -639,29 +722,14 @@ function PanelGerencia({
       </WidgetCard>
 
       {/* Fila 4: funnel de estados */}
-      <WidgetCard titulo="Funnel de estados">
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart
-            data={DATA_FUNNEL}
-            layout="vertical"
-            margin={{ left: 10, right: 40 }}
-            onClick={(state) => {
-              const label = state?.activeLabel
-              setPanelActivo({ titulo: label ? `Funnel — ${label}` : 'Funnel de estados', expedientes })
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#4a6a84' }} axisLine={false} tickLine={false} width={110} />
-            <Tooltip
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }}
-              formatter={(value, _name, entry) => [`${value} (${(entry.payload as { pct: number }).pct}%)`, 'Causas']}
-            />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} cursor="pointer">
-              {DATA_FUNNEL.map(d => <Cell key={d.name} fill={d.color} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <WidgetCard
+        titulo="Funnel de estados"
+        sub="Causas por etapa procesal — Civil + Laboral"
+        onClick={() => setPanelActivo({ titulo: 'Todas las causas activas', expedientes })}
+      >
+        <FunnelChart
+          onSelect={(label) => setPanelActivo({ titulo: `Funnel — ${label}`, expedientes })}
+        />
       </WidgetCard>
 
       {/* Fila 5: distribución por sub-estado y área */}
