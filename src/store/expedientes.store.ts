@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
+import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply, LogAuditoria } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_MOCK, TAREAS_MAP_INICIAL } from '../data/expedientes.mock'
 
 interface ExpedientesState {
@@ -30,6 +30,13 @@ interface ExpedientesState {
   eliminarDocumento: (expedienteId: string, docId: string) => void
   reordenarDocumentos: (expId: string, ordenNuevo: string[]) => void
   agregarReply: (expId: string, actividadIdx: number, reply: Omit<Reply, 'id' | 'created_at'>) => void
+  editarActividad: (
+    expId: string,
+    actividadIdx: number,
+    cambios: Partial<Pick<Actividad, 'titulo' | 'descripcion' | 'fecha' | 'doc_gde' | 'fecha_vencimiento' | 'fecha_aviso'>>,
+    usuarioId: string
+  ) => void
+  eliminarActividad: (expId: string, actividadIdx: number, usuarioId: string) => void
   agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
   actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
   eliminarRegistroPenal: (expId: string, registroId: string) => void
@@ -237,6 +244,72 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
         }
       }),
     })
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+    }
+  }),
+
+  editarActividad: (expId, idx, cambios, uid) => set(s => {
+    const fn = (e: Expediente) => {
+      const antes = e.timeline[idx]
+      if (!antes) return e
+      const entradaLog: LogAuditoria = {
+        id:          `log_${Date.now()}`,
+        tipo:        'EDICION',
+        usuario_id:  uid,
+        timestamp:   new Date().toISOString(),
+        descripcion: 'Actividad editada',
+        campo_antes: JSON.stringify({
+          titulo:             antes.titulo,
+          descripcion:        antes.descripcion,
+          fecha:              antes.fecha,
+          doc_gde:            antes.doc_gde,
+          fecha_vencimiento:  antes.fecha_vencimiento,
+          fecha_aviso:        antes.fecha_aviso,
+        }),
+        campo_despues: JSON.stringify(cambios),
+      }
+      return {
+        ...e,
+        timeline: e.timeline.map((act, i) => i !== idx ? act : {
+          ...act,
+          ...cambios,
+          log: [...(act.log ?? []), entradaLog],
+        }),
+      }
+    }
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+    }
+  }),
+
+  eliminarActividad: (expId, idx, uid) => set(s => {
+    const fn = (e: Expediente) => {
+      const antes = e.timeline[idx]
+      if (!antes || antes.tipo === 'RECEPCION') return e
+      const entradaLog: LogAuditoria = {
+        id:          `log_${Date.now()}`,
+        tipo:        'ELIMINACION',
+        usuario_id:  uid,
+        timestamp:   new Date().toISOString(),
+        descripcion: `Actividad eliminada: ${antes.titulo}`,
+        campo_antes: JSON.stringify({
+          titulo:      antes.titulo,
+          descripcion: antes.descripcion,
+          fecha:       antes.fecha,
+        }),
+      }
+      return {
+        ...e,
+        timeline: e.timeline.map((act, i) => i !== idx ? act : {
+          ...act,
+          eliminado: true,
+          log: [...(act.log ?? []), entradaLog],
+        }),
+      }
+    }
     return {
       expedientes: applyToArr(s.expedientes, expId, fn),
       expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),

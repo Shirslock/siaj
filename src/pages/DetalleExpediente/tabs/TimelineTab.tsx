@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { Expediente, Actividad, TipoActividad, Tarea, Reply } from '../../../types'
+import type { Expediente, Actividad, TipoActividad, Tarea, Reply, LogAuditoria } from '../../../types'
 import { getUsuarioById, getNombreCompleto } from '../../../data/usuarios'
 import { TimelinePenal } from './TimelinePenal'
 import { useExpedientesStore } from '../../../store/expedientes.store'
@@ -787,6 +787,40 @@ function ReplyList({ replies }: { replies: Reply[] }) {
   )
 }
 
+// ── Historial de auditoría ───────────────────────────────────────────────────
+
+function LogAuditoriaList({ log }: { log: LogAuditoria[] }) {
+  if (!log.length) return null
+  return (
+    <div className="ml-10 mr-4 mb-1">
+      <details className="group">
+        <summary className="text-[10px] text-[#7a9ab4] cursor-pointer hover:text-[#4a6a84] list-none flex items-center gap-1 select-none">
+          <Icon name="history" size={11} />
+          {log.length} registro{log.length > 1 ? 's' : ''} de auditoría
+          <Icon name="expand_more" size={11} className="group-open:rotate-180 transition-transform" />
+        </summary>
+        <div className="mt-1.5 space-y-1 border-l-2 border-[#e8e8e8] pl-3">
+          {log.map(entry => {
+            const autor = getUsuarioById(entry.usuario_id)
+            return (
+              <div key={entry.id} className="text-[10px] text-[#7a9ab4]">
+                <span className={`font-bold mr-1 ${entry.tipo === 'ELIMINACION' ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
+                  {entry.tipo === 'EDICION' ? '✎ Editado' : '✕ Eliminado'}
+                </span>
+                por {autor ? getNombreCompleto(autor) : entry.usuario_id}
+                {' · '}
+                {new Date(entry.timestamp).toLocaleDateString('es-AR', {
+                  day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit',
+                })}
+              </div>
+            )
+          })}
+        </div>
+      </details>
+    </div>
+  )
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export function TimelineTab({ exp }: Props) {
@@ -797,6 +831,7 @@ export function TimelineTab({ exp }: Props) {
   const {
     tareasMap, inicializarTareas, actualizarTarea,
     agregarActividad, actualizarExpediente, agregarReply,
+    editarActividad, eliminarActividad,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const { agregarTarea } = useTareasStore()
@@ -814,6 +849,11 @@ export function TimelineTab({ exp }: Props) {
   const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
   const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
   const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  const [editTarget, setEditTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
+  const [formEdit, setFormEdit] = useState({
+    titulo: '', descripcion: '', fecha: '', doc_gde: '', fecha_vencimiento: '', fecha_aviso: '',
+  })
+  const [menuActividad, setMenuActividad] = useState<{ act: Actividad; globalIdx: number; x: number; y: number } | null>(null)
   const [tabModal, setTabModal] = useState<'generica' | 'solicitud'>('generica')
   const [formSolicitud, setFormSolicitud] = useState(BLANK_SOLICITUD)
   const [modalEscrito, setModalEscrito] = useState(false)
@@ -870,6 +910,43 @@ export function TimelineTab({ exp }: Props) {
     toast.success('Comentario agregado.')
   }
 
+  function abrirEdicion(act: Actividad, globalIdx: number) {
+    setEditTarget({ act, globalIdx })
+    setFormEdit({
+      titulo:            act.titulo,
+      descripcion:       act.descripcion ?? '',
+      fecha:             act.fecha,
+      doc_gde:           act.doc_gde ?? '',
+      fecha_vencimiento: act.fecha_vencimiento ?? '',
+      fecha_aviso:       act.fecha_aviso ?? '',
+    })
+  }
+
+  function confirmarEdicion() {
+    if (!editTarget || !formEdit.titulo.trim()) return
+    editarActividad(
+      exp.id,
+      editTarget.globalIdx,
+      {
+        titulo:            formEdit.titulo.trim(),
+        descripcion:       formEdit.descripcion.trim(),
+        fecha:             formEdit.fecha,
+        doc_gde:           formEdit.doc_gde || undefined,
+        fecha_vencimiento: formEdit.fecha_vencimiento || undefined,
+        fecha_aviso:       formEdit.fecha_aviso || undefined,
+      },
+      usuarioActivo?.id ?? ''
+    )
+    toast.success('Actividad actualizada.')
+    setEditTarget(null)
+  }
+
+  function confirmarEliminacion(globalIdx: number) {
+    if (!confirm('¿Eliminás esta actividad? Quedará un registro de auditoría.')) return
+    eliminarActividad(exp.id, globalIdx, usuarioActivo?.id ?? '')
+    toast.success('Actividad eliminada. Registro de auditoría generado.')
+  }
+
   const toggleEstado = (idx: number) =>
     setEstadosExpandidos(prev => {
       const next = new Set(prev)
@@ -914,7 +991,7 @@ export function TimelineTab({ exp }: Props) {
       : false
   , [exp.timeline, estadoProcesal])
 
-  const sorted = [...exp.timeline].sort((a, b) => a.fecha.localeCompare(b.fecha))
+  const sorted = [...exp.timeline].filter(a => !a.eliminado).sort((a, b) => a.fecha.localeCompare(b.fecha))
 
   // Filtrar feed
   const feedFiltrado = sorted.filter(act => {
@@ -1003,6 +1080,11 @@ export function TimelineTab({ exp }: Props) {
     return exp.timeline.indexOf(act)
   }
 
+  function esMovimientoSistema(act: Actividad): boolean {
+    return act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
+      (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
+  }
+
   function agregarNuevaActividad() {
     if (!formAct.titulo.trim() || !formAct.descripcion.trim()) return
     const act: Actividad = {
@@ -1072,6 +1154,13 @@ export function TimelineTab({ exp }: Props) {
     document.addEventListener('click', handler)
     return () => document.removeEventListener('click', handler)
   }, [menuExport])
+
+  useEffect(() => {
+    if (!menuActividad) return
+    const handler = () => setMenuActividad(null)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [menuActividad])
 
   const FILTRO_TABS: { key: FiltroTab; label: string; count?: number }[] = [
     { key: 'todo',        label: 'Todo' },
@@ -1235,7 +1324,7 @@ export function TimelineTab({ exp }: Props) {
                             tareasHistoricas={[]}
                           />
                           {esLetrado && (
-                            <div className="pl-14 pb-2 -mt-2">
+                            <div className="pl-14 pb-2 -mt-2 flex items-center gap-2">
                               <button
                                 onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
                                 className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
@@ -1243,9 +1332,22 @@ export function TimelineTab({ exp }: Props) {
                                 <Icon name="reply" size={13} />
                                 Comentar
                               </button>
+                              {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    const r = e.currentTarget.getBoundingClientRect()
+                                    setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
+                                  }}
+                                  className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                                >
+                                  <Icon name="more_vert" size={14} />
+                                </button>
+                              )}
                             </div>
                           )}
                           <ReplyList replies={a.replies ?? []} />
+                          <LogAuditoriaList log={a.log ?? []} />
                         </div>
                       ))}
                     </div>
@@ -1362,13 +1464,27 @@ export function TimelineTab({ exp }: Props) {
                                     </div>
                                   )}
                                   {esLetrado && (
-                                    <button
-                                      onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                      className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium mt-1.5"
-                                    >
-                                      <Icon name="reply" size={13} />
-                                      Comentar
-                                    </button>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                      <button
+                                        onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
+                                        className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                                      >
+                                        <Icon name="reply" size={13} />
+                                        Comentar
+                                      </button>
+                                      {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
+                                        <button
+                                          onClick={e => {
+                                            e.stopPropagation()
+                                            const r = e.currentTarget.getBoundingClientRect()
+                                            setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
+                                          }}
+                                          className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                                        >
+                                          <Icon name="more_vert" size={14} />
+                                        </button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                                 <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
@@ -1378,6 +1494,7 @@ export function TimelineTab({ exp }: Props) {
                                   <ReplyList replies={a.replies ?? []} />
                                 </div>
                               )}
+                              <LogAuditoriaList log={a.log ?? []} />
                             </div>
                           ))
                         )}
@@ -1429,6 +1546,30 @@ export function TimelineTab({ exp }: Props) {
           />
         )}
       </div>
+
+      {/* ── Menú flotante editar/eliminar actividad ── */}
+      {menuActividad && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ position: 'fixed', left: menuActividad.x, top: menuActividad.y }}
+          className="w-36 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
+        >
+          <button
+            onClick={() => { abrirEdicion(menuActividad.act, menuActividad.globalIdx); setMenuActividad(null) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors text-left"
+          >
+            <Icon name="edit" size={13} />
+            Editar
+          </button>
+          <button
+            onClick={() => { confirmarEliminacion(menuActividad.globalIdx); setMenuActividad(null) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
+          >
+            <Icon name="delete" size={13} />
+            Eliminar
+          </button>
+        </div>
+      )}
 
       {/* ── Modal nueva actividad ── */}
       <Modal
@@ -1693,6 +1834,78 @@ export function TimelineTab({ exp }: Props) {
               />
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* ── Modal editar actividad ── */}
+      <Modal
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        titulo="Editar actividad"
+        size="md"
+        footer={
+          <>
+            <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarEdicion}
+              disabled={!formEdit.titulo.trim()}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Guardar cambios
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          <div>
+            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+            <input type="text" className="field-input w-full" value={formEdit.titulo} onChange={e => setFormEdit(p => ({ ...p, titulo: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Descripción</label>
+            <textarea className="field-input w-full min-h-[80px] resize-none" value={formEdit.descripcion} onChange={e => setFormEdit(p => ({ ...p, descripcion: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Fecha</label>
+            <input type="date" className="field-input w-full" value={formEdit.fecha} onChange={e => setFormEdit(p => ({ ...p, fecha: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Documento GDE</label>
+            <input type="text" className="field-input w-full font-mono" placeholder="EX-2026-..." value={formEdit.doc_gde} onChange={e => setFormEdit(p => ({ ...p, doc_gde: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Fecha de vencimiento</label>
+            <input
+              type="date"
+              className="field-input w-full"
+              value={formEdit.fecha_vencimiento}
+              onChange={e => setFormEdit(p => ({
+                ...p,
+                fecha_vencimiento: e.target.value,
+                fecha_aviso: e.target.value ? p.fecha_aviso : '',
+              }))}
+            />
+          </div>
+          {formEdit.fecha_vencimiento && (
+            <div>
+              <label className="field-label">Fecha de aviso</label>
+              <input
+                type="date"
+                className="field-input w-full"
+                max={formEdit.fecha_vencimiento}
+                value={formEdit.fecha_aviso}
+                onChange={e => setFormEdit(p => ({ ...p, fecha_aviso: e.target.value }))}
+              />
+            </div>
+          )}
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#faeeda] border border-[#fde68a]">
+            <Icon name="info" size={14} className="text-[#854f0b] flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-[#854f0b]">
+              Los cambios quedan registrados en el log de auditoría de la actividad.
+            </p>
+          </div>
         </div>
       </Modal>
     </div>

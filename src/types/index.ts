@@ -186,6 +186,18 @@ export interface Reply {
   created_at:         string
 }
 
+export type TipoLogAuditoria = 'EDICION' | 'ELIMINACION'
+
+export interface LogAuditoria {
+  id:             string
+  tipo:           TipoLogAuditoria
+  usuario_id:     string
+  timestamp:      string       // ISO
+  descripcion:    string       // texto libre
+  campo_antes?:   string       // snapshot anterior (JSON.stringify)
+  campo_despues?: string       // snapshot posterior
+}
+
 export interface Actividad {
   id?: string
   expediente_id?: string
@@ -207,6 +219,8 @@ export interface Actividad {
   tareasSnapshot?: Tarea[]
   es_movimiento_impulsorio?: boolean
   replies?: Reply[]
+  log?: LogAuditoria[]
+  eliminado?: boolean
   fecha_vencimiento?: string
   fecha_aviso?: string
   escrito_id?: string                    // referencia al EscritoTemplate usado, si vino del generador
