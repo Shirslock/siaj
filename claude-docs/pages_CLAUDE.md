@@ -112,6 +112,25 @@ Orden de renderizado en tab "Todo":
 2. **Feed colapsable** por estado (abajo)
 3. **Entrada RECEPCION** fija al final
 
+### Edición / eliminación de actividades (con log de auditoría)
+
+- Solo visible si `esLetrado` (usuario activo === `exp.abogado_id`) y la actividad no es
+  `RECEPCION` ni un movimiento de sistema (`esMovimientoSistema(a)`: `tipo === 'MOVIMIENTO'` +
+  `estadoExpediente` + título "Cambio de estado…"/"Retroceso de estado…"). **No filtrar por
+  `tipo !== 'MOVIMIENTO'` a secas** — el modal "Nueva actividad" usa `MOVIMIENTO` como tipo por
+  defecto (`BLANK_ACT.tipo`), así que esa condición ocultaba el menú de cualquier actividad
+  genérica creada sin cambiar el tipo.
+- El menú ⋮ **no** es un dropdown CSS `group-hover` posicionado `absolute` — el contenedor del
+  feed tiene `overflow-hidden` (`rounded-2xl overflow-hidden`) y lo recorta. Es un menú controlado
+  por estado (`menuActividad`), con `position: fixed` calculado desde
+  `e.currentTarget.getBoundingClientRect()` en el click, renderizado una sola vez fuera del
+  contenedor recortado (junto a los modales) y cerrado con un listener de `click` en `document`
+  (mismo patrón que `menuExport`).
+- `editarActividad`/`eliminarActividad` (store) actualizan `Actividad.log` — se muestra con
+  `<LogAuditoriaList log={a.log ?? []}>` (mismo archivo) debajo de `<ReplyList>`.
+- La eliminación es soft-delete (`Actividad.eliminado`, no `activo` — ver nota en `types_CLAUDE.md`);
+  el feed (`sorted`) filtra con `!a.eliminado`.
+
 ## Modal "Nueva Actividad" — tabs
 
 **Civil/Laboral (TimelineTab):** 2 tabs — `'generica'` y `'solicitud'`

@@ -30,6 +30,8 @@ asignarAbogado(expedienteId, abogadoId)
 agregarActividad(expedienteId, actividad)
 agregarSubitem(expId, actividadIndex, subitem)
 agregarReply(expId, actividadIdx, replyData)    // replyData: Omit<Reply, 'id' | 'created_at'>
+editarActividad(expId, actividadIdx, cambios, usuarioId)   // cambios: Partial<Pick<Actividad, 'titulo'|'descripcion'|'fecha'|'doc_gde'|'fecha_vencimiento'|'fecha_aviso'>>; agrega entrada a log
+eliminarActividad(expId, actividadIdx, usuarioId)          // soft-delete: setea eliminado: true + entrada en log; no-op sobre RECEPCION
 
 // Tareas estructuradas (por estado procesal)
 inicializarTareas(expId, estadoCodigo, tareas)
@@ -56,6 +58,12 @@ eliminarRegistroPenal(expId, registroId)
 // Filtros
 setFiltros(filtros)
 ```
+
+**Log de auditoría (`editarActividad`/`eliminarActividad`):** ambas actualizan `expedientes` y
+`expedienteActivo` en paralelo vía los helpers `applyToArr`/`applyToActivo` (mismo patrón que
+`agregarReply`), agregando una `LogAuditoria` a `act.log`. `eliminarActividad` no borra la entrada
+del array — marca `eliminado: true` para preservar el historial; TimelineTab filtra el feed con
+`!a.eliminado`.
 
 ## Acciones — ui.store.ts
 

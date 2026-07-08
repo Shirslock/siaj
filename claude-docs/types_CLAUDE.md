@@ -28,8 +28,10 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
 | `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal |
 | `Expediente` | Entidad principal — incluye estadoProcesal |
-| `Actividad` | Actividad genérica del letrado en el timeline — incluye `replies?: Reply[]` |
+| `Actividad` | Actividad genérica del letrado en el timeline — incluye `replies?: Reply[]`, `log?: LogAuditoria[]`, `eliminado?: boolean` |
 | `Reply` | Comentario anidado en una actividad — autor, texto, fecha, doc_gde, fecha_vencimiento, fecha_aviso |
+| `TipoLogAuditoria` | 'EDICION' \| 'ELIMINACION' |
+| `LogAuditoria` | Entrada de auditoría de una actividad — `usuario_id`, `timestamp` ISO, `descripcion`, snapshots `campo_antes`/`campo_despues` (JSON.stringify) |
 | `ChecklistItem` | Ítem de checklist dentro de una actividad |
 | `SubActividad` | Seguimiento dentro de una actividad |
 | `Interviniente` | Parte del expediente |
@@ -53,6 +55,8 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 ## Campos destacados de Actividad
 
 - `replies?: Reply[]` — comentarios anidados agregados por el letrado asignado
+- `log?: LogAuditoria[]` — historial de ediciones/eliminaciones de la actividad (ver `editarActividad`/`eliminarActividad` en el store)
+- `eliminado?: boolean` — soft-delete de la actividad. **No confundir con `activo`**: `activo` ya se usaba antes para marcar el movimiento de sistema "vigente" (ver `CausaDetalle.page.tsx`); reutilizarlo para soft-delete ocultaba actividades nuevas (`activo: false` por defecto en `agregarNuevaActividad`). El feed de TimelineTab filtra con `!a.eliminado`, no con `a.activo`.
 - `tareasSnapshot?: Tarea[]` — snapshot de tareas al momento del cambio de estado
 - `es_movimiento_impulsorio?: boolean` — marca el movimiento como impulsorio procesal
 - `tipo?: 'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'` — clasificación para el módulo Agenda (`AgendaEvent`)
