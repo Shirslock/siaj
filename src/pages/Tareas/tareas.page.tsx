@@ -19,7 +19,6 @@ import {
   type TareaKanban, type PrioridadTarea, type EstadoTareaKanban, type AreaDestinataria,
 } from '../../store/tareas.store'
 import { Modal } from '../../components/ui/Modal'
-import { Button } from '../../components/ui/Button'
 import { AreaBadge } from '../../components/ui/Badge'
 import { USUARIOS, getNombreCompleto, getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
@@ -341,13 +340,6 @@ export default function TareasPage() {
     return map
   }, [tareasFiltradas])
 
-  function abrirNueva() {
-    setTareaEditando(null)
-    setForm({ ...BLANK_TAREA, asignado_a: '' })
-    setGrupoAsignacion('')
-    setModalAbierto(true)
-  }
-
   function abrirEditar(t: TareaKanban) {
     setTareaEditando(t)
     setForm({
@@ -406,7 +398,7 @@ export default function TareasPage() {
         persona_contacto_id: form.persona_contacto_id || undefined,
         persona_contacto: form.persona_contacto || undefined,
       })
-      toast.success('Tarea actualizada.')
+      toast.success('Solicitud actualizada.')
     } else {
       agregarTarea({
         ...form,
@@ -420,19 +412,19 @@ export default function TareasPage() {
         persona_contacto_id: form.persona_contacto_id || undefined,
         persona_contacto: form.persona_contacto || undefined,
       })
-      toast.success('Tarea asignada.')
+      toast.success('Solicitud asignada.')
     }
     setModalAbierto(false)
   }
 
   function moverTarea(id: string, estado: EstadoTarea) {
     moverTareaStore(id, estado)
-    toast.success(`Tarea movida a ${COLUMNAS.find(c => c.key === estado)?.label}.`)
+    toast.success(`Solicitud movida a ${COLUMNAS.find(c => c.key === estado)?.label}.`)
   }
 
   function eliminarTarea(id: string) {
     eliminarTareaStore(id)
-    toast.success('Tarea eliminada.')
+    toast.success('Solicitud eliminada.')
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -476,16 +468,13 @@ export default function TareasPage() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Tareas</h1>
+          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Solicitudes</h1>
           <p className="text-sm text-[#4a6a84] mt-1">
-            {tareasFiltradas.length} tarea{tareasFiltradas.length !== 1 ? 's' : ''} ·{' '}
+            {tareasFiltradas.length} solicitud{tareasFiltradas.length !== 1 ? 'es' : ''} ·{' '}
             {tareasPorEstado.pendiente.length} pendiente{tareasPorEstado.pendiente.length !== 1 ? 's' : ''} ·{' '}
             {tareasPorEstado.en_curso.length} en curso
           </p>
         </div>
-        <Button variant="primary" icon="add" onClick={abrirNueva}>
-          Nueva tarea
-        </Button>
       </div>
 
       {/* Filtros */}
@@ -495,7 +484,7 @@ export default function TareasPage() {
           <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
           <input
             className="field-input pl-9 w-full text-sm"
-            placeholder="Buscar tarea..."
+            placeholder="Buscar solicitud..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
@@ -524,7 +513,7 @@ export default function TareasPage() {
               setFiltroAreaExt('')
             }}
           >
-            <option value="mis_tareas">★ Mis tareas</option>
+            <option value="mis_tareas">★ Mis solicitudes</option>
             <option value="creadas_por_mi">Mis pedidos</option>
             <option value="interna">Interna SIAJ</option>
             <option value="externa">Externa SIAJ</option>
@@ -629,17 +618,6 @@ export default function TareasPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Botón agregar en columna pendiente */}
-                {col.key === 'pendiente' && (
-                  <button
-                    onClick={abrirNueva}
-                    className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:text-[#1b3a57] hover:border-[#1b3a57] hover:bg-white transition-all text-xs font-medium"
-                  >
-                    <Icon name="add" size={14} />
-                    Agregar tarea
-                  </button>
-                )}
               </ColumnaDroppable>
             )
           })}
@@ -664,7 +642,7 @@ export default function TareasPage() {
       <Modal
         open={modalAbierto}
         onClose={() => setModalAbierto(false)}
-        titulo={tareaEditando ? 'Editar tarea' : 'Nueva tarea'}
+        titulo={tareaEditando ? 'Editar solicitud' : 'Nueva solicitud'}
         size="md"
         footer={
           <>
@@ -680,7 +658,7 @@ export default function TareasPage() {
               className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               <Icon name="save" size={16} />
-              {tareaEditando ? 'Guardar cambios' : 'Asignar tarea'}
+              {tareaEditando ? 'Guardar cambios' : 'Asignar solicitud'}
             </button>
           </>
         }
@@ -689,7 +667,7 @@ export default function TareasPage() {
 
           {/* Título */}
           <div>
-            <label className="field-label">Título de la tarea <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Título de la solicitud <span className="text-[#b91c1c]">*</span></label>
             <input
               type="text"
               className="field-input w-full"
@@ -706,7 +684,7 @@ export default function TareasPage() {
             <textarea
               className="field-input w-full resize-y"
               style={{ minHeight: 72 }}
-              placeholder="Detalles de la tarea..."
+              placeholder="Detalles de la solicitud..."
               value={form.descripcion}
               onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
             />
