@@ -82,6 +82,7 @@ export interface Usuario {
     CIVIL?: number
     LABORAL?: number
   }
+  cuil?: string
 }
 
 export interface Expediente {
@@ -185,6 +186,76 @@ export interface Reply {
   created_at:         string
 }
 
+export interface LogAuditoria {
+  id:             string
+  expediente_id:  string
+  actividad_id?:  string
+  usuario_id:     string
+  accion:         'CREAR' | 'EDITAR' | 'ELIMINAR'
+  entidad:        string
+  datos_antes?:   Record<string, unknown>
+  datos_despues?: Record<string, unknown>
+  fecha:          string
+  usuario?:       { apellido: string; nombre: string }
+}
+
+export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'
+
+export type NivelAutomatizacionEscrito =
+  | 'AUTOMATICA'
+  | 'ASISTIDA_DATO'
+  | 'ASISTIDA_CRITERIO'
+
+export type FueroEscrito = 'CIVIL' | 'LABORAL' | 'AMBOS'
+
+export type TipoCampoVariable =
+  | 'text' | 'textarea' | 'date' | 'select' | 'interviniente'
+
+export interface VariableEscrito {
+  id: string
+  label: string
+  tipo: TipoCampoVariable
+  opciones?: string[]
+  requerido?: boolean
+  esDestinatarioCedula?: boolean
+}
+
+export interface EscritoTemplate {
+  id: string
+  grupo: string
+  titulo: string
+  fuero: FueroEscrito
+  nivel: NivelAutomatizacionEscrito
+  cuerpo: string
+  variables: VariableEscrito[]
+  linkModelo?: string
+  observaciones?: string
+}
+
+export type CaracterRepresentacion = 'APODERADO' | 'PATROCINANTE' | 'DERECHO_PROPIO'
+export type RepresentadoEscrito = 'ESTADO_NACIONAL' | 'SOFSE'
+
+export interface Matricula {
+  id: string
+  abogado_id: string
+  area: Area
+  jurisdiccion: string
+  tomo: string
+  folio: string
+}
+
+export interface DatosEscrito {
+  matricula_id: string
+  firmante_id: string
+  caracter: CaracterRepresentacion
+  representado: RepresentadoEscrito
+  cuil_firmante: string
+  causa: string | null
+  juzgado?: string
+  secretaria?: string
+  variables: Record<string, string>
+}
+
 export interface Actividad {
   id?: string
   expediente_id?: string
@@ -208,6 +279,8 @@ export interface Actividad {
   replies?: Reply[]
   fecha_vencimiento?: string
   fecha_aviso?: string
+  escrito_id?: string
+  escrito_estado?: EstadoEscritoActividad
 }
 
 export interface AgendaEvent {
@@ -259,6 +332,9 @@ export type TipoCampo =
   | 'causa'
   | 'linea'
   | 'juzgado'
+  | 'fuero_select'
+  | 'juzgado_filtered'
+  | 'secretaria_juzgado'
   | 'select'
   | 'multiselect'
 
@@ -275,6 +351,7 @@ export interface CampoFormulario {
   options?: string[] | { value: string; label: string }[]
   onchange?: string
   dependsOn?: { field: string; value: string }
+  juzgadoRef?: string
 }
 
 export interface FormularioSubtipo {

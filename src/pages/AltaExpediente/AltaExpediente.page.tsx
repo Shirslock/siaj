@@ -85,7 +85,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
     canal, area, tipo, camposMesa, errors,
     tiposFiltrados, tipoSeleccionado,
     camposComunes, camposTipo, lineaSeleccionada,
-    setCanal, setArea, setTipo, setCampoMesa, setLinea, submit, validate,
+    setCanal, setArea, setTipo, setCampoMesa, setLinea, validate,
   } = useAltaForm(modoAbogadoPenal)
 
   const { altaExpediente } = useExpedientesStore()

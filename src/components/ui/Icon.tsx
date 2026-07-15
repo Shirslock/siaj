@@ -13,8 +13,8 @@ import {
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
-  ScaleIcon, ShieldCheckIcon, SparklesIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserPlusIcon,
-  UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon,
+  ScaleIcon, ShieldCheckIcon, SparklesIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserIcon, UserPlusIcon,
+  UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
 } from '@heroicons/react/24/outline'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -92,6 +92,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   error:                 ExclamationCircleIcon,
 
   // Personas
+  person:                UserIcon,
   person_add:            UserPlusIcon,
   person_search:         UserCircleIcon,
   people:                UsersIcon,
@@ -116,6 +117,12 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   timeline:              ChartBarIcon,
   trending_up:           ArrowTrendingUpIcon,
   work:                  BriefcaseIcon,
+
+  // Agenda
+  calendar:              CalendarIcon,
+
+  // Tareas
+  task:                  CheckBadgeIcon,
 }
 
 interface IconProps {

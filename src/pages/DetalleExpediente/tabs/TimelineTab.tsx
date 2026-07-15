@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { Expediente, Actividad, TipoActividad, Tarea, Reply } from '../../../types'
+import type { Expediente, Actividad, TipoActividad, Tarea, Reply, LogAuditoria } from '../../../types'
 import { getUsuarioById, getNombreCompleto } from '../../../data/usuarios'
 import { TimelinePenal } from './TimelinePenal'
 import { useExpedientesStore } from '../../../store/expedientes.store'
@@ -13,6 +13,9 @@ import {
   actividadesToFilas, tareasToFilas, exportarExcel, exportarPDF,
   type FilaTimelineExport,
 } from '../../../utils/exportTimeline'
+import { useTareasStore } from '../../../store/tareas.store'
+import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
+import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
 
 interface Props { exp: Expediente }
 
@@ -448,7 +451,19 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
             : 'bg-white border-[rgba(0,0,0,0.10)] shadow-card'
         }`}>
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+              {act.escrito_estado === 'GENERADO' && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                  Pendiente de aprobación externa
+                </span>
+              )}
+              {act.escrito_estado === 'APROBADO_CARGADO' && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                  Aprobado y cargado
+                </span>
+              )}
+            </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
               {isSistema && (
@@ -772,6 +787,40 @@ function ReplyList({ replies }: { replies: Reply[] }) {
   )
 }
 
+// ── Historial de auditoría ───────────────────────────────────────────────────
+
+function LogAuditoriaList({ log }: { log: LogAuditoria[] }) {
+  if (!log.length) return null
+  return (
+    <div className="ml-10 mr-4 mb-1">
+      <details className="group">
+        <summary className="text-[10px] text-[#7a9ab4] cursor-pointer hover:text-[#4a6a84] list-none flex items-center gap-1 select-none">
+          <Icon name="history" size={11} />
+          {log.length} registro{log.length > 1 ? 's' : ''} de auditoría
+          <Icon name="expand_more" size={11} className="group-open:rotate-180 transition-transform" />
+        </summary>
+        <div className="mt-1.5 space-y-1 border-l-2 border-[#e8e8e8] pl-3">
+          {log.map(entry => {
+            const autor = getUsuarioById(entry.usuario_id)
+            return (
+              <div key={entry.id} className="text-[10px] text-[#7a9ab4]">
+                <span className={`font-bold mr-1 ${entry.accion === 'ELIMINAR' ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
+                  {entry.accion === 'EDITAR' ? '✎ Editado' : entry.accion === 'ELIMINAR' ? '✕ Eliminado' : '+ Creado'}
+                </span>
+                por {autor ? getNombreCompleto(autor) : (entry.usuario ? `${entry.usuario.apellido}, ${entry.usuario.nombre}` : entry.usuario_id)}
+                {' · '}
+                {new Date(entry.fecha).toLocaleDateString('es-AR', {
+                  day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit',
+                })}
+              </div>
+            )
+          })}
+        </div>
+      </details>
+    </div>
+  )
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export function TimelineTab({ exp }: Props) {
@@ -782,8 +831,10 @@ export function TimelineTab({ exp }: Props) {
   const {
     tareasMap, inicializarTareas, actualizarTarea,
     agregarActividad, actualizarExpediente, agregarReply,
+    editarActividad, eliminarActividad, logAuditoria, cargarLogAuditoria,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { agregarTarea } = useTareasStore()
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
   const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
@@ -798,9 +849,95 @@ export function TimelineTab({ exp }: Props) {
   const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
   const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
   const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  const [editTarget, setEditTarget] = useState<Actividad | null>(null)
+  const [formEdit, setFormEdit] = useState({
+    titulo: '', descripcion: '', fecha: '', doc_gde: '', fecha_vencimiento: '', fecha_aviso: '',
+  })
+  const [menuActividad, setMenuActividad] = useState<{ act: Actividad; x: number; y: number } | null>(null)
+  const [tabModal, setTabModal] = useState<'generica' | 'solicitud'>('generica')
+  const [formSolicitud, setFormSolicitud] = useState(BLANK_SOLICITUD)
+  const [modalEscrito, setModalEscrito] = useState(false)
+  const [escritoIdSeleccionado, setEscritoIdSeleccionado] = useState<string | null>(null)
+
+  useEffect(() => {
+    cargarLogAuditoria(exp.id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exp.id])
 
   function limpiarFormReply() {
     setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  }
+
+  function cerrarModal() {
+    setModalNuevaActividad(false)
+    setEsImpulsorio(false)
+    setTabModal('generica')
+    setFormSolicitud(BLANK_SOLICITUD)
+    setEscritoIdSeleccionado(null)
+  }
+
+  function guardarSolicitud() {
+    if (!formSolicitud.titulo.trim()) return
+    agregarTarea({
+      titulo:              formSolicitud.titulo,
+      descripcion:         formSolicitud.descripcion,
+      expediente_id:       exp.id,
+      expediente_caratula: exp.caratula,
+      expediente_area:     exp.area,
+      asignado_a:          formSolicitud.asignado_a,
+      creado_por:          usuarioActivo?.id ?? '',
+      fecha_limite:        formSolicitud.fecha_limite || null,
+      prioridad:           formSolicitud.prioridad,
+      estado:              'pendiente',
+      mostrar_en_agenda:   false,
+      area_destinataria:   formSolicitud.area_destinataria || undefined,
+      persona_contacto_id: formSolicitud.persona_contacto_id || undefined,
+      persona_contacto:    formSolicitud.persona_contacto || undefined,
+      etiquetas:           [],
+      created_at:          new Date().toISOString(),
+    })
+    toast.success('Solicitud creada.')
+    cerrarModal()
+  }
+
+  function abrirEdicion(act: Actividad) {
+    setEditTarget(act)
+    setFormEdit({
+      titulo:            act.titulo,
+      descripcion:       act.descripcion ?? '',
+      fecha:             act.fecha,
+      doc_gde:           act.doc_gde ?? '',
+      fecha_vencimiento: act.fecha_vencimiento ?? '',
+      fecha_aviso:       act.fecha_aviso ?? '',
+    })
+  }
+
+  async function confirmarEdicion() {
+    if (!editTarget?.id || !formEdit.titulo.trim()) return
+    await editarActividad(exp.id, editTarget.id, {
+      titulo:            formEdit.titulo.trim(),
+      descripcion:       formEdit.descripcion.trim(),
+      fecha:             formEdit.fecha,
+      doc_gde:           formEdit.doc_gde || undefined,
+      fecha_vencimiento: formEdit.fecha_vencimiento || undefined,
+      fecha_aviso:       formEdit.fecha_aviso || undefined,
+    })
+    await cargarLogAuditoria(exp.id)
+    toast.success('Actividad actualizada.')
+    setEditTarget(null)
+  }
+
+  async function confirmarEliminacion(act: Actividad) {
+    if (!act.id) return
+    if (!confirm('¿Eliminás esta actividad? Quedará un registro de auditoría.')) return
+    await eliminarActividad(exp.id, act.id)
+    await cargarLogAuditoria(exp.id)
+    toast.success('Actividad eliminada. Registro de auditoría generado.')
+  }
+
+  function esMovimientoSistema(act: Actividad): boolean {
+    return act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
+      (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
   }
 
   function confirmarReply() {
@@ -944,7 +1081,6 @@ export function TimelineTab({ exp }: Props) {
 
   function guardarTarea() {
     if (!tareaSeleccionada) return
-    console.log('[guardarTarea] key usada:', `${exp.id}__${estadoCodigo}`)
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
     toast.success('Tarea actualizada.')
     setTareaSeleccionada(null)
@@ -971,6 +1107,8 @@ export function TimelineTab({ exp }: Props) {
       activo: false,
       creado_por: usuarioActivo?.id,
       es_movimiento_impulsorio: esImpulsorio || undefined,
+      escrito_id: escritoIdSeleccionado ?? undefined,
+      escrito_estado: escritoIdSeleccionado ? 'GENERADO' : undefined,
       ...(formAct.fecha_vencimiento ? { fecha_vencimiento: formAct.fecha_vencimiento } : {}),
       ...(formAct.fecha_aviso       ? { fecha_aviso:       formAct.fecha_aviso       } : {}),
     } as Actividad
@@ -981,10 +1119,9 @@ export function TimelineTab({ exp }: Props) {
       })
     }
     toast.success('Actividad registrada.')
-    setModalNuevaActividad(false)
+    cerrarModal()
     setFormAct(BLANK_ACT)
     setAdjuntoNuevaAct(null)
-    setEsImpulsorio(false)
   }
 
   const nombreArchivo = `timeline_${exp.id.replace('/', '-')}_${new Date().toISOString().split('T')[0]}`
@@ -1023,6 +1160,13 @@ export function TimelineTab({ exp }: Props) {
     document.addEventListener('click', handler)
     return () => document.removeEventListener('click', handler)
   }, [menuExport])
+
+  useEffect(() => {
+    if (!menuActividad) return
+    const handler = () => setMenuActividad(null)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [menuActividad])
 
   const FILTRO_TABS: { key: FiltroTab; label: string; count?: number }[] = [
     { key: 'todo',        label: 'Todo' },
@@ -1186,7 +1330,7 @@ export function TimelineTab({ exp }: Props) {
                             tareasHistoricas={[]}
                           />
                           {esLetrado && (
-                            <div className="pl-14 pb-2 -mt-2">
+                            <div className="pl-14 pb-2 -mt-2 flex items-center gap-2">
                               <button
                                 onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
                                 className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
@@ -1194,9 +1338,22 @@ export function TimelineTab({ exp }: Props) {
                                 <Icon name="reply" size={13} />
                                 Comentar
                               </button>
+                              {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    const r = e.currentTarget.getBoundingClientRect()
+                                    setMenuActividad({ act: a, x: r.left, y: r.bottom + 4 })
+                                  }}
+                                  className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                                >
+                                  <Icon name="more_vert" size={14} />
+                                </button>
+                              )}
                             </div>
                           )}
                           <ReplyList replies={a.replies ?? []} />
+                          <LogAuditoriaList log={logAuditoria.filter(l => l.actividad_id === a.id)} />
                         </div>
                       ))}
                     </div>
@@ -1313,13 +1470,27 @@ export function TimelineTab({ exp }: Props) {
                                     </div>
                                   )}
                                   {esLetrado && (
-                                    <button
-                                      onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                      className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium mt-1.5"
-                                    >
-                                      <Icon name="reply" size={13} />
-                                      Comentar
-                                    </button>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                      <button
+                                        onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
+                                        className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                                      >
+                                        <Icon name="reply" size={13} />
+                                        Comentar
+                                      </button>
+                                      {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
+                                        <button
+                                          onClick={e => {
+                                            e.stopPropagation()
+                                            const r = e.currentTarget.getBoundingClientRect()
+                                            setMenuActividad({ act: a, x: r.left, y: r.bottom + 4 })
+                                          }}
+                                          className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                                        >
+                                          <Icon name="more_vert" size={14} />
+                                        </button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                                 <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
@@ -1329,6 +1500,7 @@ export function TimelineTab({ exp }: Props) {
                                   <ReplyList replies={a.replies ?? []} />
                                 </div>
                               )}
+                              <LogAuditoriaList log={logAuditoria.filter(l => l.actividad_id === a.id)} />
                             </div>
                           ))
                         )}
@@ -1381,33 +1553,97 @@ export function TimelineTab({ exp }: Props) {
         )}
       </div>
 
+      {/* ── Menú flotante editar/eliminar actividad ── */}
+      {menuActividad && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ position: 'fixed', left: menuActividad.x, top: menuActividad.y }}
+          className="w-36 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
+        >
+          <button
+            onClick={() => { abrirEdicion(menuActividad.act); setMenuActividad(null) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors text-left"
+          >
+            <Icon name="edit" size={13} />
+            Editar
+          </button>
+          <button
+            onClick={() => { confirmarEliminacion(menuActividad.act); setMenuActividad(null) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
+          >
+            <Icon name="delete" size={13} />
+            Eliminar
+          </button>
+        </div>
+      )}
+
       {/* ── Modal nueva actividad ── */}
       <Modal
         open={modalNuevaActividad}
-        onClose={() => { setModalNuevaActividad(false); setEsImpulsorio(false) }}
+        onClose={cerrarModal}
         titulo="Nueva actividad"
         size="md"
         footer={
           <>
-            <button onClick={() => { setModalNuevaActividad(false); setEsImpulsorio(false) }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrarModal} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
               Cancelar
             </button>
             <button
-              onClick={agregarNuevaActividad}
-              disabled={!formAct.titulo.trim() || !formAct.descripcion.trim()}
+              onClick={tabModal === 'generica' ? agregarNuevaActividad : guardarSolicitud}
+              disabled={
+                tabModal === 'generica'
+                  ? (!formAct.titulo.trim() || !formAct.descripcion.trim())
+                  : !formSolicitud.titulo.trim()
+              }
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
-              Agregar
+              {tabModal === 'generica' ? 'Agregar' : 'Crear solicitud'}
             </button>
           </>
         }
       >
-        <div className="space-y-3">
+        {/* Tabs */}
+        <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1 mb-4">
+          {([
+            ['generica',  'Actividad Genérica'],
+            ['solicitud', 'Nueva Solicitud'],
+          ] as const).map(([val, lbl]) => (
+            <button key={val} type="button"
+              onClick={() => setTabModal(val)}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+                tabModal === val
+                  ? 'bg-white text-[#1b3a57] shadow-sm'
+                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
+        {tabModal === 'solicitud' && (
+          <SolicitudForm
+            form={formSolicitud}
+            setForm={setFormSolicitud}
+            usuarioActivo={usuarioActivo}
+          />
+        )}
+
+        {tabModal === 'generica' && <div className="space-y-3">
           <div>
             <label className="field-label">Tipo</label>
             <select className="field-input w-full" value={formAct.tipo} onChange={e => setFormAct(p => ({ ...p, tipo: e.target.value as TipoActividad }))}>
               {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
+            {formAct.tipo === 'PRESENTACION' && (
+              <button
+                type="button"
+                onClick={() => setModalEscrito(true)}
+                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#4a9ab5] text-[#1b3a57] text-xs font-semibold hover:bg-[rgba(27,58,87,0.05)] transition-colors"
+              >
+                <Icon name="article" size={16} />
+                Generar Escrito
+              </button>
+            )}
           </div>
           <div>
             <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
@@ -1516,8 +1752,20 @@ export function TimelineTab({ exp }: Props) {
               )}
             </div>
           )}
-        </div>
+        </div>}
       </Modal>
+
+      <GenerarEscritoModal
+        open={modalEscrito}
+        onClose={() => setModalEscrito(false)}
+        exp={exp}
+        onGenerar={({ titulo, cuerpo, escrito_id }) => {
+          setFormAct(p => ({ ...p, titulo, descripcion: cuerpo }))
+          setEscritoIdSeleccionado(escrito_id)
+          setModalEscrito(false)
+          toast.success('Word descargado. Revisá el texto y confirmá la actividad — quedará como "pendiente de aprobación".')
+        }}
+      />
 
       {/* ── Modal agregar comentario (reply) ── */}
       <Modal
@@ -1592,6 +1840,78 @@ export function TimelineTab({ exp }: Props) {
               />
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* ── Modal editar actividad ── */}
+      <Modal
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        titulo="Editar actividad"
+        size="md"
+        footer={
+          <>
+            <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarEdicion}
+              disabled={!formEdit.titulo.trim()}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Guardar cambios
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          <div>
+            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+            <input type="text" className="field-input w-full" value={formEdit.titulo} onChange={e => setFormEdit(p => ({ ...p, titulo: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Descripción</label>
+            <textarea className="field-input w-full min-h-[80px] resize-none" value={formEdit.descripcion} onChange={e => setFormEdit(p => ({ ...p, descripcion: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Fecha</label>
+            <input type="date" className="field-input w-full" value={formEdit.fecha} onChange={e => setFormEdit(p => ({ ...p, fecha: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Documento GDE</label>
+            <input type="text" className="field-input w-full font-mono" placeholder="EX-2026-..." value={formEdit.doc_gde} onChange={e => setFormEdit(p => ({ ...p, doc_gde: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Fecha de vencimiento</label>
+            <input
+              type="date"
+              className="field-input w-full"
+              value={formEdit.fecha_vencimiento}
+              onChange={e => setFormEdit(p => ({
+                ...p,
+                fecha_vencimiento: e.target.value,
+                fecha_aviso: e.target.value ? p.fecha_aviso : '',
+              }))}
+            />
+          </div>
+          {formEdit.fecha_vencimiento && (
+            <div>
+              <label className="field-label">Fecha de aviso</label>
+              <input
+                type="date"
+                className="field-input w-full"
+                max={formEdit.fecha_vencimiento}
+                value={formEdit.fecha_aviso}
+                onChange={e => setFormEdit(p => ({ ...p, fecha_aviso: e.target.value }))}
+              />
+            </div>
+          )}
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#faeeda] border border-[#fde68a]">
+            <Icon name="info" size={14} className="text-[#854f0b] flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-[#854f0b]">
+              Los cambios quedan registrados en el log de auditoría de la actividad.
+            </p>
+          </div>
         </div>
       </Modal>
     </div>

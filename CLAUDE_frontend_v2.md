@@ -164,6 +164,18 @@ Sección en DetalleExpediente:
 ### SPEC-FE-08 — Panel de configuración ✅
 ### SPEC-FE-09 — Limpieza final de mocks ✅
 
+### SPEC-FE-14 — Merge main + módulo Solicitudes ✅
+- ✅ editarActividad + eliminarActividad con backend real
+- ✅ LogAuditoriaList conectado al endpoint real
+- ✅ Generador de Escritos en TimelineTab
+- ✅ Tab Nueva Solicitud con SolicitudForm
+- ✅ FormularioDinamico: fuero_select, juzgado_filtered, secretaria_juzgado
+- ✅ Módulo Solicitudes: /solicitudes + Sidebar
+- ✅ AppLayout: Panel de Control + full-width configuración
+- ✅ Icon.tsx: sets unificados
+- ✅ Tipos: EscritoTemplate, DatosEscrito, Matricula, LogAuditoria
+- ✅ npm run build sin errores
+
 ### SPEC-FE-10 — Upload real de PDF ⬜
 - ⬜ Modificar `DocumentosTab.tsx` para enviar archivo real (multipart/form-data)
 - ⬜ `src/api/expedientes.ts` — `subirDocumento(expId, file)` con FormData

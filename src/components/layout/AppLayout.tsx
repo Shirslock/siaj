@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard':       'Dashboard',
+  '/dashboard':       'Panel de Control',
   '/mesa':            'Mesa SACO',
   '/mesa/alta':       'Alta de Expediente',
   '/actuaciones':     'Actuaciones',
@@ -43,6 +43,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
     activePage = 'actuaciones'
   }
 
+  const esConfiguracion = pathname === '/configuracion'
+
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
       <Sidebar activePage={activePage} />
@@ -52,7 +54,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           sidebarCollapsed ? 'ml-16' : 'ml-64'
         }`}
       >
-        <div className="max-w-screen-xl mx-auto">
+        <div className={esConfiguracion ? 'w-full' : 'max-w-screen-xl mx-auto'}>
           {children}
         </div>
       </main>

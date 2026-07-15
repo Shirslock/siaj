@@ -8,6 +8,7 @@ import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
 import CausaDetallePage from './pages/CausaDetalle/CausaDetalle.page'
 import DetalleExpedientePage from './pages/DetalleExpediente/DetalleExpediente.page'
 import ConfiguracionPage from './pages/Configuracion/Configuracion.page'
+import TareasPage from './pages/Tareas/tareas.page'
 import LoginPage from './pages/Login/Login.page'
 import { useUIStore } from './store/ui.store'
 import { getMe } from './api/auth'
@@ -72,6 +73,7 @@ export default function App() {
                 <Route path="/causa/*"           element={<CausaDetallePage />} />
                 <Route path="/penal"             element={<Navigate to="/" replace />} />
                 <Route path="/agenda"            element={<PagePlaceholder nombre="Agenda" />} />
+                <Route path="/solicitudes"       element={<TareasPage />} />
                 <Route path="/configuracion"     element={<ConfiguracionPage />} />
               </Routes>
             </AppLayout>

@@ -130,7 +130,7 @@ export function UsuariosPanel() {
                 </td>
                 <td className="py-2.5 px-4">
                   <div className="flex flex-wrap gap-1">
-                    {u.areas.map(a => (
+                    {u.areas.map((a: Area) => (
                       <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
                     ))}
                     {u.areas.length === 0 && <span className="text-[#c0c0c0] text-xs">—</span>}

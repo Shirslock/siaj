@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply } from '../types'
+import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply, LogAuditoria } from '../types'
 import {
   getExpedientes,
   getExpediente,
@@ -28,6 +28,9 @@ import {
   agregarRegistroPenal as agregarRegistroPenalApi,
   actualizarRegistroPenal as actualizarRegistroPenalApi,
   eliminarRegistroPenal as eliminarRegistroPenalApi,
+  editarActividad as editarActividadApi,
+  eliminarActividad as eliminarActividadApi,
+  getLogAuditoria as getLogAuditoriaApi,
 } from '../api/expedientes'
 
 interface ExpedientesState {
@@ -37,6 +40,7 @@ interface ExpedientesState {
   filtros: FiltrosExpediente
   tareasMap: Record<string, Tarea[]>
   registrosPenales: Record<string, RegistroActividadPenal[]>
+  logAuditoria: LogAuditoria[]
   cargando: boolean
   altaExpediente: (body: Partial<Expediente>) => Promise<Expediente>
   cargarExpedientes: (filtros?: FiltrosExpediente) => Promise<void>
@@ -49,6 +53,9 @@ interface ExpedientesState {
   asignarAbogado: (expedienteId: string, abogadoId: string) => Promise<void>
   agregarActividad: (expedienteId: string, actividad: Actividad) => Promise<void>
   agregarSubitem: (expedienteId: string, actividadId: string, subitem: SubActividad) => Promise<void>
+  editarActividad: (expId: string, actividadId: string, cambios: Partial<Actividad>) => Promise<void>
+  eliminarActividad: (expId: string, actividadId: string) => Promise<void>
+  cargarLogAuditoria: (expId: string) => Promise<void>
   vincularExpediente: (expedienteId: string, vinculo: VinculoExpediente) => Promise<void>
   desvincularExpediente: (expedienteId: string, vinculoId: string) => Promise<void>
   agregarInterviniente: (expedienteId: string, interviniente: Interviniente) => Promise<void>
@@ -87,6 +94,7 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
   filtros: {},
   tareasMap: {},
   registrosPenales: {},
+  logAuditoria: [],
   cargando: false,
 
   altaExpediente: async (body) => {
@@ -202,6 +210,37 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     await agregarSubitemApi(expId, actividadId, subitem)
     const res = await getExpediente(expId)
     set({ expedienteActivo: res.data })
+  },
+
+  editarActividad: async (expId, actividadId, cambios) => {
+    set(s => ({
+      expedienteActivo: s.expedienteActivo?.id === expId
+        ? {
+            ...s.expedienteActivo,
+            timeline: (s.expedienteActivo.timeline ?? []).map(a =>
+              a.id === actividadId ? { ...a, ...cambios } : a
+            ),
+          }
+        : s.expedienteActivo,
+    }))
+    await editarActividadApi(expId, actividadId, cambios)
+  },
+
+  eliminarActividad: async (expId, actividadId) => {
+    set(s => ({
+      expedienteActivo: s.expedienteActivo?.id === expId
+        ? {
+            ...s.expedienteActivo,
+            timeline: (s.expedienteActivo.timeline ?? []).filter(a => a.id !== actividadId),
+          }
+        : s.expedienteActivo,
+    }))
+    await eliminarActividadApi(expId, actividadId)
+  },
+
+  cargarLogAuditoria: async (expId) => {
+    const res = await getLogAuditoriaApi(expId)
+    set({ logAuditoria: res.data })
   },
 
   vincularExpediente: async (expedienteId, vinculo) => {

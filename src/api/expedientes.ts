@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Interviniente, RegistroActividadPenal, Reply, SubActividad, Tarea, VinculoExpediente } from '../types'
+import type { Actividad, ChecklistItem, Documento, Expediente, FiltrosExpediente, Interviniente, LogAuditoria, RegistroActividadPenal, Reply, SubActividad, Tarea, VinculoExpediente } from '../types'
 
 export interface ListaExpedientesResponse {
   data: {
@@ -102,6 +102,21 @@ export async function actualizarChecklist(id: string, actividadId: string, check
 export async function agregarSubitem(id: string, actividadId: string, subitem: SubActividad): Promise<{ data: Actividad }> {
   const [serie, anio] = id.split('/')
   return api.post(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}/subitems`, subitem)
+}
+
+export async function editarActividad(id: string, actividadId: string, cambios: Partial<Actividad>): Promise<{ data: Actividad }> {
+  const [serie, anio] = id.split('/')
+  return api.patch(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}`, cambios)
+}
+
+export async function eliminarActividad(id: string, actividadId: string): Promise<{ ok: boolean }> {
+  const [serie, anio] = id.split('/')
+  return api.delete(`/api/expedientes/${serie}/${anio}/actividades/${actividadId}`)
+}
+
+export async function getLogAuditoria(id: string): Promise<{ data: LogAuditoria[] }> {
+  const [serie, anio] = id.split('/')
+  return api.get(`/api/expedientes/${serie}/${anio}/log-auditoria`)
 }
 
 // Tareas
