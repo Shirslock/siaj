@@ -104,7 +104,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
           <Icon name="search" size={15} className="text-white/60 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Buscar actuación..."
+            placeholder="Buscar..."
             value={inputLocal}
             onChange={handleChange}
             className="flex-1 bg-transparent text-white placeholder-white/50 text-[13px] outline-none min-w-0"
