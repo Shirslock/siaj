@@ -97,7 +97,7 @@ export default function MesaSacoPage() {
           icon="create_new_folder"
           onClick={() => navigate('/mesa/alta')}
         >
-          Nuevo Expediente
+          Nueva Actuación
         </Button>
       </div>
 

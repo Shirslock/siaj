@@ -144,7 +144,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
             </span>
           </nav>
           <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">
-            {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nuevo Ingreso de Expediente'}
+            {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nueva Actuación'}
           </h1>
           <p className="text-sm text-[#4a6a84] mt-1">
             Completá los datos según el canal y tipo de gestión.

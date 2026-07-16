@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { useNotificacionesStore } from '../../store/notificaciones.store'
 import { getNombreCompleto } from '../../data/usuarios'
@@ -33,12 +33,34 @@ function fechaRelativa(iso: string): string {
 
 export function Topbar({ titulo, subtitulo }: TopbarProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const panelRef = useRef<HTMLDivElement>(null)
   const [panelAbierto, setPanelAbierto] = useState(false)
 
-  const { sidebarCollapsed, usuarioActivo } = useUIStore()
+  const { sidebarCollapsed, usuarioActivo, busquedaGlobal, setBusquedaGlobal } = useUIStore()
   const { notificaciones, marcarLeida, marcarTodasLeidas, descartar } =
     useNotificacionesStore()
+
+  const [inputLocal, setInputLocal] = useState(busquedaGlobal)
+
+  // Sincronizar si el store se limpia externamente
+  useEffect(() => {
+    setInputLocal(busquedaGlobal)
+  }, [busquedaGlobal])
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setInputLocal(val)
+    setBusquedaGlobal(val)
+    if (!location.pathname.includes('/actuaciones')) {
+      navigate(`/actuaciones?q=${encodeURIComponent(val)}`)
+    }
+  }
+
+  function handleClear() {
+    setInputLocal('')
+    setBusquedaGlobal('')
+  }
 
   const misNotifs = notificaciones
     .filter(n => n.destinatarioId === usuarioActivo?.id)
@@ -73,6 +95,35 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
         </h1>
         {subtitulo && (
           <p className="text-sm text-white opacity-70 leading-tight">{subtitulo}</p>
+        )}
+      </div>
+
+      {/* Buscador global */}
+      <div className="flex-1 max-w-md mx-8 relative">
+        <div className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 rounded-xl px-3 py-2 transition-all duration-200 focus-within:bg-white/25 focus-within:border-white/50">
+          <Icon name="search" size={15} className="text-white/60 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Buscar actuación..."
+            value={inputLocal}
+            onChange={handleChange}
+            className="flex-1 bg-transparent text-white placeholder-white/50 text-[13px] outline-none min-w-0"
+          />
+          {inputLocal && (
+            <button
+              onClick={handleClear}
+              className="text-white/60 hover:text-white transition-colors flex-shrink-0"
+            >
+              <Icon name="close" size={14} />
+            </button>
+          )}
+        </div>
+
+        {inputLocal && !location.pathname.includes('/actuaciones') && (
+          <div className="absolute top-full left-0 right-0 mt-1 px-3 py-1.5 bg-[#1b3a57] rounded-lg text-[11px] text-white/70 border border-white/10 z-50">
+            <Icon name="search" size={11} className="inline mr-1 opacity-60" />
+            Buscando en Actuaciones...
+          </div>
         )}
       </div>
 
