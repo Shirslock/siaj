@@ -53,14 +53,14 @@ npm run build      # build de producción
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
 | `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión. 12 ciclos definidos (ver Sección 13). |
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
-| `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage. |
+| `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global (`busquedaGlobal`). |
 | `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
 | `src/components/ui/Modal.tsx` | Modal Headless UI. Props: open, onClose, titulo, size, footer. |
 | `src/components/ui/Badge.tsx` | EstadoBadge, AreaBadge, RolBadge. |
 | `src/components/ui/FormField.tsx` | Wrapper label + hint + error para inputs. |
-| `src/components/layout/` | AppLayout, Sidebar, Topbar, UserSwitcher. |
+| `src/components/layout/` | AppLayout, Sidebar, Topbar (con buscador global persistente — ver Sección 19), UserSwitcher. |
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
@@ -426,3 +426,17 @@ Detalle completo en `src/pages/Dashboard/Dashboard_CLAUDE.md`.
 
 **Nota de tipos:** `RolSistema` no incluye `'ASISTENTE'` — los asistentes caen en la vista LETRADO
 por ser el fallback (`!esReferente && !esCoordinador`).
+
+## 19. Buscador global (Topbar)
+
+`Topbar.tsx` incluye un input de búsqueda persistente entre todas las páginas, respaldado por
+`busquedaGlobal`/`setBusquedaGlobal` en `ui.store.ts`.
+
+- Si el usuario escribe estando en `/actuaciones`: filtra en tiempo real (sincroniza con el
+  filtro `buscar` de `BandejaAbogado.page.tsx`).
+- Si escribe desde cualquier otra página: navega a `/actuaciones?q=<texto>` (muestra el hint
+  "Buscando en Actuaciones..." mientras tanto).
+- `BandejaAbogado.page.tsx` lee `busquedaGlobal` o el query param `q` al montar y los vuelca al
+  filtro `buscar`, que matchea `id`, `caratula`, `numero_causa`, `numero_ee_gde` y el label de `tipo`.
+- El botón × limpia `busquedaGlobal` (y por ende el filtro) sin afectar el resto de los filtros
+  de la bandeja.

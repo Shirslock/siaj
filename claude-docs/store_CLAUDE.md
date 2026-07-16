@@ -9,7 +9,7 @@ Solo sessionStorage para ID del usuario activo.
 | Store | Qué maneja | Hook |
 |-------|-----------|------|
 | `expedientes.store.ts` | Expedientes, queue, tareas, filtros | `useExpedientesStore()` |
-| `ui.store.ts` | Usuario activo, sidebar, sessionStorage | `useUIStore()` |
+| `ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global | `useUIStore()` |
 | `configuracion.store.ts` | Catálogos editables del sistema + usuarios | `useConfiguracionStore()` |
 | `agenda.store.ts` | Eventos custom del usuario en la agenda | `useAgendaStore()` |
 | `tareas.store.ts` | Tareas Kanban del módulo Tareas + solicitudes internas | `useTareasStore()` |
@@ -70,8 +70,15 @@ del array — marca `eliminado: true` para preservar el historial; TimelineTab f
 ```ts
 setUsuarioActivo(id)   // persiste en sessionStorage
 toggleSidebar()
+setBusquedaGlobal(q)   // buscador global del Topbar (persistente entre páginas)
 // Toasts: NO usar showToast — usar toast.* de react-toastify directamente
 ```
+
+**Buscador global (`busquedaGlobal`/`setBusquedaGlobal`):** alimenta el input de búsqueda del
+`Topbar`, visible en todas las páginas. Si el usuario escribe estando fuera de `/actuaciones`,
+el Topbar navega a `/actuaciones?q=<texto>`; `BandejaAbogado.page.tsx` lee `busquedaGlobal` (o
+el query param `q` al montar) y lo vuelca al filtro `buscar`, que matchea `id`, `caratula`,
+`numero_causa`, `numero_ee_gde` y el label de `tipo`.
 
 ## Acciones — configuracion.store.ts
 

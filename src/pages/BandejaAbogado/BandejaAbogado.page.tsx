@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { TIPOS_GESTION } from '../../data/catalogos'
@@ -55,15 +55,18 @@ const filterInputCls =
 export default function BandejaAbogadoPage() {
   const navigate = useNavigate()
   const { expedientes, actualizarExpediente, asignarAbogado, tareasMap } = useExpedientesStore()
-  const { usuarioActivo } = useUIStore()
+  const { usuarioActivo, busquedaGlobal } = useUIStore()
+  const [searchParams] = useSearchParams()
 
   const rolSistema  = usuarioActivo?.rolSistema
   const esCoordi    = rolSistema === 'COORDINADOR'
   const esReferente = rolSistema === 'REFERENTE'
   const esAbogado   = !esCoordi && !esReferente
 
+  const buscarInicial = busquedaGlobal || searchParams.get('q') || ''
+
   const filtroInicial = useMemo(() => ({
-    buscar:     '',
+    buscar:     buscarInicial,
     area:       esCoordi ? (usuarioActivo?.areas[0] ?? '') : '',
     tipo:       '',
     estado:     '',
@@ -72,7 +75,7 @@ export default function BandejaAbogadoPage() {
     fechaHasta: '',
     soloUrgentes: false,
     soloAlerta:   false,
-  }), [usuarioActivo?.id, esCoordi, esAbogado])
+  }), [usuarioActivo?.id, esCoordi, esAbogado, buscarInicial])
 
   const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>('activos')
   const [filtros,        setFiltros]        = useState(filtroInicial)
@@ -89,6 +92,13 @@ export default function BandejaAbogadoPage() {
   useEffect(() => {
     setFiltros(filtroInicial)
   }, [usuarioActivo?.id])
+
+  // Si el usuario escribe en el buscador global (desde esta u otra página), reflejarlo en el filtro
+  useEffect(() => {
+    if (busquedaGlobal) {
+      setFiltros(prev => ({ ...prev, buscar: busquedaGlobal }))
+    }
+  }, [busquedaGlobal])
 
   // Cerrar menú contextual al click fuera
   useEffect(() => {
@@ -124,11 +134,14 @@ export default function BandejaAbogadoPage() {
       if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap, e.timeline).activa && !getAlertaTimer(e).activa) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
-        return (
-          e.caratula.toLowerCase().includes(q) ||
-          e.id.toLowerCase().includes(q) ||
-          (e.numero_causa ?? '').toLowerCase().includes(q)
-        )
+        const campos = [
+          e.id,
+          e.caratula,
+          e.numero_causa ?? '',
+          e.numero_ee_gde ?? '',
+          TIPO_LABEL[e.tipo] ?? e.tipo,
+        ]
+        return campos.some(c => c?.toLowerCase().includes(q))
       }
       return true
     })

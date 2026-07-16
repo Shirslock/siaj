@@ -5,13 +5,16 @@ import { USUARIOS } from '../data/usuarios'
 interface UIState {
   usuarioActivo: Usuario | null
   sidebarCollapsed: boolean
+  busquedaGlobal: string
   setUsuarioActivo: (id: string) => void
   toggleSidebar: () => void
+  setBusquedaGlobal: (q: string) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
   usuarioActivo: USUARIOS.find(u => u.id === 'UR_018') ?? null,
   sidebarCollapsed: false,
+  busquedaGlobal: '',
 
   setUsuarioActivo: (id) => {
     const usuario = USUARIOS.find(u => u.id === id) ?? null
@@ -22,6 +25,8 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+
+  setBusquedaGlobal: (q) => set({ busquedaGlobal: q }),
 }))
 
 const savedId = (() => { try { return sessionStorage.getItem('siaj_usuario_activo') } catch { return null } })()
