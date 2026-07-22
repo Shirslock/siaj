@@ -14,6 +14,7 @@ import {
   type FilaTimelineExport,
 } from '../../../utils/exportTimeline'
 import { useTareasStore } from '../../../store/tareas.store'
+import { useNotificacionesStore } from '../../../store/notificaciones.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
 
@@ -42,6 +43,8 @@ const BLANK_ACT = {
   doc_gde:           '',
   fecha_vencimiento: '',
   fecha_aviso:       '',
+  mostrar_en_agenda: false,
+  rango_aviso:       null as 'diario' | 5 | 10 | 15 | null,
 }
 
 type FiltroTab = 'todo' | 'sistema' | 'actividades' | 'tareas'
@@ -148,10 +151,16 @@ function TareaFeedItem({
       {/* Nombre */}
       <p className="text-xs text-[#1b3a57] flex-1 truncate">{tarea.nombre}</p>
 
-      {/* Dot urgencia */}
-      {tarea.fechaVencimiento && (
+      {/* Urgencia / Vencido */}
+      {tarea.fechaVencimiento && urg === 'rojo' && tarea.estado !== 'cumplido' && tarea.estado !== 'no_procedente' && (
+        <span className="flex items-center gap-1 text-[9px] font-black text-[#b91c1c] bg-red-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
+          <Icon name="warning" size={10} />
+          Vencido
+        </span>
+      )}
+      {tarea.fechaVencimiento && urg !== 'rojo' && (
         <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-          urg === 'rojo' ? 'bg-[#b91c1c]' : urg === 'ambar' ? 'bg-amber-500' : 'bg-green-500'
+          urg === 'ambar' ? 'bg-amber-500' : 'bg-green-500'
         }`} />
       )}
 
@@ -334,6 +343,26 @@ function TareaDetailPanel({
             </div>
           </div>
 
+          {/* Mostrar en agenda — opcional */}
+          {(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setCambiosLocales(p => ({ ...p, mostrar_en_agenda: !(p.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  (cambiosLocales.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  (cambiosLocales.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-[#1b3a57]">Mostrar en agenda</p>
+                <p className="text-[10px] text-[#4a6a84]">Aparecerá en el calendario en la fecha de vencimiento</p>
+              </div>
+            </label>
+          )}
+
           {/* Fecha de aviso */}
           {(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
             <div>
@@ -354,6 +383,38 @@ function TareaDetailPanel({
                   alertaActiva: !!e.target.value,
                 }))}
               />
+            </div>
+          )}
+
+          {/* Rango de aviso */}
+          {(cambiosLocales.fecha_aviso ?? tarea.fecha_aviso) && (
+            <div>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-2">
+                Frecuencia de notificación
+              </label>
+              <div className="flex gap-2">
+                {([
+                  { value: 'diario', label: 'Todos los días' },
+                  { value: 5,        label: 'Cada 5 días' },
+                  { value: 10,       label: 'Cada 10 días' },
+                  { value: 15,       label: 'Cada 15 días' },
+                ] as const).map(op => {
+                  const actual = cambiosLocales.rango_aviso ?? tarea.rango_aviso ?? null
+                  return (
+                    <button
+                      key={String(op.value)}
+                      onClick={() => setCambiosLocales(p => ({ ...p, rango_aviso: op.value }))}
+                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
+                        actual === op.value
+                          ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
+                          : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                      }`}
+                    >
+                      {op.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 
@@ -879,7 +940,7 @@ export function TimelineTab({ exp }: Props) {
       expediente_id:       exp.id,
       expediente_caratula: exp.caratula,
       expediente_area:     exp.area,
-      asignado_a:          formSolicitud.asignado_a,
+      asignado_a:          formSolicitud.asignado_a[0] ?? '',
       creado_por:          usuarioActivo?.id ?? '',
       fecha_limite:        formSolicitud.fecha_limite || null,
       prioridad:           formSolicitud.prioridad,
@@ -1070,6 +1131,22 @@ export function TimelineTab({ exp }: Props) {
   function guardarTarea() {
     if (!tareaSeleccionada) return
     actualizarTarea(exp.id, estadoCodigo, tareaSeleccionada.id, cambiosLocales)
+    const rangoFinal = cambiosLocales.rango_aviso ?? tareaSeleccionada.rango_aviso
+    const fechaAvisoFinal = cambiosLocales.fecha_aviso ?? tareaSeleccionada.fecha_aviso
+    if (fechaAvisoFinal && rangoFinal && usuarioActivo?.id) {
+      useNotificacionesStore.getState().agregarNotificacion({
+        tipo: 'ALERTA_VENCIMIENTO',
+        titulo: `Vencimiento próximo: ${tareaSeleccionada.nombre}`,
+        descripcion: `Vence el ${tareaSeleccionada.fechaVencimiento ?? cambiosLocales.fechaVencimiento}. Aviso desde ${fechaAvisoFinal}.`,
+        expedienteId: exp.id,
+        tipoGestion: exp.tipo ?? '',
+        caratula: exp.caratula ?? '',
+        numeroCausa: exp.numero_causa ?? null,
+        leida: false,
+        fecha: new Date().toISOString(),
+        destinatarioId: usuarioActivo.id,
+      })
+    }
     toast.success('Tarea actualizada.')
     setTareaSeleccionada(null)
   }
@@ -1675,6 +1752,24 @@ export function TimelineTab({ exp }: Props) {
             />
           </div>
           {formAct.fecha_vencimiento && (
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setFormAct(p => ({ ...p, mostrar_en_agenda: !p.mostrar_en_agenda }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  formAct.mostrar_en_agenda ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  formAct.mostrar_en_agenda ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">Mostrar en agenda</p>
+                <p className="text-[11px] text-[#4a6a84]">Aparecerá en el calendario en la fecha de vencimiento</p>
+              </div>
+            </label>
+          )}
+          {formAct.fecha_vencimiento && (
             <div>
               <label className="field-label">Fecha de aviso (opcional)</label>
               <p className="text-[10px] text-[#7a9ab4] mb-1">
@@ -1687,6 +1782,32 @@ export function TimelineTab({ exp }: Props) {
                 value={formAct.fecha_aviso}
                 onChange={e => setFormAct(p => ({ ...p, fecha_aviso: e.target.value }))}
               />
+            </div>
+          )}
+          {formAct.fecha_aviso && (
+            <div>
+              <label className="field-label">Frecuencia de notificación</label>
+              <div className="flex gap-2 mt-1">
+                {([
+                  { value: 'diario', label: 'Todos los días' },
+                  { value: 5,        label: 'Cada 5 días' },
+                  { value: 10,       label: 'Cada 10 días' },
+                  { value: 15,       label: 'Cada 15 días' },
+                ] as const).map(op => (
+                  <button
+                    key={String(op.value)}
+                    type="button"
+                    onClick={() => setFormAct(p => ({ ...p, rango_aviso: op.value }))}
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
+                      formAct.rango_aviso === op.value
+                        ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
+                        : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                    }`}
+                  >
+                    {op.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <div>

@@ -419,6 +419,30 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
     ],
   },
 
+  LANZAMIENTO_JUDICIALIZADO: {
+    label: 'Lanzamiento Judicializado',
+    mesa: [
+      { id:'mesa_num_causa',      label:'N° de Causa',              type:'causa',            mono:true },
+      { id:'mesa_juzgado_fuero',  label:'Fuero',                    type:'fuero_select' },
+      { id:'mesa_juzgado',        label:'Juzgado',                  type:'juzgado_filtered' },
+      { id:'mesa_secretaria',     label:'Secretaría',               type:'secretaria_juzgado', juzgadoRef:'mesa_juzgado' },
+      { id:'mesa_caratula',       label:'Carátula',                 type:'text',             full:true },
+      { id:'mesa_abogado_contr',  label:'Abogado de la contraria',  type:'text' },
+      { id:'mesa_parte_actora',   label:'Parte Actora',             type:'text' },
+      { id:'mesa_parte_dem',      label:'Parte Demandada',          type:'text' },
+      { id:'mesa_codemandados',   label:'Codemandado',              type:'text',             full:true },
+      { id:'mesa_fecha_inicio',   label:'Fecha de Inicio',          type:'date' },
+      { id:'mesa_juicio',         label:'Tipo de Juicio',           type:'select',           options:['LANZAMIENTO','DESALOJO','RECUPERACIÓN DE INMUEBLE','OTROS'] },
+      { id:'mesa_ubicacion',      label:'Ubicación del inmueble',   type:'text',             full:true },
+      { id:'mesa_linea',          label:'Línea Ferroviaria',        type:'linea' },
+    ],
+    abogado: [
+      { id:'abogado_designado',   label:'Abogado designado',        type:'abogado_select' },
+      { id:'estado_tramite',      label:'Estado',                   type:'select',           options:['INGRESADO','EN TRAMITACIÓN','SENTENCIA','APELACIÓN','FIRME','ARCHIVADO'] },
+      { id:'observaciones',       label:'Observaciones',            type:'textarea',         full:true },
+    ],
+  },
+
   OTRAS: {
     label: 'Otras presentaciones / gestiones',
     mesa: [

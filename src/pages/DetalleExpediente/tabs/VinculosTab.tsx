@@ -23,6 +23,7 @@ export function VinculosTab({ exp }: Props) {
   const [busqueda, setBusqueda] = useState('')
   const [seleccionado, setSeleccionado] = useState<Expediente | null>(null)
   const [tipoRelacion, setTipoRelacion] = useState<TipoRelacion>('RELACIONADO')
+  const [confirmarDesvincular, setConfirmarDesvincular] = useState<VinculoExpediente | null>(null)
 
   const vinculadosIds = new Set(exp.vinculos.map(v => v.id))
   const candidatos = expedientes.filter(e =>
@@ -98,7 +99,7 @@ export function VinculosTab({ exp }: Props) {
                     </div>
                   </div>
                   <button
-                    onClick={() => desvincularExpediente(exp.id, v.id)}
+                    onClick={() => setConfirmarDesvincular(v)}
                     title="Desvincular"
                     className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
                   >
@@ -136,7 +137,7 @@ export function VinculosTab({ exp }: Props) {
       >
         <div className="space-y-4">
           <div className="relative">
-            <Icon name="search" size={18} />
+            <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
             <input
               className="field-input pl-9 w-full"
               placeholder="Buscar por ID o carátula…"
@@ -183,6 +184,45 @@ export function VinculosTab({ exp }: Props) {
             </select>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={!!confirmarDesvincular}
+        onClose={() => setConfirmarDesvincular(null)}
+        titulo="Desvincular actuación"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setConfirmarDesvincular(null)}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                if (!confirmarDesvincular) return
+                desvincularExpediente(exp.id, confirmarDesvincular.id)
+                setConfirmarDesvincular(null)
+              }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#b91c1c] text-white hover:opacity-90 transition-opacity"
+            >
+              Desvincular
+            </button>
+          </>
+        }
+      >
+        {confirmarDesvincular && (
+          <div className="space-y-2">
+            <p className="text-sm text-[#1b3a57]">
+              ¿Confirmás que querés desvincular la siguiente actuación?
+            </p>
+            <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 mt-2">
+              <p className="font-mono text-xs font-bold text-[#1b3a57]">{confirmarDesvincular.id}</p>
+              <p className="text-xs text-[#4a6a84] mt-0.5 truncate">{confirmarDesvincular.caratula}</p>
+            </div>
+          </div>
+        )}
       </Modal>
     </>
   )

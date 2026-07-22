@@ -921,6 +921,178 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     documentos: [],
     vinculos: [],
   },
+
+  // ══════════════════════════════════════════════════════════
+  // LANZAMIENTO + LANZAMIENTO JUDICIALIZADO — CIVIL — CASANO Felix (UR_004)
+  // C-0041/2026: Lanzamiento (antecedente)
+  // C-0042/2026: Lanzamiento Judicializado (principal — en verde)
+  // ══════════════════════════════════════════════════════════
+
+  // ── C-0042/2026 — LANZAMIENTO_JUDICIALIZADO — principal (verde) ──
+  {
+    id: 'C-0042/2026',
+    area: 'CIVIL' as Area,
+    tipo: 'LANZAMIENTO_JUDICIALIZADO' as TipoGestion,
+    estado: 'EN TRAMITACIÓN',
+    estadoProcesal: 'INICIO',
+    caratula: 'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO JUDICIALIZADO',
+    numero_ee_gde: 'ME-2026-00502-APN-DGJYA',
+    numero_causa: '8821/2026',
+    abogado_id: 'UR_004',
+    fecha_recepcion: '2026-04-16',
+    es_principal: true,
+    es_juicio_iniciado: true,
+    fecha_inicio_juicio: '2026-04-16',
+    campos_mesa: {
+      mesa_num_causa:     '8821/2026',
+      mesa_juzgado_fuero: 'CIVIL',
+      mesa_juzgado:       'JUZ_001',
+      mesa_secretaria:    'Secretaría N°1',
+      mesa_caratula:      'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO JUDICIALIZADO',
+      mesa_abogado_contr: '',
+      mesa_parte_actora:  'SOFSA S.A.',
+      mesa_parte_dem:     'PERALTA, OSCAR HÉCTOR',
+      mesa_codemandados:  '',
+      mesa_fecha_inicio:  '2026-04-16',
+      mesa_juicio:        'LANZAMIENTO',
+      mesa_ubicacion:     'Km 12 — Línea Roca — Partido de Lomas de Zamora',
+      mesa_linea:         'LIN_001',
+    },
+    campos_abogado: {
+      abogado_designado: 'UR_004',
+      estado_tramite:    'EN TRAMITACIÓN',
+      observaciones:     'Originado en lanzamiento administrativo C-0041/2026.',
+    },
+    timeline: [
+      {
+        id: 'C042_REC_01',
+        expediente_id: 'C-0042/2026',
+        tipo: 'RECEPCION' as TipoActividad,
+        titulo: 'Lanzamiento Judicializado iniciado',
+        descripcion: 'Creado como consecuencia del juicio iniciado en C-0041/2026. Memo de área civil asignado.',
+        fecha: '2026-04-16',
+        activo: false,
+        subitems: [],
+        estadoExpediente: 'ASIGNADO',
+        doc_gde: 'ME-2026-00502-APN-DGJYA',
+        creado_por: 'UR_004',
+      },
+      {
+        id: 'C042_MOV_01',
+        expediente_id: 'C-0042/2026',
+        tipo: 'MOVIMIENTO' as TipoActividad,
+        titulo: 'Cambio de estado: Asignado → Inicio',
+        descripcion: 'Se reúne documental respaldatoria del lanzamiento antecedente. Inicia preparación de demanda.',
+        fecha: '2026-04-20',
+        activo: true,
+        subitems: [],
+        estadoExpediente: 'INICIO',
+        es_movimiento_impulsorio: true,
+        doc_gde: null,
+      },
+    ],
+    intervinientes: [
+      { id: 'IN_C042_01', nombre: 'SOFSA S.A.', rol_procesal: 'ACTOR', tipo_documento: 'CUIT', numero_documento: '30-99887766-4', representado_por: 'CASANO, Felix' },
+      { id: 'IN_C042_02', nombre: 'PERALTA, OSCAR HÉCTOR', rol_procesal: 'DEMANDADO', tipo_documento: 'DNI', numero_documento: '22.341.009' },
+    ],
+    documentos: [],
+    vinculos: [
+      {
+        id: 'C-0041/2026',
+        area: 'CIVIL',
+        tipo: 'LANZAMIENTO',
+        caratula: 'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO — INMUEBLE KM 12 LÍNEA ROCA',
+        estado: 'JUICIO_INICIADO',
+        estadoLabel: 'Juicio Iniciado',
+        tipo_relacion: 'ANTECEDENTE',
+        abogado_id: 'UR_004',
+      },
+    ],
+  },
+
+  // ── C-0041/2026 — LANZAMIENTO — antecedente ──
+  {
+    id: 'C-0041/2026',
+    area: 'CIVIL' as Area,
+    tipo: 'LANZAMIENTO' as TipoGestion,
+    estado: 'JUICIO_INICIADO',
+    estadoProcesal: 'JUICIO_INICIADO',
+    caratula: 'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO — INMUEBLE KM 12 LÍNEA ROCA',
+    numero_ee_gde: 'ME-2026-00415-APN-DGJYA',
+    numero_causa: '8821/2026',
+    abogado_id: 'UR_004',
+    fecha_recepcion: '2026-03-10',
+    es_principal: false,
+    campos_mesa: {
+      linea: 'LIN_001',
+      ubicacion: 'Km 12 — Línea Roca — Partido de Lomas de Zamora',
+      intruso: 'PERALTA, OSCAR HÉCTOR',
+      fecha_intimacion: '2026-01-15',
+      documental: 'Completo',
+    },
+    campos_abogado: {
+      estado_tramite: 'JUICIO INICIADO',
+      resultado_analisis: 'Viabilidad confirmada. Se inicia juicio.',
+      observaciones: 'Intruso sin título. Posesión precaria desde 2022. Se pasa a Lanzamiento Judicializado.',
+    },
+    timeline: [
+      {
+        id: 'C041_REC_01',
+        expediente_id: 'C-0041/2026',
+        tipo: 'RECEPCION' as TipoActividad,
+        titulo: 'Expediente recibido y asignado',
+        descripcion: 'Lanzamiento recibido por Mesa SACO. Memo de área civil. Asignado a letrado.',
+        fecha: '2026-03-10',
+        activo: false,
+        subitems: [],
+        estadoExpediente: 'ASIGNADO',
+        doc_gde: 'ME-2026-00415-APN-DGJYA',
+        creado_por: 'UR_028',
+      },
+      {
+        id: 'C041_MOV_01',
+        expediente_id: 'C-0041/2026',
+        tipo: 'MOVIMIENTO' as TipoActividad,
+        titulo: 'Cambio de estado: Asignado → En Análisis',
+        descripcion: 'Análisis de antecedentes del inmueble. Jurisdicción confirmada: federal.',
+        fecha: '2026-03-20',
+        activo: false,
+        subitems: [],
+        estadoExpediente: 'EN_ANALISIS',
+        doc_gde: null,
+      },
+      {
+        id: 'C041_MOV_02',
+        expediente_id: 'C-0041/2026',
+        tipo: 'MOVIMIENTO' as TipoActividad,
+        titulo: 'Cambio de estado: En Análisis → Juicio Iniciado',
+        descripcion: 'Se define inicio de juicio. El expediente pasa a antecedente de Lanzamiento Judicializado.',
+        fecha: '2026-04-15',
+        activo: true,
+        subitems: [],
+        estadoExpediente: 'JUICIO_INICIADO',
+        es_movimiento_impulsorio: true,
+        doc_gde: null,
+      },
+    ],
+    intervinientes: [
+      { id: 'IN_C041_01', nombre: 'SOFSA S.A.', rol_procesal: 'ACTOR', tipo_documento: 'CUIT', numero_documento: '30-99887766-4' },
+      { id: 'IN_C041_02', nombre: 'PERALTA, OSCAR HÉCTOR', rol_procesal: 'DEMANDADO', tipo_documento: 'DNI', numero_documento: '22.341.009' },
+    ],
+    documentos: [],
+    vinculos: [
+      {
+        id: 'C-0042/2026',
+        area: 'CIVIL',
+        tipo: 'LANZAMIENTO_JUDICIALIZADO',
+        caratula: 'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO JUDICIALIZADO',
+        estado: 'EN TRAMITACIÓN',
+        estadoLabel: 'En tramitación',
+        tipo_relacion: 'JUDICIALIZADO',
+        abogado_id: 'UR_004',
+      },
+    ],
+  },
 ]
 
 // Alias para compatibilidad con imports existentes
@@ -952,6 +1124,20 @@ export const TAREAS_MAP_INICIAL: Record<string, Tarea[]> = {
     tarea('AEJ_02', 'Analizar viabilidad del acuerdo', { estado: 'cumplido', fecha: '2024-03-20' }),
     tarea('AEJ_03', 'Solicitar conformidades internas (si corresponden)', { estado: 'en_curso', fechaVencimiento: addDays(60) }),
     tarea('AEJ_04', 'Redacción de borrador de acuerdo'),
+  ],
+
+  // C-0042/2026 — LANZAMIENTO_JUDICIALIZADO en INICIO (tareas con fechas de vencimiento y alertas)
+  'C-0042/2026__INICIO': [
+    tarea('LJ_INI_01', 'Reunir documental respaldatoria y antecedentes — vinculación con el lanzamiento', { estado: 'en_curso' }),
+    tarea('LJ_INI_02', 'Presentación en sistema judicial — sorteo de causa'),
+    tarea('LJ_INI_03', 'Carga de número de causa judicial'),
+    tarea('LJ_INI_04', 'Carga de juzgado / fuero / jurisdicción — objeto'),
+    tarea('LJ_INI_05', 'Vincular escrito de demanda presentado'),
+    tarea('LJ_INI_06', 'Control de primer proveído'),
+    tarea('LJ_INI_07', 'Control de proveído inicial'),
+    tarea('LJ_INI_08', 'Aclarar o ampliar lo que corresponde'),
+    tarea('LJ_INI_09', 'Pago de Bono Profesional'),
+    tarea('LJ_INI_10', 'Control de plazo — 3 meses', { fechaVencimiento: addDays(90), alertaActiva: true, diasAlerta: 15 }),
   ],
 }
 
@@ -1044,4 +1230,6 @@ export const ESTADOS_POR_TIPO: Record<string, string[]> = {
   RECUPERO:         ['INGRESADO', 'EN GESTIÓN', 'COBRADO', 'INCOBRABLE', 'ARCHIVADO'],
   EJECUCION_GAR:    ['INICIADA', 'EN TRÁMITE', 'COBRADA', 'RECHAZADA', 'ARCHIVADA'],
   OTRAS:            ['INGRESADO', 'EN TRÁMITE', 'RESUELTO', 'ARCHIVADO'],
+  LANZAMIENTO:               ['RECEPCIONADO', 'EN_ANALISIS', 'ACUERDO_EXTRAJUDICIAL', 'DEVUELTO_SECTOR_REQUIRENTE', 'JUICIO_INICIADO'],
+  LANZAMIENTO_JUDICIALIZADO: ['EN TRAMITACIÓN', 'SENTENCIA_LANZAMIENTO', 'SENTENCIA_2_FAV', 'SENTENCIA_2_DESFAV', 'REF', 'FINALIZADO'],
 }

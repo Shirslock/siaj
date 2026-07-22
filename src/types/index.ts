@@ -1,4 +1,4 @@
-export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION'
+export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO'
 
 export interface Notificacion {
   id: string
@@ -10,6 +10,8 @@ export interface Notificacion {
   leida: boolean
   fecha: string
   destinatarioId: string
+  titulo?: string     
+  descripcion?: string
 }
 
 export type Area = 'CIVIL' | 'LABORAL' | 'PENAL'
@@ -35,6 +37,7 @@ export type TipoGestion =
   | 'COBRO_CANON'
   | 'RECLAMO_CONTRAT'
   | 'LANZAMIENTO'
+  | 'LANZAMIENTO_JUDICIALIZADO'
   | 'RECUPERO'
   | 'CONSIGNACION'
   | 'DESAFUERO'
@@ -67,6 +70,7 @@ export interface TipoGestionItem {
   areas: Area[]
   canal: Canal
   canales: Canal[]
+  soloDesdeJuicio?: boolean
 }
 
 export interface Usuario {
@@ -119,7 +123,7 @@ export interface VinculoExpediente {
   caratula: string
   estado: string
   estadoLabel: string
-  tipo_relacion: 'MISMO_SINIESTRO' | 'MISMA_CAUSA' | 'RELACIONADO'
+  tipo_relacion: 'MISMO_SINIESTRO' | 'MISMA_CAUSA' | 'RELACIONADO' | 'ANTECEDENTE' | 'JUDICIALIZADO'
   numero_causa?: string
   abogado_id?: string
 }
@@ -256,6 +260,8 @@ export interface Tarea {
   diasAlerta?: number | null
   observaciones?: string
   docGde?: string | null
+  rango_aviso?: 'diario' | 5 | 10 | 15 | null
+  mostrar_en_agenda?: boolean
 }
 
 export interface EstadoProcesal {
@@ -339,6 +345,7 @@ export type TipoCampo =
   | 'secretaria_juzgado'
   | 'select'
   | 'multiselect'
+  | 'abogado_select'
 
 export interface CampoFormulario {
   id: string

@@ -7,6 +7,7 @@ interface NotificacionesState {
   marcarTodasLeidas: (usuarioId: string) => void
   descartar: (id: string) => void
   noLeidasCount: (usuarioId: string) => number
+  agregarNotificacion: (n: Omit<Notificacion, 'id'>) => void
 }
 
 export const useNotificacionesStore = create<NotificacionesState>((set, get) => ({
@@ -35,4 +36,9 @@ export const useNotificacionesStore = create<NotificacionesState>((set, get) => 
     get().notificaciones.filter(
       (n) => n.destinatarioId === usuarioId && !n.leida
     ).length,
+
+    agregarNotificacion: (n) =>
+    set((s) => ({
+      notificaciones: [{ ...n, id: `NTF_${Date.now()}` }, ...s.notificaciones],
+    })),
 }))

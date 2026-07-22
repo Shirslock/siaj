@@ -2,6 +2,8 @@ import type { Expediente, Documento } from '../../../types'
 import { formatFecha } from '../../../utils/format'
 import Icon from '../../../components/ui/Icon'
 import { useExpedientesStore } from '../../../store/expedientes.store'
+import { Modal } from '../../../components/ui/Modal'
+import { useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -115,6 +117,8 @@ function SortableDocRow({
 
 export function DocumentosTab({ exp }: Props) {
   const { agregarDocumento, eliminarDocumento, reordenarDocumentos } = useExpedientesStore()
+  const [confirmarEliminar, setConfirmarEliminar] = useState<string | null>(null)
+  const docAEliminar = exp.documentos.find(d => d.id === confirmarEliminar)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -195,7 +199,7 @@ export function DocumentosTab({ exp }: Props) {
                     <SortableDocRow
                       key={doc.id}
                       doc={doc}
-                      onEliminar={() => eliminarDocumento(exp.id, doc.id)}
+                      onEliminar={() => setConfirmarEliminar(doc.id)}
                     />
                   ))}
                 </SortableContext>
@@ -204,6 +208,45 @@ export function DocumentosTab({ exp }: Props) {
           </DndContext>
         </div>
       )}
+      <Modal
+        open={!!confirmarEliminar}
+        onClose={() => setConfirmarEliminar(null)}
+        titulo="Eliminar documento"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setConfirmarEliminar(null)}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                if (!confirmarEliminar) return
+                eliminarDocumento(exp.id, confirmarEliminar)
+                setConfirmarEliminar(null)
+              }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#b91c1c] text-white hover:opacity-90 transition-opacity"
+            >
+              Eliminar
+            </button>
+          </>
+        }
+      >
+        {docAEliminar && (
+          <div className="space-y-2">
+            <p className="text-sm text-[#1b3a57]">¿Confirmás que querés eliminar este documento?</p>
+            <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 flex items-center gap-3">
+              <Icon name={docAEliminar.icon} size={20} className={docAEliminar.color} />
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">{docAEliminar.nombre}</p>
+                <p className="text-[10px] text-[#4a6a84]">{docAEliminar.tipo} · {docAEliminar.size}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

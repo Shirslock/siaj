@@ -80,7 +80,7 @@ function TareaCard({
   const [menuAbierto, setMenuAbierto] = useState(false)
   const asignado = getUsuarioById(tarea.asignado_a)
   const vencida = tarea.fecha_limite && tarea.fecha_limite < HOY && tarea.estado !== 'completada'
-  const initials = asignado ? `${asignado.apellido[0]}${asignado.nombre[0]}` : '?'
+  const initials = asignado ? `${asignado.apellido?.[0] ?? ''}${asignado.nombre?.[0] ?? ''}` : null
 
   const siguienteEstado: Record<EstadoTarea, EstadoTarea | null> = {
     pendiente: 'en_curso',
@@ -166,7 +166,7 @@ function TareaCard({
       )}
 
       {/* Interno SIAJ — letrado asignado */}
-      {tarea.asignado_a && (
+      {tarea.asignado_a && getUsuarioById(tarea.asignado_a) && (
         <div className="flex items-center gap-1 mt-1.5">
           <Icon name="person" size={11} className="text-[#4a6a84]" />
           <span className="text-[10px] text-[#4a6a84] truncate">
@@ -208,8 +208,7 @@ function TareaCard({
         {asignado && (
           <div
             title={getNombreCompleto(asignado)}
-            className="w-6 h-6 rounded-full bg-[#1b3a57] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-          >
+            className="w-6 h-6 rounded-full bg-[#1b3a57] ...">
             {initials}
           </div>
         )}
