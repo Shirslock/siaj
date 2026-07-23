@@ -1,22 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-  useDroppable,
-  useDraggable,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import {
-  useTareasStore, PERSONAS_POR_AREA,
-  type TareaKanban, type PrioridadTarea, type EstadoTareaKanban, type AreaDestinataria,
+  useTareasStore,
 } from '../../store/tareas.store'
 import { Modal } from '../../components/ui/Modal'
 import { AreaBadge } from '../../components/ui/Badge'
@@ -25,806 +11,377 @@ import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
-import type { Area } from '../../types'
+import { useSolicitudesStore, type Solicitud } from '../../store/tareas.store'
+import { useNotificacionesStore } from '../../store/notificaciones.store'
 
 // ── Tipos locales ─────────────────────────────────────────────────────────────
-
-type EstadoTarea = EstadoTareaKanban
-type GrupoAsignacion = 'CIVIL' | 'LABORAL' | 'PENAL' | 'RRHH' | 'COMERCIAL' | 'SEGUROS' | ''
 type TipoFiltro = 'mis_tareas' | 'creadas_por_mi' | 'interna' | 'externa' | ''
 
-// ── Configuración de columnas ─────────────────────────────────────────────────
-
-const COLUMNAS: { key: EstadoTarea; label: string; color: string; dot: string }[] = [
-  { key: 'pendiente',  label: 'Pendiente',  color: 'bg-[#fef3c7] border-[#fde68a]',  dot: 'bg-[#d97706]' },
-  { key: 'en_curso',   label: 'En curso',   color: 'bg-[#dbeafe] border-[#bfdbfe]',  dot: 'bg-[#1b3a57]' },
-  { key: 'completada', label: 'Completada', color: 'bg-[#dcfce7] border-[#bbf7d0]',  dot: 'bg-[#15803d]' },
-]
-
-const PRIORIDAD_CONFIG: Record<PrioridadTarea, { label: string; color: string }> = {
-  alta:  { label: 'Alta',  color: 'bg-[#fee2e2] text-[#b91c1c]' },
-  media: { label: 'Media', color: 'bg-[#fef3c7] text-[#d97706]' },
-  baja:  { label: 'Baja',  color: 'bg-[#e8e8e8] text-[#4a6a84]' },
-}
-
 const HOY = new Date().toISOString().split('T')[0]
-
-const BLANK_TAREA = {
-  titulo: '',
-  descripcion: '',
-  expediente_id: '',
-  asignado_a: '',
-  fecha_limite: '',
-  prioridad: 'media' as PrioridadTarea,
-  mostrar_en_agenda: false,
-  etiquetas: [] as string[],
-  area_destinataria: '' as AreaDestinataria,
-  persona_contacto_id: '',
-  persona_contacto: '',
-}
-
-// ── Card de tarea ─────────────────────────────────────────────────────────────
-
-function TareaCard({
-  tarea,
-  onMover,
-  onEditar,
-  onEliminar,
-}: {
-  tarea: TareaKanban
-  onMover: (id: string, estado: EstadoTarea) => void
-  onEditar: (t: TareaKanban) => void
-  onEliminar: (id: string) => void
-}) {
-  const navigate = useNavigate()
-  const [menuAbierto, setMenuAbierto] = useState(false)
-  const asignado = getUsuarioById(tarea.asignado_a)
-  const vencida = tarea.fecha_limite && tarea.fecha_limite < HOY && tarea.estado !== 'completada'
-  const initials = asignado ? `${asignado.apellido?.[0] ?? ''}${asignado.nombre?.[0] ?? ''}` : null
-
-  const siguienteEstado: Record<EstadoTarea, EstadoTarea | null> = {
-    pendiente: 'en_curso',
-    en_curso: 'completada',
-    completada: null,
-  }
-
-  return (
-    <div className="bg-white rounded-xl border border-[rgba(0,0,0,0.08)] shadow-card p-4 space-y-3 relative group">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-[#1b3a57] leading-snug flex-1">{tarea.titulo}</p>
-        <div className="relative flex-shrink-0">
-          <button
-            onClick={() => setMenuAbierto(v => !v)}
-            className="w-6 h-6 rounded-lg flex items-center justify-center text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors opacity-0 group-hover:opacity-100"
-          >
-            <Icon name="more_vert" size={16} />
-          </button>
-          {menuAbierto && (
-            <div
-              className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-card-lg border border-[rgba(0,0,0,0.10)] z-20 py-1"
-              onMouseLeave={() => setMenuAbierto(false)}
-            >
-              <button
-                onClick={() => { onEditar(tarea); setMenuAbierto(false) }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
-              >
-                <Icon name="edit" size={14} /> Editar
-              </button>
-              {siguienteEstado[tarea.estado] && (
-                <button
-                  onClick={() => { onMover(tarea.id, siguienteEstado[tarea.estado]!); setMenuAbierto(false) }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
-                >
-                  <Icon name="arrow_forward" size={14} />
-                  Mover a {COLUMNAS.find(c => c.key === siguienteEstado[tarea.estado])?.label}
-                </button>
-              )}
-              <button
-                onClick={() => { navigate(RUTAS.EXPEDIENTE(tarea.expediente_id)); setMenuAbierto(false) }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
-              >
-                <Icon name="open_in_new" size={14} /> Ver expediente
-              </button>
-              <div className="my-1 border-t border-[rgba(0,0,0,0.06)]" />
-              <button
-                onClick={() => { onEliminar(tarea.id); setMenuAbierto(false) }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#b91c1c] hover:bg-[#fee2e2] transition-colors"
-              >
-                <Icon name="delete" size={14} /> Eliminar
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Expediente vinculado */}
-      <button
-        onClick={() => navigate(RUTAS.EXPEDIENTE(tarea.expediente_id))}
-        className="flex items-center gap-1.5 w-full text-left group/link"
-      >
-        <Icon name="folder" size={12} className="text-[#4a6a84] flex-shrink-0" />
-        <span className="text-[10px] font-mono font-bold text-[#4a6a84] group-hover/link:text-[#1b3a57] transition-colors truncate">
-          {tarea.expediente_id}
-        </span>
-        <AreaBadge area={tarea.expediente_area} />
-      </button>
-
-      {tarea.descripcion && (
-        <p className="text-[11px] text-[#4a6a84] line-clamp-2">{tarea.descripcion}</p>
-      )}
-
-      {/* Etiquetas */}
-      {tarea.etiquetas.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {tarea.etiquetas.map(e => (
-            <span key={e} className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
-              {e}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Interno SIAJ — letrado asignado */}
-      {tarea.asignado_a && getUsuarioById(tarea.asignado_a) && (
-        <div className="flex items-center gap-1 mt-1.5">
-          <Icon name="person" size={11} className="text-[#4a6a84]" />
-          <span className="text-[10px] text-[#4a6a84] truncate">
-            {getNombreCompleto(getUsuarioById(tarea.asignado_a)!)}
-          </span>
-        </div>
-      )}
-
-      {/* Externo SIAJ — área + persona de contacto */}
-      {tarea.area_destinataria && (
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#e8e8e8] text-[#4a6a84]">
-            {tarea.area_destinataria}
-          </span>
-          {tarea.persona_contacto && (
-            <span className="text-[10px] text-[#4a6a84] truncate">
-              {tarea.persona_contacto}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-1 border-t border-[rgba(0,0,0,0.06)]">
-        <div className="flex items-center gap-2">
-          {/* Prioridad */}
-          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${PRIORIDAD_CONFIG[tarea.prioridad].color}`}>
-            {PRIORIDAD_CONFIG[tarea.prioridad].label}
-          </span>
-          {/* Fecha límite */}
-          {tarea.fecha_limite && (
-            <span className={`flex items-center gap-1 text-[10px] font-bold ${vencida ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
-              <Icon name={vencida ? 'warning' : 'schedule'} size={11} />
-              {formatFecha(tarea.fecha_limite)}
-            </span>
-          )}
-        </div>
-        {/* Avatar asignado */}
-        {asignado && (
-          <div
-            title={getNombreCompleto(asignado)}
-            className="w-6 h-6 rounded-full bg-[#1b3a57] ...">
-            {initials}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Drag and drop ─────────────────────────────────────────────────────────────
-
-function ColumnaDroppable({
-  id,
-  children,
-  className,
-}: {
-  id: string
-  children: React.ReactNode
-  className?: string
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id })
-  return (
-    <div
-      ref={setNodeRef}
-      className={`${className ?? ''} ${isOver ? 'ring-2 ring-[#1b3a57] ring-offset-2 rounded-2xl' : ''} transition-all`}
-    >
-      {children}
-    </div>
-  )
-}
-
-function TareaCardDraggable({
-  tarea,
-  ...props
-}: {
-  tarea: TareaKanban
-  onMover: (id: string, estado: EstadoTarea) => void
-  onEditar: (t: TareaKanban) => void
-  onEliminar: (id: string) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: tarea.id })
-
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className={`relative ${isDragging ? 'opacity-40 cursor-grabbing' : 'cursor-grab'}`}
-    >
-      {/* Handle de drag — ícono en el header */}
-      <div
-        {...listeners}
-        className="absolute top-2 right-8 w-6 h-6 flex items-center justify-center text-[#c0c0c0] hover:text-[#4a6a84] cursor-grab active:cursor-grabbing touch-none z-10"
-      >
-        <Icon name="drag_indicator" size={14} />
-      </div>
-      <TareaCard tarea={tarea} {...props} />
-    </div>
-  )
-}
 
 // ── Página principal ──────────────────────────────────────────────────────────
 
 export default function TareasPage() {
-  const { expedientes } = useExpedientesStore()
+  const navigate = useNavigate()
   const { usuarioActivo } = useUIStore()
-  const { tareas, agregarTarea, editarTarea, moverTarea: moverTareaStore, eliminarTarea: eliminarTareaStore } = useTareasStore()
-
-  const [modalAbierto, setModalAbierto] = useState(false)
-  const [tareaEditando, setTareaEditando] = useState<TareaKanban | null>(null)
-  const [form, setForm] = useState(BLANK_TAREA)
-  const [grupoAsignacion, setGrupoAsignacion] = useState<GrupoAsignacion>('')
+  const { } = useTareasStore()
   const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>('mis_tareas')
   const [filtroLetrado, setFiltroLetrado] = useState('')
-  const [filtroAreaExt, setFiltroAreaExt] = useState('')
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
   const [filtroExpediente, setFiltroExpediente] = useState('')
   const [busqueda, setBusqueda] = useState('')
-  const [tareaArrastrada, setTareaArrastrada] = useState<TareaKanban | null>(null)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // px mínimos antes de activar
-      },
-    })
-  )
-
-  // Filtrar tareas
-  const tareasFiltradas = useMemo(() => {
-    const uid = usuarioActivo?.id ?? ''
-    return tareas.filter(t => {
-      // Filtro por tipo de vista
-      if (tipoFiltro === 'mis_tareas') {
-        if (t.creado_por !== uid && t.asignado_a !== uid) return false
-      }
-      if (tipoFiltro === 'creadas_por_mi') {
-        if (t.creado_por !== uid) return false
-      }
-      if (tipoFiltro === 'interna') {
-        // Tiene asignado_a (letrado interno)
-        if (!t.asignado_a) return false
-        // Si hay filtroLetrado específico, aplicarlo
-        if (filtroLetrado && t.asignado_a !== filtroLetrado) return false
-      }
-      if (tipoFiltro === 'externa') {
-        // Tiene area_destinataria (RRHH/COM/SEG)
-        if (!t.area_destinataria) return false
-        // Si hay filtroAreaExt específico, aplicarlo
-        if (filtroAreaExt && t.area_destinataria !== filtroAreaExt) return false
-      }
-
-      // Filtros de texto y prioridad existentes
-      if (filtroPrioridad && t.prioridad !== filtroPrioridad) return false
-      if (filtroExpediente && !t.expediente_id.toLowerCase().includes(filtroExpediente.toLowerCase()) &&
-          !t.expediente_caratula.toLowerCase().includes(filtroExpediente.toLowerCase())) return false
-      if (busqueda && !t.titulo.toLowerCase().includes(busqueda.toLowerCase())) return false
-      return true
-    })
-  }, [tareas, tipoFiltro, filtroLetrado, filtroAreaExt, filtroPrioridad, filtroExpediente, busqueda, usuarioActivo])
-
-  const tareasPorEstado = useMemo(() => {
-    const map: Record<EstadoTarea, TareaKanban[]> = { pendiente: [], en_curso: [], completada: [] }
-    tareasFiltradas.forEach(t => map[t.estado].push(t))
-    return map
-  }, [tareasFiltradas])
-
-  function abrirEditar(t: TareaKanban) {
-    setTareaEditando(t)
-    setForm({
-      titulo: t.titulo,
-      descripcion: t.descripcion,
-      expediente_id: t.expediente_id,
-      asignado_a: t.asignado_a,
-      fecha_limite: t.fecha_limite ?? '',
-      prioridad: t.prioridad,
-      mostrar_en_agenda: t.mostrar_en_agenda,
-      etiquetas: t.etiquetas,
-      area_destinataria: t.area_destinataria ?? '',
-      persona_contacto_id: t.persona_contacto_id ?? '',
-      persona_contacto: t.persona_contacto ?? '',
-    })
-    if (t.area_destinataria) {
-      setGrupoAsignacion(t.area_destinataria)
-    } else if (t.asignado_a) {
-      const u = getUsuarioById(t.asignado_a)
-      const areaJuridica = u?.areas.find(a => ['CIVIL', 'LABORAL', 'PENAL'].includes(a))
-      setGrupoAsignacion((areaJuridica as GrupoAsignacion) ?? '')
-    } else {
-      setGrupoAsignacion('')
-    }
-    setModalAbierto(true)
-  }
-
-  function getPersonasGrupo(grupo: GrupoAsignacion): { id: string; nombre: string }[] {
-    if (!grupo) return []
-    if (['CIVIL', 'LABORAL', 'PENAL'].includes(grupo)) {
-      return USUARIOS
-        .filter(u =>
-          (u.rolSistema === 'ABOGADO' || u.rolSistema === 'COORDINADOR') &&
-          u.areas.includes(grupo as Area)
-        )
-        .map(u => ({
-          id: u.id,
-          nombre: `${u.apellido}, ${u.nombre}${u.id === usuarioActivo?.id ? ' (yo)' : ''}`,
-        }))
-    }
-    return PERSONAS_POR_AREA
-      .filter(p => p.area === grupo)
-      .map(p => ({ id: p.id, nombre: p.nombre }))
-  }
-
-  function guardarTarea() {
-    if (!form.titulo.trim() || !form.expediente_id) return
-    const expObj = expedientes.find(e => e.id === form.expediente_id)
-    if (tareaEditando) {
-      editarTarea(tareaEditando.id, {
-        ...form,
-        fecha_limite: form.fecha_limite || null,
-        expediente_caratula: expObj?.caratula ?? tareaEditando.expediente_caratula,
-        expediente_area: expObj?.area ?? tareaEditando.expediente_area,
-        area_destinataria: form.area_destinataria || undefined,
-        persona_contacto_id: form.persona_contacto_id || undefined,
-        persona_contacto: form.persona_contacto || undefined,
-      })
-      toast.success('Solicitud actualizada.')
-    } else {
-      agregarTarea({
-        ...form,
-        fecha_limite: form.fecha_limite || null,
-        expediente_caratula: expObj?.caratula ?? '',
-        expediente_area: expObj?.area ?? 'CIVIL',
-        creado_por: usuarioActivo?.id ?? '',
-        estado: 'pendiente',
-        created_at: HOY,
-        area_destinataria: form.area_destinataria || undefined,
-        persona_contacto_id: form.persona_contacto_id || undefined,
-        persona_contacto: form.persona_contacto || undefined,
-      })
-      toast.success('Solicitud asignada.')
-    }
-    setModalAbierto(false)
-  }
-
-  function moverTarea(id: string, estado: EstadoTarea) {
-    moverTareaStore(id, estado)
-    toast.success(`Solicitud movida a ${COLUMNAS.find(c => c.key === estado)?.label}.`)
-  }
-
-  function eliminarTarea(id: string) {
-    eliminarTareaStore(id)
-    toast.success('Solicitud eliminada.')
-  }
-
-  function handleDragStart(event: DragStartEvent) {
-    const tarea = tareas.find(t => t.id === event.active.id)
-    setTareaArrastrada(tarea ?? null)
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    setTareaArrastrada(null)
-    if (!over) return
-    const tareaId = active.id as string
-    const columnaDestino = over.id as EstadoTarea
-    if (!['pendiente', 'en_curso', 'completada'].includes(columnaDestino)) return
-    const tarea = tareas.find(t => t.id === tareaId)
-    if (!tarea) return
-    if (tarea.estado === columnaDestino) return
-    moverTarea(tareaId, columnaDestino)
-  }
 
   function limpiarFiltros() {
-    setTipoFiltro('mis_tareas')
+    setTipoFiltro('')
     setFiltroLetrado('')
-    setFiltroAreaExt('')
     setBusqueda('')
     setFiltroExpediente('')
     setFiltroPrioridad('')
   }
-
-  const hayFiltrosActivos =
-    tipoFiltro !== 'mis_tareas' ||
-    busqueda !== '' ||
-    filtroExpediente !== '' ||
-    filtroPrioridad !== ''
+  const hayFiltrosActivos = tipoFiltro !== '' || busqueda !== '' || filtroExpediente !== '' || filtroPrioridad !== '' || filtroLetrado !== ''
 
   const abogados = USUARIOS.filter(u => u.rolSistema === 'ABOGADO' || u.rolSistema === 'COORDINADOR')
+
+  // ── Estado solicitudes ────────────────────────────────────────────────────
+  const { solicitudes, responderSolicitud } = useSolicitudesStore()
+  const [vista, setVista] = useState<'mis_solicitudes' | 'mis_pedidos'>('mis_solicitudes')
+  const [modalRespuesta, setModalRespuesta] = useState<Solicitud | null>(null)
+  const [modalVer, setModalVer] = useState<Solicitud | null>(null)
+  const [respForm, setRespForm] = useState({ comentario: '', adjunto_nombre: '', adjunto_size: '' })
+  const [menuSol, setMenuSol] = useState<string | null>(null)
+
+  const uid = usuarioActivo?.id ?? ''
+  const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'
+  const esGerente = usuarioActivo?.rolSistema === 'REFERENTE'
+
+  const solicitudesFiltradas = useMemo(() => {
+    return solicitudes.filter(s => {
+      if (vista === 'mis_solicitudes' && s.creado_por !== uid) return false
+      if (vista === 'mis_pedidos' && !s.asignado_a.includes(uid)) return false
+      if (tipoFiltro === 'interna' && s.tipo !== 'interna') return false
+      if (tipoFiltro === 'externa' && s.tipo !== 'externa') return false
+      if (filtroPrioridad && s.prioridad !== filtroPrioridad) return false
+      if (filtroExpediente && !s.expediente_id.toLowerCase().includes(filtroExpediente.toLowerCase())) return false
+      if (filtroLetrado && s.creado_por !== filtroLetrado) return false
+      if (busqueda && !s.titulo.toLowerCase().includes(busqueda.toLowerCase())) return false
+      return true
+    })
+  }, [solicitudes, vista, uid, tipoFiltro, filtroPrioridad, filtroExpediente, filtroLetrado, busqueda])
+
+  function puedeAdjuntar(s: Solicitud): boolean {
+    if (s.estado === 'respondida') return false
+    if (s.tipo === 'externa' && s.creado_por === uid) return true
+    if (s.tipo === 'interna' && s.asignado_a.includes(uid)) return true
+    return false
+  }
+
+  function guardarRespuesta() {
+    if (!modalRespuesta || !respForm.comentario.trim()) return
+    responderSolicitud(modalRespuesta.id, {
+      comentario: respForm.comentario,
+      adjunto_nombre: respForm.adjunto_nombre || undefined,
+      adjunto_size: respForm.adjunto_size || undefined,
+      respondido_por: uid,
+      fecha: new Date().toISOString().split('T')[0],
+    })
+    if (modalRespuesta.tipo === 'interna') {
+      useNotificacionesStore.getState().agregarNotificacion({
+        tipo: 'ALERTA_VENCIMIENTO',
+        titulo: `Respuesta: ${modalRespuesta.titulo}`,
+        descripcion: `${getNombreCompleto(getUsuarioById(uid)!)} respondió tu solicitud.`,
+        expedienteId: modalRespuesta.expediente_id,
+        tipoGestion: '', caratula: modalRespuesta.expediente_caratula,
+        numeroCausa: null, leida: false,
+        fecha: new Date().toISOString(),
+        destinatarioId: modalRespuesta.creado_por,
+      })
+    }
+    toast.success('Respuesta registrada. Solicitud marcada como cumplida.')
+    setModalRespuesta(null)
+    setRespForm({ comentario: '', adjunto_nombre: '', adjunto_size: '' })
+  }
+
+  const PRIORIDAD_COLOR: Record<string, string> = {
+    alta: 'bg-[#fee2e2] text-[#b91c1c]',
+    media: 'bg-[#fef3c7] text-[#d97706]',
+    baja: 'bg-[#e8e8e8] text-[#4a6a84]',
+  }
 
   return (
     <div className="p-6 space-y-5 max-w-screen-xl">
 
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Solicitudes</h1>
-          <p className="text-sm text-[#4a6a84] mt-1">
-            {tareasFiltradas.length} solicitud{tareasFiltradas.length !== 1 ? 'es' : ''} ·{' '}
-            {tareasPorEstado.pendiente.length} pendiente{tareasPorEstado.pendiente.length !== 1 ? 's' : ''} ·{' '}
-            {tareasPorEstado.en_curso.length} en curso
-          </p>
-        </div>
+      <div>
+        <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Solicitudes</h1>
+        <p className="text-sm text-[#4a6a84] mt-1">
+          {solicitudesFiltradas.length} solicitud{solicitudesFiltradas.length !== 1 ? 'es' : ''}
+        </p>
+      </div>
+
+      {/* Toggle mis solicitudes / mis pedidos */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {(['mis_solicitudes', 'mis_pedidos'] as const).map(v => (
+          <button
+            key={v}
+            onClick={() => setVista(v)}
+            className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${
+              vista === v
+                ? 'bg-[#1b3a57] text-white'
+                : 'bg-white border border-[rgba(0,0,0,0.10)] text-[#4a6a84] hover:text-[#1b3a57]'
+            }`}
+          >
+            {v === 'mis_solicitudes' ? 'Mis solicitudes' : 'Mis pedidos'}
+          </button>
+        ))}
+        <p className="text-[11px] text-[#7a9ab4]">
+          {vista === 'mis_solicitudes'
+            ? 'Solicitudes que hiciste a otros'
+            : 'Pedidos que otros te hicieron a vos'}
+        </p>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-2xl shadow-card px-5 py-3 flex items-center gap-3 flex-wrap">
-        {/* Búsqueda */}
-        <div className="relative flex-1 min-w-[180px]">
-          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
-          <input
-            className="field-input pl-9 w-full text-sm"
-            placeholder="Buscar solicitud..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-          />
+      <div className="bg-white rounded-2xl shadow-card px-5 py-3 flex items-center gap-3">
+        <div className="relative flex-1 min-w-[160px]">
+          <Icon name="search" size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
+          <input className="field-input pl-8 w-full text-sm" placeholder="Buscar solicitud..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
         </div>
-
-        {/* Expediente */}
-        <div className="relative min-w-[180px]">
-          <Icon name="folder" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
-          <input
-            className="field-input pl-8 w-full text-sm"
-            placeholder="Filtrar por expediente..."
-            value={filtroExpediente}
-            onChange={e => setFiltroExpediente(e.target.value)}
-          />
-        </div>
-
-        {/* Tipo de filtro */}
-        <div className="flex gap-2 flex-wrap">
-          {/* Select principal de tipo de filtro */}
-          <select
-            className="field-input text-sm"
-            value={tipoFiltro}
-            onChange={e => {
-              setTipoFiltro(e.target.value as TipoFiltro)
-              setFiltroLetrado('')
-              setFiltroAreaExt('')
-            }}
-          >
-            <option value="mis_tareas">★ Mis solicitudes</option>
-            <option value="creadas_por_mi">Mis pedidos</option>
-            <option value="interna">Interna SIAJ</option>
-            <option value="externa">Externa SIAJ</option>
-            <option value="">Todas</option>
-          </select>
-
-          {/* Segundo select — interna (letrado) */}
-          {tipoFiltro === 'interna' && (
-            <select
-              className="field-input text-sm"
-              value={filtroLetrado}
-              onChange={e => setFiltroLetrado(e.target.value)}
-            >
-              <option value="">Todos los letrados</option>
-              {abogados.map(u => (
-                <option key={u.id} value={u.id}>
-                  {getNombreCompleto(u)}{u.id === usuarioActivo?.id ? ' (yo)' : ''}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Segundo select — externa (área) */}
-          {tipoFiltro === 'externa' && (
-            <select
-              className="field-input text-sm"
-              value={filtroAreaExt}
-              onChange={e => setFiltroAreaExt(e.target.value)}
-            >
-              <option value="">Todas las áreas</option>
-              <option value="RRHH">RRHH</option>
-              <option value="COMERCIAL">Comercial</option>
-              <option value="SEGUROS">Seguros</option>
-            </select>
-          )}
-        </div>
-
-        {/* Prioridad */}
-        <select
-          className="field-input text-sm"
-          value={filtroPrioridad}
-          onChange={e => setFiltroPrioridad(e.target.value)}
-        >
-          <option value="">Todas las prioridades</option>
+        <input className="field-input flex-1 min-w-0 text-sm" placeholder="N° actuación..." value={filtroExpediente} onChange={e => setFiltroExpediente(e.target.value)} />
+        <select className="field-input flex-1 min-w-0 text-sm" value={tipoFiltro} onChange={e => setTipoFiltro(e.target.value as TipoFiltro)}>
+          <option value="">Interno / Externo</option>
+          <option value="interna">Interna</option>
+          <option value="externa">Externa</option>
+        </select>
+        <select className="field-input flex-1 min-w-0 text-sm" value={filtroPrioridad} onChange={e => setFiltroPrioridad(e.target.value)}>
+          <option value="">Prioridad</option>
           <option value="alta">Alta</option>
           <option value="media">Media</option>
           <option value="baja">Baja</option>
         </select>
-
+        {(esCoordinador || esGerente) && (
+          <select className="field-input flex-1 min-w-0 text-sm" value={filtroLetrado} onChange={e => setFiltroLetrado(e.target.value)}>
+            <option value="">Todos los letrados</option>
+            {abogados.map(u => <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>)}
+          </select>
+        )}
         {hayFiltrosActivos && (
-          <button
-            onClick={limpiarFiltros}
-            className="flex items-center gap-1 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-          >
-            <Icon name="filter_alt_off" size={14} />
-            Limpiar
+          <button onClick={limpiarFiltros} className="flex items-center gap-1 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+            <Icon name="filter_alt_off" size={14} /> Limpiar
           </button>
         )}
       </div>
 
-      {/* Kanban */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-3 gap-5 items-start">
-          {COLUMNAS.map(col => {
-            const items = tareasPorEstado[col.key]
-            return (
-              <ColumnaDroppable key={col.key} id={col.key} className="space-y-3">
-                {/* Header columna */}
-                <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${col.color}`}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-                    <span className="text-xs font-black uppercase tracking-widest text-[#1b3a57]">
-                      {col.label}
-                    </span>
-                  </div>
-                  <span className="text-xs font-bold text-[#4a6a84] bg-white/60 px-2 py-0.5 rounded-full">
-                    {items.length}
-                  </span>
-                </div>
-
-                {/* Cards */}
-                <div className="space-y-3 min-h-[120px]">
-                  {items.map(t => (
-                    <TareaCardDraggable
-                      key={t.id}
-                      tarea={t}
-                      onMover={moverTarea}
-                      onEditar={abrirEditar}
-                      onEliminar={eliminarTarea}
-                    />
-                  ))}
-
-                  {/* Zona de drop vacía visible */}
-                  {items.length === 0 && (
-                    <div className="h-20 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.08)] flex items-center justify-center text-xs text-[#c0c0c0]">
-                      Soltá aquí
+      {/* Tabla */}
+      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-[rgba(0,0,0,0.06)]">
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Actuación</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Solicitud</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+                {vista === 'mis_solicitudes' ? 'Dirigida a' : 'Solicitado por'}
+              </th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Prioridad</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Fecha límite</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Estado</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[rgba(0,0,0,0.04)]">
+            {solicitudesFiltradas.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-16 text-center">
+                  <Icon name="inbox" size={32} className="text-[#c0c0c0] mx-auto mb-2" />
+                  <p className="text-sm text-[#7a9ab4]">Sin solicitudes para mostrar.</p>
+                </td>
+              </tr>
+              ) : solicitudesFiltradas.map((s, idx) => {
+              const vencida = s.fecha_limite && s.fecha_limite < HOY && s.estado !== 'respondida'
+              return (
+                <tr key={s.id} className="hover:bg-[#f9fbfc] transition-colors">
+                  <td className="px-4 py-3">
+                    <button onClick={() => navigate(RUTAS.EXPEDIENTE(s.expediente_id))} className="flex items-center gap-1.5 group">
+                      <Icon name="folder" size={13} className="text-[#4a6a84]" />
+                      <span className="font-mono text-xs font-bold text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">{s.expediente_id}</span>
+                      <AreaBadge area={s.expediente_area} />
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 max-w-[260px]">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <p className="text-sm font-semibold text-[#1b3a57] truncate">{s.titulo}</p>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                        s.tipo === 'interna' ? 'bg-[#dbeafe] text-[#1b3a57]' : 'bg-[#f3e8ff] text-[#7c3aed]'
+                      }`}>
+                        {s.tipo === 'interna' ? 'Interna' : 'Externa'}
+                      </span>
                     </div>
-                  )}
+                    {s.descripcion && <p className="text-[11px] text-[#4a6a84] truncate">{s.descripcion}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-xs font-semibold text-[#1b3a57]">
+                      {vista === 'mis_solicitudes'
+                        ? s.asignado_a_nombre
+                        : (() => {
+                            const u = USUARIOS.find(u => u.id === s.creado_por)
+                            return u ? `${u.apellido}, ${u.nombre}` : s.creado_por
+                          })()
+                      }
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${PRIORIDAD_COLOR[s.prioridad]}`}>
+                      {s.prioridad.charAt(0).toUpperCase() + s.prioridad.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {s.fecha_limite ? (
+                      <span className={`flex items-center gap-1 text-xs font-medium ${vencida ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
+                        {vencida && <Icon name="warning" size={12} />}
+                        {formatFecha(s.fecha_limite)}
+                      </span>
+                    ) : <span className="text-[11px] text-[#c0c0c0]">Sin fecha</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${
+                      s.estado === 'respondida' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#fef3c7] text-[#d97706]'
+                    }`}>
+                      <Icon name={s.estado === 'respondida' ? 'check_circle' : 'schedule'} size={11} />
+                      {s.estado === 'respondida' ? 'Respondida' : 'Pendiente'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="relative inline-block">
+                      <button
+                        onClick={() => setMenuSol(menuSol === s.id ? null : s.id)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                      >
+                        <Icon name="more_vert" size={16} />
+                      </button>
+                      {menuSol === s.id && (
+                        <div
+                          className={`absolute right-0 w-48 bg-white rounded-xl shadow-card-lg border border-[rgba(0,0,0,0.10)] z-20 py-1 ${
+                            idx === 0 && solicitudesFiltradas.length > 1 ? 'top-full mt-1' : 'bottom-full mb-1'
+                          }`}
+                          onMouseLeave={() => setMenuSol(null)}
+                        >
+                          <button onClick={() => { setModalVer(s); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#f5f5f5]">
+                            <Icon name="visibility" size={14} /> Ver detalle
+                          </button>
+                          {puedeAdjuntar(s) && (
+                            <button onClick={() => { setModalRespuesta(s); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#f5f5f5]">
+                              <Icon name="attach_file" size={14} /> Adjuntar respuesta
+                            </button>
+                          )}
+                          <button onClick={() => { navigate(RUTAS.EXPEDIENTE(s.expediente_id)); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#f5f5f5]">
+                            <Icon name="open_in_new" size={14} /> Ver actuación
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modal ver detalle */}
+      <Modal open={!!modalVer} onClose={() => setModalVer(null)} titulo="Detalle de solicitud" size="md"
+        footer={<button onClick={() => setModalVer(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8]">Cerrar</button>}
+      >
+        {modalVer && (
+          <div className="space-y-4">
+            <div className="space-y-0">
+              {([
+                ['Actuación', modalVer.expediente_id],
+                ['Título', modalVer.titulo],
+                ['Descripción', modalVer.descripcion],
+                ['Tipo', modalVer.tipo === 'interna' ? 'Interna' : 'Externa'],
+                ['Prioridad', modalVer.prioridad.charAt(0).toUpperCase() + modalVer.prioridad.slice(1)],
+                ['Dirigida a', modalVer.asignado_a_nombre],
+                ['Fecha límite', modalVer.fecha_limite ? formatFecha(modalVer.fecha_limite) : 'Sin fecha'],
+              ] as [string, string][]).map(([label, value]) => (
+                <div key={label} className="flex gap-3 py-2.5 border-b border-[rgba(0,0,0,0.06)] last:border-0">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-28 flex-shrink-0 pt-0.5">{label}</span>
+                  <span className="text-sm text-[#1b3a57]">{value}</span>
                 </div>
-              </ColumnaDroppable>
-            )
-          })}
-        </div>
-
-        {/* Overlay — preview flotante al arrastrar */}
-        <DragOverlay>
-          {tareaArrastrada && (
-            <div className="opacity-95 rotate-1 shadow-2xl rounded-xl">
-              <TareaCard
-                tarea={tareaArrastrada}
-                onMover={() => {}}
-                onEditar={() => {}}
-                onEliminar={() => {}}
-              />
+              ))}
             </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+            {modalVer.respuesta && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-green-700">Respuesta</p>
+                <p className="text-sm text-[#1b3a57]">{modalVer.respuesta.comentario}</p>
+                {modalVer.respuesta.adjunto_nombre && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Icon name="attach_file" size={13} className="text-[#4a6a84]" />
+                    <span className="text-xs text-[#4a6a84]">{modalVer.respuesta.adjunto_nombre}</span>
+                    <button className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#1b3a57] text-white hover:opacity-80 transition-opacity ml-1">
+                      <Icon name="download" size={11} />
+                      Descargar
+                    </button>
+                  </div>
+                )}
+                <p className="text-[10px] text-[#7a9ab4]">
+                  {formatFecha(modalVer.respuesta.fecha)} · {(() => {
+                    const u = getUsuarioById(modalVer.respuesta.respondido_por)
+                    return u ? getNombreCompleto(u) : modalVer.respuesta.respondido_por
+                  })()}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
-      {/* Modal nueva/editar tarea */}
-      <Modal
-        open={modalAbierto}
-        onClose={() => setModalAbierto(false)}
-        titulo={tareaEditando ? 'Editar solicitud' : 'Nueva solicitud'}
-        size="md"
+      {/* Modal adjuntar respuesta */}
+      <Modal open={!!modalRespuesta} onClose={() => setModalRespuesta(null)} titulo="Adjuntar respuesta" size="md"
         footer={
           <>
+            <button onClick={() => setModalRespuesta(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8]">Cancelar</button>
             <button
-              onClick={() => setModalAbierto(false)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={guardarTarea}
-              disabled={!form.titulo.trim() || !form.expediente_id}
+              onClick={guardarRespuesta}
+              disabled={!respForm.comentario.trim()}
               className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
-              <Icon name="save" size={16} />
-              {tareaEditando ? 'Guardar cambios' : 'Asignar solicitud'}
+              <Icon name="save" size={15} /> Guardar respuesta
             </button>
           </>
         }
       >
-        <div className="space-y-4">
-
-          {/* Título */}
-          <div>
-            <label className="field-label">Título de la solicitud <span className="text-[#b91c1c]">*</span></label>
-            <input
-              type="text"
-              className="field-input w-full"
-              placeholder="Ej: Presentar escrito de contestación..."
-              value={form.titulo}
-              onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
-              autoFocus
-            />
-          </div>
-
-          {/* Descripción */}
-          <div>
-            <label className="field-label">Descripción</label>
-            <textarea
-              className="field-input w-full resize-y"
-              style={{ minHeight: 72 }}
-              placeholder="Detalles de la solicitud..."
-              value={form.descripcion}
-              onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
-            />
-          </div>
-
-          {/* Expediente asociado */}
-          <div>
-            <label className="field-label">Expediente asociado <span className="text-[#b91c1c]">*</span></label>
-            <select
-              className="field-input w-full"
-              value={form.expediente_id}
-              onChange={e => setForm(p => ({ ...p, expediente_id: e.target.value }))}
-            >
-              <option value="">Seleccionar expediente...</option>
-              {expedientes.map(e => (
-                <option key={e.id} value={e.id}>
-                  {e.id} — {e.caratula.slice(0, 60)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Asignar a — selector en dos pasos */}
-            <div className="space-y-2">
-              <label className="field-label">Asignar a</label>
-
-              {/* Paso 1 — Grupo/Área */}
-              <select
-                className="field-input w-full"
-                value={grupoAsignacion}
-                onChange={e => {
-                  const g = e.target.value as GrupoAsignacion
-                  setGrupoAsignacion(g)
-                  setForm(p => ({
-                    ...p,
-                    asignado_a: '',
-                    area_destinataria: (['RRHH', 'COMERCIAL', 'SEGUROS'] as GrupoAsignacion[]).includes(g) ? g as AreaDestinataria : '',
-                    persona_contacto_id: '',
-                    persona_contacto: '',
-                  }))
-                }}
-              >
-                <option value="">Sin asignar</option>
-                <optgroup label="Interno SIAJ">
-                  <option value="CIVIL">Civil</option>
-                  <option value="LABORAL">Laboral</option>
-                  <option value="PENAL">Penal</option>
-                </optgroup>
-                <optgroup label="Externo SIAJ">
-                  <option value="RRHH">RRHH</option>
-                  <option value="COMERCIAL">Comercial</option>
-                  <option value="SEGUROS">Seguros</option>
-                </optgroup>
-              </select>
-
-              {/* Paso 2 — Persona (solo si hay grupo) */}
-              {grupoAsignacion && (
-                <select
-                  className="field-input w-full"
-                  value={
-                    ['CIVIL', 'LABORAL', 'PENAL'].includes(grupoAsignacion)
-                      ? form.asignado_a
-                      : form.persona_contacto_id
-                  }
-                  onChange={e => {
-                    const val = e.target.value
-                    const esInterno = ['CIVIL', 'LABORAL', 'PENAL'].includes(grupoAsignacion)
-                    if (esInterno) {
-                      setForm(p => ({ ...p, asignado_a: val }))
-                    } else {
-                      const persona = PERSONAS_POR_AREA.find(p => p.id === val)
-                      setForm(p => ({
-                        ...p,
-                        persona_contacto_id: val,
-                        persona_contacto: persona?.nombre ?? '',
-                      }))
-                    }
-                  }}
-                >
-                  <option value="">Seleccioná una persona...</option>
-                  {getPersonasGrupo(grupoAsignacion).map(p => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
-                  ))}
-                </select>
+        {modalRespuesta && (
+          <div className="space-y-4">
+            <div className="bg-[#f5f5f5] rounded-xl px-4 py-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">Solicitud</p>
+              <p className="text-sm font-semibold text-[#1b3a57]">{modalRespuesta.titulo}</p>
+              <p className="text-xs text-[#4a6a84] mt-0.5">{modalRespuesta.descripcion}</p>
+            </div>
+            <div>
+              <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+              <textarea
+                className="field-input w-full resize-y"
+                style={{ minHeight: 80 }}
+                placeholder="Describí la respuesta o lo que estás adjuntando..."
+                value={respForm.comentario}
+                onChange={e => setRespForm(p => ({ ...p, comentario: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="field-label">Adjunto (opcional)</label>
+              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] cursor-pointer hover:bg-[#f5f5f5] transition-colors">
+                <Icon name="attach_file" size={18} className="text-[#4a6a84]" />
+                <span className="text-sm text-[#4a6a84]">{respForm.adjunto_nombre || 'Seleccionar archivo...'}</span>
+                <input type="file" className="hidden" onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) setRespForm(p => ({ ...p, adjunto_nombre: f.name, adjunto_size: `${(f.size / 1024).toFixed(0)} KB` }))
+                }} />
+              </label>
+              {respForm.adjunto_nombre && (
+                <p className="text-[10px] text-[#4a6a84] mt-1">{respForm.adjunto_nombre} · {respForm.adjunto_size}</p>
               )}
             </div>
-
-            {/* Prioridad */}
-            <div>
-              <label className="field-label">Prioridad</label>
-              <div className="flex gap-2 mt-1">
-                {(['alta', 'media', 'baja'] as PrioridadTarea[]).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setForm(prev => ({ ...prev, prioridad: p }))}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all capitalize ${
-                      form.prioridad === p
-                        ? p === 'alta' ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
-                        : p === 'media' ? 'bg-[#fef3c7] border-[#fde68a] text-[#d97706]'
-                        : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.20)] text-[#4a6a84]'
-                        : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
-
-          {/* Fecha límite */}
-          <div>
-            <label className="field-label">Fecha límite</label>
-            <input
-              type="date"
-              className="field-input w-full"
-              value={form.fecha_limite}
-              onChange={e => setForm(p => ({ ...p, fecha_limite: e.target.value }))}
-            />
-          </div>
-
-          {/* Mostrar en agenda */}
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div
-              onClick={() => setForm(p => ({ ...p, mostrar_en_agenda: !p.mostrar_en_agenda }))}
-              className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                form.mostrar_en_agenda ? 'bg-[#1b3a57]' : 'bg-[#e8e8e8]'
-              }`}
-            >
-              <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                form.mostrar_en_agenda ? 'translate-x-4' : 'translate-x-0'
-              }`} />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-[#1b3a57]">Mostrar en agenda</p>
-              <p className="text-[11px] text-[#4a6a84]">Aparecerá en el calendario en la fecha límite</p>
-            </div>
-          </label>
-
-        </div>
+        )}
       </Modal>
     </div>
   )

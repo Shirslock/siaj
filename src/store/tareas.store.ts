@@ -175,3 +175,166 @@ export const useTareasStore = create<TareasState>((set) => ({
       tareas: state.tareas.filter(t => t.id !== id),
     })),
 }))
+
+// ── Tipos Solicitud ───────────────────────────────────────────────────────────
+
+export type TipoSolicitud = 'interna' | 'externa'
+export type EstadoSolicitud = 'pendiente' | 'respondida'
+
+export interface RespuestaSolicitud {
+  comentario: string
+  adjunto_nombre?: string
+  adjunto_size?: string
+  respondido_por: string   // usuario id
+  fecha: string
+}
+
+export interface Solicitud {
+  id: string
+  tipo: TipoSolicitud
+  titulo: string
+  descripcion: string
+  expediente_id: string
+  expediente_caratula: string
+  expediente_area: Area
+  creado_por: string          // quien hizo la solicitud
+  asignado_a: string[]        // a quiénes (usuarios internos o nombre externo)
+  asignado_a_nombre: string   // display
+  area_destinataria?: AreaDestinataria
+  persona_contacto_id?: string
+  persona_contacto?: string
+  prioridad: PrioridadTarea
+  fecha_limite: string | null
+  estado: EstadoSolicitud
+  respuesta?: RespuestaSolicitud
+  created_at: string
+}
+
+// ── Mock solicitudes ──────────────────────────────────────────────────────────
+
+const SOLICITUDES_MOCK: Solicitud[] = [
+  // ── SOL_001: Solicitud INTERNA hecha por Alejandra Lopez a Felix Casano ──
+  // Aparece en "Mis solicitudes" de Alejandra y en "Mis pedidos" de Felix
+  {
+    id: 'SOL_001',
+    tipo: 'interna',
+    titulo: 'Antecedentes del expediente C-0041/2026',
+    descripcion: 'Necesito el informe de estado actualizado del lanzamiento para elevar a Gerencia. Adjuntá el último escrito presentado.',
+    expediente_id: 'C-0041/2026',
+    expediente_caratula: 'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO — INMUEBLE KM 12 LÍNEA ROCA',
+    expediente_area: 'CIVIL',
+    creado_por: 'UR_018',
+    asignado_a: ['UR_004'],
+    asignado_a_nombre: 'CASANO, Felix',
+    prioridad: 'alta',
+    fecha_limite: fechaEnDias(3),
+    estado: 'pendiente',
+    created_at: HOY,
+  },
+
+  // ── SOL_002: Solicitud EXTERNA hecha por Alejandra Lopez a perito externo ──
+  // Aparece en "Mis solicitudes" de Alejandra — puede adjuntar respuesta ella misma
+  {
+    id: 'SOL_002',
+    tipo: 'externa',
+    titulo: 'Informe pericial contable — Causa 8821/2026',
+    descripcion: 'Solicitud de informe pericial contable al perito designado por el juzgado. Se aguarda respuesta por mail.',
+    expediente_id: 'C-0042/2026',
+    expediente_caratula: 'SOFSA SA C/ PERALTA OSCAR HÉCTOR S/ LANZAMIENTO JUDICIALIZADO',
+    expediente_area: 'CIVIL',
+    creado_por: 'UR_018',
+    asignado_a: [],
+    asignado_a_nombre: 'Dr. Pérez, Juan (Perito externo)',
+    prioridad: 'media',
+    fecha_limite: fechaEnDias(15),
+    estado: 'pendiente',
+    created_at: HOY,
+  },
+
+  // ── SOL_003: Pedido hacia Alejandra Lopez hecho por Adriana Benitez ──
+  // Aparece en "Mis pedidos" de Alejandra — puede adjuntar respuesta
+  {
+    id: 'SOL_003',
+    tipo: 'interna',
+    titulo: 'Revisión de dictamen — Causa C-0009/2024',
+    descripcion: 'Necesito que revises el dictamen antes del viernes y me confirmes si hay observaciones para corregir antes de presentarlo.',
+    expediente_id: 'C-0009/2024',
+    expediente_caratula: 'SOFSA SA C/ COMERCIOS VARIOS S/ COBRO DE CÁNONES',
+    expediente_area: 'CIVIL',
+    creado_por: 'UR_003',
+    asignado_a: ['UR_018'],
+    asignado_a_nombre: 'LOPEZ, Alejandra',
+    prioridad: 'alta',
+    fecha_limite: fechaEnDias(4),
+    estado: 'pendiente',
+    created_at: HOY,
+  },
+
+  // ── SOL_004: Pedido hacia Alejandra Lopez hecho por Pablo Pisano ──
+  // Aparece en "Mis pedidos" de Alejandra — puede adjuntar respuesta
+  {
+    id: 'SOL_004',
+    tipo: 'interna',
+    titulo: 'Autorización para ampliar plazo de contestación',
+    descripcion: 'La parte actora solicitó extensión. Necesito tu autorización formal para presentar la nota al juzgado.',
+    expediente_id: 'C-0023/2026',
+    expediente_caratula: 'RODRIGUEZ MARIO OSCAR C/ SOFSA SA S/ DAÑOS Y PERJUICIOS',
+    expediente_area: 'CIVIL',
+    creado_por: 'UR_013',
+    asignado_a: ['UR_018'],
+    asignado_a_nombre: 'LOPEZ, Alejandra',
+    prioridad: 'media',
+    fecha_limite: fechaEnDias(7),
+    estado: 'pendiente',
+    created_at: HOY,
+  },
+
+  // ── SOL_005: Solicitud hecha por Adriana Benitez a Alejandra Lopez ──
+  // Aparece en "Mis solicitudes" de Adriana y en "Mis pedidos" de Alejandra
+  {
+    id: 'SOL_005',
+    tipo: 'interna',
+    titulo: 'Lineamientos para contestar demanda',
+    descripcion: 'Antes de redactar la contestación quiero alinearme con vos en la estrategia procesal. ¿Podés pasarme un memo con los lineamientos?',
+    expediente_id: 'C-0001/2026',
+    expediente_caratula: 'FERNANDEZ MARIA ROSA C/ SOFSA SA S/ DAÑOS Y PERJUICIOS',
+    expediente_area: 'CIVIL',
+    creado_por: 'UR_003',
+    asignado_a: ['UR_018'],
+    asignado_a_nombre: 'LOPEZ, Alejandra',
+    prioridad: 'baja',
+    fecha_limite: fechaEnDias(10),
+    estado: 'pendiente',
+    created_at: HOY,
+  },
+]
+
+// ── Store solicitudes ─────────────────────────────────────────────────────────
+
+interface SolicitudesState {
+  solicitudes: Solicitud[]
+  agregarSolicitud: (s: Omit<Solicitud, 'id'>) => void
+  responderSolicitud: (id: string, respuesta: RespuestaSolicitud) => void
+  editarSolicitud: (id: string, cambios: Partial<Solicitud>) => void
+}
+
+export const useSolicitudesStore = create<SolicitudesState>((set) => ({
+  solicitudes: SOLICITUDES_MOCK,
+
+  agregarSolicitud: (s) =>
+    set(state => ({
+      solicitudes: [{ ...s, id: `SOL_${Date.now()}` }, ...state.solicitudes],
+    })),
+
+  responderSolicitud: (id, respuesta) =>
+    set(state => ({
+      solicitudes: state.solicitudes.map(s =>
+        s.id === id ? { ...s, estado: 'respondida', respuesta } : s
+      ),
+    })),
+
+  editarSolicitud: (id, cambios) =>
+    set(state => ({
+      solicitudes: state.solicitudes.map(s => s.id === id ? { ...s, ...cambios } : s),
+    })),
+}))
