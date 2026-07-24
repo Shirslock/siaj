@@ -21,6 +21,7 @@ export const TIPOS_GESTION: TipoGestionItem[] = [
   { code:'COBRO_CANON',       id:'TPG_006', label:'Cobro de Cánones',                 areas:['CIVIL'],                   canal:'EE_GDE',   canales:['EE_GDE'] },
   { code:'RECLAMO_CONTRAT',   id:'TPG_007', label:'Reclamo a Contratistas',           areas:['CIVIL'],                   canal:'EE_GDE',   canales:['EE_GDE'] },
   { code:'LANZAMIENTO',       id:'TPG_008', label:'Lanzamientos',                     areas:['CIVIL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
+  { code:'LANZAMIENTO_JUDICIALIZADO', id:'TPG_023', label:'Lanzamiento Judicializado', areas:['CIVIL'], canal:'MEMO_GDE', canales:['MEMO_GDE'], soloDesdeJuicio: true },
   { code:'RECUPERO',          id:'TPG_009', label:'Recuperos',                        areas:['CIVIL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
   { code:'CONSIGNACION',      id:'TPG_010', label:'Consignaciones',                   areas:['LABORAL'],                 canal:'MEMO_GDE', canales:['MEMO_GDE'] },
   { code:'DESAFUERO',         id:'TPG_011', label:'Desafueros',                       areas:['LABORAL'],                 canal:'MEMO_GDE', canales:['MEMO_GDE'] },

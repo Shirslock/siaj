@@ -8,12 +8,13 @@ export const BLANK_SOLICITUD = {
   titulo:              '',
   descripcion:         '',
   grupoAsig:           '' as GrupoAsig,
-  asignado_a:          '',
+  asignado_a:          [] as string[],
   persona_contacto_id: '',
   persona_contacto:    '',
   area_destinataria:   '' as 'RRHH' | 'COMERCIAL' | 'SEGUROS' | '',
   prioridad:           'media' as 'alta' | 'media' | 'baja',
   fecha_limite:        '',
+  mostrar_en_agenda:   false,
 }
 
 interface Props {
@@ -70,7 +71,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
         />
       </div>
 
-      {/* Asignar a — selector en dos pasos */}
+      {/* Asignar a — selector en dos pasos con multiselect */}
       <div>
         <label className="field-label">Asignar a</label>
         <select
@@ -82,7 +83,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
             setForm(p => ({
               ...p,
               grupoAsig:           g,
-              asignado_a:          '',
+              asignado_a:          [],
               persona_contacto_id: '',
               persona_contacto:    '',
               area_destinataria:   esExt ? g as 'RRHH' | 'COMERCIAL' | 'SEGUROS' : '',
@@ -102,35 +103,51 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
           </optgroup>
         </select>
 
-        {form.grupoAsig && (
-          <select
-            className="field-input w-full"
-            value={
-              ['CIVIL', 'LABORAL', 'PENAL'].includes(form.grupoAsig)
-                ? form.asignado_a
-                : form.persona_contacto_id
-            }
-            onChange={e => {
-              const val  = e.target.value
-              const esInt = ['CIVIL', 'LABORAL', 'PENAL'].includes(form.grupoAsig)
-              if (esInt) {
-                setForm(p => ({ ...p, asignado_a: val }))
-              } else {
-                const persona = PERSONAS_POR_AREA.find(p => p.id === val)
-                setForm(p => ({
-                  ...p,
-                  persona_contacto_id: val,
-                  persona_contacto:    persona?.nombre ?? '',
-                }))
-              }
-            }}
-          >
-            <option value="">Seleccioná una persona...</option>
-            {getPersonasGrupo(form.grupoAsig).map(p => (
-              <option key={p.id} value={p.id}>{p.nombre}</option>
-            ))}
-          </select>
-        )}
+        {form.grupoAsig && (() => {
+          const personas = getPersonasGrupo(form.grupoAsig)
+          const esInt    = ['CIVIL', 'LABORAL', 'PENAL'].includes(form.grupoAsig)
+          return (
+            <div className="space-y-1.5">
+              {personas.map(persona => {
+                const seleccionado = form.asignado_a.includes(persona.id)
+                return (
+                  <label
+                    key={persona.id}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border cursor-pointer transition-colors ${
+                      seleccionado
+                        ? 'bg-[rgba(196,223,232,0.30)] border-[#4a9ab5]'
+                        : 'border-[rgba(0,0,0,0.10)] hover:bg-[#f5f5f5]'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="accent-[#1b3a57]"
+                      checked={seleccionado}
+                      onChange={() => {
+                        if (esInt) {
+                          setForm(p => ({
+                            ...p,
+                            asignado_a: seleccionado
+                              ? p.asignado_a.filter(id => id !== persona.id)
+                              : [...p.asignado_a, persona.id],
+                          }))
+                        } else {
+                          setForm(p => ({
+                            ...p,
+                            asignado_a: seleccionado
+                              ? p.asignado_a.filter(id => id !== persona.id)
+                              : [...p.asignado_a, persona.id],
+                          }))
+                        }
+                      }}
+                    />
+                    <span className="text-sm text-[#1b3a57]">{persona.nombre}</span>
+                  </label>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Prioridad */}
@@ -165,9 +182,27 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
           type="date"
           className="field-input w-full"
           value={form.fecha_limite}
-          onChange={e => setForm(p => ({ ...p, fecha_limite: e.target.value }))}
+          onChange={e => setForm(p => ({ ...p, fecha_limite: e.target.value, mostrar_en_agenda: false }))}
         />
       </div>
+
+      {/* Switch agenda — solo si hay fecha límite */}
+      <label className="flex items-center gap-3 cursor-pointer group">
+        <div
+          onClick={() => setForm(p => ({ ...p, mostrar_en_agenda: !p.mostrar_en_agenda }))}
+          className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+            form.mostrar_en_agenda ? 'bg-[#1b3a57]' : 'bg-[#e8e8e8]'
+          }`}
+        >
+          <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+            form.mostrar_en_agenda ? 'translate-x-4' : 'translate-x-0'
+          }`} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-[#1b3a57]">Mostrar en agenda</p>
+          <p className="text-[11px] text-[#4a6a84]">Aparecerá en el calendario en la fecha límite</p>
+        </div>
+      </label>
     </div>
   )
 }
