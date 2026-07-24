@@ -474,15 +474,43 @@ export default function AgendaPage() {
               {eventosPanel.map(ev => (
                 <div
                   key={ev.id}
-                  onClick={() => navigate(RUTAS.EXPEDIENTE(ev.expediente_id))}
-                  className={`rounded-xl border p-3 cursor-pointer hover:opacity-80 transition-opacity ${TIPO_COLOR[ev.tipo ?? 'ACTIVIDAD']}`}
+                  className={`rounded-xl border p-3 ${TIPO_COLOR[ev.tipo ?? 'ACTIVIDAD']}`}
                 >
-                  <div className="flex items-center gap-1.5 mb-1">
+                  <div className="flex items-start justify-between gap-1 mb-1">
                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${TIPO_COLOR[ev.tipo ?? 'ACTIVIDAD']}`}>
                       {ev.tipo === 'AUDIENCIA' ? 'Audiencia' : ev.tipo === 'TAREA' ? 'Tarea' : 'Actividad'}
                     </span>
+                    {ev.tipo !== 'TAREA' && (
+                      <button
+                        title={ev.estado === 'COMPLETADA' ? 'Cumplido' : 'Marcar cumplido'}
+                        disabled={ev.estado === 'COMPLETADA'}
+                        onClick={e => {
+                          e.stopPropagation()
+                          const { editarActividad } = useExpedientesStore.getState()
+                          editarActividad(
+                            ev.expediente_id,
+                            Number(ev.actividad_id),
+                            { estado: 'COMPLETADA' },
+                            usuarioActivo?.id ?? ''
+                          )
+                          toast.success('Actividad marcada como cumplida.')
+                        }}
+                        className={`flex-shrink-0 p-0.5 rounded-lg transition-colors ${
+                          ev.estado === 'COMPLETADA'
+                            ? 'text-green-600 opacity-100 cursor-default'
+                            : 'text-[#4a6a84] hover:bg-green-100 hover:text-green-600'
+                        }`}
+                      >
+                        <Icon name="check_circle" size={16} />
+                      </button>
+                    )}
                   </div>
-                  <p className="text-sm font-semibold text-[#1b3a57]">{ev.titulo}</p>
+                  <p
+                    className="text-sm font-semibold text-[#1b3a57] cursor-pointer hover:underline"
+                    onClick={() => navigate(RUTAS.EXPEDIENTE(ev.expediente_id))}
+                  >
+                    {ev.titulo}
+                  </p>
                   <p className="text-[10px] font-mono text-[#4a6a84] mt-0.5">{ev.expediente_id}</p>
                 </div>
               ))}
@@ -510,6 +538,25 @@ export default function AgendaPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setAgendaEvDetalle(null)}>Cerrar</Button>
+            {agendaEvDetalle && agendaEvDetalle.tipo !== 'TAREA' && (
+              <button
+                onClick={() => {
+                  const { editarActividad } = useExpedientesStore.getState()
+                  editarActividad(
+                    agendaEvDetalle.expediente_id,
+                    Number(agendaEvDetalle.actividad_id),
+                    { estado: 'COMPLETADA' },
+                    usuarioActivo?.id ?? ''
+                  )
+                  toast.success('Actividad marcada como cumplida.')
+                  setAgendaEvDetalle(null)
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border-2 border-green-600 text-green-700 hover:bg-green-50 transition-colors"
+              >
+                <Icon name="check_circle" size={16} />
+                Cumplido
+              </button>
+            )}
             {agendaEvDetalle && (
               <Button variant="primary" onClick={() => { navigate(RUTAS.EXPEDIENTE(agendaEvDetalle.expediente_id)); setAgendaEvDetalle(null) }}>
                 Ver actuación

@@ -464,7 +464,7 @@ export function TimelinePenal({ exp }: Props) {
       expediente_id:       exp.id,
       expediente_caratula: exp.caratula,
       expediente_area:     exp.area,
-      asignado_a:          formSolicitud.asignado_a,
+      asignado_a:          formSolicitud.asignado_a[0] ?? '',
       creado_por:          usuarioActivo?.id ?? '',
       fecha_limite:        formSolicitud.fecha_limite || null,
       prioridad:           formSolicitud.prioridad,

@@ -81,6 +81,8 @@ export default function DetalleExpedientePage() {
     fecha_inicio: HOY,
     tipo_juicio: '',
     monto: '',
+    ubicacion: '',
+    linea: '',
   })
 
   const menuRef = useRef<HTMLDivElement>(null)
@@ -713,34 +715,23 @@ export default function DetalleExpedientePage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="field-label">Oficio Judicial (OJ)</label>
-              <input type="text" className="field-input w-full" placeholder="OJ-2026-XXXX"
-                value={formJuicio.oficio_judicial}
-                onChange={e => setFormJuicio(p => ({ ...p, oficio_judicial: e.target.value }))} />
-            </div>
-            <div>
-              <label className="field-label">Tipo de Intervención</label>
-              <input
-                type="text"
-                className="field-input w-full opacity-60 cursor-not-allowed"
-                value="Actora"
-                readOnly
-              />
-              <p className="text-[10px] text-[#7a9ab4] mt-1">Pre-seleccionado según tipo de gestión. No editable.</p>
-            </div>
-            <div>
-              <label className="field-label">Secretaría</label>
-              <input type="text" className="field-input w-full" placeholder="Ej: Secretaría N°3"
-                value={formJuicio.secretaria}
-                onChange={e => setFormJuicio(p => ({ ...p, secretaria: e.target.value }))} />
-            </div>
+            {/* N° de Causa — siempre */}
             <div>
               <label className="field-label">N° de Causa <span className="text-[#b91c1c]">*</span></label>
               <input type="text" className="field-input w-full font-mono" placeholder="FSM-XXXXX/2026"
                 value={formJuicio.numero_causa}
                 onChange={e => setFormJuicio(p => ({ ...p, numero_causa: e.target.value }))} />
             </div>
+
+            {/* Secretaría — siempre */}
+            <div>
+              <label className="field-label">Secretaría</label>
+              <input type="text" className="field-input w-full" placeholder="Ej: Secretaría N°3"
+                value={formJuicio.secretaria}
+                onChange={e => setFormJuicio(p => ({ ...p, secretaria: e.target.value }))} />
+            </div>
+
+            {/* Juzgado — siempre, col-span-2 */}
             <div className="col-span-2">
               <label className="field-label">Juzgado</label>
               <select className="field-input w-full"
@@ -750,65 +741,119 @@ export default function DetalleExpedientePage() {
                 {ALL_JUZGADOS.map(j => <option key={j.id} value={j.id}>{j.label}</option>)}
               </select>
             </div>
+
+            {/* Carátula — siempre, col-span-2 */}
             <div className="col-span-2">
               <label className="field-label">Carátula</label>
               <input type="text" className="field-input w-full"
                 value={formJuicio.caratula}
                 onChange={e => setFormJuicio(p => ({ ...p, caratula: e.target.value }))} />
             </div>
+
+            {/* Abogado de la contraria — siempre */}
             <div>
               <label className="field-label">Abogado de la Contraria <span className="text-[#b91c1c]">*</span></label>
               <input type="text" className="field-input w-full" placeholder="Dr. Apellido, Nombre"
                 value={formJuicio.abogado_contraria}
                 onChange={e => setFormJuicio(p => ({ ...p, abogado_contraria: e.target.value }))} />
             </div>
+
+            {/* Parte Actora — siempre */}
             <div>
               <label className="field-label">Parte Actora <span className="text-[#b91c1c]">*</span></label>
               <input type="text" className="field-input w-full" placeholder="Nombre del actor"
                 value={formJuicio.parte_actora}
                 onChange={e => setFormJuicio(p => ({ ...p, parte_actora: e.target.value }))} />
             </div>
+
+            {/* Parte Demandada — siempre */}
             <div>
               <label className="field-label">Parte Demandada <span className="text-[#b91c1c]">*</span></label>
               <input type="text" className="field-input w-full"
                 value={formJuicio.parte_demandada}
                 onChange={e => setFormJuicio(p => ({ ...p, parte_demandada: e.target.value }))} />
             </div>
+
+            {/* Codemandados — siempre */}
             <div>
-              <label className="field-label">Coactores</label>
-              <input type="text" className="field-input w-full" placeholder="Si corresponde"
-                value={formJuicio.coactores}
-                onChange={e => setFormJuicio(p => ({ ...p, coactores: e.target.value }))} />
-            </div>
-            <div>
-              <label className="field-label">Codemandados</label>
+              <label className="field-label">Codemandado</label>
               <input type="text" className="field-input w-full" placeholder="Si corresponde"
                 value={formJuicio.codemandados}
                 onChange={e => setFormJuicio(p => ({ ...p, codemandados: e.target.value }))} />
             </div>
+
+            {/* Fecha de Inicio — siempre */}
             <div>
               <label className="field-label">Fecha de Inicio <span className="text-[#b91c1c]">*</span></label>
               <input type="date" className="field-input w-full"
                 value={formJuicio.fecha_inicio}
                 onChange={e => setFormJuicio(p => ({ ...p, fecha_inicio: e.target.value }))} />
             </div>
+
+            {/* Tipo de Juicio — siempre pero opciones según tipo */}
             <div>
               <label className="field-label">Tipo de Juicio <span className="text-[#b91c1c]">*</span></label>
               <select className="field-input w-full"
                 value={formJuicio.tipo_juicio}
                 onChange={e => setFormJuicio(p => ({ ...p, tipo_juicio: e.target.value }))}>
                 <option value="">— Seleccioná —</option>
-                {['DAÑOS Y PERJUICIOS','COBRO DE SUMAS DE DINERO','EJECUTIVO O PREPARACIÓN VÍA EJECUTIVA',
-                  'ACCIDENTE - ACCIÓN CIVIL','AMPARO','BENEFICIO DE LSG','CONSIGNACIÓN','OTROS']
-                  .map(o => <option key={o}>{o}</option>)}
+                {(exp.tipo === 'LANZAMIENTO'
+                  ? ['LANZAMIENTO', 'DESALOJO', 'RECUPERACIÓN DE INMUEBLE', 'OTROS']
+                  : ['DAÑOS Y PERJUICIOS', 'COBRO DE SUMAS DE DINERO', 'EJECUTIVO O PREPARACIÓN VÍA EJECUTIVA',
+                     'ACCIDENTE - ACCIÓN CIVIL', 'AMPARO', 'BENEFICIO DE LSG', 'CONSIGNACIÓN', 'OTROS']
+                ).map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
-            <div>
-              <label className="field-label">Monto de la Demanda <span className="text-[#b91c1c]">*</span></label>
-              <input type="number" className="field-input w-full" placeholder="$ 0"
-                value={formJuicio.monto}
-                onChange={e => setFormJuicio(p => ({ ...p, monto: e.target.value }))} />
-            </div>
+
+            {/* Ubicación — solo LANZAMIENTO, col-span-2 */}
+            {exp.tipo === 'LANZAMIENTO' && (
+              <div className="col-span-2">
+                <label className="field-label">Ubicación del inmueble</label>
+                <input type="text" className="field-input w-full" placeholder="Ej: Km 12 — Línea Roca — Lomas de Zamora"
+                  value={formJuicio.ubicacion}
+                  onChange={e => setFormJuicio(p => ({ ...p, ubicacion: e.target.value }))} />
+              </div>
+            )}
+
+            {/* Línea Ferroviaria — solo LANZAMIENTO */}
+            {exp.tipo === 'LANZAMIENTO' && (
+              <div>
+                <label className="field-label">Línea Ferroviaria</label>
+                <select className="field-input w-full"
+                  value={formJuicio.linea}
+                  onChange={e => setFormJuicio(p => ({ ...p, linea: e.target.value }))}>
+                  <option value="">— Seleccioná —</option>
+                  {['ROCA','SAN MARTÍN','SARMIENTO','MITRE','BELGRANO SUR','REGIONALES','LARGA DISTANCIA','CENTRAL','TREN DE LA COSTA']
+                    .map(l => <option key={l}>{l}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* OJ y Monto — solo si NO es LANZAMIENTO */}
+            {exp.tipo !== 'LANZAMIENTO' && (
+              <div>
+                <label className="field-label">Oficio Judicial (OJ)</label>
+                <input type="text" className="field-input w-full" placeholder="OJ-2026-XXXX"
+                  value={formJuicio.oficio_judicial}
+                  onChange={e => setFormJuicio(p => ({ ...p, oficio_judicial: e.target.value }))} />
+              </div>
+            )}
+            {exp.tipo !== 'LANZAMIENTO' && (
+              <div>
+                <label className="field-label">Monto de la Demanda <span className="text-[#b91c1c]">*</span></label>
+                <input type="number" className="field-input w-full" placeholder="$ 0"
+                  value={formJuicio.monto}
+                  onChange={e => setFormJuicio(p => ({ ...p, monto: e.target.value }))} />
+              </div>
+            )}
+            {exp.tipo !== 'LANZAMIENTO' && (
+              <div>
+                <label className="field-label">Coactores</label>
+                <input type="text" className="field-input w-full" placeholder="Si corresponde"
+                  value={formJuicio.coactores}
+                  onChange={e => setFormJuicio(p => ({ ...p, coactores: e.target.value }))} />
+              </div>
+            )}
           </div>
         </div>
       </Modal>

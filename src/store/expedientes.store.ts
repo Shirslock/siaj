@@ -33,7 +33,7 @@ interface ExpedientesState {
   editarActividad: (
     expId: string,
     actividadIdx: number,
-    cambios: Partial<Pick<Actividad, 'titulo' | 'descripcion' | 'fecha' | 'doc_gde' | 'fecha_vencimiento' | 'fecha_aviso'>>,
+    cambios: Partial<Pick<Actividad, 'titulo' | 'descripcion' | 'fecha' | 'doc_gde' | 'fecha_vencimiento' | 'fecha_aviso' | 'estado'>>,
     usuarioId: string
   ) => void
   eliminarActividad: (expId: string, actividadIdx: number, usuarioId: string) => void
