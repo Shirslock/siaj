@@ -10,4 +10,5 @@ export const RUTAS = {
   CAUSA:           (numeroCausa: string) => `/causa/${numeroCausa}`,
   AGENDA:          '/agenda',
   NUEVA_ACTUACION_PENAL: '/actuaciones/nueva-penal',
+  LICENCIAS:       '/licencias',
 } as const

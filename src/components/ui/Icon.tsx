@@ -118,6 +118,9 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
 
   // Tareas
   task:                  CheckBadgeIcon,
+
+  // Licencias
+  clock:                 ClockIcon,
 }
 
 interface IconProps {

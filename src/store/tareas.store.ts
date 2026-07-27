@@ -338,3 +338,140 @@ export const useSolicitudesStore = create<SolicitudesState>((set) => ({
       solicitudes: state.solicitudes.map(s => s.id === id ? { ...s, ...cambios } : s),
     })),
 }))
+
+// ── Tipos Licencias ───────────────────────────────────────────────────────────
+
+export type MotivoLicencia = 'vacaciones' | 'medica' | 'examen' | 'otro'
+
+export interface Licencia {
+  id: string
+  usuario_id: string
+  motivo: MotivoLicencia
+  motivo_detalle?: string       // obligatorio si motivo === 'otro'
+  fecha_inicio: string
+  fecha_fin: string
+  reemplazante_id: string       // usuario designado
+  created_at: string
+}
+
+const LICENCIAS_MOCK: Licencia[] = [
+
+  // ── LOPEZ ALEJANDRA (UR_018) — tiene una licencia próxima de vacaciones
+  // Reemplazante: PISANO PABLO
+  {
+    id: 'LIC_001',
+    usuario_id: 'UR_018',
+    motivo: 'vacaciones',
+    fecha_inicio: fechaEnDias(10),
+    fecha_fin: fechaEnDias(20),
+    reemplazante_id: 'UR_013',
+    created_at: HOY,
+  },
+
+  // ── PISANO PABLO (UR_013) — tiene una licencia médica activa hoy
+  // Reemplazante: LOPEZ ALEJANDRA
+  // → Lopez ve esta en "Actuaciones a mi cargo como reemplazante"
+  {
+    id: 'LIC_002',
+    usuario_id: 'UR_013',
+    motivo: 'medica',
+    fecha_inicio: fechaEnDias(-2),
+    fecha_fin: fechaEnDias(5),
+    reemplazante_id: 'UR_018',
+    created_at: fechaEnDias(-2),
+  },
+
+  // ── BENITEZ ADRIANA (UR_003) — tiene una licencia por examen próxima
+  // Reemplazante: CASANO FELIX
+  {
+    id: 'LIC_003',
+    usuario_id: 'UR_003',
+    motivo: 'examen',
+    fecha_inicio: fechaEnDias(3),
+    fecha_fin: fechaEnDias(4),
+    reemplazante_id: 'UR_004',
+    created_at: HOY,
+  },
+
+  // ── BENITEZ ADRIANA es reemplazante de CASANO FELIX en vacaciones
+  // → Adriana ve esto en "Actuaciones a mi cargo"
+  {
+    id: 'LIC_004',
+    usuario_id: 'UR_004',
+    motivo: 'vacaciones',
+    fecha_inicio: fechaEnDias(15),
+    fecha_fin: fechaEnDias(25),
+    reemplazante_id: 'UR_003',
+    created_at: HOY,
+  },
+
+  // ── FERRARI JESSICA tiene licencia médica activa, reemplazante CRESPI FACUNDO
+  // Para poblar la vista del sistema con más datos
+  {
+    id: 'LIC_005',
+    usuario_id: 'UR_007',
+    motivo: 'medica',
+    fecha_inicio: fechaEnDias(-1),
+    fecha_fin: fechaEnDias(4),
+    reemplazante_id: 'UR_005',
+    created_at: fechaEnDias(-1),
+  },
+
+  // ── ARMANI GIULIANA tiene licencia próxima de otro motivo
+  // Reemplazante: MOLINELLI RODRIGO
+  {
+    id: 'LIC_006',
+    usuario_id: 'UR_001',
+    motivo: 'otro',
+    motivo_detalle: 'Trámite personal',
+    fecha_inicio: fechaEnDias(2),
+    fecha_fin: fechaEnDias(2),
+    reemplazante_id: 'UR_010',
+    created_at: HOY,
+  },
+]
+
+// ── Store licencias ───────────────────────────────────────────────────────────
+
+interface LicenciasState {
+  licencias: Licencia[]
+  agregarLicencia: (l: Omit<Licencia, 'id'>) => void
+  eliminarLicencia: (id: string) => void
+}
+
+export const useLicenciasStore = create<LicenciasState>((set) => ({
+  licencias: LICENCIAS_MOCK,
+
+  agregarLicencia: (l) =>
+    set(state => ({
+      licencias: [{ ...l, id: `LIC_${Date.now()}` }, ...state.licencias],
+    })),
+
+  eliminarLicencia: (id) =>
+    set(state => ({
+      licencias: state.licencias.filter(l => l.id !== id),
+    })),
+}))
+
+// ── Helper: reemplazante activo para un usuario ───────────────────────────────
+
+export function getReemplazanteActivo(licencias: Licencia[], usuarioId: string): Licencia | null {
+  const hoy = new Date().toISOString().split('T')[0]
+  return licencias.find(l =>
+    l.usuario_id === usuarioId &&
+    l.fecha_inicio <= hoy &&
+    l.fecha_fin >= hoy
+  ) ?? null
+}
+
+// ── Helper: actuaciones a las que tiene acceso como reemplazante ──────────────
+
+export function esReemplazanteActivo(licencias: Licencia[], reemplazanteId: string, titularId: string): boolean {
+  const hoy = new Date().toISOString().split('T')[0]
+  return licencias.some(l =>
+    l.reemplazante_id === reemplazanteId &&
+    l.usuario_id === titularId &&
+    l.fecha_inicio <= hoy &&
+    l.fecha_fin >= hoy
+  )
+}
