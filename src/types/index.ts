@@ -87,6 +87,9 @@ export interface Usuario {
     LABORAL?: number
   }
   cuil?: string
+  email?: string
+  matriculas?: Partial<Record<'CABA' | 'PROVINCIA' | 'FEDERAL', string>>
+  activo?: boolean
 }
 
 export interface Expediente {

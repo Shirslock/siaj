@@ -6,6 +6,9 @@ import { LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import type { Area } from '../../types'
 
 type RolBDOpcion = 'abogado' | 'abogada' | 'asistente_jurídico' | 'abogado_coordinador' | 'gerente' | 'adm_mesa'
+type JurisdiccionMatricula = 'CABA' | 'PROVINCIA' | 'FEDERAL'
+
+const JURISDICCIONES: JurisdiccionMatricula[] = ['CABA', 'PROVINCIA', 'FEDERAL']
 
 const ROL_BD_OPCIONES: { value: RolBDOpcion; label: string }[] = [
   { value: 'abogado',             label: 'Abogado' },
@@ -38,13 +41,15 @@ const AREA_BADGES: Record<string, string> = {
 const AREAS: Area[] = ['CIVIL', 'LABORAL', 'PENAL']
 
 interface FormUsuario {
-  apellido:   string
-  nombre:     string
-  email:      string
-  rolBD:      RolBDOpcion
-  areas:      Area[]
-  fifoOrder:  string
+  apellido:    string
+  nombre:      string
+  email:       string
+  rolBD:       RolBDOpcion
+  areas:       Area[]
+  fifoOrder:   Partial<Record<'CIVIL' | 'LABORAL', number>>
   lineasPenal: string[]
+  matriculas:  Partial<Record<JurisdiccionMatricula, string>>
+  activo:      boolean
 }
 
 const BLANK_FORM: FormUsuario = {
@@ -53,26 +58,31 @@ const BLANK_FORM: FormUsuario = {
   email:       '',
   rolBD:       'abogado',
   areas:       [],
-  fifoOrder:   '',
+  fifoOrder:   {},
   lineasPenal: [],
+  matriculas:  {},
+  activo:      true,
 }
 
 export function UsuariosPanel() {
   const { usuarios } = useConfiguracionStore()
 
   const [editando, setEditando] = useState<(typeof usuarios)[0] | null>(null)
-  const [form, setForm] = useState<FormUsuario>(BLANK_FORM)
+  const [form, setForm]         = useState<FormUsuario>(BLANK_FORM)
+  const [altaAbierta, setAltaAbierta] = useState(false)
 
   function abrirEditar(u: (typeof usuarios)[0]) {
     setEditando(u)
     setForm({
       apellido:    u.apellido,
       nombre:      u.nombre,
-      email:       '',
+      email:       (u as any).email ?? '',
       rolBD:       u.rolBD as RolBDOpcion,
       areas:       [...u.areas] as Area[],
-      fifoOrder:   '',
+      fifoOrder:   (u.fifoOrder as Partial<Record<'CIVIL' | 'LABORAL', number>>) ?? {},
       lineasPenal: u.lineasPenal ?? [],
+      matriculas:  (u as any).matriculas ?? {},
+      activo:      (u as any).activo ?? true,
     })
   }
 
@@ -97,73 +107,122 @@ export function UsuariosPanel() {
     }))
   }
 
-  const tieneCivLab  = form.areas.includes('CIVIL') || form.areas.includes('LABORAL')
-  const tienePenal   = form.areas.includes('PENAL')
+  const tieneCivLab = form.areas.includes('CIVIL') || form.areas.includes('LABORAL')
+  const tienePenal  = form.areas.includes('PENAL')
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-[#1b3a57]">Abogados / Usuarios</h2>
-        <span className="text-xs text-[#9a9a9a]">{usuarios.length} usuarios</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-[#9a9a9a]">{usuarios.length} usuarios</span>
+          <button
+            onClick={() => { setAltaAbierta(true); setEditando(null); setForm(BLANK_FORM) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+          >
+            <Icon name="add" size={16} /> Nuevo
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.1)]">
-              {['Nombre', 'Rol', 'Área/s', 'Estado', ''].map(c => (
+              {['Nombre', 'Rol', 'Área/s', 'Mail', 'Matrícula', 'Secuencia / Línea', ''].map(c => (
                 <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
-            {usuarios.map(u => (
-              <tr key={u.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4">
-                  <p className="text-[#1b3a57] font-semibold text-sm">{u.apellido}, {u.nombre}</p>
-                  <p className="text-[10px] text-[#9a9a9a] font-mono">{u.id}</p>
-                </td>
-                <td className="py-2.5 px-4">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROL_BD_BADGE[u.rolBD] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>
-                    {ROL_BD_LABEL[u.rolBD] ?? u.rolBD}
-                  </span>
-                </td>
-                <td className="py-2.5 px-4">
-                  <div className="flex flex-wrap gap-1">
-                    {u.areas.map(a => (
-                      <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
-                    ))}
-                    {u.areas.length === 0 && <span className="text-[#c0c0c0] text-xs">—</span>}
-                  </div>
-                </td>
-                <td className="py-2.5 px-4">
-                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                    Activo
-                  </span>
-                </td>
-                <td className="py-2.5 px-4">
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => abrirEditar(u)}
-                      title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
-                    >
-                      <Icon name="edit" size={14} />
-                    </button>
-                    <button
-                      title="Desactivar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
-                    >
-                      <Icon name="block" size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {usuarios.map(u => {
+              const matriculas = (u as any).matriculas as Partial<Record<JurisdiccionMatricula, string>> | undefined
+              const activo     = (u as any).activo ?? true
+              return (
+                <tr key={u.id} className="hover:bg-[#f8f8f8]">
+
+                  {/* Nombre */}
+                  <td className="py-2.5 px-4">
+                    <p className="text-[#1b3a57] font-semibold text-sm">{u.apellido}, {u.nombre}</p>
+                    <p className="text-[10px] text-[#9a9a9a] font-mono">{u.id}</p>
+                  </td>
+
+                  {/* Rol */}
+                  <td className="py-2.5 px-4">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROL_BD_BADGE[u.rolBD] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>
+                      {ROL_BD_LABEL[u.rolBD] ?? u.rolBD}
+                    </span>
+                  </td>
+
+                  {/* Área/s */}
+                  <td className="py-2.5 px-4">
+                    <div className="flex flex-wrap gap-1">
+                      {u.areas.map(a => (
+                        <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
+                      ))}
+                      {u.areas.length === 0 && <span className="text-[#c0c0c0] text-xs">—</span>}
+                    </div>
+                  </td>
+
+                  {/* Mail */}
+                  <td className="py-2.5 px-4">
+                    <span className="text-xs text-[#4a6a84]">{(u as any).email ?? '—'}</span>
+                  </td>
+
+                  {/* Matrícula */}
+                  <td className="py-2.5 px-4">
+                    {matriculas && Object.keys(matriculas).length > 0
+                      ? Object.entries(matriculas).map(([jur, num]) => (
+                          <div key={jur} className="text-[10px] text-[#1b3a57]">
+                            <span className="font-bold text-[#4a6a84]">{jur}:</span> {num}
+                          </div>
+                        ))
+                      : <span className="text-[#c0c0c0] text-xs">—</span>}
+                  </td>
+
+                  {/* Secuencia / Línea */}
+                  <td className="py-2.5 px-4">
+                    {u.lineasPenal && u.lineasPenal.length > 0 ? (
+                      <span className="text-[10px] text-[#4a6a84]">
+                        {u.lineasPenal.length} línea{u.lineasPenal.length !== 1 ? 's' : ''}
+                      </span>
+                    ) : u.fifoOrder && Object.keys(u.fifoOrder).length > 0 ? (
+                      <div className="space-y-0.5">
+                        {Object.entries(u.fifoOrder).map(([area, pos]) => (
+                          <div key={area} className="text-[10px] font-mono text-[#1b3a57]">
+                            <span className="text-[#4a6a84]">{area}</span> #{pos}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-[#c0c0c0] text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* Acciones */}
+                  <td className="py-2.5 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activo ? 'bg-green-100 text-green-700' : 'bg-[#e8e8e8] text-[#9a9a9a]'}`}>
+                        {activo ? 'Activo' : 'Inactivo'}
+                      </span>
+                      <button
+                        onClick={() => abrirEditar(u)}
+                        title="Editar"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                      >
+                        <Icon name="edit" size={14} />
+                      </button>
+                    </div>
+                  </td>
+
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
 
+      {/* Modal editar */}
       <Modal
         open={!!editando}
         onClose={cerrar}
@@ -185,6 +244,8 @@ export function UsuariosPanel() {
         }
       >
         <div className="space-y-4">
+
+          {/* Nombre y apellido */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="field-label">Apellido</label>
@@ -194,68 +255,251 @@ export function UsuariosPanel() {
               <label className="field-label">Nombre</label>
               <input type="text" className="field-input w-full" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
             </div>
-            <div className="col-span-2">
-              <label className="field-label">Email</label>
-              <input type="email" className="field-input w-full" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
-            </div>
-            <div className="col-span-2">
-              <label className="field-label">Rol</label>
-              <select className="field-input w-full" value={form.rolBD} onChange={e => setForm(p => ({ ...p, rolBD: e.target.value as RolBDOpcion }))}>
-                {ROL_BD_OPCIONES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-              </select>
-            </div>
           </div>
 
+          {/* Email */}
+          <div>
+            <label className="field-label">Email</label>
+            <input type="email" className="field-input w-full" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+          </div>
+
+          {/* Rol */}
+          <div>
+            <label className="field-label">Rol</label>
+            <select className="field-input w-full" value={form.rolBD} onChange={e => setForm(p => ({ ...p, rolBD: e.target.value as RolBDOpcion }))}>
+              {ROL_BD_OPCIONES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+
+          {/* Área/s */}
           <div>
             <label className="field-label mb-1.5 block">Área/s</label>
             <div className="flex gap-3">
               {AREAS.map(a => (
                 <label key={a} className="flex items-center gap-1.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="rounded"
-                    checked={form.areas.includes(a)}
-                    onChange={() => toggleArea(a)}
-                  />
+                  <input type="checkbox" className="rounded" checked={form.areas.includes(a)} onChange={() => toggleArea(a)} />
                   <span className={`text-xs font-bold px-2 py-0.5 rounded ${AREA_BADGES[a]}`}>{a}</span>
                 </label>
               ))}
             </div>
           </div>
 
+          {/* Matrículas */}
+          <div>
+            <label className="field-label mb-2 block">Matrículas</label>
+            <div className="space-y-2">
+              {JURISDICCIONES.map(jur => (
+                <div key={jur} className="flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-20 flex-shrink-0">{jur}</span>
+                  <input
+                    type="text"
+                    className="field-input flex-1 font-mono text-sm"
+                    placeholder={`Nro. matrícula ${jur}...`}
+                    value={form.matriculas[jur] ?? ''}
+                    onChange={e => setForm(p => ({
+                      ...p,
+                      matriculas: { ...p.matriculas, [jur]: e.target.value || undefined },
+                    }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* FIFO — solo Civil/Laboral */}
           {tieneCivLab && (
             <div>
-              <label className="field-label">Secuencia FIFO</label>
-              <input
-                type="number"
-                min={1}
-                className="field-input w-32 font-mono"
-                placeholder="Ej: 5"
-                value={form.fifoOrder}
-                onChange={e => setForm(p => ({ ...p, fifoOrder: e.target.value }))}
-              />
-              <p className="text-[11px] text-[#9a9a9a] mt-1">Orden de asignación para Civil / Laboral</p>
+              <label className="field-label mb-1.5 block">Secuencia FIFO</label>
+              <div className="space-y-2">
+                {(['CIVIL', 'LABORAL'] as const).filter(a => form.areas.includes(a)).map(a => (
+                  <div key={a} className="flex items-center gap-3">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded flex-shrink-0 ${AREA_BADGES[a]}`}>{a}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      className="field-input w-24 font-mono"
+                      placeholder="Ej: 5"
+                      value={form.fifoOrder[a] ?? ''}
+                      onChange={e => setForm(p => ({
+                        ...p,
+                        fifoOrder: { ...p.fifoOrder, [a]: e.target.value ? Number(e.target.value) : undefined },
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-[#9a9a9a] mt-1">Orden de asignación automática</p>
             </div>
           )}
 
+          {/* Líneas — solo Penal */}
           {tienePenal && (
             <div>
               <label className="field-label mb-1.5 block">Líneas asignadas</label>
               <div className="grid grid-cols-3 gap-1.5">
                 {LINEAS_FERROVIARIAS.map(l => (
                   <label key={l.id} className="flex items-center gap-1.5 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      className="rounded"
-                      checked={form.lineasPenal.includes(l.id)}
-                      onChange={() => toggleLinea(l.id)}
-                    />
+                    <input type="checkbox" className="rounded" checked={form.lineasPenal.includes(l.id)} onChange={() => toggleLinea(l.id)} />
                     <span className="text-xs text-[#1b3a57]">{l.label}</span>
                   </label>
                 ))}
               </div>
             </div>
           )}
+
+          {/* Estado activo — al final */}
+          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  form.activo ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">Usuario activo</p>
+                <p className="text-[11px] text-[#4a6a84]">Los usuarios inactivos no pueden acceder al sistema</p>
+              </div>
+            </label>
+          </div>
+
+        </div>
+      </Modal>
+
+      {/* Modal alta */}
+      <Modal
+        open={altaAbierta}
+        onClose={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
+        titulo="Nuevo usuario"
+        size="md"
+        footer={
+          <>
+            <button
+              onClick={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
+              disabled={!form.apellido.trim() || !form.nombre.trim()}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Dar de alta
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="field-label">Apellido</label>
+              <input type="text" className="field-input w-full" value={form.apellido} onChange={e => setForm(p => ({ ...p, apellido: e.target.value }))} />
+            </div>
+            <div>
+              <label className="field-label">Nombre</label>
+              <input type="text" className="field-input w-full" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <label className="field-label">Email</label>
+            <input type="email" className="field-input w-full" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Rol</label>
+            <select className="field-input w-full" value={form.rolBD} onChange={e => setForm(p => ({ ...p, rolBD: e.target.value as RolBDOpcion }))}>
+              {ROL_BD_OPCIONES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="field-label mb-1.5 block">Área/s</label>
+            <div className="flex gap-3">
+              {AREAS.map(a => (
+                <label key={a} className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input type="checkbox" className="rounded" checked={form.areas.includes(a)} onChange={() => toggleArea(a)} />
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${AREA_BADGES[a]}`}>{a}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="field-label mb-2 block">Matrículas</label>
+            <div className="space-y-2">
+              {JURISDICCIONES.map(jur => (
+                <div key={jur} className="flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-20 flex-shrink-0">{jur}</span>
+                  <input
+                    type="text"
+                    className="field-input flex-1 font-mono text-sm"
+                    placeholder={`Nro. matrícula ${jur}...`}
+                    value={form.matriculas[jur] ?? ''}
+                    onChange={e => setForm(p => ({
+                      ...p,
+                      matriculas: { ...p.matriculas, [jur]: e.target.value || undefined },
+                    }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          {tieneCivLab && (
+            <div>
+              <label className="field-label mb-1.5 block">Secuencia FIFO</label>
+              <div className="space-y-2">
+                {(['CIVIL', 'LABORAL'] as const).filter(a => form.areas.includes(a)).map(a => (
+                  <div key={a} className="flex items-center gap-3">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded flex-shrink-0 ${AREA_BADGES[a]}`}>{a}</span>
+                    <input
+                      type="number" min={1}
+                      className="field-input w-24 font-mono"
+                      placeholder="Ej: 5"
+                      value={form.fifoOrder[a] ?? ''}
+                      onChange={e => setForm(p => ({
+                        ...p,
+                        fifoOrder: { ...p.fifoOrder, [a]: e.target.value ? Number(e.target.value) : undefined },
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-[#9a9a9a] mt-1">Orden de asignación automática</p>
+            </div>
+          )}
+          {tienePenal && (
+            <div>
+              <label className="field-label mb-1.5 block">Líneas asignadas</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {LINEAS_FERROVIARIAS.map(l => (
+                  <label key={l.id} className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input type="checkbox" className="rounded" checked={form.lineasPenal.includes(l.id)} onChange={() => toggleLinea(l.id)} />
+                    <span className="text-xs text-[#1b3a57]">{l.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  form.activo ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">Usuario activo</p>
+                <p className="text-[11px] text-[#4a6a84]">Los usuarios inactivos no pueden acceder al sistema</p>
+              </div>
+            </label>
+          </div>
         </div>
       </Modal>
     </div>
