@@ -68,40 +68,40 @@ function VistaLectura({ tabla }: { tabla: TablaConfig }) {
 function VistaSimple({ tabla }: { tabla: TablaConfig }) {
   const store = useConfiguracionStore()
   const items = (store[tabla.storeKey as keyof typeof store] as CatalogoItem[]) ?? []
-  const { agregarItem, editarItem, desactivarItem } = store
+  const { agregarItem, editarItem } = store
 
   const [modalAbierto, setModalAbierto] = useState(false)
   const [editando, setEditando] = useState<CatalogoItem | null>(null)
-  const [form, setForm] = useState({ id: '', label: '', dias: '' })
+  const [form, setForm] = useState({ id: '', label: '', dias: '', activo: true })
 
   const esSancion = tabla.especial === 'sancion'
   const modoEdicion = !!editando
 
   function abrirNuevo() {
     setEditando(null)
-    setForm({ id: '', label: '', dias: '' })
+    setForm({ id: '', label: '', dias: '', activo: true })
     setModalAbierto(true)
   }
 
   function abrirEditar(item: CatalogoItem) {
     setEditando(item)
-    setForm({ id: item.id, label: item.label, dias: '' })
+    setForm({ id: item.id, label: item.label, dias: '', activo: item.activo ?? true })
     setModalAbierto(false) // se abre via editando
   }
 
   function cerrar() {
     setEditando(null)
     setModalAbierto(false)
-    setForm({ id: '', label: '', dias: '' })
+    setForm({ id: '', label: '', dias: '', activo: true })
   }
 
   function guardar() {
     if (!form.label.trim()) return
     if (modoEdicion && editando) {
-      editarItem(tabla.storeKey, editando.id, { label: form.label.trim() })
+      editarItem(tabla.storeKey, editando.id, { label: form.label.trim(), activo: form.activo })
     } else {
       const id = form.id.trim() || `X_${Date.now()}`
-      agregarItem(tabla.storeKey, { id, label: form.label.trim() })
+      agregarItem(tabla.storeKey, { id, label: form.label.trim(), activo: form.activo })
     }
     cerrar()
   }
@@ -143,14 +143,6 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
                       className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
                     >
                       <Icon name="edit" size={14} />
-                    </button>
-                    <button
-                      onClick={() => desactivarItem(tabla.storeKey, item.id)}
-                      title="Desactivar"
-                      disabled={item.activo === false}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <Icon name="block" size={14} />
                     </button>
                   </div>
                 </td>
@@ -214,6 +206,24 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
               />
             </div>
           )}
+          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  form.activo ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">Activo</p>
+                <p className="text-[11px] text-[#4a6a84]">Los ítems inactivos no aparecen en los formularios</p>
+              </div>
+            </label>
+          </div>
         </div>
       </Modal>
     </div>
@@ -225,33 +235,33 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
 function VistaExtended({ tabla }: { tabla: TablaConfig }) {
   const store = useConfiguracionStore()
   const items = (store[tabla.storeKey as keyof typeof store] as CatalogoItemExtended[]) ?? []
-  const { agregarItem, editarItem, desactivarItem } = store
+  const { agregarItem, editarItem } = store
 
   const [modalAbierto, setModalAbierto] = useState(false)
   const [editando, setEditando] = useState<CatalogoItemExtended | null>(null)
-  const [form, setForm] = useState({ label: '', tipo: '', provincia: '', localidad: '' })
+  const [form, setForm] = useState({ label: '', tipo: '', provincia: '', localidad: '', activo: true })
 
   function abrirNuevo() {
     setEditando(null)
-    setForm({ label: '', tipo: '', provincia: '', localidad: '' })
+    setForm({ label: '', tipo: '', provincia: '', localidad: '', activo: true })
     setModalAbierto(true)
   }
 
   function abrirEditar(item: CatalogoItemExtended) {
     setEditando(item)
-    setForm({ label: item.label, tipo: item.tipo ?? '', provincia: item.provincia ?? '', localidad: item.localidad ?? '' })
+    setForm({ label: item.label, tipo: item.tipo ?? '', provincia: item.provincia ?? '', localidad: item.localidad ?? '', activo: item.activo ?? true })
   }
 
   function cerrar() {
     setEditando(null)
     setModalAbierto(false)
-    setForm({ label: '', tipo: '', provincia: '', localidad: '' })
+    setForm({ label: '', tipo: '', provincia: '', localidad: '', activo: true })
   }
 
   function guardar() {
     if (!form.label.trim()) return
     if (editando) {
-      editarItem(tabla.storeKey, editando.id, { label: form.label, tipo: form.tipo, provincia: form.provincia, localidad: form.localidad })
+      editarItem(tabla.storeKey, editando.id, { label: form.label, tipo: form.tipo, provincia: form.provincia, localidad: form.localidad, activo: form.activo })
     } else {
       agregarItem(tabla.storeKey, {
         id: `EXT_${Date.now()}`,
@@ -300,9 +310,6 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
                     <button onClick={() => abrirEditar(item)} title="Editar" className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors">
                       <Icon name="edit" size={14} />
                     </button>
-                    <button onClick={() => desactivarItem(tabla.storeKey, item.id)} title="Desactivar" disabled={item.activo === false} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                      <Icon name="block" size={14} />
-                    </button>
                   </div>
                 </td>
               </tr>
@@ -344,6 +351,24 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
               <label className="field-label">Localidad</label>
               <input type="text" className="field-input w-full" value={form.localidad} onChange={e => setForm(p => ({ ...p, localidad: e.target.value }))} />
             </div>
+          </div>
+          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  form.activo ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">Activo</p>
+                <p className="text-[11px] text-[#4a6a84]">Los ítems inactivos no aparecen en los formularios</p>
+              </div>
+            </label>
           </div>
         </div>
       </Modal>

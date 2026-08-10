@@ -12,6 +12,7 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'actuaciones',    icon: 'work',         label: 'Actuaciones',            ruta: '/actuaciones' },
   { key: 'agenda',         icon: 'calendar',     label: 'Agenda',                 ruta: '/agenda' },
   { key: 'tareas',         icon: 'task',         label: 'Solicitudes',            ruta: '/tareas' },
+  { key: 'licencias',      icon: 'clock',        label: 'Licencias',              ruta: '/licencias' },
   { key: 'configuracion',  icon: 'settings',     label: 'Configuración',          ruta: '/configuracion' },
 ]
 
