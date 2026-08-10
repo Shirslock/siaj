@@ -26,7 +26,9 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `CatalogoItem` | `{ id, label, activo? }` — base para todos los catálogos. `activo` es opcional; `undefined` equivale a activo |
 | `CatalogoItemExtended` | CatalogoItem + tipo? + provincia? + localidad? |
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
-| `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal |
+| `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal + `email?`, `matriculas?` (CABA/PROVINCIA/FEDERAL), `activo?` |
+| `Licencia` | Licencia de un usuario (motivo, fechas, reemplazante) — definida en `store/tareas.store.ts` |
+| `MotivoLicencia` | 'vacaciones' \| 'medica' \| 'examen' \| 'otro' — definido en `store/tareas.store.ts` |
 | `Expediente` | Entidad principal — incluye estadoProcesal |
 | `Actividad` | Actividad genérica del letrado en el timeline — incluye `replies?: Reply[]`, `log?: LogAuditoria[]`, `eliminado?: boolean` |
 | `Reply` | Comentario anidado en una actividad — autor, texto, fecha, doc_gde, fecha_vencimiento, fecha_aviso |
@@ -42,6 +44,12 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `ItemQueue` | Entrada en la cola de Mesa SIAJ |
 | `FiltrosExpediente` | Estado de filtros de las bandejas |
 | `AccesosRol` | Permisos y ruta de inicio por rol |
+
+## Campos destacados de Usuario
+
+- `email?: string` — mail del usuario (editable desde UsuariosPanel).
+- `matriculas?: Partial<Record<'CABA' | 'PROVINCIA' | 'FEDERAL', string>>` — matrículas por jurisdicción.
+- `activo?: boolean` — estado alta/baja; se gestiona con el switch Activo/Inactivo en UsuariosPanel.
 
 ## Campos destacados de Expediente
 

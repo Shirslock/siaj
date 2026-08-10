@@ -12,7 +12,7 @@ Solo sessionStorage para ID del usuario activo.
 | `ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global | `useUIStore()` |
 | `configuracion.store.ts` | Catálogos editables del sistema + usuarios | `useConfiguracionStore()` |
 | `agenda.store.ts` | Eventos custom del usuario en la agenda | `useAgendaStore()` |
-| `tareas.store.ts` | Tareas Kanban del módulo Tareas + solicitudes internas | `useTareasStore()` |
+| `tareas.store.ts` | Tareas Kanban del módulo Tareas + solicitudes internas + licencias | `useTareasStore()` / `useSolicitudesStore()` / `useLicenciasStore()` |
 
 ---
 
@@ -185,6 +185,23 @@ agregarTarea({
   created_at:          new Date().toISOString(),
 })
 ```
+
+## Acciones — useLicenciasStore (en tareas.store.ts)
+
+```ts
+agregarLicencia(l: Omit<Licencia, 'id'>)   // genera id LIC_${Date.now()}
+eliminarLicencia(id: string)
+```
+
+Tipos exportados: `Licencia`, `MotivoLicencia` ('vacaciones' | 'medica' | 'examen' | 'otro').
+Mock inicial: `LICENCIAS_MOCK` (6 licencias, `LIC_001`–`LIC_006`).
+
+Helpers (mismo archivo):
+- `getReemplazanteActivo(licencias, usuarioId): Licencia | null` — licencia vigente hoy del usuario.
+- `esReemplazanteActivo(licencias, reemplazanteId, titularId): boolean` — si un usuario reemplaza hoy a otro.
+
+`Licencia`: `{ id, usuario_id, motivo, motivo_detalle?, fecha_inicio, fecha_fin, reemplazante_id, created_at }`.
+`motivo_detalle` es obligatorio cuando `motivo === 'otro'`.
 
 ---
 

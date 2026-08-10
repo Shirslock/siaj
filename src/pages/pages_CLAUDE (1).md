@@ -29,6 +29,7 @@ src/pages/NombrePagina/
 | `Configuracion/` | /configuracion | REFERENTE únicamente | ✓ panel admin con 28 tablas |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
 | `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | ✓ calendario mensual/semanal/día, filtros por rol, audiencias mock, eventos custom |
+| `Licencias/` | /licencias | TODOS los roles | ✓ gestor de licencias — alta con motivo/reemplazante, licencias propias, actuaciones a cargo como reemplazante (`LicenciasPage.tsx`) |
 
 ---
 
