@@ -11,7 +11,7 @@ export const USUARIOS: Usuario[] = [
   { id:'UR_001', apellido:'ARMANI',          nombre:'GIULIANA',      rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['LABORAL'],                    fifoOrder:{ LABORAL:1 } },
   { id:'UR_002', apellido:'BARRIOS',         nombre:'CYNTHIA',       rolBD:'asistente_jurídico',  roles:['asistente_jurídico'],                  rolSistema: mapRol('asistente_jurídico'),  areas:['CIVIL','LABORAL'] },
   { id:'UR_003', apellido:'BENITEZ',         nombre:'ADRIANA',       rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:1 } },
-  { id:'UR_004', apellido:'CASANO',          nombre:'FELIX',         rolBD:'abogado',             roles:['abogado'],                             rolSistema: mapRol('abogado'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:2 }, cuil:'20-27654321-3' },
+  { id:'UR_004', apellido:'CASANO',          nombre:'FELIX',         rolBD:'abogado',             roles:['abogado'],                             rolSistema: mapRol('abogado'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:2 }, cuil:'20-27654321-3', email:'felix.casano@trenesargentinos.gob.ar', matriculas:{ CABA:'56.234', FEDERAL:'12.891' }, activo: true },
   { id:'UR_005', apellido:'CRESPI',          nombre:'FACUNDO',       rolBD:'abogado',             roles:['abogado'],                             rolSistema: mapRol('abogado'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:3 } },
   { id:'UR_006', apellido:'ESCALANTE',       nombre:'CAROLINA',      rolBD:'abogado',             roles:['abogado'],                             rolSistema: mapRol('abogado'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:4 } },
   { id:'UR_007', apellido:'FERRARI',         nombre:'JESSICA',       rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:5 }, cuil:'27-31456789-5' },
@@ -20,7 +20,7 @@ export const USUARIOS: Usuario[] = [
   { id:'UR_010', apellido:'MOLINELLI',       nombre:'RODRIGO',       rolBD:'abogado',             roles:['abogado'],                             rolSistema: mapRol('abogado'),             areas:['LABORAL'],                    fifoOrder:{ LABORAL:2 } },
   { id:'UR_011', apellido:'PEREZ',           nombre:'FERNANDA',      rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:8 } },
   { id:'UR_012', apellido:'PIRES',           nombre:'DAIANA',        rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['LABORAL'],                    fifoOrder:{ LABORAL:3 }, cuil:'27-33987654-1' },
-  { id:'UR_013', apellido:'PISANO',          nombre:'PABLO',         rolBD:'abogado_coordinador', roles:['abogado_coordinador'],                 rolSistema: mapRol('abogado_coordinador'), areas:['CIVIL','LABORAL'] },
+  { id:'UR_013', apellido:'PISANO',          nombre:'PABLO',         rolBD:'abogado_coordinador', roles:['abogado_coordinador'],                 rolSistema: mapRol('abogado_coordinador'), areas:['CIVIL','LABORAL'],            email:'pablo.pisano@trenesargentinos.gob.ar', matriculas:{ CABA:'41.102', PROVINCIA:'8.774', FEDERAL:'9.203' }, activo: true },
   { id:'UR_014', apellido:'SANTILLAN',       nombre:'MELISA',        rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:9 } },
   { id:'UR_015', apellido:'SBARBATI',        nombre:'PABLO',         rolBD:'abogado',             roles:['abogado'],                             rolSistema: mapRol('abogado'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:10 } },
   { id:'UR_016', apellido:'VETRANO',         nombre:'MAGDALENA',     rolBD:'abogada',             roles:['abogada'],                             rolSistema: mapRol('abogada'),             areas:['CIVIL'],                      fifoOrder:{ CIVIL:11 } },
@@ -62,25 +62,25 @@ export function getAbogadosFifo(area: 'CIVIL' | 'LABORAL'): Usuario[] {
 
 export const ROL_ACCESOS: Record<RolSistema, AccesosRol> = {
   REFERENTE: {
-    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas', 'configuracion'],
+    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas', 'licencias', 'configuracion'],
     puedeReasignar: false,
     verTodaBandeja: true,
     inicio: '/dashboard',
   },
   COORDINADOR: {
-    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas'],
+    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas', 'licencias'],
     puedeReasignar: false,
     verTodaBandeja: true,
     inicio: '/actuaciones',
   },
   ABOGADO: {
-    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas'],
+    nav: ['dashboard', 'actuaciones', 'agenda', 'tareas', 'licencias'],
     puedeReasignar: false,
     verTodaBandeja: false,
     inicio: '/actuaciones',
   },
   ADMINISTRATIVO: {
-    nav: ['mesa'],
+    nav: ['mesa', 'licencias'],
     puedeReasignar: false,
     verTodaBandeja: false,
     inicio: '/mesa',
