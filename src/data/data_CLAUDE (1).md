@@ -102,7 +102,7 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 
 ## Mocks disponibles (expedientes.mock.ts)
 
-`EXPEDIENTES_MOCK` — 10 actuaciones basadas en el flujo real del prototipo. Se exporta también como
+`EXPEDIENTES_MOCK` — 11 actuaciones basadas en el flujo real del prototipo. Se exporta también como
 `EXPEDIENTES_ABOGADO` (alias de compatibilidad). El store carga `expedientes: EXPEDIENTES_MOCK`.
 
 **Regla clave — `estado`/`estadoProcesal` usan el CÓDIGO del catálogo, no el label:**
@@ -121,6 +121,7 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 | 06 | C-0009/2024 | COBRO_CANON | CIVIL | ACUERDO_EXTRAJUDICIAL | FERRARI UR_007 | suelta (ciclo A) |
 | 07 | L-0008/2023 | DEMANDA_LABORAL | LABORAL | SENTENCIA | MOLINELLI UR_010 | suelta · `es_principal` (juicio, badge PJN) |
 | 08 | P-0001/2024 | QUERELLA | PENAL | INSTRUCCION | DESIDERI UR_019 | suelta · vínculo→C-0001 (mismo siniestro) |
+| 08b | P-0019/2024 | CARTA_SUCESO | PENAL | EN_ANALISIS | DESIDERI UR_019 | suelta · `es_principal` · **ejemplo del flujo "Nueva Querella"** |
 | 09 | P-0002/2023 | DEFENSA_PENAL | PENAL | ACEPTADO | BIONDI UR_023 | suelta |
 | 10 | P-0003/2024 | QUERELLA | PENAL | EN_ANALISIS | PRINOTTI UR_024 | suelta · tarea vencida |
 
@@ -139,7 +140,12 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 
 Helper `tarea(id, nombre, over?)` en el mock completa el shape de `Tarea` con defaults.
 
-**Documentos en el mock:** todos los documentos tienen campo `id` obligatorio (`DOC_..._001`). Actualmente las 10 actuaciones tienen `documentos: []`.
+**Ejemplo Nueva Querella (`P-0019/2024`):** Carta Suceso (SAE) tipo `CARTA_SUCESO`, área PENAL, sin
+`numero_causa`. Sirve para probar el flujo "Nueva Querella" del menú `+` de DetalleExpediente (ver
+`pages_CLAUDE.md`): al crear la Querella, ambas se agrupan bajo una causa común (la que se tipee en el
+modal, o el `id` de la Carta si se deja vacío) y la Querella pasa a ser la cabecera (`es_principal: true`).
+
+**Documentos en el mock:** todos los documentos tienen campo `id` obligatorio (`DOC_..._001`). Actualmente las 11 actuaciones tienen `documentos: []`.
 
 **Exports de infraestructura conservados** (no son actuaciones de ejemplo): `QUEUE_MESA`, `CARTA_SUCESO_QUEUE`, `CAUSAS_PENALES`, `ESTADOS_POR_TIPO`.
 

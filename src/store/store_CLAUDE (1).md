@@ -21,6 +21,7 @@ Solo sessionStorage para ID del usuario activo.
 ```ts
 // Expedientes
 setExpedienteActivo(id)
+agregarExpediente(exp)                 // exp: Expediente completo (con id). Lo appendea a expedientes[]. Usado por el flujo "Nueva Querella" para crear el expediente QUERELLA derivado de una Carta SAE
 actualizarCampoMesa(id, campo, valor)
 actualizarCampoAbogado(id, campo, valor)
 actualizarEstado(id, estado)

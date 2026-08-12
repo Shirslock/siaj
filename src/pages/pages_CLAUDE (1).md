@@ -75,6 +75,36 @@ Modal "Cambiar estado" con lógica de flujo procesal:
 - **Retroceso siempre habilitado** → aviso amarillo informativo.
 - `tieneTareasPendientes` se calcula una sola vez antes del JSX, no inline.
 
+## DetalleExpediente — Acciones del menú `+` (Iniciar Juicio / Nueva Querella)
+
+Ambas acciones viven en el menú `+` del header y crean/transforman actuaciones. Se muestran
+condicionalmente por `tipo` y estado:
+
+- **Iniciar Juicio** (Civil/Laboral): `show` si `TIPOS_CON_JUICIO.has(exp.tipo)` y el estado es
+  `JUICIO_INICIADO`. NO crea un expediente nuevo — actualiza el actual (`es_juicio_iniciado`,
+  `fecha_inicio_juicio`, `campos_mesa.mesa_*`).
+- **Nueva Querella** (Penal): `show` si `exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`.
+  SÍ crea un expediente nuevo de `tipo: 'QUERELLA'`, análogo a "Iniciar Juicio" pero para el flujo penal.
+
+### Flujo Nueva Querella (`confirmarNuevaQuerella`)
+
+Modal con carátula (obligatoria), fuero→juzgado en cascada (`FUEROS_PENAL` + `getJuzgadosPorFuero`
+de `data/juzgadosPJN`), fiscalía, N° causa/IPP, letrado (`USUARIOS` ABOGADO/COORDINADOR) y observaciones.
+
+Al confirmar:
+1. Calcula una **causa común** para agrupar ambas actuaciones:
+   `formQuerella.numero_causa.trim() || exp.numero_causa?.trim() || exp.id` (el `id` de la Carta es
+   el sentinela de último recurso cuando no hay N° de causa real).
+2. Crea la Querella (`estado`/`estadoProcesal: 'INSTRUCCION'`, área PENAL) con `numero_causa: causaComun`,
+   `es_principal: true` y `vinculos: []` (los vínculos los carga el abogado desde la tab Vinculados —
+   el sistema no los crea automáticamente). Se agrega al store con `agregarExpediente`.
+3. Parchea la Carta SAE: `es_querella_iniciada: true`, `id_querella_derivada: idQuerella`,
+   `numero_causa: causaComun`, `es_principal: false`.
+4. Agrega un movimiento impulsorio al timeline de la Carta y navega a la nueva Querella.
+
+**Resultado en Bandeja:** Carta y Querella quedan agrupadas bajo `causaComun`; como la Querella es
+`es_principal: true`, es la cabecera del grupo (ver regla en `data_CLAUDE.md` / `es_principal` en `types_CLAUDE.md`).
+
 ## Agenda/ — Lógica de negocio
 
 Archivo principal: `Agenda.page.tsx`. Hook de datos: `useAgendaEvents.ts`.
