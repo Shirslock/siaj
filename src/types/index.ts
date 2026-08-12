@@ -117,6 +117,8 @@ export interface Expediente {
   es_juicio_iniciado?: boolean
   fecha_inicio_juicio?: string
   fecha_ultimo_impulsorio?: string
+  es_querella_iniciada?: boolean
+  id_querella_derivada?: string   // id del expediente QUERELLA derivado
 }
 
 export interface VinculoExpediente {

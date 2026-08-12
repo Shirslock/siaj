@@ -10,6 +10,7 @@ interface ExpedientesState {
   tareasMap: Record<string, Tarea[]>
   registrosPenales: Record<string, RegistroActividadPenal[]>
   setExpedienteActivo: (id: string) => void
+  agregarExpediente: (exp: Expediente) => void
   actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
   actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
   actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => void
@@ -62,6 +63,10 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     const exp = get().expedientes.find(e => e.id === id) ?? null
     set({ expedienteActivo: exp })
   },
+
+  agregarExpediente: (exp) => set(s => ({
+    expedientes: [...s.expedientes, exp],
+  })),
 
   actualizarExpediente: (id, patch) => set(s => {
     const fn = (e: Expediente) => ({ ...e, ...patch })
