@@ -250,7 +250,8 @@ El timeline del expediente tiene DOS capas:
 | DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 6 tabs — ver Sección 10a |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
-| Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
+| Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Calendario mes/semana (lun–vie), filtros por rol, audiencias mock, eventos custom (solo lectura/borrado) |
+| Licencias/ | /licencias | TODOS los roles | Gestor de licencias: alta con motivo/reemplazante, licencias propias, actuaciones a cargo como reemplazante |
 
 ### 10a. Tabs de DetalleExpediente
 

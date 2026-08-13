@@ -102,7 +102,7 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 
 ## Mocks disponibles (expedientes.mock.ts)
 
-`EXPEDIENTES_MOCK` — 10 actuaciones basadas en el flujo real del prototipo. Se exporta también como
+`EXPEDIENTES_MOCK` — 12 actuaciones basadas en el flujo real del prototipo. Se exporta también como
 `EXPEDIENTES_ABOGADO` (alias de compatibilidad). El store carga `expedientes: EXPEDIENTES_MOCK`.
 
 **Regla clave — `estado`/`estadoProcesal` usan el CÓDIGO del catálogo, no el label:**
@@ -123,6 +123,12 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 | 08 | P-0001/2024 | QUERELLA | PENAL | INSTRUCCION | DESIDERI UR_019 | suelta · vínculo→C-0001 (mismo siniestro) |
 | 09 | P-0002/2023 | DEFENSA_PENAL | PENAL | ACEPTADO | BIONDI UR_023 | suelta |
 | 10 | P-0003/2024 | QUERELLA | PENAL | EN_ANALISIS | PRINOTTI UR_024 | suelta · tarea vencida |
+| 11 | C-0042/2026 | LANZAMIENTO_JUDICIALIZADO | CIVIL | INICIO | CASANO UR_004 | **8821/2026 · Principal** · juicio iniciado · vínculo ANTECEDENTE→C-0041 |
+| 12 | C-0041/2026 | LANZAMIENTO | CIVIL | JUICIO_INICIADO | CASANO UR_004 | 8821/2026 · antecedente administrativo de C-0042 |
+
+**Par LANZAMIENTO (C-0042 ↔ C-0041):** el lanzamiento administrativo `C-0041/2026` deriva en el
+lanzamiento judicializado `C-0042/2026` (mismo `numero_causa` 8821/2026, mismo letrado UR_004). El
+vínculo se modela con `tipo_relacion: 'ANTECEDENTE'` y `C-0042` es el `es_principal`.
 
 **Agrupación por causa:** los expedientes con el mismo `numero_causa` se agrupan en bandeja (`BandejaAbogado`/`BandejaArea`); el que tiene `es_principal: true` muestra el badge verde "Principal · PJN". Grupo 1 = causa `45.201/2023` (3 exp, principal C-0001, CASANO). Grupo 2 = causa `78.910/2022` (2 exp, principal L-0002, PIRES). Las 5 sueltas tienen `numero_causa` único o `null`.
 

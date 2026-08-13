@@ -28,7 +28,7 @@ src/pages/NombrePagina/
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
 | `Configuracion/` | /configuracion | REFERENTE únicamente | ✓ panel admin con 28 tablas |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
-| `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | ✓ calendario mensual/semanal/día, filtros por rol, audiencias mock, eventos custom |
+| `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | ✓ calendario mensual/semanal (lun–vie), filtros por rol, audiencias mock; eventos custom solo se listan/eliminan (sin UI de alta) |
 | `Licencias/` | /licencias | TODOS los roles | ✓ gestor de licencias — alta con motivo/reemplazante, licencias propias, actuaciones a cargo como reemplazante (`LicenciasPage.tsx`) |
 
 ---
@@ -80,15 +80,30 @@ Modal "Cambiar estado" con lógica de flujo procesal:
 Archivo principal: `Agenda.page.tsx`. Hook de datos: `useAgendaEvents.ts`.
 Mock de audiencias: `src/data/audiencias.mock.ts`.
 
-Vistas: `'mes' | 'semana' | 'dia'`.
+Vistas: `'mes' | 'semana'` (toggle). **No hay vista día ni listado.** La grilla muestra
+solo **lunes a viernes** (sábado/domingo se eliminan del layout). Vista mes: máx 3 chips por
+día + "+N más". Panel lateral fijo con el detalle del día seleccionado.
 
-**Filtros por rol:**
+**Dos fuentes de eventos:**
+- `AgendaEvent` (derivados del sistema) — se arman en `useAgendaEvents()` desde: tareas de
+  `tareasMap`, actividades del `timeline` con `fecha_vencimiento`, `AUDIENCIAS_MOCK` y tareas
+  Kanban (`useTareasStore`, con flag `mostrar_en_agenda`). Campo `tipo`:
+  `'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'`. No tienen hora, se ubican solo por fecha.
+- `EventoCustom` (manuales) — via `useAgendaStore()`. Tipos: `reunion | recordatorio |
+  vencimiento | otro`. **No están vinculados a expedientes.**
+
+**Filtros por rol** (en `useAgendaEvents.ts`):
 - `REFERENTE`: ve todo (todos los abogados y áreas)
-- `COORDINADOR`: ve su área
-- `ABOGADO`: ve solo sus propios eventos
+- `COORDINADOR`: ve su área (`usuarioActivo.areas`)
+- `ABOGADO`: solo sus propios eventos + audiencias de su área
 
-Tipos de eventos en el feed: `'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'` (campo `tipo` de `AgendaEvent`).
-Eventos custom del usuario: via `useAgendaStore()` (`agregarEvento`, `eliminarEvento`).
+**Interacciones:** desde el detalle de un `AgendaEvent` se puede "Ver actuación"
+(navega a `RUTAS.EXPEDIENTE`) y "Marcar cumplido" (`editarActividad`). Los `EventoCustom`
+solo se pueden **eliminar** (`eliminarEvento`).
+
+> ⚠️ **Alta de eventos custom no implementada:** el store expone `agregarEvento`, pero
+> ningún componente lo invoca. Al hacer click en un día solo se selecciona; el `BLANK_EVENTO`
+> preparado nunca se envía. No hay modal de alta, formulario inline ni drag & drop.
 
 ---
 

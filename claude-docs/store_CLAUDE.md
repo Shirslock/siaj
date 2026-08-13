@@ -149,6 +149,10 @@ eliminarEvento(id: string)
 
 Tipos exportados: `TipoEventoCustom` ('reunion' | 'recordatorio' | 'vencimiento' | 'otro'), `EventoCustom`, `COLOR_EVENTO`.
 
+> ⚠️ `agregarEvento` está definido pero **ningún componente lo invoca** — la Agenda aún no tiene
+> UI para crear eventos custom (solo se listan y eliminan). API lista para cablear cuando se
+> agregue el modal de alta.
+
 ## Acciones — tareas.store.ts
 
 ```ts
