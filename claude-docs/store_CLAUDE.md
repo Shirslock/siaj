@@ -162,29 +162,28 @@ Tipos exportados: `TareaKanban`, `PrioridadTarea`, `EstadoTareaKanban`, `AreaDes
 
 `PERSONAS_POR_AREA` — 6 personas de áreas externas (RRHH ×2, COMERCIAL ×2, SEGUROS ×2), IDs `PA_001`–`PA_006`.
 
-### Crear una solicitud interna desde el timeline
+## Acciones — useSolicitudesStore (en tareas.store.ts)
 
 ```ts
-const { agregarTarea } = useTareasStore()
-
-agregarTarea({
-  titulo, descripcion,
-  expediente_id:       exp.id,
-  expediente_caratula: exp.caratula,
-  expediente_area:     exp.area,
-  asignado_a:          '',           // id usuario interno (o vacío)
-  creado_por:          usuarioActivo?.id ?? '',
-  fecha_limite:        null,
-  prioridad:           'media',
-  estado:              'pendiente',
-  mostrar_en_agenda:   false,
-  area_destinataria:   'RRHH',       // si es área externa
-  persona_contacto_id: 'PA_001',     // si es área externa
-  persona_contacto:    'GARCIA, María José',
-  etiquetas:           [],
-  created_at:          new Date().toISOString(),
-})
+agregarSolicitud(s: Omit<Solicitud, 'id'>)   // genera id SOL_${Date.now()}
+responderSolicitud(id: string, respuesta: RespuestaSolicitud)
+editarSolicitud(id: string, cambios: Partial<Solicitud>)
 ```
+
+Tipos exportados: `Solicitud`, `RespuestaSolicitud`, `TipoSolicitud` ('interna' | 'externa'),
+`EstadoSolicitud` ('pendiente' | 'respondida'). Mock inicial: `SOLICITUDES_MOCK` (`SOL_001`–`SOL_005`).
+
+**Modelo unificado (timeline ↔ módulo Solicitudes):** una "Nueva Solicitud" creada desde el timeline
+(`guardarSolicitud`/`guardarSolicitudPenal`) usa **`agregarSolicitud`** (no `agregarTarea`), así aparece
+en el módulo Solicitudes (`/tareas`) y puede responderse. `asignado_a` es `string[]` (internos `UR_` y/o
+externos `PA_`); `tipo` = 'externa' si hay `area_destinataria`, si no 'interna'.
+
+**`responderSolicitud` impacta en el expediente de origen** (vía `useExpedientesStore.getState()`,
+sin import circular):
+1. Marca la solicitud `estado: 'respondida'` + guarda `respuesta`.
+2. `agregarActividad` en `sol.expediente_id` → actividad `tipo: 'NOTA_RESPUESTA'`, `id: SOLR_...`,
+   `es_solicitud: true`, `solicitud_id: sol.id` (badge **RESPUESTA** en el feed).
+3. Si `respuesta.adjunto_nombre` → `agregarDocumento` en el mismo expediente (`id: DOC_SOL_...`).
 
 ## Acciones — useLicenciasStore (en tareas.store.ts)
 

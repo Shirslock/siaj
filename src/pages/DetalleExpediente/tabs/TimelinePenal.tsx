@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import type {
   Expediente,
+  Actividad,
   EstadoActividadPenal,
   ResultadoBinario,
   ResultadoAcuerdo,
@@ -16,9 +17,9 @@ import { Modal } from '../../../components/ui/Modal'
 import Icon from '../../../components/ui/Icon'
 import { formatFecha } from '../../../utils/format'
 import { getEtapasPenales, getEtapaPenal } from '../../../data/etapasPenales'
-import { getNombreCompleto } from '../../../data/usuarios'
+import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
-import { useTareasStore } from '../../../store/tareas.store'
+import { useSolicitudesStore, PERSONAS_POR_AREA } from '../../../store/tareas.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 
 interface Props { exp: Expediente }
@@ -405,7 +406,7 @@ export function TimelinePenal({ exp }: Props) {
     agregarActividad, actualizarEstado, actualizarExpediente,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
-  const { agregarTarea } = useTareasStore()
+  const { agregarSolicitud } = useSolicitudesStore()
 
   const registros = registrosPenales[exp.id] ?? []
 
@@ -458,24 +459,66 @@ export function TimelinePenal({ exp }: Props) {
 
   function guardarSolicitudPenal() {
     if (!formSolicitud.titulo.trim()) return
-    agregarTarea({
-      titulo:              formSolicitud.titulo,
-      descripcion:         formSolicitud.descripcion,
+
+    const esExterna = !!formSolicitud.area_destinataria
+    // Destinatario obligatorio: interno vía asignado_a, externo vía área destinataria
+    if (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria) {
+      toast.error('Debés seleccionar un destinatario.')
+      return
+    }
+
+    // Nombres de destinatarios (internos por USUARIOS, externos por PERSONAS_POR_AREA)
+    const nombres = formSolicitud.asignado_a.map(id => {
+      const u = getUsuarioById(id)
+      if (u) return `${u.apellido}, ${u.nombre}`
+      return PERSONAS_POR_AREA.find(p => p.id === id)?.nombre ?? id
+    })
+    const asignadoNombre = nombres.length ? nombres.join(', ') : (formSolicitud.area_destinataria || 'Sin asignar')
+
+    agregarSolicitud({
+      tipo:                esExterna ? 'externa' : 'interna',
+      titulo:              formSolicitud.titulo.trim(),
+      descripcion:         formSolicitud.descripcion.trim(),
       expediente_id:       exp.id,
-      expediente_caratula: exp.caratula,
+      expediente_caratula: exp.caratula ?? exp.id,
       expediente_area:     exp.area,
-      asignado_a:          formSolicitud.asignado_a[0] ?? '',
       creado_por:          usuarioActivo?.id ?? '',
-      fecha_limite:        formSolicitud.fecha_limite || null,
-      prioridad:           formSolicitud.prioridad,
-      estado:              'pendiente',
-      mostrar_en_agenda:   false,
+      asignado_a:          formSolicitud.asignado_a,
+      asignado_a_nombre:   asignadoNombre,
       area_destinataria:   formSolicitud.area_destinataria || undefined,
       persona_contacto_id: formSolicitud.persona_contacto_id || undefined,
       persona_contacto:    formSolicitud.persona_contacto || undefined,
-      etiquetas:           [],
+      prioridad:           formSolicitud.prioridad,
+      fecha_limite:        formSolicitud.fecha_limite || null,
+      estado:              'pendiente',
       created_at:          new Date().toISOString(),
     })
+
+    const prioridadLabel = {
+      alta:  '🔴 Alta',
+      media: '🟡 Media',
+      baja:  '🟢 Baja',
+    }[formSolicitud.prioridad] ?? formSolicitud.prioridad
+
+    agregarActividad(exp.id, {
+      id: `SOL_${Date.now()}`,
+      expediente_id: exp.id,
+      tipo: 'OTRO' as TipoActividad,
+      titulo: `Solicitud: ${formSolicitud.titulo.trim()}`,
+      descripcion: [
+        formSolicitud.descripcion.trim(),
+        `Asignado a: ${asignadoNombre}`,
+        `Prioridad: ${prioridadLabel}`,
+        formSolicitud.fecha_limite ? `Fecha límite: ${formSolicitud.fecha_limite}` : null,
+      ].filter(Boolean).join('\n'),
+      fecha: new Date().toISOString().split('T')[0],
+      activo: true,
+      subitems: [],
+      estadoExpediente: exp.estadoProcesal ?? exp.estado,
+      es_solicitud: true,
+      ...(formSolicitud.fecha_limite ? { fecha_vencimiento: formSolicitud.fecha_limite, fecha_aviso: formSolicitud.fecha_limite } : {}),
+    } as Actividad)
+
     toast.success('Solicitud creada.')
     closeModalNueva()
   }
@@ -728,10 +771,24 @@ export function TimelinePenal({ exp }: Props) {
       return (
         <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
           <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Icon name="description" size={16} className="text-[#4a6a84]" />
+            <Icon name={entrada.tipo === 'NOTA_RESPUESTA' ? 'check' : entrada.titulo.startsWith('Solicitud:') ? 'task' : 'description'} size={16} className="text-[#4a6a84]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">{entrada.titulo}</p>
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <p className="text-sm font-semibold text-[#1b3a57]">{entrada.titulo}</p>
+              {entrada.tipo === 'NOTA_RESPUESTA' && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
+                  <Icon name="check" size={9} />
+                  RESPUESTA
+                </span>
+              )}
+              {entrada.tipo !== 'NOTA_RESPUESTA' && entrada.titulo.startsWith('Solicitud:') && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
+                  <Icon name="task" size={9} />
+                  SOLICITUD
+                </span>
+              )}
+            </div>
             {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
             {entrada.doc_gde && (
               <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
@@ -1086,7 +1143,7 @@ export function TimelinePenal({ exp }: Props) {
               </button>
               <button
                 onClick={guardarSolicitudPenal}
-                disabled={!formSolicitud.titulo.trim()}
+                disabled={!formSolicitud.titulo.trim() || (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria)}
                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 Crear solicitud

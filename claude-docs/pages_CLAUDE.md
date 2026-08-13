@@ -139,10 +139,26 @@ Orden de renderizado en tab "Todo":
 
 El tab **Nueva Solicitud** usa el componente compartido `<SolicitudForm>` (`src/components/SolicitudForm.tsx`).
 - El `expediente_id` se toma automáticamente del expediente abierto — no hay campo para elegirlo.
-- Las solicitudes se guardan en `useTareasStore()` via `agregarTarea()`.
 - Selector de asignación en dos pasos: primero el grupo (Civil/Laboral/Penal/RRHH/Comercial/Seguros), luego la persona.
 - Grupos internos (Civil/Laboral/Penal) muestran abogados y coordinadores de `USUARIOS`.
 - Grupos externos (RRHH/Comercial/Seguros) muestran personas de `PERSONAS_POR_AREA` del store.
+- `form.asignado_a` es un **array multiselect** (checkboxes) — sirve tanto para internos (ids `UR_`) como para externos (ids `PA_`). `area_destinataria` se setea al elegir un grupo externo.
+- **Destinatario obligatorio:** el `<option>` inicial es `disabled` ("Seleccionar destinatario...") y el botón "Crear solicitud" queda deshabilitado si no hay `asignado_a` ni `area_destinataria`.
+
+### Modelo unificado de solicitudes (timeline ↔ módulo Solicitudes)
+
+`guardarSolicitud`/`guardarSolicitudPenal` hacen **dos cosas** al confirmar:
+1. `agregarSolicitud()` de `useSolicitudesStore()` → crea la `Solicitud` que aparece en el módulo
+   Solicitudes (`/tareas`) y puede responderse ahí. (Ya **no** usa `useTareasStore().agregarTarea`.)
+2. `agregarActividad()` → deja una entrada en el timeline del expediente con `tipo: 'OTRO'`,
+   `id: SOL_...` y `es_solicitud: true` (icono `task`, badge violeta **SOLICITUD**).
+
+Las entradas con `es_solicitud` son **read-only** en el feed: no muestran "Comentar" ni el menú ⋮.
+
+**La respuesta impacta de vuelta en el timeline** (ver `responderSolicitud` en `store_CLAUDE.md`):
+al responder desde el módulo Solicitudes se agrega una actividad `NOTA_RESPUESTA` (`es_solicitud: true`,
+badge verde **RESPUESTA**, icono `edit_note`/`check`) en el expediente de origen, y si la respuesta
+trae adjunto, se suma al repositorio de la tab Documentos.
 
 ```ts
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'

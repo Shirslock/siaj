@@ -234,6 +234,8 @@ export interface Actividad {
   fecha_aviso?: string
   escrito_id?: string                    // referencia al EscritoTemplate usado, si vino del generador
   escrito_estado?: EstadoEscritoActividad // GENERADO = se descargó el .docx y falta la aprobación externa
+  es_solicitud?: boolean                 // true = entrada de solicitud/respuesta, sin reply/edit/delete
+  solicitud_id?: string                  // referencia cruzada a la Solicitud de useSolicitudesStore
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'
