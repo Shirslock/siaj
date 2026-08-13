@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
+import type { Expediente } from '../../types'
 import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
@@ -9,6 +10,7 @@ import { USUARIOS, getNombreCompleto, puedeReasignar, esAbogadoPenal } from '../
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
 import { MAPA_INICIAR_JUICIO } from '../../utils/iniciarJuicio'
+import { FUEROS_PENAL, getJuzgadosPorFuero } from '../../data/juzgadosPJN'
 import { getEtapasPenales } from '../../data/etapasPenales'
 import { DatosTab }          from './tabs/DatosTab'
 import { VinculosTab }       from './tabs/VinculosTab'
@@ -23,7 +25,7 @@ import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
-type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_actuacion_penal'
+type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_actuacion_penal' | 'nueva_querella'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
@@ -56,7 +58,7 @@ export default function DetalleExpedientePage() {
   const params = useParams()
   const expId = params['*'] ?? ''
 
-  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, tareasMap, inicializarTareas } = useExpedientesStore()
+  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
 
   const [tab, setTab] = useState<Tab>('datos')
@@ -84,6 +86,17 @@ export default function DetalleExpedientePage() {
     ubicacion: '',
     linea: '',
   })
+
+  const BLANK_QUERELLA = {
+    numero_causa:  '',
+    juzgado_fuero: '',
+    juzgado:       '',
+    fiscalia:      '',
+    caratula:      '',
+    abogado_id:    exp?.abogado_id ?? '',
+    observaciones: '',
+  }
+  const [formQuerella, setFormQuerella] = useState(BLANK_QUERELLA)
 
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -153,6 +166,14 @@ export default function DetalleExpedientePage() {
     if (a === 'reasignar') setNuevoAbogado(exp!.abogado_id ?? '')
     if (a === 'iniciar_juicio') {
       setFormJuicio(p => ({ ...p, caratula: exp!.caratula, numero_causa: exp!.numero_causa ?? '' }))
+    }
+    if (a === 'nueva_querella') {
+      setFormQuerella({
+        ...BLANK_QUERELLA,
+        caratula:     exp!.caratula,
+        numero_causa: exp!.numero_causa ?? '',
+        abogado_id:   exp!.abogado_id ?? '',
+      })
     }
     setAccion(a)
   }
@@ -280,6 +301,100 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
+  function confirmarNuevaQuerella() {
+    if (!formQuerella.caratula.trim()) {
+      toast.error('La carátula es obligatoria.')
+      return
+    }
+
+    const idQuerella = `P-Q${Date.now().toString().slice(-6)}`
+
+    // Causa común para agrupar ambas actuaciones.
+    // Prioridad: lo que ingresó el letrado en el modal → número de
+    // causa del expediente origen → id del expediente origen como
+    // último recurso.
+    const causaComun = (
+      formQuerella.numero_causa.trim() ||
+      exp!.numero_causa?.trim() ||
+      exp!.id
+    )
+
+    const nuevaQuerella: Expediente = {
+      id:              idQuerella,
+      area:            'PENAL',
+      tipo:            'QUERELLA',
+      estado:          'INSTRUCCION',
+      estadoProcesal:  'INSTRUCCION',
+      caratula:        formQuerella.caratula.trim(),
+      numero_ee_gde:   exp!.numero_ee_gde,
+      numero_causa:    causaComun,
+      es_principal:    true,
+      abogado_id:      formQuerella.abogado_id || exp!.abogado_id || undefined,
+      fecha_recepcion: HOY,
+      es_urgente:      exp!.es_urgente,
+      campos_mesa: {
+        area_requirente: exp!.campos_mesa?.area_requirente ?? '',
+        linea:           exp!.linea ?? exp!.campos_mesa?.linea ?? '',
+        numero_causa:    causaComun,
+        juzgado_fuero:   formQuerella.juzgado_fuero,
+        juzgado:         formQuerella.juzgado,
+        fiscalia:        formQuerella.fiscalia,
+      },
+      campos_abogado: {
+        abg_caratula:    formQuerella.caratula.trim(),
+        abg_tipo_hecho:  exp!.campos_abogado?.abg_tipo_hecho ?? '',
+        abg_fecha_hecho: exp!.campos_abogado?.abg_fecha_hecho ?? '',
+        abg_lugar_hecho: exp!.campos_abogado?.abg_lugar_hecho ?? '',
+        observaciones:   formQuerella.observaciones,
+      },
+      timeline: [
+        {
+          id:               `${idQuerella}_REC_01`,
+          expediente_id:    idQuerella,
+          tipo:             'RECEPCION',
+          titulo:           'Querella iniciada desde Carta SAE',
+          descripcion:      `Querella derivada de la Carta SAE ${exp!.id}.${formQuerella.observaciones ? ' ' + formQuerella.observaciones : ''}`,
+          fecha:            HOY,
+          activo:           true,
+          subitems:         [],
+          estadoExpediente: 'INSTRUCCION',
+          creado_por:       usuarioActivo?.id,
+        },
+      ],
+      vinculos: [],
+      intervinientes: [],
+      documentos:     [],
+    }
+
+    agregarExpediente(nuevaQuerella)
+
+    actualizarExpediente(exp!.id, {
+      es_querella_iniciada: true,
+      id_querella_derivada: idQuerella,
+      numero_causa:         causaComun,
+      es_principal:         false,
+    })
+
+    agregarActividad(exp!.id, {
+      id:               `${exp!.id}_QRL_${Date.now()}`,
+      expediente_id:    exp!.id,
+      tipo:             'MOVIMIENTO',
+      titulo:           'Nueva Querella iniciada',
+      descripcion:      `Se inició la Querella ${idQuerella} — ${formQuerella.caratula.trim()}. La causa penal pasa a tramitarse como Querella.`,
+      fecha:            HOY,
+      activo:           true,
+      subitems:         [],
+      estadoExpediente: exp!.estado,
+      es_movimiento_impulsorio: true,
+      creado_por:       usuarioActivo?.id,
+    })
+
+    toast.success(`Querella ${idQuerella} creada correctamente.`, { autoClose: 6000 })
+    setAccion(null)
+    setFormQuerella(BLANK_QUERELLA)
+    setTimeout(() => navigate(RUTAS.EXPEDIENTE(idQuerella)), 800)
+  }
+
   const alerta      = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
   const alertaTimer = getAlertaTimer(exp)
 
@@ -354,6 +469,15 @@ export default function DetalleExpedientePage() {
                   {exp.numero_causa}
                 </span>
               )}
+              {exp.es_querella_iniciada && exp.id_querella_derivada && (
+                <button
+                  onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id_querella_derivada!))}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#eeedfe] text-[#534ab7] border border-[#AFA9EC] hover:bg-[#CECBF6] transition-colors"
+                >
+                  <Icon name="gavel" size={12} />
+                  Ver Querella →
+                </button>
+              )}
             </div>
             <h1 className="font-headline font-bold text-xl text-[#1b3a57] leading-snug">{exp.caratula}</h1>
             <div className="flex items-center gap-4 mt-1.5 text-xs text-[#4a6a84] flex-wrap">
@@ -384,6 +508,7 @@ export default function DetalleExpedientePage() {
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
                   { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' },
+                  { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Nueva Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada },
                 ]
                 .filter(item => item.show)
                 .map(item => (
@@ -854,6 +979,117 @@ export default function DetalleExpedientePage() {
                   onChange={e => setFormJuicio(p => ({ ...p, coactores: e.target.value }))} />
               </div>
             )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Nueva Querella */}
+      <Modal
+        open={accion === 'nueva_querella'}
+        onClose={() => { setAccion(null); setFormQuerella(BLANK_QUERELLA) }}
+        titulo="Nueva Querella"
+        size="md"
+        footer={
+          <>
+            <button onClick={() => { setAccion(null); setFormQuerella(BLANK_QUERELLA) }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarNuevaQuerella}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            >
+              <Icon name="gavel" size={16} />
+              Iniciar Querella
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+
+          {/* Info del origen */}
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-[#f0f7ff] border border-[#C4DFE8]">
+            <Icon name="info" size={14} className="text-[#1b7a8a] mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-[12px] font-semibold text-[#1b3a57] mb-0.5">
+                Se creará una nueva actuación de tipo Querella
+              </p>
+              <p className="text-[11px] text-[#4a6a84]">
+                La Querella quedará vinculada a esta Carta SAE y pasará a ser la actuación principal dentro de la causa.
+              </p>
+            </div>
+          </div>
+
+          {/* Carátula */}
+          <div>
+            <label className="field-label">Carátula <span className="text-[#b91c1c]">*</span></label>
+            <input type="text" className="field-input w-full" placeholder="SOFSE S.A. C/ NN S/ QUERELLA"
+              value={formQuerella.caratula}
+              onChange={e => setFormQuerella(p => ({ ...p, caratula: e.target.value }))} />
+          </div>
+
+          {/* Fuero + Juzgado en cascada */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="field-label">Fuero</label>
+              <select className="field-input w-full"
+                value={formQuerella.juzgado_fuero}
+                onChange={e => setFormQuerella(p => ({ ...p, juzgado_fuero: e.target.value, juzgado: '' }))}>
+                <option value="">Seleccionar...</option>
+                {FUEROS_PENAL.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Juzgado / Tribunal</label>
+              <select className="field-input w-full"
+                value={formQuerella.juzgado}
+                disabled={!formQuerella.juzgado_fuero}
+                onChange={e => setFormQuerella(p => ({ ...p, juzgado: e.target.value }))}>
+                <option value="">
+                  {formQuerella.juzgado_fuero ? 'Seleccionar...' : 'Primero elegí un fuero'}
+                </option>
+                {getJuzgadosPorFuero(formQuerella.juzgado_fuero).map(j => (
+                  <option key={j.nombre} value={j.nombre}>{j.nombre}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Fiscalía */}
+          <div>
+            <label className="field-label">Fiscalía</label>
+            <input type="text" className="field-input w-full" placeholder="Fiscalía interviniente"
+              value={formQuerella.fiscalia}
+              onChange={e => setFormQuerella(p => ({ ...p, fiscalia: e.target.value }))} />
+          </div>
+
+          {/* N° de Causa */}
+          <div>
+            <label className="field-label">N° de Causa / IPP</label>
+            <input type="text" className="field-input w-full font-mono" placeholder="Ej: 88.441/2024"
+              value={formQuerella.numero_causa}
+              onChange={e => setFormQuerella(p => ({ ...p, numero_causa: e.target.value }))} />
+          </div>
+
+          {/* Letrado asignado */}
+          <div>
+            <label className="field-label">Letrado asignado</label>
+            <select className="field-input w-full"
+              value={formQuerella.abogado_id}
+              onChange={e => setFormQuerella(p => ({ ...p, abogado_id: e.target.value }))}>
+              <option value="">Sin asignar</option>
+              {USUARIOS.filter(u => u.rolSistema === 'ABOGADO' || u.rolSistema === 'COORDINADOR').map(u => (
+                <option key={u.id} value={u.id}>{u.apellido}, {u.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Observaciones */}
+          <div>
+            <label className="field-label">Observaciones</label>
+            <textarea className="field-input w-full resize-none" style={{ minHeight: 64 }}
+              placeholder="Motivo de la querella..."
+              value={formQuerella.observaciones}
+              onChange={e => setFormQuerella(p => ({ ...p, observaciones: e.target.value }))} />
           </div>
         </div>
       </Modal>
