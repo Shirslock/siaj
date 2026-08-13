@@ -54,7 +54,10 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 ## Campos destacados de Expediente
 
 - `es_urgente?: boolean` — marcado manualmente desde el detalle; usado por filtro "Urgentes" en BandejaAbogado
-- `es_principal?: boolean` — badge verde "Principal · PJN" en la fila de bandeja
+- `es_principal?: boolean` — badge verde "Principal · PJN" en la fila de bandeja; también determina la cabecera del grupo-causa en BandejaAbogado (`exps.find(e => e.es_principal) ?? exps[0]`)
+- `es_juicio_iniciado?: boolean` / `fecha_inicio_juicio?` / `fecha_ultimo_impulsorio?` — flujo "Iniciar Juicio" (Civil/Laboral)
+- `es_querella_iniciada?: boolean` — marca una Carta SAE (`tipo: 'CARTA_SUCESO'`) cuya Querella ya fue creada; oculta la acción "Nueva Querella" y muestra el badge "Ver Querella →" en el header
+- `id_querella_derivada?: string` — id del expediente QUERELLA generado desde esa Carta SAE (destino del badge "Ver Querella →")
 
 ## Campos destacados de EstadoProcesal
 

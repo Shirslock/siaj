@@ -21,6 +21,7 @@ Solo sessionStorage para ID del usuario activo.
 ```ts
 // Expedientes
 setExpedienteActivo(id)
+agregarExpediente(exp)                 // exp: Expediente completo (con id). Lo appendea a expedientes[]. Usado por el flujo "Nueva Querella" para crear el expediente QUERELLA derivado de una Carta SAE
 actualizarCampoMesa(id, campo, valor)
 actualizarCampoAbogado(id, campo, valor)
 actualizarEstado(id, estado)
@@ -30,7 +31,7 @@ asignarAbogado(expedienteId, abogadoId)
 agregarActividad(expedienteId, actividad)
 agregarSubitem(expId, actividadIndex, subitem)
 agregarReply(expId, actividadIdx, replyData)    // replyData: Omit<Reply, 'id' | 'created_at'>
-editarActividad(expId, actividadIdx, cambios, usuarioId)   // cambios: Partial<Pick<Actividad, 'titulo'|'descripcion'|'fecha'|'doc_gde'|'fecha_vencimiento'|'fecha_aviso'>>; agrega entrada a log
+editarActividad(expId, actividadIdx, cambios, usuarioId)   // cambios: Partial<Pick<Actividad, 'titulo'|'descripcion'|'fecha'|'doc_gde'|'fecha_vencimiento'|'fecha_aviso'|'estado'>>; agrega entrada a log
 eliminarActividad(expId, actividadIdx, usuarioId)          // soft-delete: setea eliminado: true + entrada en log; no-op sobre RECEPCION
 
 // Tareas estructuradas (por estado procesal)
