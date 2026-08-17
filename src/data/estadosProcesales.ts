@@ -1,6 +1,15 @@
-import type { EstadoProcesal, UrgenciaTarea } from '../types'
+import type { EstadoProcesal, UrgenciaTarea, Tarea } from '../types'
 
-// ── DEMANDA CIVIL — ciclo completo ──────────────────────
+// ── Helper para crear tareas con campos por defecto (uso temprano) ──
+function tt(id: string, nombre: string): Tarea {
+  return { id, nombre, estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null }
+}
+
+// ── DEMANDA CIVIL — ciclo completo (Parte Demandada) ─────
+// Estructura MATRIZ SACO: ASIGNADO → INICIO → TRABA_LITIS → EN_PRUEBA
+// → ALEGATO → SENTENCIA_1_(FAV|DESFAV) → APELACION → SENTENCIA_2_(FAV|DESFAV)
+// → REF → EJECUCION_SENTENCIA → FINALIZADO
+// (Recurso de Queja ya no es nodo lineal: es trámite paralelo, ver TAREAS_RECURSO_QUEJA)
 export const ESTADOS_DEMANDA_CIVIL: EstadoProcesal[] = [
   {
     codigo: 'ASIGNADO',
@@ -12,72 +21,319 @@ export const ESTADOS_DEMANDA_CIVIL: EstadoProcesal[] = [
     codigo: 'INICIO',
     label: 'Inicio',
     siguiente: 'TRABA_LITIS',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
-      { id: 'DC_INI_01', nombre: 'Análisis inicial de la demanda',             estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_02', nombre: 'Interposición de revocatoria',               estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_03', nombre: 'Definición de plazo para contestar demanda', estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_04', nombre: 'Revisión integral del expediente',           estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_05', nombre: 'Interposición de caducidad',                 estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_06', nombre: 'Contestación de demanda',                    estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_07', nombre: 'Redacción de defensa de fondo',              estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_08', nombre: 'Planteo de excepciones',                     estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_09', nombre: 'Oposiciones',                                estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_10', nombre: 'Requerir citación de terceros',              estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_11', nombre: 'Ofrecimiento de prueba',                     estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_12', nombre: 'Documental',                                 estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_13', nombre: 'Testimonial — Propuestos por SOFSA',         estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_14', nombre: 'Pericial',                                   estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_15', nombre: 'Informativa',                                estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_INI_16', nombre: 'Presentación en sistema judicial',           estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      tt('DC_INI_01', 'Análisis inicial de la demanda'),
+      tt('DC_INI_02', 'Interposición de revocatoria'),
+      tt('DC_INI_03', 'Definición de plazo para contestar demanda'),
+      tt('DC_INI_04', 'Revisión integral del expediente'),
+      tt('DC_INI_05', 'Interposición de caducidad'),
+      tt('DC_INI_06', 'Contestación de demanda'),
+      tt('DC_INI_07', 'Redacción de defensa de fondo'),
+      tt('DC_INI_08', 'Planteo de excepciones'),
+      tt('DC_INI_09', 'Oposiciones'),
+      tt('DC_INI_10', 'Requerir citación de terceros'),
+      tt('DC_INI_11', 'Ofrecimiento de prueba'),
+      tt('DC_INI_12', 'Documental'),
+      tt('DC_INI_13', 'Testimonial — Propuestos por SOFSA'),
+      tt('DC_INI_14', 'Pericial'),
+      tt('DC_INI_15', 'Informativa'),
+      tt('DC_INI_16', 'Presentación en sistema judicial'),
     ],
   },
   {
     codigo: 'TRABA_LITIS',
     label: 'Traba de Litis',
     siguiente: 'EN_PRUEBA',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
-      { id: 'DC_TL_01', nombre: 'Notificación de traslado',         estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_TL_02', nombre: 'Control de plazos procesales',     estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_TL_03', nombre: 'Presentación de documentación',    estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      tt('DC_TL_01', 'Notificación de traslado'),
+      tt('DC_TL_02', 'Control de plazos procesales'),
+      tt('DC_TL_03', 'Presentación de documentación'),
     ],
   },
   {
     codigo: 'EN_PRUEBA',
     label: 'En Prueba',
-    siguiente: 'ALEGATOS',
+    siguiente: 'ALEGATO',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
-      { id: 'DC_EP_01', nombre: 'Producción de prueba documental',  estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_EP_02', nombre: 'Seguimiento de peritos',           estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_EP_03', nombre: 'Control de audiencias de prueba',  estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      tt('DC_EP_01', 'Producción de prueba documental'),
+      tt('DC_EP_02', 'Seguimiento de peritos'),
+      tt('DC_EP_03', 'Control de audiencias de prueba'),
     ],
   },
   {
-    codigo: 'ALEGATOS',
+    codigo: 'ALEGATO',
     label: 'Alegatos',
-    siguiente: 'SENTENCIA',
+    siguiente: 'SENTENCIA_1_FAV',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
-      { id: 'DC_AL_01', nombre: 'Redacción de alegatos',            estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_AL_02', nombre: 'Presentación de alegatos',         estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      tt('DC_AL_01', 'Redacción de alegatos'),
+      tt('DC_AL_02', 'Presentación de alegatos'),
     ],
   },
   {
-    codigo: 'SENTENCIA',
-    label: 'Sentencia',
-    siguiente: 'CERRADO',
+    codigo: 'SENTENCIA_1_FAV',
+    label: 'Sentencia 1° Instancia — Favorable',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'SENTENCIA_1',
     tareas: [
-      { id: 'DC_SE_01', nombre: 'Análisis de sentencia',            estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_SE_02', nombre: 'Recursos ordinarios',              estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
-      { id: 'DC_SE_03', nombre: 'Notificación a área requirente',   estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      tt('DC_S1F_01', 'Análisis de sentencia'),
+      tt('DC_S1F_02', 'Control de firmeza — apelación de la contraria'),
+      tt('DC_S1F_03', 'Notificación a área requirente'),
     ],
   },
   {
-    codigo: 'CERRADO',
-    label: 'Cerrado',
+    codigo: 'SENTENCIA_1_DESFAV',
+    label: 'Sentencia 1° Instancia — Desfavorable',
+    siguiente: 'APELACION',
+    grupoCausal: 'SENTENCIA_1',
+    tareas: [
+      tt('DC_S1D_01', 'Análisis de sentencia'),
+      tt('DC_S1D_02', 'Evaluar viabilidad de apelación'),
+      tt('DC_S1D_03', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'APELACION',
+    label: 'Apelación',
+    siguiente: 'SENTENCIA_2_FAV',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DC_AP_01', 'Redacción de memorial de agravios'),
+      tt('DC_AP_02', 'Presentación de apelación'),
+      tt('DC_AP_03', 'Control de elevación'),
+      tt('DC_AP_04', 'Seguimiento de cámara'),
+    ],
+  },
+  {
+    codigo: 'SENTENCIA_2_FAV',
+    label: 'Sentencia 2° Instancia — Favorable',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DC_S2F_01', 'Análisis de sentencia de cámara'),
+      tt('DC_S2F_02', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'SENTENCIA_2_DESFAV',
+    label: 'Sentencia 2° Instancia — Desfavorable',
+    siguiente: 'REF',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DC_S2D_01', 'Análisis de sentencia'),
+      tt('DC_S2D_02', 'Evaluar viabilidad de recurso extraordinario'),
+      tt('DC_S2D_03', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'REF',
+    label: 'Recurso Extraordinario Federal',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DC_REF_01', 'Redacción de REF'),
+      tt('DC_REF_02', 'Presentación de REF'),
+      tt('DC_REF_03', 'Control de admisibilidad'),
+      tt('DC_REF_04', 'Seguimiento de CSJN'),
+    ],
+  },
+  {
+    codigo: 'EJECUCION_SENTENCIA',
+    label: 'Ejecución de Sentencia',
+    siguiente: 'FINALIZADO',
+    grupoCausal: 'EJECUCION_SENTENCIA',
+    tareas: [
+      tt('DC_ES_01', 'Liquidación definitiva de condena'),
+      tt('DC_ES_02', 'Control de observaciones a la liquidación'),
+      tt('DC_ES_03', 'Informar a Administración monto a pagar'),
+      tt('DC_ES_04', 'Requerir fondos para el pago'),
+      tt('DC_ES_05', 'Control de transferencia / pago'),
+      tt('DC_ES_06', 'Certificar pago'),
+      tt('DC_ES_07', 'Gestión de archivo'),
+      tt('DC_ES_CAUSAL', 'Registrar causal de finalización'),
+    ],
+  },
+  {
+    codigo: 'FINALIZADO',
+    label: 'Finalizado',
     siguiente: undefined,
+    esArchivado: true,
     tareas: [
-      { id: 'DC_CE_01', nombre: 'Archivo del expediente',           estado: 'sin_estado', fecha: null, fechaVencimiento: null, alertaActiva: false, diasAlerta: null, observaciones: '', docGde: null },
+      tt('DC_FIN_01', 'Archivo del expediente'),
+      tt('DC_FIN_02', 'Notificación final a área requirente'),
+      tt('DC_FIN_03', 'Registrar resultado'),
+      tt('DC_FIN_04', 'Cierre en sistema'),
     ],
   },
+]
+
+// ── DEMANDA LABORAL — ciclo completo (Parte Demandada) ───
+// Misma estructura MATRIZ SACO que ESTADOS_DEMANDA_CIVIL, adaptada al fuero laboral.
+export const ESTADOS_DEMANDA_LABORAL: EstadoProcesal[] = [
+  {
+    codigo: 'ASIGNADO',
+    label: 'Asignado',
+    siguiente: 'INICIO',
+    tareas: [],
+  },
+  {
+    codigo: 'INICIO',
+    label: 'Inicio',
+    siguiente: 'TRABA_LITIS',
+    grupoCausal: 'PRE_SENTENCIA_1',
+    tareas: [
+      tt('DL_INI_01', 'Análisis inicial de la demanda laboral'),
+      tt('DL_INI_02', 'Verificar competencia — fuero laboral'),
+      tt('DL_INI_03', 'Definición de plazo para contestar demanda'),
+      tt('DL_INI_04', 'Revisión integral del legajo del trabajador'),
+      tt('DL_INI_05', 'Contestación de demanda'),
+      tt('DL_INI_06', 'Redacción de defensa de fondo'),
+      tt('DL_INI_07', 'Planteo de excepciones'),
+      tt('DL_INI_08', 'Ofrecimiento de prueba'),
+      tt('DL_INI_09', 'Documental'),
+      tt('DL_INI_10', 'Testimonial — Propuestos por SOFSA'),
+      tt('DL_INI_11', 'Pericial contable / médica'),
+      tt('DL_INI_12', 'Presentación en sistema judicial'),
+    ],
+  },
+  {
+    codigo: 'TRABA_LITIS',
+    label: 'Traba de Litis',
+    siguiente: 'EN_PRUEBA',
+    grupoCausal: 'PRE_SENTENCIA_1',
+    tareas: [
+      tt('DL_TL_01', 'Notificación de traslado'),
+      tt('DL_TL_02', 'Control de plazos procesales'),
+      tt('DL_TL_03', 'Presentación de documentación'),
+    ],
+  },
+  {
+    codigo: 'EN_PRUEBA',
+    label: 'En Prueba',
+    siguiente: 'ALEGATO',
+    grupoCausal: 'PRE_SENTENCIA_1',
+    tareas: [
+      tt('DL_EP_01', 'Producción de prueba documental'),
+      tt('DL_EP_02', 'Control de peritos laborales'),
+      tt('DL_EP_03', 'Control de audiencias de prueba'),
+    ],
+  },
+  {
+    codigo: 'ALEGATO',
+    label: 'Alegatos',
+    siguiente: 'SENTENCIA_1_FAV',
+    grupoCausal: 'PRE_SENTENCIA_1',
+    tareas: [
+      tt('DL_AL_01', 'Redacción de alegatos'),
+      tt('DL_AL_02', 'Presentación de alegatos'),
+    ],
+  },
+  {
+    codigo: 'SENTENCIA_1_FAV',
+    label: 'Sentencia 1° Instancia — Favorable',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'SENTENCIA_1',
+    tareas: [
+      tt('DL_S1F_01', 'Análisis de sentencia'),
+      tt('DL_S1F_02', 'Control de firmeza — apelación de la contraria'),
+      tt('DL_S1F_03', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'SENTENCIA_1_DESFAV',
+    label: 'Sentencia 1° Instancia — Desfavorable',
+    siguiente: 'APELACION',
+    grupoCausal: 'SENTENCIA_1',
+    tareas: [
+      tt('DL_S1D_01', 'Análisis de sentencia'),
+      tt('DL_S1D_02', 'Evaluar viabilidad de apelación'),
+      tt('DL_S1D_03', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'APELACION',
+    label: 'Apelación',
+    siguiente: 'SENTENCIA_2_FAV',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DL_AP_01', 'Redacción de memorial de agravios'),
+      tt('DL_AP_02', 'Presentación de apelación'),
+      tt('DL_AP_03', 'Seguimiento de cámara laboral'),
+    ],
+  },
+  {
+    codigo: 'SENTENCIA_2_FAV',
+    label: 'Sentencia 2° Instancia — Favorable',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DL_S2F_01', 'Análisis de sentencia de cámara'),
+      tt('DL_S2F_02', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'SENTENCIA_2_DESFAV',
+    label: 'Sentencia 2° Instancia — Desfavorable',
+    siguiente: 'REF',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DL_S2D_01', 'Análisis de sentencia'),
+      tt('DL_S2D_02', 'Evaluar recurso extraordinario'),
+      tt('DL_S2D_03', 'Notificación a área requirente'),
+    ],
+  },
+  {
+    codigo: 'REF',
+    label: 'Recurso Extraordinario Federal',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
+    tareas: [
+      tt('DL_REF_01', 'Redacción de REF'),
+      tt('DL_REF_02', 'Presentación de REF'),
+      tt('DL_REF_03', 'Control de admisibilidad'),
+    ],
+  },
+  {
+    codigo: 'EJECUCION_SENTENCIA',
+    label: 'Ejecución de Sentencia',
+    siguiente: 'FINALIZADO',
+    grupoCausal: 'EJECUCION_SENTENCIA',
+    tareas: [
+      tt('DL_ES_01', 'Liquidación definitiva de condena'),
+      tt('DL_ES_02', 'Control de observaciones a la liquidación'),
+      tt('DL_ES_03', 'Informar a Administración monto a pagar'),
+      tt('DL_ES_04', 'Requerir fondos para el pago'),
+      tt('DL_ES_05', 'Control de transferencia / pago'),
+      tt('DL_ES_06', 'Certificar pago'),
+      tt('DL_ES_07', 'Gestión de archivo'),
+      tt('DL_ES_CAUSAL', 'Registrar causal de finalización'),
+    ],
+  },
+  {
+    codigo: 'FINALIZADO',
+    label: 'Finalizado',
+    siguiente: undefined,
+    esArchivado: true,
+    tareas: [
+      tt('DL_FIN_01', 'Archivo del expediente'),
+      tt('DL_FIN_02', 'Notificación final a área requirente'),
+      tt('DL_FIN_03', 'Registrar resultado'),
+      tt('DL_FIN_04', 'Cierre en sistema'),
+    ],
+  },
+]
+
+// ── Recurso de Queja — trámite paralelo (no es nodo de la cadena) ─
+// Aplica desde REF en adelante en los 4 ciclos de Demanda Civil/Laboral.
+// Ver useExpedientesStore.toggleQuejaEnTramite().
+export const TAREAS_RECURSO_QUEJA: Tarea[] = [
+  tt('RQ_01', 'Interposición del recurso de queja'),
+  tt('RQ_02', 'Seguimiento ante la Cámara'),
+  tt('RQ_03', 'Resolución de la queja'),
+  tt('RQ_04', 'Si prospera: retroceder a REF con motivo'),
 ]
 
 // ── Estados genéricos para tipos sin definición específica ──
@@ -378,6 +634,7 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
     codigo: 'INICIO',
     label: 'Inicio',
     siguiente: 'TRABA_LITIS',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DCA_INI_01', 'Análisis inicial del expediente'), t('DCA_INI_02', 'Verificar competencia y jurisdicción'),
       t('DCA_INI_03', 'Preparar escrito de demanda'), t('DCA_INI_04', 'Adjuntar documental'), t('DCA_INI_05', 'Ofrecimiento de prueba'),
@@ -390,6 +647,7 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
     codigo: 'TRABA_LITIS',
     label: 'Traba de Litis',
     siguiente: 'PRUEBA',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DCA_TL_01', 'Control de notificación de traslado'), t('DCA_TL_02', 'Control de plazos procesales'),
       t('DCA_TL_03', 'Presentación de documental complementaria'), t('DCA_TL_04', 'Seguimiento de excepciones si las hay'),
@@ -399,6 +657,7 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
     codigo: 'PRUEBA',
     label: 'En Prueba',
     siguiente: 'ALEGATO',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DCA_PR_01', 'Producción de prueba documental'), t('DCA_PR_02', 'Seguimiento de peritos'),
       t('DCA_PR_03', 'Control de audiencias de prueba'), t('DCA_PR_04', 'Impulso procesal'),
@@ -408,14 +667,16 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
     codigo: 'ALEGATO',
     label: 'Alegatos',
     siguiente: 'SENTENCIA_1_FAV',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DCA_AL_01', 'Redacción de alegatos'), t('DCA_AL_02', 'Presentación de alegatos'),
     ],
   },
   {
     codigo: 'SENTENCIA_1_FAV',
-    label: 'Sentencia 1ª — Favorable',
+    label: 'Sentencia 1° Instancia — Favorable',
     siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'SENTENCIA_1',
     tareas: [
       t('DCA_S1F_01', 'Análisis de sentencia'), t('DCA_S1F_02', 'Liquidación judicial'),
       t('DCA_S1F_03', 'Notificación a área requirente'), t('DCA_S1F_04', 'Verificar cumplimiento voluntario'),
@@ -423,8 +684,9 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
   },
   {
     codigo: 'SENTENCIA_1_DESFAV',
-    label: 'Sentencia 1ª — Desfavorable',
+    label: 'Sentencia 1° Instancia — Desfavorable',
     siguiente: 'APELACION',
+    grupoCausal: 'SENTENCIA_1',
     tareas: [
       t('DCA_S1D_01', 'Análisis de sentencia'), t('DCA_S1D_02', 'Evaluar viabilidad de apelación'),
       t('DCA_S1D_03', 'Notificación a área requirente'),
@@ -434,6 +696,7 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
     codigo: 'APELACION',
     label: 'Apelación',
     siguiente: 'SENTENCIA_2_FAV',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DCA_AP_01', 'Redacción de memorial de agravios'), t('DCA_AP_02', 'Presentación de apelación'),
       t('DCA_AP_03', 'Control de elevación'), t('DCA_AP_04', 'Seguimiento de cámara'),
@@ -441,8 +704,9 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
   },
   {
     codigo: 'SENTENCIA_2_FAV',
-    label: 'Sentencia 2ª — Favorable',
+    label: 'Sentencia 2° Instancia — Favorable',
     siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DCA_S2F_01', 'Análisis de sentencia de cámara'), t('DCA_S2F_02', 'Liquidación judicial'),
       t('DCA_S2F_03', 'Notificación a área requirente'),
@@ -450,8 +714,9 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
   },
   {
     codigo: 'SENTENCIA_2_DESFAV',
-    label: 'Sentencia 2ª — Desfavorable',
+    label: 'Sentencia 2° Instancia — Desfavorable',
     siguiente: 'REF',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DCA_S2D_01', 'Análisis de sentencia'), t('DCA_S2D_02', 'Evaluar viabilidad de recurso extraordinario'),
       t('DCA_S2D_03', 'Notificación a área requirente'),
@@ -460,32 +725,25 @@ export const ESTADOS_DEMANDA_CIVIL_ACTORA: EstadoProcesal[] = [
   {
     codigo: 'REF',
     label: 'Recurso Extraordinario Federal',
-    siguiente: 'RECURSO_QUEJA',
+    siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DCA_REF_01', 'Redacción de REF'), t('DCA_REF_02', 'Presentación de REF'),
       t('DCA_REF_03', 'Control de admisibilidad'), t('DCA_REF_04', 'Seguimiento de CSJN'),
     ],
   },
   {
-    codigo: 'RECURSO_QUEJA',
-    label: 'Recurso de Queja',
-    siguiente: 'EJECUCION_SENTENCIA',
-    tareas: [
-      t('DCA_RQ_01', 'Redacción de queja'), t('DCA_RQ_02', 'Presentación de queja'),
-      t('DCA_RQ_03', 'Seguimiento de resolución'),
-    ],
-  },
-  {
     codigo: 'EJECUCION_SENTENCIA',
     label: 'Ejecución de Sentencia',
     siguiente: 'FINALIZADO',
+    grupoCausal: 'EJECUCION_SENTENCIA',
     tareas: [
       t('DCA_ES_01', 'Liquidación definitiva'), t('DCA_ES_02', 'Presentación de liquidación'),
       t('DCA_ES_03', 'Control de observaciones'), t('DCA_ES_04', 'Seguimiento de aprobación'),
       t('DCA_ES_05', 'Gestión de cobro'), t('DCA_ES_06', 'Verificar acreditación'),
       t('DCA_ES_07', 'Informar a Administración'), t('DCA_ES_08', 'Requerir fondos al Banco'),
       t('DCA_ES_09', 'Control de transferencia'), t('DCA_ES_10', 'Certificar cobro'),
-      t('DCA_ES_11', 'Gestión de archivo'),
+      t('DCA_ES_11', 'Gestión de archivo'), t('DCA_ES_CAUSAL', 'Registrar causal de finalización'),
     ],
   },
   {
@@ -507,6 +765,7 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'INICIO',
     label: 'Inicio',
     siguiente: 'TRABA_LITIS',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DLA_INI_01', 'Análisis inicial del expediente'), t('DLA_INI_02', 'Verificar competencia — fuero laboral'),
       t('DLA_INI_03', 'Preparar escrito de demanda laboral'), t('DLA_INI_04', 'Adjuntar documental'),
@@ -520,6 +779,7 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'TRABA_LITIS',
     label: 'Traba de Litis',
     siguiente: 'PRUEBA',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DLA_TL_01', 'Control de notificación de traslado'), t('DLA_TL_02', 'Control de plazos procesales'),
       t('DLA_TL_03', 'Presentación de documental complementaria'),
@@ -529,6 +789,7 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'PRUEBA',
     label: 'En Prueba',
     siguiente: 'ALEGATO',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DLA_PR_01', 'Producción de prueba documental'), t('DLA_PR_02', 'Control de peritos laborales'),
       t('DLA_PR_03', 'Control de audiencias'), t('DLA_PR_04', 'Impulso procesal'),
@@ -538,14 +799,16 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'ALEGATO',
     label: 'Alegatos',
     siguiente: 'SENTENCIA_1_FAV',
+    grupoCausal: 'PRE_SENTENCIA_1',
     tareas: [
       t('DLA_AL_01', 'Redacción de alegatos'), t('DLA_AL_02', 'Presentación de alegatos'),
     ],
   },
   {
     codigo: 'SENTENCIA_1_FAV',
-    label: 'Sentencia 1ª — Favorable',
+    label: 'Sentencia 1° Instancia — Favorable',
     siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'SENTENCIA_1',
     tareas: [
       t('DLA_S1F_01', 'Análisis de sentencia'), t('DLA_S1F_02', 'Liquidación judicial'),
       t('DLA_S1F_03', 'Notificación a área requirente'),
@@ -553,8 +816,9 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
   },
   {
     codigo: 'SENTENCIA_1_DESFAV',
-    label: 'Sentencia 1ª — Desfavorable',
+    label: 'Sentencia 1° Instancia — Desfavorable',
     siguiente: 'APELACION',
+    grupoCausal: 'SENTENCIA_1',
     tareas: [
       t('DLA_S1D_01', 'Análisis de sentencia'), t('DLA_S1D_02', 'Evaluar viabilidad de apelación'),
     ],
@@ -563,6 +827,7 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'APELACION',
     label: 'Apelación',
     siguiente: 'SENTENCIA_2_FAV',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DLA_AP_01', 'Redacción de memorial'), t('DLA_AP_02', 'Presentación de apelación'),
       t('DLA_AP_03', 'Seguimiento de cámara laboral'),
@@ -570,16 +835,18 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
   },
   {
     codigo: 'SENTENCIA_2_FAV',
-    label: 'Sentencia 2ª — Favorable',
+    label: 'Sentencia 2° Instancia — Favorable',
     siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DLA_S2F_01', 'Análisis de sentencia de cámara'), t('DLA_S2F_02', 'Liquidación judicial'),
     ],
   },
   {
     codigo: 'SENTENCIA_2_DESFAV',
-    label: 'Sentencia 2ª — Desfavorable',
+    label: 'Sentencia 2° Instancia — Desfavorable',
     siguiente: 'REF',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DLA_S2D_01', 'Análisis de sentencia'), t('DLA_S2D_02', 'Evaluar recurso extraordinario'),
     ],
@@ -588,6 +855,7 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'REF',
     label: 'Recurso Extraordinario Federal',
     siguiente: 'EJECUCION_SENTENCIA',
+    grupoCausal: 'INSTANCIA_RECURSIVA',
     tareas: [
       t('DLA_REF_01', 'Redacción de REF'), t('DLA_REF_02', 'Presentación de REF'),
       t('DLA_REF_03', 'Control de admisibilidad'),
@@ -597,13 +865,14 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
     codigo: 'EJECUCION_SENTENCIA',
     label: 'Ejecución de Sentencia',
     siguiente: 'FINALIZADO',
+    grupoCausal: 'EJECUCION_SENTENCIA',
     tareas: [
       t('DLA_ES_01', 'Liquidación definitiva'), t('DLA_ES_02', 'Presentación de liquidación'),
       t('DLA_ES_03', 'Control de observaciones'), t('DLA_ES_04', 'Seguimiento de aprobación'),
       t('DLA_ES_05', 'Gestión de cobro'), t('DLA_ES_06', 'Verificar acreditación'),
       t('DLA_ES_07', 'Informar a Administración'), t('DLA_ES_08', 'Requerir fondos'),
       t('DLA_ES_09', 'Control de transferencia'), t('DLA_ES_10', 'Certificar cobro'),
-      t('DLA_ES_11', 'Gestión de archivo'),
+      t('DLA_ES_11', 'Gestión de archivo'), t('DLA_ES_CAUSAL', 'Registrar causal de finalización'),
     ],
   },
   {
@@ -618,83 +887,137 @@ export const ESTADOS_DEMANDA_LABORAL_ACTORA: EstadoProcesal[] = [
   },
 ]
 
-// ── CICLO: Lanzamiento Judicializado ─────────────────────
+// ── CICLO: Lanzamiento Judicializado (MATRIZ SACO) ───────
+// Split Operativo/Comercial (ver getSiguienteLanzamiento en
+// DetalleExpediente.page.tsx) + bifurcación por vulnerabilidad
+// desde CONSTATACION_JUDICIAL (ver RAMIFICACIONES_POR_CODIGO).
+// Circuito completo (Operativo, con vulnerables):
+//   ASIGNADO → INICIO → CONSTATACION_JUDICIAL
+//     → TRASLADO_DEFENSOR_OFICIAL → TRABA_LITIS → SENTENCIA_LANZAMIENTO
+//     → APELACION_LANZ → SENTENCIA_CAMARA → REF_LANZ → SENTENCIA_FIRME
+//     → MANDAMIENTO_LIBRADO → LANZAMIENTO_EFECTIVIZADO → TERMINADO
+// Circuito Comercial (salto directo, ver PASO 4):
+//   INICIO → SENTENCIA_LANZAMIENTO → MANDAMIENTO_LIBRADO
+//     → LANZAMIENTO_EFECTIVIZADO → TERMINADO
 export const ESTADOS_LANZAMIENTO_JUDICIALIZADO: EstadoProcesal[] = [
   { codigo: 'ASIGNADO', label: 'Asignado', siguiente: 'INICIO', tareas: [] },
   {
     codigo: 'INICIO',
     label: 'Inicio',
-    siguiente: 'SENTENCIA_LANZAMIENTO',
+    siguiente: 'CONSTATACION_JUDICIAL',
+    grupoCausal: 'LANZAMIENTO',
     tareas: [
-      t('LJ_INI_01', 'Reunir documental respaldatoria y antecedentes — vinculación con el lanzamiento'),
-      t('LJ_INI_02', 'Presentación en sistema judicial — sorteo de causa'),
-      t('LJ_INI_03', 'Carga de número de causa judicial'),
-      t('LJ_INI_04', 'Carga de juzgado / fuero / jurisdicción — objeto'),
-      t('LJ_INI_05', 'Vincular escrito de demanda presentado'),
-      t('LJ_INI_06', 'Control de primer proveído'),
-      t('LJ_INI_07', 'Control de proveído inicial'),
-      t('LJ_INI_08', 'Aclarar o ampliar lo que corresponde'),
-      t('LJ_INI_09', 'Pago de Bono Profesional'),
-      t('LJ_INI_10', 'Control de plazo — 3 meses'),
+      t('LJ_INI_01', 'Análisis de antecedentes del inmueble'),
+      t('LJ_INI_02', 'Verificar documentación respaldatoria'),
+    ],
+  },
+  {
+    codigo: 'CONSTATACION_JUDICIAL',
+    label: 'Constatación Judicial',
+    siguiente: 'SENTENCIA_LANZAMIENTO',
+    grupoCausal: 'LANZAMIENTO',
+    tareas: [
+      t('LJ_CJ_01', 'Solicitar constatación judicial'),
+      t('LJ_CJ_02', 'Registrar resultado de constatación'),
+      t('LJ_CJ_03', 'Verificar presencia de personas vulnerables (menores/embarazadas/discapacidad)'),
+    ],
+  },
+  {
+    codigo: 'TRASLADO_DEFENSOR_OFICIAL',
+    label: 'Traslado a Defensor Oficial (con vulnerables)',
+    siguiente: 'TRABA_LITIS',
+    grupoCausal: 'LANZAMIENTO',
+    tareas: [
+      t('LJ_TDO_01', 'Notificar traslado a Defensor Oficial'),
+      t('LJ_TDO_02', 'Aguardar toma de intervención'),
+    ],
+  },
+  {
+    codigo: 'TRABA_LITIS',
+    label: 'Traba de Litis',
+    siguiente: 'SENTENCIA_LANZAMIENTO',
+    grupoCausal: 'LANZAMIENTO',
+    tareas: [
+      t('LJ_TL_01', 'Control de traslados'),
+      t('LJ_TL_02', 'Seguimiento de resoluciones del Defensor Oficial'),
     ],
   },
   {
     codigo: 'SENTENCIA_LANZAMIENTO',
-    label: 'Sentencia de Lanzamiento',
-    siguiente: 'SENTENCIA_2_FAV',
+    label: 'Sentencia de Lanzamiento (sin vulnerables — directo)',
+    siguiente: 'APELACION_LANZ',
+    grupoCausal: 'LANZAMIENTO',
     tareas: [
-      t('LJ_SL_01', 'Se libra el mandamiento'),
-      t('LJ_SL_02', 'Diligenciamiento del mandamiento'),
-      t('LJ_SL_03', 'Ejecución de la medida'),
-      t('LJ_SL_04', 'Depositario de bienes (sí/no)'),
-      t('LJ_SL_05', 'Presentación del defensor oficial (sí/no)'),
-      t('LJ_SL_06', 'Subir al sistema el mandamiento diligenciado'),
+      t('LJ_SL_01', 'Control de dictado de sentencia de lanzamiento'),
+      t('LJ_SL_02', 'Notificar a las partes'),
     ],
   },
   {
-    codigo: 'SENTENCIA_2_FAV',
-    label: 'Sentencia 2ª — Favorable',
-    siguiente: 'FINALIZADO',
+    codigo: 'APELACION_LANZ',
+    label: 'Apelación',
+    siguiente: 'SENTENCIA_CAMARA',
+    grupoCausal: 'LANZAMIENTO',
     tareas: [
-      t('LJ_S2F_01', 'Control de dictado de sentencia'),
-      t('LJ_S2F_02', 'Análisis del fallo — recurso de aclaratoria (3 días)'),
-      t('LJ_S2F_03', 'Subir al sistema la sentencia de segunda instancia'),
+      t('LJ_AP_01', 'Notificación para expresar agravios (Defensor Oficial u otra parte)'),
+      t('LJ_AP_02', 'Redacción de recurso'),
     ],
   },
   {
-    codigo: 'SENTENCIA_2_DESFAV',
-    label: 'Sentencia 2ª — Desfavorable',
-    siguiente: 'REF',
+    codigo: 'SENTENCIA_CAMARA',
+    label: 'Sentencia de Cámara',
+    siguiente: 'REF_LANZ',
+    grupoCausal: 'LANZAMIENTO',
     tareas: [
-      t('LJ_S2D_01', 'Control de dictado de sentencia'),
-      t('LJ_S2D_02', 'Análisis del fallo — recurso de aclaratoria (3 días)'),
-      t('LJ_S2D_03', 'Evaluación de responsabilidad'),
-      t('LJ_S2D_04', 'Subir al sistema la sentencia de segunda instancia'),
+      t('LJ_SC_01', 'Control de dictado de sentencia de Cámara'),
     ],
   },
   {
-    codigo: 'REF',
+    codigo: 'REF_LANZ',
     label: 'Recurso Extraordinario Federal',
-    siguiente: 'FINALIZADO',
+    siguiente: 'SENTENCIA_FIRME',
+    grupoCausal: 'LANZAMIENTO',
     tareas: [
-      t('LJ_REF_01', 'Análisis de procedencia (10 días)'),
-      t('LJ_REF_02', 'Redacción del recurso extraordinario'),
-      t('LJ_REF_03', 'Presentación en sistema judicial y subir escrito presentado'),
-      t('LJ_REF_04', 'Control formal del recurso'),
-      t('LJ_REF_05', 'Seguimiento de concesión o denegación'),
+      t('LJ_REF_01', 'Presentación del Recurso Extraordinario Federal'),
+      t('LJ_REF_02', 'Seguimiento (no suspende el trámite)'),
     ],
   },
   {
-    codigo: 'FINALIZADO',
+    codigo: 'SENTENCIA_FIRME',
+    label: 'Sentencia Firme',
+    siguiente: 'MANDAMIENTO_LIBRADO',
+    grupoCausal: 'LANZAMIENTO',
+    tareas: [
+      t('LJ_SF_01', 'Control de firmeza de la sentencia'),
+    ],
+  },
+  {
+    codigo: 'MANDAMIENTO_LIBRADO',
+    label: 'Mandamiento Librado',
+    siguiente: 'LANZAMIENTO_EFECTIVIZADO',
+    grupoCausal: 'LANZAMIENTO',
+    tareas: [
+      t('LJ_ML_01', 'Solicitar libramiento de mandamiento'),
+      t('LJ_ML_02', 'Coordinar con Fuerzas de Seguridad'),
+    ],
+  },
+  {
+    codigo: 'LANZAMIENTO_EFECTIVIZADO',
+    label: 'Lanzamiento Efectivizado',
+    siguiente: 'TERMINADO',
+    grupoCausal: 'LANZAMIENTO',
+    tareas: [
+      t('LJ_LE_01', 'Registrar acta de lanzamiento efectivizado'),
+      t('LJ_LE_02', 'Notificar a Infraestructura la recuperación del inmueble'),
+    ],
+  },
+  {
+    codigo: 'TERMINADO',
     label: 'Finalizado',
     siguiente: undefined,
     esArchivado: true,
+    grupoCausal: 'LANZAMIENTO',
     tareas: [
-      t('LJ_FIN_01', 'Verificar cumplimiento total'),
-      t('LJ_FIN_02', 'Verificar cobro / imposibilidad de cobro'),
-      t('LJ_FIN_03', 'Registrar resultado final'),
-      t('LJ_FIN_04', 'Archivo judicial si corresponde'),
-      t('LJ_FIN_05', 'Archivo interno'),
+      t('LJ_TER_01', 'Registrar causal de finalización'),
     ],
   },
 ]
@@ -702,7 +1025,7 @@ export const ESTADOS_LANZAMIENTO_JUDICIALIZADO: EstadoProcesal[] = [
 // ── Mapa general tipo → estados ─────────────────────────
 const ESTADOS_PROCESALES: Partial<Record<string, EstadoProcesal[]>> = {
   DEMANDA_CIVIL:             ESTADOS_DEMANDA_CIVIL,
-  DEMANDA_LABORAL:           ESTADOS_DEMANDA_CIVIL,
+  DEMANDA_LABORAL:           ESTADOS_DEMANDA_LABORAL,
   COBRO_CANON:               ESTADOS_COBRO_CANON,
   RECLAMO_CONTRAT:           ESTADOS_RECLAMO_CONTRAT,
   RECUPERO:                  ESTADOS_RECUPERO,
