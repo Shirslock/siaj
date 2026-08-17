@@ -9,6 +9,7 @@ import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from
 import { USUARIOS, getNombreCompleto, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
+import { getCausalesPorEstado } from '../../data/causalesFinalizacion'
 import { MAPA_INICIAR_JUICIO } from '../../utils/iniciarJuicio'
 import { FUEROS_PENAL, getJuzgadosPorFuero } from '../../data/juzgadosPJN'
 import { getEtapasPenales } from '../../data/etapasPenales'
@@ -33,15 +34,72 @@ const TIPOS_CON_JUICIO = new Set([
   'COBRO_CANON', 'RECLAMO_CONTRAT', 'RECUPERO', 'EJECUCION_GAR',
   'LANZAMIENTO', 'CONSIGNACION', 'DESAFUERO',
 ])
+// Tipos con flujo MATRIZ SACO — "Finalizado" siempre disponible en el select
+const TIPOS_FINALIZACION_LIBRE = new Set([
+  'DEMANDA_CIVIL', 'DEMANDA_LABORAL', 'DEMANDA_CIVIL_ACTORA', 'DEMANDA_LABORAL_ACTORA',
+  'LANZAMIENTO_JUDICIALIZADO',
+])
 
-const ESTADOS_DESDE_EN_ANALISIS: Record<string, string[]> = {
-  COBRO_CANON:     ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
-  RECLAMO_CONTRAT: ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
-  RECUPERO:        ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
-  EJECUCION_GAR:   ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
-  LANZAMIENTO:     ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
-  CONSIGNACION:    ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
-  DESAFUERO:       ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE'],
+// Código del estado terminal por tipo — la mayoría usa 'FINALIZADO', pero
+// LANZAMIENTO_JUDICIALIZADO usa 'TERMINADO' (label igual: "Finalizado").
+const CODIGO_FINALIZADO_POR_TIPO: Record<string, string> = {
+  DEMANDA_CIVIL: 'FINALIZADO',
+  DEMANDA_LABORAL: 'FINALIZADO',
+  DEMANDA_CIVIL_ACTORA: 'FINALIZADO',
+  DEMANDA_LABORAL_ACTORA: 'FINALIZADO',
+  LANZAMIENTO_JUDICIALIZADO: 'TERMINADO',
+}
+function getCodigoFinalizado(tipo: string): string {
+  return CODIGO_FINALIZADO_POR_TIPO[tipo] ?? 'FINALIZADO'
+}
+
+// Ramificaciones genéricas por CÓDIGO de estado — válidas para cualquier tipo
+// de expediente que llegue a ese código (p.ej. ALEGATO/APELACION son iguales
+// en los 4 ciclos de Demanda Civil/Laboral). EN_ANALISIS es la excepción:
+// su ramificación depende del tipo ("ciclo A" vs "ciclo B"), se resuelve
+// en getRamificaciones() antes de caer acá.
+const RAMIFICACIONES_POR_CODIGO: Record<string, string[]> = {
+  ALEGATO:    ['SENTENCIA_1_FAV', 'SENTENCIA_1_DESFAV'],
+  APELACION:  ['SENTENCIA_2_FAV', 'SENTENCIA_2_DESFAV'],
+  CONSTATACION_JUDICIAL: ['SENTENCIA_LANZAMIENTO', 'TRASLADO_DEFENSOR_OFICIAL'],
+}
+
+// Split Operativo/Comercial de LANZAMIENTO_JUDICIALIZADO — el circuito
+// Comercial salta directo entre estos 4 nodos, ignorando la bifurcación de
+// CONSTATACION_JUDICIAL y las instancias recursivas intermedias.
+const SALTOS_LANZAMIENTO_COMERCIAL: Record<string, string> = {
+  INICIO: 'SENTENCIA_LANZAMIENTO',
+  SENTENCIA_LANZAMIENTO: 'MANDAMIENTO_LIBRADO',
+  MANDAMIENTO_LIBRADO: 'LANZAMIENTO_EFECTIVIZADO',
+  LANZAMIENTO_EFECTIVIZADO: 'TERMINADO',
+}
+/** Próximo código del circuito Comercial de Lanzamiento, o null si no aplica
+ * (tipo distinto de Comercial, o el estado actual no tiene salto definido —
+ * en ese caso el modal cae al flujo normal/ramificado). */
+function getSiguienteLanzamiento(codigoActual: string, tipoLanzamiento: string): string | null {
+  if (tipoLanzamiento !== 'Comercial') return null
+  return SALTOS_LANZAMIENTO_COMERCIAL[codigoActual] ?? null
+}
+
+const TIPOS_EN_ANALISIS_CICLO_A = new Set([
+  'COBRO_CANON', 'RECLAMO_CONTRAT', 'RECUPERO', 'EJECUCION_GAR', 'LANZAMIENTO',
+])
+const TIPOS_EN_ANALISIS_CICLO_B = new Set(['CONSIGNACION', 'DESAFUERO'])
+
+/** Códigos de estado destino disponibles como ramificación desde `codigoEstado`,
+ * dado el `tipoExpediente` (solo relevante para EN_ANALISIS). Vacío si el
+ * estado no ramifica (es una transición lineal vía `siguiente`). */
+function getRamificaciones(codigoEstado: string, tipoExpediente: string): string[] {
+  if (codigoEstado === 'EN_ANALISIS') {
+    if (TIPOS_EN_ANALISIS_CICLO_B.has(tipoExpediente)) {
+      return ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE']
+    }
+    if (TIPOS_EN_ANALISIS_CICLO_A.has(tipoExpediente)) {
+      return ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE']
+    }
+    return []
+  }
+  return RAMIFICACIONES_POR_CODIGO[codigoEstado] ?? []
 }
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
@@ -68,6 +126,9 @@ export default function DetalleExpedientePage() {
   const [nuevaCausa, setNuevaCausa] = useState('')
   const [nuevoAbogado, setNuevoAbogado] = useState('')
   const [motivoEstado, setMotivoEstado] = useState('')
+  const [modalCausal, setModalCausal] = useState(false)
+  const [causalSeleccionada, setCausalSeleccionada] = useState('')
+  const [causalLibre, setCausalLibre] = useState('')
   const [formJuicio, setFormJuicio] = useState({
     oficio_judicial: '',
     tipo_intervencion: 'Actora',
@@ -85,6 +146,7 @@ export default function DetalleExpedientePage() {
     monto: '',
     ubicacion: '',
     linea: '',
+    tipo_lanzamiento: '',
   })
 
   const BLANK_QUERELLA = {
@@ -138,7 +200,7 @@ export default function DetalleExpedientePage() {
   const siguienteEstadoProcesal = estadoProcesalActual?.siguiente
     ? getEstadoProcesal(exp.tipo, estadoProcesalActual.siguiente)
     : undefined
-  const esFlujoProcesal = !!siguienteEstadoProcesal || !!(ESTADOS_DESDE_EN_ANALISIS[exp.tipo] && (exp.estadoProcesal ?? exp.estado) === 'EN_ANALISIS')
+  const esFlujoProcesal = !!siguienteEstadoProcesal || getRamificaciones(exp.estadoProcesal ?? exp.estado, exp.tipo).length > 0
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
@@ -149,13 +211,22 @@ export default function DetalleExpedientePage() {
       } else if (esFlujoProcesal) {
         const todosEstados = getEstadosProcesales(exp!.tipo)
         const estadoCod = exp!.estadoProcesal ?? exp!.estado
-        const ramificados = ESTADOS_DESDE_EN_ANALISIS[exp!.tipo]
-        if (estadoCod === 'EN_ANALISIS' && ramificados) {
+        const tipoLanz = String(exp!.campos_mesa?.['mesa_tipo_lanzamiento'] ?? '')
+        const saltoComercial = exp!.tipo === 'LANZAMIENTO_JUDICIALIZADO' && tipoLanz === 'Comercial'
+          ? getSiguienteLanzamiento(estadoCod, tipoLanz)
+          : null
+        const ramificados = saltoComercial ? [] : getRamificaciones(estadoCod, exp!.tipo)
+        if (saltoComercial) {
+          setNuevoEstado(saltoComercial)
+        } else if (ramificados.length > 0) {
           setNuevoEstado(ramificados[0])
         } else {
-          const idxActual = todosEstados.findIndex(e => e.codigo === estadoCod)
-          const porDefecto = todosEstados[idxActual + 1]?.codigo ?? ''
-          setNuevoEstado(porDefecto)
+          // Usar el campo explícito .siguiente, no el vecino posicional en el
+          // array: códigos que son destino de una bifurcación previa (p.ej.
+          // SENTENCIA_1_FAV/SENTENCIA_2_FAV) tienen como vecino físico a su
+          // hermano DESFAV, no a su verdadero siguiente estado.
+          const estadoActualObj = todosEstados.find(e => e.codigo === estadoCod)
+          setNuevoEstado(estadoActualObj?.siguiente ?? '')
         }
       } else {
         setNuevoEstado(exp!.estado)
@@ -207,6 +278,11 @@ export default function DetalleExpedientePage() {
     }
     if (esFlujoProcesal) {
       if (!nuevoEstado) { setAccion(null); return }
+      if (TIPOS_FINALIZACION_LIBRE.has(exp!.tipo) && nuevoEstado === getCodigoFinalizado(exp!.tipo)) {
+        setAccion(null)
+        setModalCausal(true)
+        return
+      }
       const todosEstados = getEstadosProcesales(exp!.tipo)
       const idxActual = todosEstados.findIndex(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
       const destCodigo = nuevoEstado
@@ -254,6 +330,38 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
+  function confirmarCausal() {
+    const causal = causalSeleccionada || causalLibre.trim()
+    if (!causal) return
+    const estadoCodigo = exp!.estadoProcesal ?? exp!.estado
+    const estadoActual = getEstadoProcesal(exp!.tipo, estadoCodigo)
+    const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+    const tareas = tareasMap[`${exp!.id}__${estadoCodigo}`] ?? estadoActual?.tareas ?? []
+    const codigoFinalizado = getCodigoFinalizado(exp!.tipo)
+    agregarActividad(exp!.id, {
+      id: `ACT_${Date.now()}`,
+      expediente_id: exp!.id,
+      tipo: 'MOVIMIENTO',
+      titulo: `Cambio de estado: ${estadoActual?.label ?? estadoCodigo} → Finalizado`,
+      descripcion: `Actuación finalizada por ${nombre}. Causal: ${causal}`,
+      fecha: HOY,
+      activo: true,
+      subitems: [],
+      estadoExpediente: codigoFinalizado,
+      tareasSnapshot: tareas,
+      doc_gde: null,
+      creado_por: usuarioActivo?.id,
+    })
+    actualizarEstado(exp!.id, codigoFinalizado)
+    actualizarExpediente(exp!.id, { estadoProcesal: codigoFinalizado, causal_finalizacion: causal })
+    toast.success('Actuación finalizada.')
+    setModalCausal(false)
+    setCausalSeleccionada('')
+    setCausalLibre('')
+    setNuevoEstado('')
+    setMotivoEstado('')
+  }
+
   function confirmarCausa() {
     actualizarExpediente(exp!.id, { numero_causa: nuevaCausa.trim() || null })
     toast.success('N° Causa actualizado.')
@@ -274,6 +382,95 @@ export default function DetalleExpedientePage() {
   }
 
   function confirmarIniciarJuicio() {
+    const tipoDestino = MAPA_INICIAR_JUICIO[exp!.tipo]
+
+    // LANZAMIENTO es el único origen que crea un expediente NUEVO
+    // (LANZAMIENTO_JUDICIALIZADO) — mismo patrón que confirmarNuevaQuerella.
+    // El resto de MAPA_INICIAR_JUICIO sigue parcheando el expediente actual.
+    if (tipoDestino === 'LANZAMIENTO_JUDICIALIZADO') {
+      const idNuevo = `${exp!.area === 'CIVIL' ? 'C' : 'L'}-LJ${Date.now().toString().slice(-6)}`
+      // "Principal · PJN" solo si hay número de causa REAL — el id del
+      // expediente origen es un sentinela de agrupación, no una causa.
+      const tieneCausaReal = !!(formJuicio.numero_causa.trim() || exp!.numero_causa)
+      const causaComun = formJuicio.numero_causa.trim() || exp!.numero_causa || exp!.id
+
+      const nuevoLanzamiento: Expediente = {
+        id:              idNuevo,
+        area:            exp!.area,
+        tipo:            'LANZAMIENTO_JUDICIALIZADO',
+        estado:          'ASIGNADO',
+        estadoProcesal:  'ASIGNADO',
+        caratula:        formJuicio.caratula || exp!.caratula,
+        numero_ee_gde:   exp!.numero_ee_gde,
+        abogado_id:      exp!.abogado_id,
+        fecha_recepcion: HOY,
+        numero_causa:    causaComun,
+        es_principal:    tieneCausaReal,
+        es_urgente:      exp!.es_urgente,
+        campos_mesa: {
+          mesa_num_causa:        formJuicio.numero_causa,
+          mesa_juzgado:          formJuicio.juzgado,
+          mesa_secretaria:       formJuicio.secretaria,
+          mesa_caratula:         formJuicio.caratula,
+          mesa_abogado_contr:    formJuicio.abogado_contraria,
+          mesa_parte_actora:     formJuicio.parte_actora,
+          mesa_parte_dem:        formJuicio.parte_demandada,
+          mesa_codemandados:     formJuicio.codemandados,
+          mesa_fecha_inicio:     formJuicio.fecha_inicio,
+          mesa_juicio:           formJuicio.tipo_juicio,
+          mesa_ubicacion:        formJuicio.ubicacion,
+          mesa_linea:            formJuicio.linea,
+          mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento,
+        },
+        campos_abogado: {},
+        timeline: [
+          {
+            id:               `${idNuevo}_REC_01`,
+            expediente_id:    idNuevo,
+            tipo:             'RECEPCION',
+            titulo:           'Lanzamiento judicializado iniciado',
+            descripcion:      `Iniciado desde el lanzamiento administrativo ${exp!.id}. Tipo de lanzamiento: ${formJuicio.tipo_lanzamiento}.`,
+            fecha:            HOY,
+            activo:           true,
+            subitems:         [],
+            estadoExpediente: 'ASIGNADO',
+            creado_por:       usuarioActivo?.id,
+          },
+        ],
+        intervinientes: [],
+        documentos:     [],
+        vinculos:       [],
+      }
+
+      agregarExpediente(nuevoLanzamiento)
+
+      actualizarExpediente(exp!.id, {
+        es_juicio_iniciado:  true,
+        fecha_inicio_juicio: HOY,
+        numero_causa:        causaComun,
+        es_principal:        false,
+      })
+
+      agregarActividad(exp!.id, {
+        id:               `${exp!.id}_JUI_${Date.now()}`,
+        expediente_id:    exp!.id,
+        tipo:             'MOVIMIENTO',
+        titulo:           'Juicio iniciado — Lanzamiento judicializado',
+        descripcion:      `Se inició el lanzamiento judicializado ${idNuevo} (${formJuicio.tipo_lanzamiento}).`,
+        fecha:            HOY,
+        activo:           true,
+        subitems:         [],
+        estadoExpediente: exp!.estado,
+        es_movimiento_impulsorio: true,
+        creado_por:       usuarioActivo?.id,
+      })
+
+      toast.success(`Lanzamiento judicializado ${idNuevo} creado (${formJuicio.tipo_lanzamiento}).`, { autoClose: 6000 })
+      setAccion(null)
+      setTimeout(() => navigate(RUTAS.EXPEDIENTE(idNuevo)), 800)
+      return
+    }
+
     actualizarExpediente(exp!.id, {
       numero_causa: formJuicio.numero_causa.trim() || exp!.numero_causa,
       es_juicio_iniciado: true,
@@ -295,6 +492,9 @@ export default function DetalleExpedientePage() {
         mesa_monto:         formJuicio.monto,
         mesa_oficio_judicial: formJuicio.oficio_judicial,
         mesa_tipo_intervencion: formJuicio.tipo_intervencion,
+        mesa_ubicacion:     formJuicio.ubicacion,
+        mesa_linea:         formJuicio.linea,
+        ...(formJuicio.tipo_lanzamiento ? { mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento } : {}),
       },
     })
     toast.success('Juicio iniciado y datos registrados.')
@@ -318,6 +518,9 @@ export default function DetalleExpedientePage() {
       exp!.numero_causa?.trim() ||
       exp!.id
     )
+    // "Principal · PJN" solo si hay número de causa REAL — el id del
+    // expediente origen es un sentinela de agrupación, no una causa.
+    const tieneCausaReal = !!(formQuerella.numero_causa.trim() || exp!.numero_causa?.trim())
 
     const nuevaQuerella: Expediente = {
       id:              idQuerella,
@@ -328,7 +531,7 @@ export default function DetalleExpedientePage() {
       caratula:        formQuerella.caratula.trim(),
       numero_ee_gde:   exp!.numero_ee_gde,
       numero_causa:    causaComun,
-      es_principal:    true,
+      es_principal:    tieneCausaReal,
       abogado_id:      formQuerella.abogado_id || exp!.abogado_id || undefined,
       fecha_recepcion: HOY,
       es_urgente:      exp!.es_urgente,
@@ -577,11 +780,13 @@ export default function DetalleExpedientePage() {
                 const estadoCodigo = exp.estadoProcesal ?? exp.estado
                 if (estadoCodigo === 'ASIGNADO') return false
                 if (!nuevoEstado) return true
+                if (TIPOS_FINALIZACION_LIBRE.has(exp.tipo) && nuevoEstado === getCodigoFinalizado(exp.tipo)) return false
                 const todos = getEstadosProcesales(exp.tipo)
                 const idxActual = todos.findIndex(e => e.codigo === estadoCodigo)
                 const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
                 const esRetroceso = idxDest < idxActual
-                return !esRetroceso && tieneTareasPendientes
+                if (esRetroceso) return !motivoEstado.trim()
+                return tieneTareasPendientes
               })()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
@@ -626,16 +831,25 @@ export default function DetalleExpedientePage() {
             const todos = getEstadosProcesales(exp.tipo)
             const idxActual = todos.findIndex(e => e.codigo === estadoCodigo)
             const anteriores = todos.slice(0, idxActual).filter(e => !e.esArchivado)
-            const esEnAnalisis = estadoCodigo === 'EN_ANALISIS'
-            const codigosRamificados = esEnAnalisis ? (ESTADOS_DESDE_EN_ANALISIS[exp.tipo] ?? null) : null
-            const siguientes = codigosRamificados
-              ? codigosRamificados.map(cod => todos.find(e => e.codigo === cod)).filter(Boolean) as typeof todos
-              : todos[idxActual + 1] ? [todos[idxActual + 1]] : []
+            const codigoFinalizado = getCodigoFinalizado(exp.tipo)
+            const tipoLanzamiento = String(exp.campos_mesa?.['mesa_tipo_lanzamiento'] ?? '')
+            const siguienteComercial = exp.tipo === 'LANZAMIENTO_JUDICIALIZADO' && tipoLanzamiento === 'Comercial'
+              ? getSiguienteLanzamiento(estadoCodigo, tipoLanzamiento)
+              : null
+            const codigosRamificados = siguienteComercial ? [] : getRamificaciones(estadoCodigo, exp.tipo)
+            const siguientes = siguienteComercial
+              ? [todos.find(e => e.codigo === siguienteComercial)].filter(Boolean) as typeof todos
+              : codigosRamificados.length > 0
+                ? codigosRamificados.map(cod => todos.find(e => e.codigo === cod)).filter(Boolean) as typeof todos
+                : (siguienteEstadoProcesal ? [siguienteEstadoProcesal] : [])
             const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
-            const esRetroceso = !esAsignado && !codigosRamificados && idxDest < idxActual
+            const esRetroceso = !esAsignado && codigosRamificados.length === 0 && !siguienteComercial && nuevoEstado !== codigoFinalizado && idxDest < idxActual
+            const esTipoConFinalizacionLibre = TIPOS_FINALIZACION_LIBRE.has(exp.tipo)
+            const mostrarFinalizarSiempre = esTipoConFinalizacionLibre && estadoCodigo !== codigoFinalizado &&
+              !siguientes.some(e => e.codigo === codigoFinalizado)
             return (
               <div className="space-y-3">
-                {!esAsignado && !esRetroceso && tieneTareasPendientes && (
+                {!esAsignado && !esRetroceso && nuevoEstado !== codigoFinalizado && tieneTareasPendientes && (
                   <div className="flex items-start gap-2 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-xl">
                     <Icon name="warning" size={14} className="text-[#b91c1c] flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-[#b91c1c]">
@@ -648,8 +862,8 @@ export default function DetalleExpedientePage() {
                   <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
                     <Icon name="warning" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-[#d97706]">
-                      Estás retrocediendo a un estado anterior. Las tareas de ese estado quedarán en
-                      modo solo lectura. Solo podrás agregar actividades genéricas.
+                      Este es un retroceso de estado. Es una operación excepcional — el motivo es
+                      obligatorio y quedará registrado en el historial de la actuación.
                     </p>
                   </div>
                 )}
@@ -666,13 +880,16 @@ export default function DetalleExpedientePage() {
                       value={nuevoEstado}
                       onChange={e => setNuevoEstado(e.target.value)}
                     >
-                      {siguientes.length > 0 && (
+                      {(siguientes.length > 0 || mostrarFinalizarSiempre) && (
                         <optgroup label="Avanzar">
                           {siguientes.map(e => (
                             <option key={e.codigo} value={e.codigo} disabled={tieneTareasPendientes}>
                               {e.label}{tieneTareasPendientes ? ' (tareas pendientes)' : ''}
                             </option>
                           ))}
+                          {mostrarFinalizarSiempre && (
+                            <option value={codigoFinalizado}>Finalizado</option>
+                          )}
                         </optgroup>
                       )}
                       {anteriores.length > 0 && (
@@ -686,10 +903,13 @@ export default function DetalleExpedientePage() {
                   )}
                 </div>
                 <div>
-                  <label className="field-label">Motivo (opcional)</label>
+                  <label className="field-label">
+                    Motivo {esRetroceso && <span className="text-[#b91c1c]">*</span>}
+                    {!esRetroceso && ' (opcional)'}
+                  </label>
                   <textarea
                     className="field-input resize-none h-20 w-full"
-                    placeholder="Anotá el motivo del cambio..."
+                    placeholder={esRetroceso ? 'Obligatorio: indicá el motivo del retroceso...' : 'Anotá el motivo del cambio...'}
                     value={motivoEstado}
                     onChange={e => setMotivoEstado(e.target.value)}
                   />
@@ -709,6 +929,66 @@ export default function DetalleExpedientePage() {
             </select>
           </div>
         )}
+      </Modal>
+
+      {/* Modal: Finalizar actuación — causal de finalización */}
+      <Modal
+        open={modalCausal}
+        onClose={() => { setModalCausal(false); setCausalSeleccionada(''); setCausalLibre('') }}
+        titulo="Finalizar actuación"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => { setModalCausal(false); setCausalSeleccionada(''); setCausalLibre('') }}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarCausal}
+              disabled={!causalSeleccionada && !causalLibre.trim()}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Confirmar
+            </button>
+          </>
+        }
+      >
+        {(() => {
+          const grupoCausalActual = getEstadoProcesal(exp.tipo, exp.estadoProcesal ?? exp.estado)?.grupoCausal
+          const opcionesCausal = getCausalesPorEstado(grupoCausalActual)
+          return (
+            <div className="space-y-3">
+              <p className="text-xs text-[#4a6a84]">
+                Vas a finalizar la actuación <span className="font-mono font-bold">{exp.id}</span>. Indicá la causal de finalización.
+              </p>
+              {opcionesCausal.length > 0 ? (
+                <div>
+                  <label className="field-label">Causal de finalización</label>
+                  <select
+                    className="field-input w-full"
+                    value={causalSeleccionada}
+                    onChange={e => setCausalSeleccionada(e.target.value)}
+                  >
+                    <option value="">Seleccionar causal...</option>
+                    {opcionesCausal.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="field-label">Comentario</label>
+                  <textarea
+                    className="field-input resize-none h-20 w-full"
+                    placeholder="Comentario sobre el motivo de finalización..."
+                    value={causalLibre}
+                    onChange={e => setCausalLibre(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </Modal>
 
       {/* Modal: Agrupar a causa */}
@@ -818,7 +1098,8 @@ export default function DetalleExpedientePage() {
             </button>
             <button
               onClick={confirmarIniciarJuicio}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+              disabled={MAPA_INICIAR_JUICIO[exp.tipo] === 'LANZAMIENTO_JUDICIALIZADO' && !formJuicio.tipo_lanzamiento}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               <Icon name="gavel" size={16} />
               Confirmar Inicio
@@ -951,6 +1232,23 @@ export default function DetalleExpedientePage() {
                   {['ROCA','SAN MARTÍN','SARMIENTO','MITRE','BELGRANO SUR','REGIONALES','LARGA DISTANCIA','CENTRAL','TREN DE LA COSTA']
                     .map(l => <option key={l}>{l}</option>)}
                 </select>
+              </div>
+            )}
+
+            {/* Tipo de lanzamiento — solo si el documento nuevo es LANZAMIENTO_JUDICIALIZADO. Determina el circuito Operativo/Comercial (ver Sección 13). Se completa una única vez, después queda bloqueado en Datos Maestros. */}
+            {MAPA_INICIAR_JUICIO[exp.tipo] === 'LANZAMIENTO_JUDICIALIZADO' && (
+              <div className="col-span-2">
+                <label className="field-label">Tipo de lanzamiento <span className="text-[#b91c1c]">*</span></label>
+                <select className="field-input w-full"
+                  value={formJuicio.tipo_lanzamiento}
+                  onChange={e => setFormJuicio(p => ({ ...p, tipo_lanzamiento: e.target.value }))}>
+                  <option value="">Seleccionar...</option>
+                  <option value="Operativo">Operativo</option>
+                  <option value="Comercial">Comercial</option>
+                </select>
+                <p className="text-[10px] text-[#7a9ab4] mt-1">
+                  Determina el circuito de estados a seguir. Una vez guardado, este campo queda bloqueado.
+                </p>
               </div>
             )}
 

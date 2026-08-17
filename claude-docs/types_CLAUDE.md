@@ -17,12 +17,12 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `RolSistema` | 'REFERENTE' \| 'COORDINADOR' \| 'ABOGADO' \| 'ADMINISTRATIVO' |
 | `RolBD` | Roles del Excel: abogado, abogada, abogado_coordinador, asistente_jurídico, gerente, adm_mesa |
 | `TipoGestion` | 20 tipos de gestión del sistema |
-| `TipoActividad` | Tipos de actividades del letrado en el timeline |
+| `TipoActividad` | Tipos de actividades del letrado en el timeline — incluye `RECURSO_INCIDENTE` ("Interposición de Recurso") y `DILIGENCIAMIENTO` ("Diligenciamiento" — envío de cédulas) |
 | `EstadoActividad` | PENDIENTE \| EN_CURSO \| COMPLETADA \| VENCIDA |
 | `EstadoTarea` | 'sin_estado' \| 'en_curso' \| 'cumplido' \| 'no_procedente' |
 | `UrgenciaTarea` | 'rojo' \| 'ambar' \| 'verde' \| 'gris' |
 | `Tarea` | Tarea estructurada de un estado procesal — incluye `fecha_aviso` y `fechaVencimiento` para alertas |
-| `EstadoProcesal` | Estado con su lista de tareas y siguiente estado |
+| `EstadoProcesal` | Estado con su lista de tareas y siguiente estado — `grupoCausal?` opcional (`PRE_SENTENCIA_1`/`SENTENCIA_1`/`INSTANCIA_RECURSIVA`/`EJECUCION_SENTENCIA`/`LANZAMIENTO`) usado por el catálogo de causales de finalización |
 | `CatalogoItem` | `{ id, label, activo? }` — base para todos los catálogos. `activo` es opcional; `undefined` equivale a activo |
 | `CatalogoItemExtended` | CatalogoItem + tipo? + provincia? + localidad? |
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
@@ -54,14 +54,17 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 ## Campos destacados de Expediente
 
 - `es_urgente?: boolean` — marcado manualmente desde el detalle; usado por filtro "Urgentes" en BandejaAbogado
-- `es_principal?: boolean` — badge verde "Principal · PJN" en la fila de bandeja; también determina la cabecera del grupo-causa en BandejaAbogado (`exps.find(e => e.es_principal) ?? exps[0]`)
+- `es_principal?: boolean` — badge verde "Principal · PJN" en la fila de bandeja; también determina la cabecera del grupo-causa en BandejaAbogado (`exps.find(e => e.es_principal) ?? exps[0]`). **Regla:** nunca puede ser `true` si `numero_causa` es `null`/vacío — un expediente sin causa real jamás es "Principal · PJN", ni siquiera con el `id` propio usado como sentinela de agrupación (`confirmarNuevaQuerella`, `confirmarIniciarJuicio` calculan un `tieneCausaReal` explícito para esto, no hardcodean `true`).
 - `es_juicio_iniciado?: boolean` / `fecha_inicio_juicio?` / `fecha_ultimo_impulsorio?` — flujo "Iniciar Juicio" (Civil/Laboral)
 - `es_querella_iniciada?: boolean` — marca una Carta SAE (`tipo: 'CARTA_SUCESO'`) cuya Querella ya fue creada; oculta la acción "Nueva Querella" y muestra el badge "Ver Querella →" en el header
 - `id_querella_derivada?: string` — id del expediente QUERELLA generado desde esa Carta SAE (destino del badge "Ver Querella →")
+- `causal_finalizacion?: string` — causal elegida al finalizar (modal "Finalizar actuación"). Bloqueado/solo-lectura en DatosTab; se autocompleta, nunca se edita a mano.
+- `queja_en_tramite?: boolean` — flag del Recurso de Queja como trámite paralelo (desde REF/EJECUCION_SENTENCIA en los 4 ciclos MATRIZ SACO). Toggle con `toggleQuejaEnTramite` del store.
 
 ## Campos destacados de EstadoProcesal
 
 - `esArchivado?: boolean` — marca estados terminales no progresivos (DEVUELTO_SECTOR_REQUIRENTE, FINALIZADO). El modal de cambio de estado los excluye del optgroup "Retroceder".
+- `grupoCausal?: 'PRE_SENTENCIA_1' | 'SENTENCIA_1' | 'INSTANCIA_RECURSIVA' | 'EJECUCION_SENTENCIA'` — solo en los 4 ciclos MATRIZ SACO (Demanda Civil/Laboral Actora/Demandada). Alimenta `getCausalesPorEstado()` de `causalesFinalizacion.ts`.
 
 ## Campos destacados de Actividad
 

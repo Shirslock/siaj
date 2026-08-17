@@ -1,4 +1,5 @@
 import type { CampoFormulario, FormularioSubtipo } from '../types'
+import { TIPOS_SOLICITUD_PENAL } from './solicitudesPenales'
 
 export const CAMPOS_COMUNES_MESA: CampoFormulario[] = [
   { id:'mesa_oficio_judicial',   label:'N° OJ',                  type:'text',     placeholder:'N° OJ' },
@@ -46,7 +47,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
         { id:'abg_damnificado',    label:'Parte damnificada',         type:'text' },
         { id:'abg_imputado',       label:'Parte imputada',            type:'text' },
         { id:'abg_tipo_hecho',     label:'Tipo de hecho',    type:'multiselect', options:['APEDREO','APEDREO CON LESIONES','APEDREO CON DAÑO','DAÑO BIENES FFCC','ROBO BIENES FFCC','LESIONES','OTROS'] },
-        { id:'abg_tipo_solicitud', label:'Tipo de solicitud', type:'multiselect', options:['Solicitud de información','Solicitud de filmaciones','Solicitud de intervención','Citaciones','Solicitud de asistencia a Métodos Alternativos de Resolución del conflicto','Otros'] },
+        { id:'abg_tipo_solicitud', label:'Tipo de solicitud', type:'multiselect', options: TIPOS_SOLICITUD_PENAL },
         { id:'abg_num_siniestro',  label:'Accidente Ferroviario (N° Siniestro)', type:'text', mono:true, placeholder:'Ej: SIN-2026-001' },
       ],
     },
@@ -402,7 +403,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'mesa_coactores',     label:'Coactores',             type:'text',    full:true },
       { id:'mesa_codemandados',  label:'Codemandado',           type:'text',    full:true },
       { id:'mesa_fecha_inicio',  label:'Fecha de inicio',       type:'date' },
-      { id:'mesa_juicio',        label:'Tipo de Juicio',        type:'select',  options:['DESPIDO','DIFERENCIAS SALARIALES','ACCIDENTE DE TRABAJO','ENFERMEDAD PROFESIONAL','OTROS'] },
+      { id:'mesa_juicio',        label:'Tipo de Juicio',        type:'select',  options:['DESPIDO','DIFERENCIAS SALARIALES','ACCIDENTE DE TRABAJO','ENFERMEDAD PROFESIONAL','INDEMNIZACIÓN POR FALLECIMIENTO','REINSTALACIÓN LABORAL','MEDIDA CAUTELAR','INDEMNIZACIÓN ART. 212','OTROS'] },
       { id:'mesa_monto',         label:'Monto de la demanda',   type:'money' },
     ],
     abogado: [
@@ -410,7 +411,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'tope_convenio',      label:'Tope Convenio',              type:'select', options:['SI','NO','VIZZOTI'] },
       { id:'fecha_contestacion', label:'Fecha Contestación Demanda', type:'date' },
       { id:'monto_acuerdo',      label:'Monto del Acuerdo',          type:'money' },
-      { id:'abg_tipo_hecho',     label:'Tipo de hecho',              type:'text' },
+      { id:'abg_tipo_hecho',     label:'Tipo de hecho',              type:'select', options:['DOBLE INDEMNIZACIÓN','INEXISTENCIA DE VÍNCULO LABORAL','DESAFUERO','CONSIGNACIÓN LABORAL','EMPLEADO FERROBAIRES'] },
       { id:'abg_fecha_hecho',    label:'Fecha del hecho',            type:'date' },
       { id:'abg_lugar_hecho',    label:'Lugar del hecho',            type:'text',   full:true },
       { id:'abg_linea',          label:'Línea ferroviaria',          type:'linea' },
@@ -433,6 +434,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'mesa_codemandados',   label:'Codemandado',              type:'text',             full:true },
       { id:'mesa_fecha_inicio',   label:'Fecha de Inicio',          type:'date' },
       { id:'mesa_juicio',         label:'Tipo de Juicio',           type:'select',           options:['LANZAMIENTO','DESALOJO','RECUPERACIÓN DE INMUEBLE','OTROS'] },
+      { id:'mesa_tipo_lanzamiento', label:'Tipo de lanzamiento',    type:'select',           options:['Operativo','Comercial'] },
       { id:'mesa_ubicacion',      label:'Ubicación del inmueble',   type:'text',             full:true },
       { id:'mesa_linea',          label:'Línea Ferroviaria',        type:'linea' },
     ],

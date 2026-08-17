@@ -6,7 +6,7 @@ import { useExpedientesStore } from '../../../store/expedientes.store'
 import { useUIStore } from '../../../store/ui.store'
 import { Modal } from '../../../components/ui/Modal'
 import { formatFecha } from '../../../utils/format'
-import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia } from '../../../data/estadosProcesales'
+import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia, TAREAS_RECURSO_QUEJA } from '../../../data/estadosProcesales'
 import Icon from '../../../components/ui/Icon'
 import { toast } from 'react-toastify'
 import {
@@ -30,6 +30,8 @@ const TIPOS: { value: TipoActividad; label: string }[] = [
   { value: 'NOTIFICACION',   label: 'Notificación' },
   { value: 'MOVIMIENTO',     label: 'Movimiento' },
   { value: 'NOTA_RESPUESTA', label: 'Nota / Respuesta' },
+  { value: 'RECURSO_INCIDENTE', label: 'Interposición de Recurso' },
+  { value: 'DILIGENCIAMIENTO', label: 'Diligenciamiento' },
   { value: 'OTRO',           label: 'Otro' },
 ]
 
@@ -487,6 +489,8 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
     NOTIFICACION:   'notifications',
     MOVIMIENTO:     'swap_horiz',
     NOTA_RESPUESTA: 'edit_note',
+    RECURSO_INCIDENTE: 'gavel',
+    DILIGENCIAMIENTO: 'forward',
     OTRO:           'more_horiz',
   }
   const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
@@ -892,6 +896,85 @@ function LogAuditoriaList({ log }: { log: LogAuditoria[] }) {
           })}
         </div>
       </details>
+    </div>
+  )
+}
+
+// ── Bloque "Recurso de Queja" — trámite paralelo ─────────────────────────────
+// Aplica desde REF en adelante en los 4 ciclos de Demanda Civil/Laboral.
+// No suspende el avance a Ejecución de Sentencia. Checklist propio,
+// independiente del EstadoProcesal de la cadena principal.
+
+const QUEJA_KEY_SUFFIX = 'RECURSO_QUEJA_PARALELO'
+
+function RecursoQuejaBlock({ exp }: { exp: Expediente }) {
+  const { tareasMap, toggleQuejaEnTramite, actualizarTarea } = useExpedientesStore()
+  const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
+  const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
+
+  const key = `${exp.id}__${QUEJA_KEY_SUFFIX}`
+  const tareas = tareasMap[key] ?? TAREAS_RECURSO_QUEJA
+  const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
+
+  const estadoSintetico: NonNullable<ReturnType<typeof getEstadoProcesal>> = {
+    codigo: QUEJA_KEY_SUFFIX,
+    label: 'Recurso de Queja',
+    siguiente: undefined,
+    tareas: TAREAS_RECURSO_QUEJA,
+  }
+
+  function guardarTarea() {
+    if (!tareaSeleccionada) return
+    actualizarTarea(exp.id, QUEJA_KEY_SUFFIX, tareaSeleccionada.id, cambiosLocales)
+    setTareaSeleccionada(null)
+    setCambiosLocales({})
+  }
+
+  return (
+    <div className="p-4 rounded-xl border-2 border-dashed border-[#AFA9EC] bg-[#f5f4ff] mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[12px] font-bold text-[#534ab7]">Recurso de Queja (trámite paralelo)</p>
+        <button
+          onClick={() => toggleQuejaEnTramite(exp.id, !exp.queja_en_tramite)}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${
+            exp.queja_en_tramite
+              ? 'bg-[#534ab7] text-white hover:opacity-90'
+              : 'bg-white border border-[#AFA9EC] text-[#534ab7] hover:bg-[#eeedfe]'
+          }`}
+        >
+          {exp.queja_en_tramite ? 'En trámite' : 'Iniciar'}
+        </button>
+      </div>
+
+      {exp.queja_en_tramite && (
+        <div className="flex gap-4 items-start">
+          <div className="flex-1 min-w-0">
+            <TareasBlock
+              exp={exp}
+              tareas={tareas}
+              estadoProcesal={estadoSintetico}
+              completadas={completadas}
+              total={tareas.length}
+              tareaSeleccionada={tareaSeleccionada}
+              setTareaSeleccionada={(t) => { setTareaSeleccionada(t); setCambiosLocales({}) }}
+            />
+          </div>
+          {tareaSeleccionada && (
+            <TareaDetailPanel
+              tarea={tareaSeleccionada}
+              estadoLabel="Recurso de Queja"
+              cambiosLocales={cambiosLocales}
+              setCambiosLocales={setCambiosLocales}
+              onGuardar={guardarTarea}
+              onCerrar={() => { setTareaSeleccionada(null); setCambiosLocales({}) }}
+            />
+          )}
+        </div>
+      )}
+
+      <p className="text-[10px] text-[#7a67c9] mt-2 italic">
+        No suspende el avance a Ejecución de Sentencia. Si prospera, retroceder manualmente a REF (requiere motivo).
+      </p>
     </div>
   )
 }
@@ -1406,6 +1489,12 @@ export function TimelineTab({ exp }: Props) {
 
         {/* ── Columna izquierda: feed ── */}
         <div className="flex-1 min-w-0 space-y-0">
+
+          {/* Recurso de Queja — trámite paralelo, solo desde REF en adelante */}
+          {(filtroTab === 'todo' || filtroTab === 'tareas') &&
+            (exp.estadoProcesal === 'REF' || exp.estadoProcesal === 'EJECUCION_SENTENCIA') && (
+            <RecursoQuejaBlock exp={exp} />
+          )}
 
           {/* Bloque tareas (tab todo o tareas) */}
           {(filtroTab === 'todo' || filtroTab === 'tareas') && !esEstadoInicial && estadoProcesal && (
