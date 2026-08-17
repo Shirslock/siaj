@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { Area } from '../types'
+import type { Area, TipoActividad } from '../types'
+import { useExpedientesStore } from './expedientes.store'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -327,11 +328,52 @@ export const useSolicitudesStore = create<SolicitudesState>((set) => ({
     })),
 
   responderSolicitud: (id, respuesta) =>
-    set(state => ({
-      solicitudes: state.solicitudes.map(s =>
-        s.id === id ? { ...s, estado: 'respondida', respuesta } : s
-      ),
-    })),
+    set(state => {
+      const sol = state.solicitudes.find(x => x.id === id)
+      if (!sol) return state
+
+      const solicitudesActualizadas = state.solicitudes.map(s =>
+        s.id === id ? { ...s, estado: 'respondida' as const, respuesta } : s
+      )
+
+      // Impactar en el timeline del expediente de origen
+      const expStore = useExpedientesStore.getState()
+      const HOY = new Date().toISOString().split('T')[0]
+
+      expStore.agregarActividad(sol.expediente_id, {
+        id: `SOLR_${Date.now()}`,
+        expediente_id: sol.expediente_id,
+        tipo: 'NOTA_RESPUESTA' as TipoActividad,
+        titulo: `Respuesta: ${sol.titulo}`,
+        descripcion: [
+          respuesta.comentario,
+          respuesta.adjunto_nombre ? `Adjunto: ${respuesta.adjunto_nombre}` : null,
+          `Respondido por: ${respuesta.respondido_por}`,
+        ].filter(Boolean).join('\n'),
+        fecha: respuesta.fecha ?? HOY,
+        activo: true,
+        subitems: [],
+        estadoExpediente: '',
+        es_solicitud: true,
+        solicitud_id: sol.id,
+        doc_gde: respuesta.adjunto_nombre ?? undefined,
+      })
+
+      // Si hay adjunto → agregar al repositorio de documentos del expediente
+      if (respuesta.adjunto_nombre) {
+        expStore.agregarDocumento(sol.expediente_id, {
+          id:     `DOC_SOL_${Date.now()}`,
+          nombre: respuesta.adjunto_nombre,
+          tipo:   respuesta.adjunto_nombre.split('.').pop()?.toUpperCase() ?? 'FILE',
+          fecha:  respuesta.fecha ?? HOY,
+          size:   respuesta.adjunto_size ?? '—',
+          icon:   'attach_file',
+          color:  'text-[#4a6a84]',
+        })
+      }
+
+      return { solicitudes: solicitudesActualizadas }
+    }),
 
   editarSolicitud: (id, cambios) =>
     set(state => ({

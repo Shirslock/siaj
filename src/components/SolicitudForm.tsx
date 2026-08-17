@@ -90,7 +90,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
             }))
           }}
         >
-          <option value="">Sin asignar</option>
+          <option value="" disabled>Seleccionar destinatario...</option>
           <optgroup label="Interno SIAJ">
             <option value="CIVIL">Civil</option>
             <option value="LABORAL">Laboral</option>

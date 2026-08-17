@@ -30,7 +30,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `Licencia` | Licencia de un usuario (motivo, fechas, reemplazante) — definida en `store/tareas.store.ts` |
 | `MotivoLicencia` | 'vacaciones' \| 'medica' \| 'examen' \| 'otro' — definido en `store/tareas.store.ts` |
 | `Expediente` | Entidad principal — incluye estadoProcesal |
-| `Actividad` | Actividad genérica del letrado en el timeline — incluye `replies?: Reply[]`, `log?: LogAuditoria[]`, `eliminado?: boolean` |
+| `Actividad` | Actividad genérica del letrado en el timeline — incluye `replies?: Reply[]`, `log?: LogAuditoria[]`, `eliminado?: boolean`, `es_solicitud?: boolean`, `solicitud_id?: string` |
 | `Reply` | Comentario anidado en una actividad — autor, texto, fecha, doc_gde, fecha_vencimiento, fecha_aviso |
 | `TipoLogAuditoria` | 'EDICION' \| 'ELIMINACION' |
 | `LogAuditoria` | Entrada de auditoría de una actividad — `usuario_id`, `timestamp` ISO, `descripcion`, snapshots `campo_antes`/`campo_despues` (JSON.stringify) |
@@ -71,6 +71,8 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 - `tareasSnapshot?: Tarea[]` — snapshot de tareas al momento del cambio de estado
 - `es_movimiento_impulsorio?: boolean` — marca el movimiento como impulsorio procesal
 - `tipo?: 'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'` — clasificación para el módulo Agenda (`AgendaEvent`)
+- `es_solicitud?: boolean` — entrada de solicitud (`tipo: 'OTRO'`) o de respuesta (`tipo: 'NOTA_RESPUESTA'`) del flujo unificado de solicitudes. En el feed es **read-only**: no muestra Comentar ni el menú ⋮, y lleva badge SOLICITUD/RESPUESTA.
+- `solicitud_id?: string` — referencia cruzada a la `Solicitud` de `useSolicitudesStore` (la setea `responderSolicitud` en la actividad `NOTA_RESPUESTA`).
 
 ## Campos destacados de Documento
 
