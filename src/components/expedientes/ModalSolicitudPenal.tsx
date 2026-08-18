@@ -57,7 +57,7 @@ export function ModalSolicitudPenal({ open, onClose, expId, tipo, dataInicial }:
       fecha: new Date().toISOString().split('T')[0],
       size: `${Math.round(file.size / 1024)} KB`,
       icon: 'attach_file',
-      color: 'text-[#4a6a84]',
+      color: 'text-[#758A93]',
     })
     setArchivos(p => ({
       ...p,
@@ -123,7 +123,7 @@ export function ModalSolicitudPenal({ open, onClose, expId, tipo, dataInicial }:
 
             {c.permiteArchivo && (
               <div className="mt-1.5">
-                <label className="flex items-center gap-1.5 text-[11px] text-[#4a6a84] cursor-pointer hover:text-[#1b3a57]">
+                <label className="flex items-center gap-1.5 text-[11px] text-[#758A93] cursor-pointer hover:text-[#242C4F]">
                   <Icon name="attach_file" size={13} />
                   Adjuntar archivo
                   <input

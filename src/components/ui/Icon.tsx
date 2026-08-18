@@ -140,7 +140,7 @@ export default function Icon({ name, className = '', size = 20 }: IconProps) {
     }
     return (
       <span
-        className={`inline-block text-[10px] font-mono text-[#b91c1c] ${className}`}
+        className={`inline-block text-[10px] font-mono text-[#C3292F] ${className}`}
         title={`Missing icon: ${name}`}
       >
         [{name}]

@@ -35,7 +35,7 @@ function getColorForExt(ext: string): string {
   if (ext === 'PDF') return 'text-red-500'
   if (ext === 'DOCX' || ext === 'DOC') return 'text-blue-500'
   if (ext === 'XLSX' || ext === 'XLS') return 'text-green-600'
-  return 'text-[#4a6a84]'
+  return 'text-[#758A93]'
 }
 
 function SortableDocRow({
@@ -71,7 +71,7 @@ function SortableDocRow({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing text-[#c0c0c0] hover:text-[#4a6a84] transition-colors touch-none flex items-center justify-center"
+          className="cursor-grab active:cursor-grabbing text-[#c0c0c0] hover:text-[#758A93] transition-colors touch-none flex items-center justify-center"
         >
           <Icon name="drag_indicator" size={16} />
         </button>
@@ -79,18 +79,18 @@ function SortableDocRow({
       <td className="py-3 px-3">
         <div className="flex items-center gap-2">
           <Icon name={doc.icon} size={18} className={doc.color} />
-          <span className="text-sm text-[#1b3a57] font-medium">{doc.nombre}</span>
+          <span className="text-sm text-[#242C4F] font-medium">{doc.nombre}</span>
         </div>
       </td>
       <td className="py-3 px-3">
-        <span className="text-[10px] font-black font-mono px-2 py-0.5 rounded bg-[#e8e8e8] text-[#4a6a84]">
+        <span className="text-[10px] font-black font-mono px-2 py-0.5 rounded bg-[#E3E4E9] text-[#758A93]">
           {doc.tipo}
         </span>
       </td>
-      <td className="py-3 px-3 text-xs text-[#4a6a84] whitespace-nowrap">
+      <td className="py-3 px-3 text-xs text-[#758A93] whitespace-nowrap">
         {formatFecha(doc.fecha)}
       </td>
-      <td className="py-3 px-3 text-xs text-[#4a6a84] whitespace-nowrap">
+      <td className="py-3 px-3 text-xs text-[#758A93] whitespace-nowrap">
         {doc.size}
       </td>
       <td className="py-3 px-3">
@@ -98,14 +98,14 @@ function SortableDocRow({
           <button
             disabled
             title="Descarga no disponible en esta versión"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] cursor-not-allowed opacity-40"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] cursor-not-allowed opacity-40"
           >
             <Icon name="download" size={15} />
           </button>
           <button
             onClick={onEliminar}
             title="Eliminar"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#fee2e2] hover:text-[#C3292F] transition-colors"
           >
             <Icon name="delete" size={15} />
           </button>
@@ -140,7 +140,7 @@ export function DocumentosTab({ exp }: Props) {
     <div className="space-y-3">
       <div className="flex justify-end">
         <button
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#256386] text-white hover:opacity-90 transition-opacity shadow-sm"
           onClick={() => document.getElementById('doc-upload')?.click()}
         >
           <Icon name="upload_file" size={18} />
@@ -169,7 +169,7 @@ export function DocumentosTab({ exp }: Props) {
       </div>
 
       {exp.documentos.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-card p-10 text-center text-[#4a6a84] text-sm">
+        <div className="bg-white rounded-2xl shadow-card p-10 text-center text-[#758A93] text-sm">
           No hay documentos adjuntos.
         </div>
       ) : (
@@ -184,7 +184,7 @@ export function DocumentosTab({ exp }: Props) {
                 <tr className="border-b border-[rgba(0,0,0,0.12)]">
                   <th className="w-8" />
                   {['Documento', 'Tipo', 'Fecha', 'Tamaño', ''].map(col => (
-                    <th key={col} className="text-left py-2.5 px-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">
+                    <th key={col} className="text-left py-2.5 px-3 text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -217,7 +217,7 @@ export function DocumentosTab({ exp }: Props) {
           <>
             <button
               onClick={() => setConfirmarEliminar(null)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors"
             >
               Cancelar
             </button>
@@ -227,7 +227,7 @@ export function DocumentosTab({ exp }: Props) {
                 eliminarDocumento(exp.id, confirmarEliminar)
                 setConfirmarEliminar(null)
               }}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#b91c1c] text-white hover:opacity-90 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#C3292F] text-white hover:opacity-90 transition-opacity"
             >
               Eliminar
             </button>
@@ -236,12 +236,12 @@ export function DocumentosTab({ exp }: Props) {
       >
         {docAEliminar && (
           <div className="space-y-2">
-            <p className="text-sm text-[#1b3a57]">¿Confirmás que querés eliminar este documento?</p>
-            <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 flex items-center gap-3">
+            <p className="text-sm text-[#242C4F]">¿Confirmás que querés eliminar este documento?</p>
+            <div className="bg-[#EEEBE6] rounded-xl px-4 py-3 flex items-center gap-3">
               <Icon name={docAEliminar.icon} size={20} className={docAEliminar.color} />
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">{docAEliminar.nombre}</p>
-                <p className="text-[10px] text-[#4a6a84]">{docAEliminar.tipo} · {docAEliminar.size}</p>
+                <p className="text-sm font-medium text-[#242C4F]">{docAEliminar.nombre}</p>
+                <p className="text-[10px] text-[#758A93]">{docAEliminar.tipo} · {docAEliminar.size}</p>
               </div>
             </div>
           </div>

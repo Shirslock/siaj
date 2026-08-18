@@ -129,7 +129,7 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
             input = (
               <input
                 type="text"
-                className="field-input w-full bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed"
+                className="field-input w-full bg-[#EEEBE6] text-[#758A93] cursor-not-allowed"
                 value="ÚNICA"
                 readOnly
               />
@@ -208,7 +208,7 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                       <button
                         type="button"
                         onClick={() => commit(slots.filter((_, i) => i !== si))}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#fee2e2] hover:text-[#C3292F] transition-colors flex-shrink-0"
                       >
                         <Icon name="close" size={14} />
                       </button>
@@ -219,7 +219,7 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                   <button
                     type="button"
                     onClick={() => commit([...slots, ''])}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#242C4F] hover:text-[#2a5278] transition-colors mt-1"
                   >
                     <Icon name="add" size={14} />
                     Agregar otro
@@ -240,7 +240,7 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                   onChange={e => onChange(campo.id, e.target.checked)}
                   className="rounded accent-primary"
                 />
-                <span className="text-sm text-[#1b3a57]">{campo.placeholder ?? 'Sí'}</span>
+                <span className="text-sm text-[#242C4F]">{campo.placeholder ?? 'Sí'}</span>
               </label>
             </FormField>
           )

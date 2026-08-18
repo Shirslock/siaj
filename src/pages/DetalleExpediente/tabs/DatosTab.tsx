@@ -48,11 +48,11 @@ interface RowProps {
 function FieldRow({ label, value, edit, input }: RowProps) {
   return (
     <div className="py-3 flex gap-6 items-start border-b border-[rgba(0,0,0,0.08)] last:border-0">
-      <dt className="w-48 flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84] pt-0.5">
+      <dt className="w-48 flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#758A93] pt-0.5">
         {label}
       </dt>
-      <dd className="flex-1 text-sm text-[#1b3a57]">
-        {edit && input ? input : (value ?? <span className="text-[#4a6a84]">—</span>)}
+      <dd className="flex-1 text-sm text-[#242C4F]">
+        {edit && input ? input : (value ?? <span className="text-[#758A93]">—</span>)}
       </dd>
     </div>
   )
@@ -62,8 +62,8 @@ function Seccion({ titulo }: { titulo: string }) {
   return (
     <div className="pt-6 pb-2 first:pt-0">
       <div className="flex items-center gap-3">
-        <div className="w-1 h-4 rounded-full bg-[#1b3a57] flex-shrink-0" />
-        <p className="text-xs font-bold tracking-tight text-[#1b3a57]">
+        <div className="w-1 h-4 rounded-full bg-[#256386] flex-shrink-0" />
+        <p className="text-xs font-bold tracking-tight text-[#242C4F]">
           {titulo}
         </p>
         <div className="flex-1 h-px bg-[rgba(0,0,0,0.08)]" />
@@ -129,7 +129,7 @@ export function DatosTab({ exp }: Props) {
       return (
         <select
           disabled={bloqueadoPorLanzamiento}
-          className={`field-input w-full text-sm${bloqueadoPorLanzamiento ? ' bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed' : ''}`}
+          className={`field-input w-full text-sm${bloqueadoPorLanzamiento ? ' bg-[#EEEBE6] text-[#758A93] cursor-not-allowed' : ''}`}
           value={val}
           onChange={e => change(e.target.value)}
         >
@@ -205,7 +205,7 @@ export function DatosTab({ exp }: Props) {
           setTimeout(() => change('ÚNICA'), 0)
         }
         return (
-          <input className="field-input w-full text-sm bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed" value="ÚNICA" readOnly />
+          <input className="field-input w-full text-sm bg-[#EEEBE6] text-[#758A93] cursor-not-allowed" value="ÚNICA" readOnly />
         )
       }
       if (secs.length === 1 && secs[0] === 'A COMPLETAR') {
@@ -260,7 +260,7 @@ export function DatosTab({ exp }: Props) {
               </select>
               {slots.length > 1 && (
                 <button type="button" onClick={() => commit(slots.filter((_, i) => i !== si))}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0">
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#fee2e2] hover:text-[#C3292F] transition-colors flex-shrink-0">
                   <Icon name="close" size={14} />
                 </button>
               )}
@@ -268,7 +268,7 @@ export function DatosTab({ exp }: Props) {
           ))}
           {slots.filter(v => v !== '').length < opts.length && (
             <button type="button" onClick={() => setDraft(p => ({ ...p, [campo.id]: [...slots, ''] }))}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1">
+              className="flex items-center gap-1.5 text-xs font-bold text-[#242C4F] hover:text-[#2a5278] transition-colors mt-1">
               <Icon name="add" size={14} />
               Agregar otro
             </button>
@@ -280,7 +280,7 @@ export function DatosTab({ exp }: Props) {
       return (
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" className="accent-primary rounded" checked={Boolean(draft[campo.id])} onChange={e => setDraft(p => ({ ...p, [campo.id]: e.target.checked }))} />
-          <span className="text-sm text-[#1b3a57]">Sí</span>
+          <span className="text-sm text-[#242C4F]">Sí</span>
         </label>
       )
     }
@@ -297,11 +297,11 @@ export function DatosTab({ exp }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-[#1b3a57]">Datos de la actuación</p>
+        <p className="text-sm font-semibold text-[#242C4F]">Datos de la actuación</p>
         {!edit ? (
           <button
             onClick={startEdit}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#e8e8e8] text-[#1b3a57] hover:bg-[#e0e0e0] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#E3E4E9] text-[#242C4F] hover:bg-[#e0e0e0] transition-colors"
           >
             <Icon name="edit" size={16} />
             Editar
@@ -310,13 +310,13 @@ export function DatosTab({ exp }: Props) {
           <div className="flex gap-2">
             <button
               onClick={() => setEdit(false)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={save}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#256386] text-white hover:opacity-90 transition-opacity"
             >
               <Icon name="save" size={16} />
               Guardar
@@ -330,7 +330,7 @@ export function DatosTab({ exp }: Props) {
         {/* ── SECCIÓN 1: Expediente ── */}
         <Seccion titulo="Actuación" />
         <FieldRow label="N° Interno" edit={false}
-          value={<span className="font-mono font-bold text-[#1b3a57]">{exp.id}</span>}
+          value={<span className="font-mono font-bold text-[#242C4F]">{exp.id}</span>}
         />
         <FieldRow label="Tipo de Gestión" edit={false}
           value={tipoLabel}
@@ -354,7 +354,7 @@ export function DatosTab({ exp }: Props) {
                 type="text"
                 disabled
                 readOnly
-                className="field-input w-full bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed"
+                className="field-input w-full bg-[#EEEBE6] text-[#758A93] cursor-not-allowed"
                 value={exp.causal_finalizacion ?? 'Se completa automáticamente al finalizar la actuación'}
               />
             }
@@ -524,8 +524,8 @@ function SolicitudesPenalesDetalle({
 
         return (
           <div key={tipoSel}
-            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#f5f5f5] border border-[rgba(0,0,0,0.06)]">
-            <span className="text-[12px] text-[#1b3a57]">
+            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#EEEBE6] border border-[rgba(0,0,0,0.06)]">
+            <span className="text-[12px] text-[#242C4F]">
               {tipoSel}
               {!tieneData && (
                 <span className="ml-1.5 text-[10px] text-[#d97706] font-semibold">
@@ -535,7 +535,7 @@ function SolicitudesPenalesDetalle({
             </span>
             <button
               onClick={() => onVer(tipoSel)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-[#1b3a57] hover:text-[#2a5278] transition-colors">
+              className="flex items-center gap-1 text-[11px] font-semibold text-[#242C4F] hover:text-[#2a5278] transition-colors">
               <Icon name="visibility" size={13} />
               Ver
             </button>

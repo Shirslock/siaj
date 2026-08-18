@@ -120,7 +120,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
         </div>
 
         {inputLocal && !location.pathname.includes('/actuaciones') && (
-          <div className="absolute top-full left-0 right-0 mt-1 px-3 py-1.5 bg-[#1b3a57] rounded-lg text-[11px] text-white/70 border border-white/10 z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 px-3 py-1.5 bg-[#256386] rounded-lg text-[11px] text-white/70 border border-white/10 z-50">
             <Icon name="search" size={11} className="inline mr-1 opacity-60" />
             Buscando en Actuaciones...
           </div>
@@ -135,7 +135,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               <p className="text-sm font-semibold text-white leading-tight">
                 {getNombreCompleto(usuarioActivo)}
               </p>
-              <p className="text-xs text-[#C4DFE8] leading-tight">
+              <p className="text-xs text-[#E4EDF2] leading-tight">
                 {ROL_LABEL[usuarioActivo.rolSistema]}
               </p>
             </div>
@@ -153,7 +153,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
           >
             <Icon name="notifications_none" size={22} className="text-white" />
             {noLeidas.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#b91c1c] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#C3292F] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
                 {noLeidas.length > 9 ? '9+' : noLeidas.length}
               </span>
             )}
@@ -165,9 +165,9 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               {/* Header */}
               <div className="px-4 py-3 flex items-center justify-between border-b border-black/8">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-[#1b3a57]">Notificaciones</p>
+                  <p className="text-sm font-bold text-[#242C4F]">Notificaciones</p>
                   {noLeidas.length > 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#b91c1c] text-white">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#C3292F] text-white">
                       {noLeidas.length} nuevas
                     </span>
                   )}
@@ -175,7 +175,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                 {noLeidas.length > 0 && (
                   <button
                     onClick={() => usuarioActivo && marcarTodasLeidas(usuarioActivo.id)}
-                    className="text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                    className="text-[11px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors"
                   >
                     Marcar todas como leídas
                   </button>
@@ -186,8 +186,8 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               <div className="max-h-80 overflow-y-auto">
                 {misNotifs.length === 0 ? (
                   <div className="px-4 py-8 text-center">
-                    <Icon name="notifications_none" size={28} className="text-[#7a9ab4] mx-auto mb-2 block" />
-                    <p className="text-sm text-[#4a6a84]">Sin notificaciones</p>
+                    <Icon name="notifications_none" size={28} className="text-[#9AA6B2] mx-auto mb-2 block" />
+                    <p className="text-sm text-[#758A93]">Sin notificaciones</p>
                   </div>
                 ) : (
                   misNotifs.map(notif => (
@@ -196,11 +196,11 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                       className={`relative group px-4 py-3 border-b border-black/5 last:border-0 transition-colors ${
                         !notif.leida
                           ? 'bg-[#f0f6ff] hover:bg-[#e8f0ff]'
-                          : 'bg-white hover:bg-[#f9f9f9]'
+                          : 'bg-white hover:bg-[#E3E4E9]'
                       }`}
                     >
                       {!notif.leida && (
-                        <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#1b3a57]" />
+                        <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#256386]" />
                       )}
 
                       <div
@@ -215,27 +215,27 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${
                             notif.tipo === 'REASIGNACION'
                               ? 'bg-[#fef3c7] text-[#d97706]'
-                              : 'bg-[#C4DFE8] text-[#1b3a57]'
+                              : 'bg-[#E4EDF2] text-[#242C4F]'
                           }`}>
                             {notif.tipo === 'REASIGNACION' ? 'Reasignación' : 'Asignación'}
                           </span>
-                          <span className="text-[11px] text-[#4a6a84] truncate">
+                          <span className="text-[11px] text-[#758A93] truncate">
                             {notif.tipoGestion}
                           </span>
                         </div>
 
-                        <p className="text-[11px] font-bold font-mono text-[#1b3a57]">
+                        <p className="text-[11px] font-bold font-mono text-[#242C4F]">
                           {notif.expedienteId}
                           {notif.numeroCausa && (
-                            <span className="font-normal text-[#4a6a84] ml-1.5">· {notif.numeroCausa}</span>
+                            <span className="font-normal text-[#758A93] ml-1.5">· {notif.numeroCausa}</span>
                           )}
                         </p>
 
-                        <p className="text-xs text-[#1b3a57] line-clamp-2 mt-0.5">
+                        <p className="text-xs text-[#242C4F] line-clamp-2 mt-0.5">
                           {notif.caratula}
                         </p>
 
-                        <p className="text-[10px] text-[#7a9ab4] mt-1">
+                        <p className="text-[10px] text-[#9AA6B2] mt-1">
                           {fechaRelativa(notif.fecha)}
                         </p>
                       </div>
@@ -245,7 +245,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                           e.stopPropagation()
                           descartar(notif.id)
                         }}
-                        className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded-md text-[#7a9ab4] opacity-0 group-hover:opacity-100 hover:bg-[#e8e8e8] hover:text-[#1b3a57] transition-all"
+                        className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded-md text-[#9AA6B2] opacity-0 group-hover:opacity-100 hover:bg-[#E3E4E9] hover:text-[#242C4F] transition-all"
                       >
                         <Icon name="close" size={12} />
                       </button>
@@ -255,8 +255,8 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               </div>
 
               {misNotifs.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-black/6 bg-[#f9f9f9] text-center">
-                  <p className="text-[10px] text-[#7a9ab4]">
+                <div className="px-4 py-2.5 border-t border-black/6 bg-[#E3E4E9] text-center">
+                  <p className="text-[10px] text-[#9AA6B2]">
                     Las notificaciones leídas se eliminan automáticamente a los 30 días
                   </p>
                 </div>

@@ -24,12 +24,12 @@ const ROL_BD_LABEL: Record<string, string> = Object.fromEntries(
 )
 
 const ROL_BD_BADGE: Record<string, string> = {
-  abogado:             'bg-[#e8f0ff] text-[#1b3a57]',
-  abogada:             'bg-[#e8f0ff] text-[#1b3a57]',
+  abogado:             'bg-[#e8f0ff] text-[#242C4F]',
+  abogada:             'bg-[#e8f0ff] text-[#242C4F]',
   asistente_jurídico:  'bg-amber-100 text-amber-700',
-  abogado_coordinador: 'bg-[#d4e6f1] text-[#1b3a57]',
-  gerente:             'bg-[#1b3a57] text-white',
-  adm_mesa:            'bg-[#e8e8e8] text-[#4a6a84]',
+  abogado_coordinador: 'bg-[#d4e6f1] text-[#242C4F]',
+  gerente:             'bg-[#256386] text-white',
+  adm_mesa:            'bg-[#E3E4E9] text-[#758A93]',
 }
 
 const AREA_BADGES: Record<string, string> = {
@@ -113,12 +113,12 @@ export function UsuariosPanel() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">Abogados / Usuarios</h2>
+        <h2 className="text-lg font-semibold text-[#242C4F]">Abogados / Usuarios</h2>
         <div className="flex items-center gap-3">
           <span className="text-xs text-[#9a9a9a]">{usuarios.length} usuarios</span>
           <button
             onClick={() => { setAltaAbierta(true); setEditando(null); setForm(BLANK_FORM) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#256386] text-white hover:opacity-90 transition-opacity"
           >
             <Icon name="add" size={16} /> Nuevo
           </button>
@@ -130,7 +130,7 @@ export function UsuariosPanel() {
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.1)]">
               {['Nombre', 'Rol', 'Área/s', 'Mail', 'Matrícula', 'Secuencia / Línea', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#758A93]">{c}</th>
               ))}
             </tr>
           </thead>
@@ -143,13 +143,13 @@ export function UsuariosPanel() {
 
                   {/* Nombre */}
                   <td className="py-2.5 px-4">
-                    <p className="text-[#1b3a57] font-semibold text-sm">{u.apellido}, {u.nombre}</p>
+                    <p className="text-[#242C4F] font-semibold text-sm">{u.apellido}, {u.nombre}</p>
                     <p className="text-[10px] text-[#9a9a9a] font-mono">{u.id}</p>
                   </td>
 
                   {/* Rol */}
                   <td className="py-2.5 px-4">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROL_BD_BADGE[u.rolBD] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROL_BD_BADGE[u.rolBD] ?? 'bg-[#E3E4E9] text-[#758A93]'}`}>
                       {ROL_BD_LABEL[u.rolBD] ?? u.rolBD}
                     </span>
                   </td>
@@ -158,7 +158,7 @@ export function UsuariosPanel() {
                   <td className="py-2.5 px-4">
                     <div className="flex flex-wrap gap-1">
                       {u.areas.map(a => (
-                        <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
+                        <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#E3E4E9] text-[#758A93]'}`}>{a}</span>
                       ))}
                       {u.areas.length === 0 && <span className="text-[#c0c0c0] text-xs">—</span>}
                     </div>
@@ -166,15 +166,15 @@ export function UsuariosPanel() {
 
                   {/* Mail */}
                   <td className="py-2.5 px-4">
-                    <span className="text-xs text-[#4a6a84]">{(u as any).email ?? '—'}</span>
+                    <span className="text-xs text-[#758A93]">{(u as any).email ?? '—'}</span>
                   </td>
 
                   {/* Matrícula */}
                   <td className="py-2.5 px-4">
                     {matriculas && Object.keys(matriculas).length > 0
                       ? Object.entries(matriculas).map(([jur, num]) => (
-                          <div key={jur} className="text-[10px] text-[#1b3a57]">
-                            <span className="font-bold text-[#4a6a84]">{jur}:</span> {num}
+                          <div key={jur} className="text-[10px] text-[#242C4F]">
+                            <span className="font-bold text-[#758A93]">{jur}:</span> {num}
                           </div>
                         ))
                       : <span className="text-[#c0c0c0] text-xs">—</span>}
@@ -183,14 +183,14 @@ export function UsuariosPanel() {
                   {/* Secuencia / Línea */}
                   <td className="py-2.5 px-4">
                     {u.lineasPenal && u.lineasPenal.length > 0 ? (
-                      <span className="text-[10px] text-[#4a6a84]">
+                      <span className="text-[10px] text-[#758A93]">
                         {u.lineasPenal.length} línea{u.lineasPenal.length !== 1 ? 's' : ''}
                       </span>
                     ) : u.fifoOrder && Object.keys(u.fifoOrder).length > 0 ? (
                       <div className="space-y-0.5">
                         {Object.entries(u.fifoOrder).map(([area, pos]) => (
-                          <div key={area} className="text-[10px] font-mono text-[#1b3a57]">
-                            <span className="text-[#4a6a84]">{area}</span> #{pos}
+                          <div key={area} className="text-[10px] font-mono text-[#242C4F]">
+                            <span className="text-[#758A93]">{area}</span> #{pos}
                           </div>
                         ))}
                       </div>
@@ -202,13 +202,13 @@ export function UsuariosPanel() {
                   {/* Acciones */}
                   <td className="py-2.5 px-4">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activo ? 'bg-green-100 text-green-700' : 'bg-[#e8e8e8] text-[#9a9a9a]'}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activo ? 'bg-green-100 text-green-700' : 'bg-[#E3E4E9] text-[#9a9a9a]'}`}>
                         {activo ? 'Activo' : 'Inactivo'}
                       </span>
                       <button
                         onClick={() => abrirEditar(u)}
                         title="Editar"
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#e8f0ff] hover:text-[#242C4F] transition-colors"
                       >
                         <Icon name="edit" size={14} />
                       </button>
@@ -230,13 +230,13 @@ export function UsuariosPanel() {
         size="md"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors">
               Cancelar
             </button>
             <button
               onClick={cerrar}
               disabled={!form.apellido.trim() || !form.nombre.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar cambios
             </button>
@@ -290,7 +290,7 @@ export function UsuariosPanel() {
             <div className="space-y-2">
               {JURISDICCIONES.map(jur => (
                 <div key={jur} className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-20 flex-shrink-0">{jur}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#758A93] w-20 flex-shrink-0">{jur}</span>
                   <input
                     type="text"
                     className="field-input flex-1 font-mono text-sm"
@@ -340,7 +340,7 @@ export function UsuariosPanel() {
                 {LINEAS_FERROVIARIAS.map(l => (
                   <label key={l.id} className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input type="checkbox" className="rounded" checked={form.lineasPenal.includes(l.id)} onChange={() => toggleLinea(l.id)} />
-                    <span className="text-xs text-[#1b3a57]">{l.label}</span>
+                    <span className="text-xs text-[#242C4F]">{l.label}</span>
                   </label>
                 ))}
               </div>
@@ -353,7 +353,7 @@ export function UsuariosPanel() {
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-[#256386]' : 'bg-[rgba(0,0,0,0.15)]'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -361,8 +361,8 @@ export function UsuariosPanel() {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Usuario activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los usuarios inactivos no pueden acceder al sistema</p>
+                <p className="text-sm font-medium text-[#242C4F]">Usuario activo</p>
+                <p className="text-[11px] text-[#758A93]">Los usuarios inactivos no pueden acceder al sistema</p>
               </div>
             </label>
           </div>
@@ -380,14 +380,14 @@ export function UsuariosPanel() {
           <>
             <button
               onClick={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
               disabled={!form.apellido.trim() || !form.nombre.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Dar de alta
             </button>
@@ -431,7 +431,7 @@ export function UsuariosPanel() {
             <div className="space-y-2">
               {JURISDICCIONES.map(jur => (
                 <div key={jur} className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-20 flex-shrink-0">{jur}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#758A93] w-20 flex-shrink-0">{jur}</span>
                   <input
                     type="text"
                     className="field-input flex-1 font-mono text-sm"
@@ -476,7 +476,7 @@ export function UsuariosPanel() {
                 {LINEAS_FERROVIARIAS.map(l => (
                   <label key={l.id} className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input type="checkbox" className="rounded" checked={form.lineasPenal.includes(l.id)} onChange={() => toggleLinea(l.id)} />
-                    <span className="text-xs text-[#1b3a57]">{l.label}</span>
+                    <span className="text-xs text-[#242C4F]">{l.label}</span>
                   </label>
                 ))}
               </div>
@@ -487,7 +487,7 @@ export function UsuariosPanel() {
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-[#256386]' : 'bg-[rgba(0,0,0,0.15)]'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -495,8 +495,8 @@ export function UsuariosPanel() {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Usuario activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los usuarios inactivos no pueden acceder al sistema</p>
+                <p className="text-sm font-medium text-[#242C4F]">Usuario activo</p>
+                <p className="text-[11px] text-[#758A93]">Los usuarios inactivos no pueden acceder al sistema</p>
               </div>
             </label>
           </div>

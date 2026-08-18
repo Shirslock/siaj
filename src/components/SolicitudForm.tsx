@@ -48,7 +48,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
 
       {/* Título */}
       <div>
-        <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+        <label className="field-label">Título <span className="text-[#C3292F]">*</span></label>
         <input
           type="text"
           className="field-input w-full"
@@ -116,12 +116,12 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border cursor-pointer transition-colors ${
                       seleccionado
                         ? 'bg-[rgba(196,223,232,0.30)] border-[#4a9ab5]'
-                        : 'border-[rgba(0,0,0,0.10)] hover:bg-[#f5f5f5]'
+                        : 'border-[rgba(0,0,0,0.10)] hover:bg-[#EEEBE6]'
                     }`}
                   >
                     <input
                       type="checkbox"
-                      className="accent-[#1b3a57]"
+                      className="accent-[#256386]"
                       checked={seleccionado}
                       onChange={() => {
                         if (esInt) {
@@ -141,7 +141,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
                         }
                       }}
                     />
-                    <span className="text-sm text-[#1b3a57]">{persona.nombre}</span>
+                    <span className="text-sm text-[#242C4F]">{persona.nombre}</span>
                   </label>
                 )
               })}
@@ -166,7 +166,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
                     : p === 'media'
                     ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
                     : 'bg-green-50 border-green-300 text-green-700'
-                  : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84]'
+                  : 'bg-white border-[rgba(0,0,0,0.12)] text-[#758A93]'
               }`}
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -191,7 +191,7 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
         <div
           onClick={() => setForm(p => ({ ...p, mostrar_en_agenda: !p.mostrar_en_agenda }))}
           className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-            form.mostrar_en_agenda ? 'bg-[#1b3a57]' : 'bg-[#e8e8e8]'
+            form.mostrar_en_agenda ? 'bg-[#256386]' : 'bg-[#E3E4E9]'
           }`}
         >
           <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -199,8 +199,8 @@ export function SolicitudForm({ form, setForm, usuarioActivo }: Props) {
           }`} />
         </div>
         <div>
-          <p className="text-sm font-medium text-[#1b3a57]">Mostrar en agenda</p>
-          <p className="text-[11px] text-[#4a6a84]">Aparecerá en el calendario en la fecha límite</p>
+          <p className="text-sm font-medium text-[#242C4F]">Mostrar en agenda</p>
+          <p className="text-[11px] text-[#758A93]">Aparecerá en el calendario en la fecha límite</p>
         </div>
       </label>
     </div>

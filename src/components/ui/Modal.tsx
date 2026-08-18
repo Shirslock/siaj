@@ -54,12 +54,12 @@ export function Modal({ open, onClose, titulo, children, size = 'md', footer }: 
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.08)] flex-shrink-0">
-                  <DialogTitle as="h2" className="font-headline font-semibold text-lg text-[#1b3a57]">
+                  <DialogTitle as="h2" className="font-headline font-semibold text-lg text-[#242C4F]">
                     {titulo}
                   </DialogTitle>
                   <button
                     onClick={onClose}
-                    className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                    className="p-1.5 rounded-lg text-[#758A93] hover:bg-[#E3E4E9] transition-colors"
                   >
                     <Icon name="close" size={20} />
                   </button>
@@ -72,7 +72,7 @@ export function Modal({ open, onClose, titulo, children, size = 'md', footer }: 
 
                 {/* Footer */}
                 {footer && (
-                  <div className="flex-shrink-0 px-6 py-4 border-t border-[rgba(0,0,0,0.08)] flex items-center justify-end gap-3 bg-[#f5f5f5]">
+                  <div className="flex-shrink-0 px-6 py-4 border-t border-[rgba(0,0,0,0.08)] flex items-center justify-end gap-3 bg-[#EEEBE6]">
                     {footer}
                   </div>
                 )}

@@ -79,10 +79,10 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
                     isCurrent
-                      ? 'bg-[#1b3a57] border-[#1b3a57] text-white shadow-md'
+                      ? 'bg-[#256386] border-[#242C4F] text-white shadow-md'
                       : isPast
-                      ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#1b3a57]'
-                      : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.12)] text-[#4a6a84]'
+                      ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#242C4F]'
+                      : 'bg-[#E3E4E9] border-[rgba(0,0,0,0.12)] text-[#758A93]'
                   }`}
                 >
                   {isPast
@@ -91,7 +91,7 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
                   }
                 </div>
                 <span className={`mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[80px] truncate ${
-                  isCurrent ? 'text-[#1b3a57]' : isFuture ? 'text-[#4a6a84]' : 'text-[rgba(27,58,87,0.70)]'
+                  isCurrent ? 'text-[#242C4F]' : isFuture ? 'text-[#758A93]' : 'text-[rgba(27,58,87,0.70)]'
                 }`}>
                   {estado.label}
                 </span>
@@ -133,29 +133,29 @@ function TareaFeedItem({
   const estadoConfig = {
     cumplido:       { icon: 'check_circle', color: 'text-green-600', bg: 'bg-green-50',  badge: 'bg-green-100 text-green-700',   label: 'Cumplido' },
     en_curso:       { icon: 'schedule',     color: 'text-amber-500', bg: 'bg-amber-50',  badge: 'bg-amber-100 text-amber-700',   label: 'En curso' },
-    no_procedente:  { icon: 'block',        color: 'text-[#7a9ab4]',   bg: 'bg-[#e8e8e8]', badge: 'bg-[#e8e8e8] text-[#4a6a84]', label: 'No proc.' },
+    no_procedente:  { icon: 'block',        color: 'text-[#9AA6B2]',   bg: 'bg-[#E3E4E9]', badge: 'bg-[#E3E4E9] text-[#758A93]', label: 'No proc.' },
     sin_estado:     { icon: 'radio_button_unchecked', color: 'text-[rgba(0,0,0,0.35)]', bg: '', badge: '', label: '' },
   }[tarea.estado]
 
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[rgba(0,0,0,0.04)] transition-all hover:bg-[#f0f0f0] ${
-        isSelected ? 'bg-[rgba(27,58,87,0.05)] border-l-2 border-l-[#1b3a57]' : 'border-l-2 border-l-transparent'
+      className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[rgba(0,0,0,0.04)] transition-all hover:bg-[#E3E4E9] ${
+        isSelected ? 'bg-[rgba(27,58,87,0.05)] border-l-2 border-l-[#E4EDF2]' : 'border-l-2 border-l-transparent'
       }`}
     >
       {/* Número */}
-      <span className="text-[10px] font-bold text-[#4a6a84] w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
+      <span className="text-[10px] font-bold text-[#758A93] w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
 
       {/* Ícono estado */}
       <Icon name={estadoConfig.icon} size={18} className={`flex-shrink-0 ${estadoConfig.color}`} />
 
       {/* Nombre */}
-      <p className="text-xs text-[#1b3a57] flex-1 truncate">{tarea.nombre}</p>
+      <p className="text-xs text-[#242C4F] flex-1 truncate">{tarea.nombre}</p>
 
       {/* Urgencia / Vencido */}
       {tarea.fechaVencimiento && urg === 'rojo' && tarea.estado !== 'cumplido' && tarea.estado !== 'no_procedente' && (
-        <span className="flex items-center gap-1 text-[9px] font-black text-[#b91c1c] bg-red-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
+        <span className="flex items-center gap-1 text-[9px] font-black text-[#C3292F] bg-red-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
           <Icon name="warning" size={10} />
           Vencido
         </span>
@@ -213,17 +213,17 @@ function TareaDetailPanel({
     <div className="w-96 flex-shrink-0 sticky top-4 self-start">
       <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden shadow-card">
         {/* Header */}
-        <div className="px-5 pt-4 pb-3 border-b border-[rgba(0,0,0,0.06)] bg-[#f0f0f0]">
+        <div className="px-5 pt-4 pb-3 border-b border-[rgba(0,0,0,0.06)] bg-[#E3E4E9]">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#758A93] mb-1">
                 ESTADO PROCESAL · {estadoLabel.toUpperCase()}
               </p>
-              <p className="text-sm font-bold text-[#1b3a57] leading-snug">{tarea.nombre}</p>
+              <p className="text-sm font-bold text-[#242C4F] leading-snug">{tarea.nombre}</p>
             </div>
             <button
               onClick={onCerrar}
-              className="p-1 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors flex-shrink-0"
+              className="p-1 rounded-lg text-[#758A93] hover:bg-[#E3E4E9] transition-colors flex-shrink-0"
             >
               <Icon name="close" size={16} />
             </button>
@@ -232,7 +232,7 @@ function TareaDetailPanel({
           {/* Pill estado actual */}
           <div className="mt-2">
             {estadoLocal === 'sin_estado' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#e8e8e8] text-[#4a6a84] border border-[rgba(0,0,0,0.12)]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#E3E4E9] text-[#758A93] border border-[rgba(0,0,0,0.12)]">
                 <Icon name="radio_button_unchecked" size={12} />
                 Pendiente
               </span>
@@ -247,7 +247,7 @@ function TareaDetailPanel({
                 En curso
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E3E4E9] text-[#758A93]">
                 <Icon name="block" size={12} />
                 No procedente
               </span>
@@ -261,8 +261,8 @@ function TareaDetailPanel({
           {/* Observaciones */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84]">Observaciones</label>
-              <span className="text-[9px] text-[#4a6a84]">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93]">Observaciones</label>
+              <span className="text-[9px] text-[#758A93]">
                 {(cambiosLocales.observaciones ?? tarea.observaciones ?? '').length} car.
               </span>
             </div>
@@ -277,22 +277,22 @@ function TareaDetailPanel({
 
           {/* Estado de la actividad */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-2">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93] block mb-2">
               Estado de la actividad
             </label>
             <div className="flex gap-2 py-2">
               {estadoOpts.map(opt => {
                 const isActive = estadoLocal === opt.value
                 const activeClass =
-                  opt.value === 'cumplido'      ? 'border-[#1b3a57] bg-[#1b3a57] text-white text-sm' :
+                  opt.value === 'cumplido'      ? 'border-[#242C4F] bg-[#256386] text-white text-sm' :
                   opt.value === 'en_curso'       ? 'border-amber-500 bg-amber-50 text-amber-700 text-sm' :
-                                                   'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84] text-sm'
+                                                   'border-[rgba(0,0,0,0.20)] bg-[#E3E4E9] text-[#758A93] text-sm'
                 return (
                   <button
                     key={opt.value}
                     onClick={() => setCambiosLocales(p => ({ ...p, estado: opt.value }))}
                     className={`flex flex-1 items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${
-                      isActive ? activeClass : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#e8e8e8]'
+                      isActive ? activeClass : 'border-[rgba(0,0,0,0.12)] text-[#758A93] hover:bg-[#E3E4E9]'
                     }`}
                   >
                     <Icon name={opt.icon} size={20} />
@@ -306,7 +306,7 @@ function TareaDetailPanel({
           {/* Fechas */}
           <div className="grid grid-cols-2 gap-3 items-start">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93] block mb-1.5">
                 Fecha de actualización
               </label>
               <div className="relative">
@@ -319,7 +319,7 @@ function TareaDetailPanel({
               </div>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93] block mb-1.5">
                 Fecha de vencimiento
               </label>
               <div className="relative">
@@ -331,7 +331,7 @@ function TareaDetailPanel({
                 />
               </div>
               {urgenciaLocal === 'rojo' && (
-                <p className="text-[9px] text-[#b91c1c] mt-1 flex items-center gap-1">
+                <p className="text-[9px] text-[#C3292F] mt-1 flex items-center gap-1">
                   <Icon name="warning" size={11} />
                   Plazo vencido
                 </p>
@@ -339,7 +339,7 @@ function TareaDetailPanel({
               {/* Sin fecha pill */}
               <div className="h-3 mt-1">
                 {!(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
-                  <span className="text-[9px] text-[#4a6a84]">Sin fecha</span>
+                  <span className="text-[9px] text-[#758A93]">Sin fecha</span>
                 )}
               </div>
             </div>
@@ -351,7 +351,7 @@ function TareaDetailPanel({
               <div
                 onClick={() => setCambiosLocales(p => ({ ...p, mostrar_en_agenda: !(p.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  (cambiosLocales.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  (cambiosLocales.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) ? 'bg-[#256386]' : 'bg-[rgba(0,0,0,0.15)]'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -359,8 +359,8 @@ function TareaDetailPanel({
                 }`} />
               </div>
               <div>
-                <p className="text-xs font-medium text-[#1b3a57]">Mostrar en agenda</p>
-                <p className="text-[10px] text-[#4a6a84]">Aparecerá en el calendario en la fecha de vencimiento</p>
+                <p className="text-xs font-medium text-[#242C4F]">Mostrar en agenda</p>
+                <p className="text-[10px] text-[#758A93]">Aparecerá en el calendario en la fecha de vencimiento</p>
               </div>
             </label>
           )}
@@ -368,10 +368,10 @@ function TareaDetailPanel({
           {/* Fecha de aviso */}
           {(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
             <div>
-              <label className="text-[9px] text-[#4a6a84] font-black uppercase tracking-widest block mb-1">
+              <label className="text-[9px] text-[#758A93] font-black uppercase tracking-widest block mb-1">
                 Fecha de aviso
               </label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1.5">
+              <p className="text-[10px] text-[#9AA6B2] mb-1.5">
                 A partir de qué fecha recibir el aviso de proximidad al vencimiento.
               </p>
               <input
@@ -391,7 +391,7 @@ function TareaDetailPanel({
           {/* Rango de aviso */}
           {(cambiosLocales.fecha_aviso ?? tarea.fecha_aviso) && (
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-2">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93] block mb-2">
                 Frecuencia de notificación
               </label>
               <div className="flex gap-2">
@@ -408,8 +408,8 @@ function TareaDetailPanel({
                       onClick={() => setCambiosLocales(p => ({ ...p, rango_aviso: op.value }))}
                       className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
                         actual === op.value
-                          ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                          : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                          ? 'bg-[#256386] border-[#242C4F] text-white'
+                          : 'border-[rgba(0,0,0,0.12)] text-[#758A93] hover:bg-[#EEEBE6]'
                       }`}
                     >
                       {op.label}
@@ -422,7 +422,7 @@ function TareaDetailPanel({
 
           {/* Documento GDE */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93] block mb-1.5">
               Documento GDE
             </label>
             <input
@@ -436,12 +436,12 @@ function TareaDetailPanel({
 
           {/* Adjunto */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#758A93] block mb-1.5">
               Adjunto
             </label>
             <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
               <Icon name="attach_file" size={18} />
-              <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">Adjuntar archivo</span>
+              <span className="text-xs text-[#758A93] group-hover:text-[#242C4F] transition-colors">Adjuntar archivo</span>
               <input type="file" className="hidden" />
             </label>
           </div>
@@ -451,13 +451,13 @@ function TareaDetailPanel({
         <div className="px-5 pb-4 flex gap-2 justify-end border-t border-[rgba(0,0,0,0.06)] pt-3">
           <button
             onClick={onCerrar}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            className="px-3 py-2 rounded-xl text-xs font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={onGuardar}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#256386] text-white hover:opacity-90 transition-opacity"
           >
             <Icon name="save" size={14} />
             Guardar
@@ -504,9 +504,9 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
         {/* Timeline dot */}
         <div className="flex flex-col items-center flex-shrink-0 mt-1">
           <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-            isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
+            isSistema ? 'bg-[#E4EDF2] border border-[rgba(27,58,87,0.20)]' : 'bg-[#E3E4E9] border border-[rgba(0,0,0,0.10)]'
           }`}>
-            <Icon name={iconoActividad} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
+            <Icon name={iconoActividad} size={14} className={isSistema ? 'text-[#242C4F]' : 'text-[#758A93]'} />
           </div>
           {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)] mt-1" />}
         </div>
@@ -519,7 +519,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
         }`}>
           <div className="flex items-start justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+              <p className="text-sm font-semibold text-[#242C4F] leading-snug">{act.titulo}</p>
               {act.es_solicitud && act.tipo === 'NOTA_RESPUESTA' && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
                   <Icon name="check" size={9} />
@@ -544,16 +544,16 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
               )}
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
+              <p className="text-[10px] text-[#758A93] whitespace-nowrap">{formatFecha(act.fecha)}</p>
               {isSistema && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#E4EDF2] text-[#242C4F]">
                   Sistema
                 </span>
               )}
               {isSistema && tareasHistoricas.length > 0 && (
                 <button
                   onClick={onToggleSnapshot}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1.5 transition-colors mt-1"
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-[#758A93] hover:text-[#242C4F] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1.5 transition-colors mt-1"
                 >
                   <Icon name="checklist" size={14} />
                   {tareasHistoricas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHistoricas.length} tareas
@@ -563,12 +563,12 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
             </div>
           </div>
           {act.descripcion && (
-            <p className="text-xs text-[#4a6a84]">{act.descripcion}</p>
+            <p className="text-xs text-[#758A93]">{act.descripcion}</p>
           )}
           {(act.doc_gde || act.adjunto_nombre) && (
             <div className="flex flex-wrap gap-3 mt-1.5">
               {act.doc_gde && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#242C4F]">
                   <Icon name="description" size={14} />
                   {act.doc_gde}
                 </span>
@@ -578,7 +578,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                   href="#"
                   onClick={e => e.preventDefault()}
                   title="Descarga no disponible en esta versión"
-                  className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                  className="group inline-flex items-center gap-1 text-[10px] text-[#758A93] hover:text-[#242C4F] transition-colors"
                 >
                   <Icon name="attach_file" size={14} />
                   {act.adjunto_nombre}
@@ -591,8 +591,8 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
             <div className="mt-2 pl-3 border-l-2 border-[rgba(0,0,0,0.08)] space-y-1">
               {act.subitems.map((sub, si) => (
                 <div key={si}>
-                  <p className="text-xs font-medium text-[#1b3a57]">{sub.titulo}</p>
-                  {sub.descripcion && <p className="text-[10px] text-[#4a6a84]">{sub.descripcion}</p>}
+                  <p className="text-xs font-medium text-[#242C4F]">{sub.titulo}</p>
+                  {sub.descripcion && <p className="text-[10px] text-[#758A93]">{sub.descripcion}</p>}
                 </div>
               ))}
             </div>
@@ -602,18 +602,18 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
 
       {/* Panel tareas históricas — solo lectura */}
       {isSistema && tareasHistoricas.length > 0 && snapshotOpen && (
-        <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
+        <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#E3E4E9] mb-3 ml-10">
           <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
             {(() => {
               const matchEstado = act.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
               const labelEstadoAnterior = matchEstado?.[1]?.trim() ?? 'estado anterior'
               return (
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#758A93]">
                   TAREAS DEL ESTADO: {labelEstadoAnterior.toUpperCase()}
                 </span>
               )
             })()}
-            <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
+            <span className="text-[10px] text-[#9AA6B2] ml-auto italic">No se pueden modificar</span>
           </div>
 
           {tareasHistoricas.map(tarea => {
@@ -628,11 +628,11 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                     </div>
                   )}
                   {tarea.estado === 'no_procedente' && (
-                    <div className="w-4 h-4 rounded-full bg-[#e8e8e8] flex items-center justify-center text-[#4a6a84] text-[10px]">⊘</div>
+                    <div className="w-4 h-4 rounded-full bg-[#E3E4E9] flex items-center justify-center text-[#758A93] text-[10px]">⊘</div>
                   )}
                   {tarea.estado === 'en_curso' && (
-                    <div className="w-4 h-4 rounded-full bg-[#C4DFE8] flex items-center justify-center">
-                      <Icon name="schedule" size={10} className="text-[#1b3a57]" />
+                    <div className="w-4 h-4 rounded-full bg-[#E4EDF2] flex items-center justify-center">
+                      <Icon name="schedule" size={10} className="text-[#242C4F]" />
                     </div>
                   )}
                   {tarea.estado === 'sin_estado' && (
@@ -643,12 +643,12 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                 {/* Nombre + observaciones inline */}
                 <div className="flex-1 min-w-0">
                   <p className={`text-[11px] font-medium ${
-                    tarea.estado === 'cumplido'       ? 'line-through text-[#7a9ab4]'
-                    : tarea.estado === 'no_procedente' ? 'text-[#7a9ab4]'
-                    : 'text-[#1b3a57]'
+                    tarea.estado === 'cumplido'       ? 'line-through text-[#9AA6B2]'
+                    : tarea.estado === 'no_procedente' ? 'text-[#9AA6B2]'
+                    : 'text-[#242C4F]'
                   }`}>{tarea.nombre}</p>
                   {tarea.observaciones && (
-                    <p className="text-[10px] text-[#7a9ab4] mt-0.5 italic">{tarea.observaciones}</p>
+                    <p className="text-[10px] text-[#9AA6B2] mt-0.5 italic">{tarea.observaciones}</p>
                   )}
                 </div>
 
@@ -656,8 +656,8 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                 {tarea.estado !== 'sin_estado' && (
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${
                     tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
-                    : tarea.estado === 'en_curso' ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                    : 'bg-[#e8e8e8] text-[#4a6a84]'
+                    : tarea.estado === 'en_curso' ? 'bg-[#E4EDF2] text-[#242C4F]'
+                    : 'bg-[#E3E4E9] text-[#758A93]'
                   }`}>
                     {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
                   </span>
@@ -665,7 +665,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
 
                 {/* Fecha */}
                 {tarea.fecha && (
-                  <span className="text-[10px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{tarea.fecha}</span>
+                  <span className="text-[10px] text-[#9AA6B2] flex-shrink-0 mt-0.5">{tarea.fecha}</span>
                 )}
               </div>
             )
@@ -679,22 +679,22 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
           {hijas.map((hija, hi) => (
             <div key={hija.id ?? hi} className="flex gap-3 pl-4 border-l-2 border-[rgba(27,58,87,0.20)] ml-3">
               <div className="flex flex-col items-center flex-shrink-0 mt-1">
-                <div className="w-6 h-6 rounded-full bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)] flex items-center justify-center">
-                  <Icon name="subdirectory_arrow_right" size={12} className="text-[#4a6a84]" />
+                <div className="w-6 h-6 rounded-full bg-[#E3E4E9] border border-[rgba(0,0,0,0.10)] flex items-center justify-center">
+                  <Icon name="subdirectory_arrow_right" size={12} className="text-[#758A93]" />
                 </div>
               </div>
               <div className="flex-1 rounded-xl border border-[rgba(0,0,0,0.10)] bg-white shadow-card p-3 mb-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{hija.titulo}</p>
-                  <p className="text-[10px] text-[#4a6a84] whitespace-nowrap flex-shrink-0">{formatFecha(hija.fecha)}</p>
+                  <p className="text-sm font-semibold text-[#242C4F] leading-snug">{hija.titulo}</p>
+                  <p className="text-[10px] text-[#758A93] whitespace-nowrap flex-shrink-0">{formatFecha(hija.fecha)}</p>
                 </div>
                 {hija.descripcion && (
-                  <p className="text-xs text-[#4a6a84] mt-0.5">{hija.descripcion}</p>
+                  <p className="text-xs text-[#758A93] mt-0.5">{hija.descripcion}</p>
                 )}
                 {(hija.doc_gde || hija.adjunto_nombre) && (
                   <div className="flex flex-wrap gap-3 mt-1.5">
                     {hija.doc_gde && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#242C4F]">
                         <Icon name="description" size={14} />
                         {hija.doc_gde}
                       </span>
@@ -704,7 +704,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                         href="#"
                         onClick={e => e.preventDefault()}
                         title="Descarga no disponible en esta versión"
-                        className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                        className="group inline-flex items-center gap-1 text-[10px] text-[#758A93] hover:text-[#242C4F] transition-colors"
                       >
                         <Icon name="attach_file" size={14} />
                         {hija.adjunto_nombre}
@@ -754,27 +754,27 @@ function TareasBlock({
   return (
     <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden mb-4 shadow-card">
       {/* Header bloque tareas */}
-      <div className="px-5 py-3 flex items-center gap-3 bg-[#f0f0f0] border-b border-[rgba(0,0,0,0.06)]">
+      <div className="px-5 py-3 flex items-center gap-3 bg-[#E3E4E9] border-b border-[rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-bold text-[#4a6a84] uppercase tracking-wide">
+            <span className="text-[10px] font-bold text-[#758A93] uppercase tracking-wide">
               Estado actual:
             </span>
             <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
-              progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-[#C4DFE8] text-[#1b3a57]'
+              progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-[#E4EDF2] text-[#242C4F]'
             }`}>
               {estadoProcesal.label.toUpperCase()}
             </span>
           </div>
-          <span className="text-xs text-[#4a6a84]">{completadas}/{total} tareas</span>
+          <span className="text-xs text-[#758A93]">{completadas}/{total} tareas</span>
           {/* Barra de progreso */}
-          <div className="flex-1 bg-[#e8e8e8] h-1.5 rounded-full max-w-[100px]">
+          <div className="flex-1 bg-[#E3E4E9] h-1.5 rounded-full max-w-[100px]">
             <div
-              className={`h-1.5 rounded-full transition-all ${progresoPct === 100 ? 'bg-green-500' : 'bg-[#1b3a57]'}`}
+              className={`h-1.5 rounded-full transition-all ${progresoPct === 100 ? 'bg-green-500' : 'bg-[#256386]'}`}
               style={{ width: `${progresoPct}%` }}
             />
           </div>
-          <span className="text-[10px] font-bold text-[#4a6a84]">{progresoPct}%</span>
+          <span className="text-[10px] font-bold text-[#758A93]">{progresoPct}%</span>
         </div>
 
         {puedeAvanzar && (
@@ -798,7 +798,7 @@ function TareasBlock({
       {/* Lista tareas */}
       {tareas.length === 0 ? (
         <div className="px-5 py-6 text-center">
-          <p className="text-xs text-[#4a6a84] italic">Este estado no requiere tareas. Podés avanzar directamente.</p>
+          <p className="text-xs text-[#758A93] italic">Este estado no requiere tareas. Podés avanzar directamente.</p>
         </div>
       ) : (
         <>
@@ -814,7 +814,7 @@ function TareasBlock({
           ))}
           {!mostrarTodas && tareas.length > 8 && (
             <button
-              className="w-full px-5 py-2.5 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors text-left"
+              className="w-full px-5 py-2.5 text-[11px] text-[#758A93] hover:text-[#242C4F] hover:bg-[#E3E4E9] transition-colors text-left"
               onClick={() => setMostrarTodas(true)}
             >
               + {tareas.length - 8} tareas más...
@@ -835,24 +835,24 @@ function ReplyList({ replies }: { replies: Reply[] }) {
       {replies.map(reply => {
         const autorU = getUsuarioById(reply.autor_id)
         return (
-          <div key={reply.id} className="pl-4 border-l-2 border-[#C4DFE8]">
-            <div className="bg-[#f9f9f9] rounded-xl px-4 py-3">
+          <div key={reply.id} className="pl-4 border-l-2 border-[#E4EDF2]">
+            <div className="bg-[#E3E4E9] rounded-xl px-4 py-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-[#1b3a57]">
+                <span className="text-[11px] font-bold text-[#242C4F]">
                   {autorU ? getNombreCompleto(autorU) : reply.autor_id}
                 </span>
-                <span className="text-[10px] text-[#7a9ab4]">{formatFecha(reply.fecha)}</span>
+                <span className="text-[10px] text-[#9AA6B2]">{formatFecha(reply.fecha)}</span>
               </div>
-              <p className="text-xs text-[#1b3a57] whitespace-pre-wrap">{reply.texto}</p>
+              <p className="text-xs text-[#242C4F] whitespace-pre-wrap">{reply.texto}</p>
               {reply.doc_gde && (
-                <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
+                <p className="text-[10px] font-mono text-[#242C4F] mt-1.5 flex items-center gap-1">
                   <Icon name="attach_file" size={11} />
                   {reply.doc_gde}
                 </p>
               )}
               {reply.fecha_vencimiento && (
                 <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-[10px] text-[#4a6a84]">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
+                  <span className="text-[10px] text-[#758A93]">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
                   {reply.fecha_aviso && (
                     <span className="text-[10px] text-[#d97706]">Aviso: {formatFecha(reply.fecha_aviso)}</span>
                   )}
@@ -873,17 +873,17 @@ function LogAuditoriaList({ log }: { log: LogAuditoria[] }) {
   return (
     <div className="ml-10 mr-4 mb-1">
       <details className="group">
-        <summary className="text-[10px] text-[#7a9ab4] cursor-pointer hover:text-[#4a6a84] list-none flex items-center gap-1 select-none">
+        <summary className="text-[10px] text-[#9AA6B2] cursor-pointer hover:text-[#758A93] list-none flex items-center gap-1 select-none">
           <Icon name="history" size={11} />
           {log.length} registro{log.length > 1 ? 's' : ''} de auditoría
           <Icon name="expand_more" size={11} className="group-open:rotate-180 transition-transform" />
         </summary>
-        <div className="mt-1.5 space-y-1 border-l-2 border-[#e8e8e8] pl-3">
+        <div className="mt-1.5 space-y-1 border-l-2 border-[#E3E4E9] pl-3">
           {log.map(entry => {
             const autor = getUsuarioById(entry.usuario_id)
             return (
-              <div key={entry.id} className="text-[10px] text-[#7a9ab4]">
-                <span className={`font-bold mr-1 ${entry.tipo === 'ELIMINACION' ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
+              <div key={entry.id} className="text-[10px] text-[#9AA6B2]">
+                <span className={`font-bold mr-1 ${entry.tipo === 'ELIMINACION' ? 'text-[#C3292F]' : 'text-[#758A93]'}`}>
                   {entry.tipo === 'EDICION' ? '✎ Editado' : '✕ Eliminado'}
                 </span>
                 por {autor ? getNombreCompleto(autor) : entry.usuario_id}
@@ -1396,8 +1396,8 @@ export function TimelineTab({ exp }: Props) {
         <div className="flex items-center justify-between gap-3">
           {/* Título y contadores */}
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-[#1b3a57]">Ciclo de Vida — Actividades</p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57] font-semibold">
+            <p className="text-sm font-bold text-[#242C4F]">Ciclo de Vida — Actividades</p>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#E4EDF2] text-[#242C4F] font-semibold">
               {completadas} de {total + sorted.length} completadas
             </span>
           </div>
@@ -1405,23 +1405,23 @@ export function TimelineTab({ exp }: Props) {
           <div className="flex items-center gap-2 flex-shrink-0">
 
             {/* Tabs filtro */}
-            <div className="flex items-center gap-1 bg-[#e8e8e8] rounded-xl p-1">
+            <div className="flex items-center gap-1 bg-[#E3E4E9] rounded-xl p-1">
               {FILTRO_TABS.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setFiltroTab(tab.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                     filtroTab === tab.key
-                      ? 'bg-white shadow-sm text-[#1b3a57]'
-                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                      ? 'bg-white shadow-sm text-[#242C4F]'
+                      : 'text-[#758A93] hover:text-[#242C4F]'
                   }`}
                 >
                   {tab.label}
                   {tab.count !== undefined && tab.count > 0 && (
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
                       filtroTab === tab.key
-                        ? 'bg-[#1b3a57] text-white'
-                        : 'bg-[#e0e0e0] text-[#4a6a84]'
+                        ? 'bg-[#256386] text-white'
+                        : 'bg-[#e0e0e0] text-[#758A93]'
                     }`}>
                       {tab.count}
                     </span>
@@ -1434,7 +1434,7 @@ export function TimelineTab({ exp }: Props) {
             <div className="relative" onClick={e => e.stopPropagation()}>
               <button
                 onClick={() => setMenuExport(v => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#242C4F] hover:bg-[#E3E4E9] transition-colors"
               >
                 <Icon name="download" size={14} />
                 Exportar
@@ -1445,16 +1445,16 @@ export function TimelineTab({ exp }: Props) {
                 <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg z-50 py-1 min-w-[160px]">
                   <button
                     onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#242C4F] hover:bg-[#EEEBE6] transition-colors"
                   >
-                    <Icon name="description" size={16} className="text-[#15803d]" />
+                    <Icon name="description" size={16} className="text-[#267F33]" />
                     Descargar Excel
                   </button>
                   <button
                     onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, tituloDoc, subtituloDoc); setMenuExport(false) }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#242C4F] hover:bg-[#EEEBE6] transition-colors"
                   >
-                    <Icon name="picture_as_pdf" size={16} className="text-[#b91c1c]" />
+                    <Icon name="picture_as_pdf" size={16} className="text-[#C3292F]" />
                     Descargar PDF
                   </button>
                 </div>
@@ -1464,7 +1464,7 @@ export function TimelineTab({ exp }: Props) {
             {/* Botón nueva actividad */}
             <button
               onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#256386] text-white hover:opacity-90 transition-opacity shadow-sm"
             >
               <Icon name="add" size={16} />
               Nueva Actividad
@@ -1474,7 +1474,7 @@ export function TimelineTab({ exp }: Props) {
 
         {/* Buscador */}
         <div className="relative mt-3">
-          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
+          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#758A93] pointer-events-none" />
           <input
             className="field-input pl-9 w-full text-sm"
             placeholder="Buscar actividad..."
@@ -1530,8 +1530,8 @@ export function TimelineTab({ exp }: Props) {
                       {esEstadoInicial && (
                         <div className="p-6 text-center">
                           <Icon name="inbox" className="block mb-2 mx-auto" size={32} />
-                          <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
-                          <p className="text-xs text-[#4a6a84]">Usá <strong>Acciones → Cambiar estado</strong> para comenzar.</p>
+                          <p className="text-sm font-semibold text-[#242C4F] mb-1">Actuación pendiente de inicio</p>
+                          <p className="text-xs text-[#758A93]">Usá <strong>Acciones → Cambiar estado</strong> para comenzar.</p>
                         </div>
                       )}
                       {actividades.map((a, ai) => (
@@ -1549,7 +1549,7 @@ export function TimelineTab({ exp }: Props) {
                             <div className="pl-14 pb-2 -mt-2 flex items-center gap-2">
                               <button
                                 onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                                className="flex items-center gap-1 text-[11px] text-[#758A93] hover:text-[#242C4F] transition-colors font-medium"
                               >
                                 <Icon name="reply" size={13} />
                                 Comentar
@@ -1561,7 +1561,7 @@ export function TimelineTab({ exp }: Props) {
                                     const r = e.currentTarget.getBoundingClientRect()
                                     setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
                                   }}
-                                  className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                                  className="w-6 h-6 flex items-center justify-center rounded text-[#9AA6B2] hover:bg-[#E3E4E9] hover:text-[#242C4F] transition-colors"
                                 >
                                   <Icon name="more_vert" size={14} />
                                 </button>
@@ -1582,18 +1582,18 @@ export function TimelineTab({ exp }: Props) {
                     {/* Cabecera colapsable */}
                     <div
                       onClick={() => toggleEstado(gi)}
-                      className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+                      className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#E3E4E9] transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon name={expandido ? 'expand_less' : 'expand_more'} size={16} className="text-[#1b3a57]" />
+                      <div className="w-8 h-8 rounded-lg bg-[#E4EDF2] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Icon name={expandido ? 'expand_less' : 'expand_more'} size={16} className="text-[#242C4F]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#1b3a57]">{sistema.titulo}</p>
-                        {sistema.descripcion && <p className="text-xs text-[#4a6a84]">{sistema.descripcion}</p>}
+                        <p className="text-sm font-semibold text-[#242C4F]">{sistema.titulo}</p>
+                        {sistema.descripcion && <p className="text-xs text-[#758A93]">{sistema.descripcion}</p>}
                         {tareasHist.length > 0 && (
                           <button
                             onClick={e => { e.stopPropagation(); toggleSnapshot(gi) }}
-                            className="flex items-center gap-1.5 text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1 transition-colors mt-1.5"
+                            className="flex items-center gap-1.5 text-[11px] font-bold text-[#758A93] hover:text-[#242C4F] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1 transition-colors mt-1.5"
                           >
                             <Icon name="checklist" size={14} />
                             {tareasHist.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHist.length} tareas
@@ -1601,21 +1601,21 @@ export function TimelineTab({ exp }: Props) {
                           </button>
                         )}
                       </div>
-                      <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-1">{formatFecha(sistema.fecha)}</span>
+                      <span className="text-[11px] text-[#9AA6B2] flex-shrink-0 mt-1">{formatFecha(sistema.fecha)}</span>
                     </div>
 
                     {/* Snapshot tareas */}
                     {snapshotOpen && tareasHist.length > 0 && (
-                      <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
+                      <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#E3E4E9] mb-3 ml-10">
                         <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#758A93]">
                             {(() => {
                               const match = sistema.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
                               const label = match?.[1]?.trim() ?? 'estado anterior'
                               return `TAREAS DEL ESTADO: ${label.toUpperCase()}`
                             })()}
                           </span>
-                          <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
+                          <span className="text-[10px] text-[#9AA6B2] ml-auto italic">No se pueden modificar</span>
                         </div>
                         {tareasHist.map(tarea => {
                           const dimmed = tarea.estado === 'sin_estado'
@@ -1628,11 +1628,11 @@ export function TimelineTab({ exp }: Props) {
                                   </div>
                                 )}
                                 {tarea.estado === 'no_procedente' && (
-                                  <div className="w-4 h-4 rounded-full bg-[#e8e8e8] flex items-center justify-center text-[#4a6a84] text-[10px]">⊘</div>
+                                  <div className="w-4 h-4 rounded-full bg-[#E3E4E9] flex items-center justify-center text-[#758A93] text-[10px]">⊘</div>
                                 )}
                                 {tarea.estado === 'en_curso' && (
-                                  <div className="w-4 h-4 rounded-full bg-[#C4DFE8] flex items-center justify-center">
-                                    <Icon name="schedule" size={10} className="text-[#1b3a57]" />
+                                  <div className="w-4 h-4 rounded-full bg-[#E4EDF2] flex items-center justify-center">
+                                    <Icon name="schedule" size={10} className="text-[#242C4F]" />
                                   </div>
                                 )}
                                 {tarea.estado === 'sin_estado' && (
@@ -1640,23 +1640,23 @@ export function TimelineTab({ exp }: Props) {
                                 )}
                               </div>
                               <p className={`text-xs flex-1 ${
-                                tarea.estado === 'cumplido' ? 'line-through text-[#7a9ab4]'
-                                : tarea.estado === 'no_procedente' ? 'text-[#7a9ab4]'
-                                : 'text-[#1b3a57]'
+                                tarea.estado === 'cumplido' ? 'line-through text-[#9AA6B2]'
+                                : tarea.estado === 'no_procedente' ? 'text-[#9AA6B2]'
+                                : 'text-[#242C4F]'
                               }`}>
                                 {tarea.nombre}
                               </p>
                               {tarea.estado !== 'sin_estado' && (
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                                   tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
-                                  : tarea.estado === 'en_curso' ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                                  : 'bg-[#e8e8e8] text-[#4a6a84]'
+                                  : tarea.estado === 'en_curso' ? 'bg-[#E4EDF2] text-[#242C4F]'
+                                  : 'bg-[#E3E4E9] text-[#758A93]'
                                 }`}>
                                   {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
                                 </span>
                               )}
                               {tarea.observaciones && (
-                                <p className="text-[10px] text-[#7a9ab4] mt-0.5 italic w-full pl-7">{tarea.observaciones}</p>
+                                <p className="text-[10px] text-[#9AA6B2] mt-0.5 italic w-full pl-7">{tarea.observaciones}</p>
                               )}
                             </div>
                           )
@@ -1668,17 +1668,17 @@ export function TimelineTab({ exp }: Props) {
                     {expandido && (
                       <div className="border-t border-[rgba(0,0,0,0.05)] bg-[#fafafa]">
                         {actividades.length === 0 ? (
-                          <p className="px-16 py-3 text-xs text-[#7a9ab4] italic">Sin actividades en este período.</p>
+                          <p className="px-16 py-3 text-xs text-[#9AA6B2] italic">Sin actividades en este período.</p>
                         ) : (
                           actividades.map((a, ai) => (
                             <div key={a.id ?? ai}>
                               <div className="flex items-start gap-3 px-5 py-3 border-b border-[rgba(0,0,0,0.04)] last:border-0 ml-10">
-                                <div className="w-7 h-7 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0">
-                                  <Icon name="description" size={14} className="text-[#4a6a84]" />
+                                <div className="w-7 h-7 rounded-lg bg-[#E3E4E9] flex items-center justify-center flex-shrink-0">
+                                  <Icon name="description" size={14} className="text-[#758A93]" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
+                                    <p className="text-sm text-[#242C4F] font-medium">{a.titulo}</p>
                                     {a.es_solicitud && a.tipo === 'NOTA_RESPUESTA' && (
                                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
                                         <Icon name="check" size={9} />
@@ -1692,18 +1692,18 @@ export function TimelineTab({ exp }: Props) {
                                       </span>
                                     )}
                                   </div>
-                                  {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
+                                  {a.descripcion && <p className="text-xs text-[#758A93]">{a.descripcion}</p>}
                                   {(a.doc_gde || a.adjunto_nombre) && (
                                     <div className="flex flex-wrap gap-3 mt-1">
-                                      {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]"><Icon name="description" size={12} />{a.doc_gde}</span>}
-                                      {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
+                                      {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#242C4F]"><Icon name="description" size={12} />{a.doc_gde}</span>}
+                                      {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#758A93]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
                                     </div>
                                   )}
                                   {esLetrado && !a.es_solicitud && (
                                     <div className="flex items-center gap-2 mt-1.5">
                                       <button
                                         onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                        className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                                        className="flex items-center gap-1 text-[11px] text-[#758A93] hover:text-[#242C4F] transition-colors font-medium"
                                       >
                                         <Icon name="reply" size={13} />
                                         Comentar
@@ -1715,7 +1715,7 @@ export function TimelineTab({ exp }: Props) {
                                             const r = e.currentTarget.getBoundingClientRect()
                                             setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
                                           }}
-                                          className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                                          className="w-6 h-6 flex items-center justify-center rounded text-[#9AA6B2] hover:bg-[#E3E4E9] hover:text-[#242C4F] transition-colors"
                                         >
                                           <Icon name="more_vert" size={14} />
                                         </button>
@@ -1723,7 +1723,7 @@ export function TimelineTab({ exp }: Props) {
                                     </div>
                                   )}
                                 </div>
-                                <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
+                                <span className="text-[11px] text-[#9AA6B2] flex-shrink-0">{formatFecha(a.fecha)}</span>
                               </div>
                               {(a.replies ?? []).length > 0 && (
                                 <div className="ml-20 mr-5 mb-2 space-y-1.5">
@@ -1740,29 +1740,29 @@ export function TimelineTab({ exp }: Props) {
                 )
               })}
               {!esEstadoInicial && gruposFeed.grupos.every(g => !g.sistema && g.actividades.length === 0) && !gruposFeed.entradaRecepcion && (
-                <div className="p-8 text-center text-[#4a6a84] text-sm">
+                <div className="p-8 text-center text-[#758A93] text-sm">
                   No hay actividades que coincidan.
                 </div>
               )}
               {/* Entrada de recepción — siempre visible al final */}
               {gruposFeed.entradaRecepcion && (
                 <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[rgba(0,0,0,0.05)]">
-                  <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Icon name="inbox" size={16} className="text-[#4a6a84]" />
+                  <div className="w-8 h-8 rounded-lg bg-[#E3E4E9] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Icon name="inbox" size={16} className="text-[#758A93]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1b3a57]">{gruposFeed.entradaRecepcion.titulo}</p>
+                    <p className="text-sm font-semibold text-[#242C4F]">{gruposFeed.entradaRecepcion.titulo}</p>
                     {gruposFeed.entradaRecepcion.descripcion && (
-                      <p className="text-xs text-[#4a6a84]">{gruposFeed.entradaRecepcion.descripcion}</p>
+                      <p className="text-xs text-[#758A93]">{gruposFeed.entradaRecepcion.descripcion}</p>
                     )}
                     {gruposFeed.entradaRecepcion.doc_gde && (
-                      <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                      <p className="text-[10px] font-mono text-[#242C4F] mt-1 flex items-center gap-1">
                         <Icon name="attach_file" size={12} />
                         {gruposFeed.entradaRecepcion.doc_gde}
                       </p>
                     )}
                   </div>
-                  <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(gruposFeed.entradaRecepcion.fecha)}</span>
+                  <span className="text-[11px] text-[#9AA6B2] flex-shrink-0 mt-0.5">{formatFecha(gruposFeed.entradaRecepcion.fecha)}</span>
                 </div>
               )}
             </div>
@@ -1792,14 +1792,14 @@ export function TimelineTab({ exp }: Props) {
         >
           <button
             onClick={() => { abrirEdicion(menuActividad.act, menuActividad.globalIdx); setMenuActividad(null) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#242C4F] hover:bg-[#EEEBE6] transition-colors text-left"
           >
             <Icon name="edit" size={13} />
             Editar
           </button>
           <button
             onClick={() => { confirmarEliminacion(menuActividad.globalIdx); setMenuActividad(null) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#C3292F] hover:bg-[#fee2e2] transition-colors text-left"
           >
             <Icon name="delete" size={13} />
             Eliminar
@@ -1815,7 +1815,7 @@ export function TimelineTab({ exp }: Props) {
         size="md"
         footer={
           <>
-            <button onClick={cerrarModal} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrarModal} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors">
               Cancelar
             </button>
             <button
@@ -1825,7 +1825,7 @@ export function TimelineTab({ exp }: Props) {
                   ? (!formAct.titulo.trim() || !formAct.descripcion.trim())
                   : (!formSolicitud.titulo.trim() || (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria))
               }
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               {tabModal === 'generica' ? 'Agregar' : 'Crear solicitud'}
             </button>
@@ -1833,7 +1833,7 @@ export function TimelineTab({ exp }: Props) {
         }
       >
         {/* Tabs */}
-        <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1 mb-4">
+        <div className="flex gap-1 bg-[#EEEBE6] rounded-xl p-1 mb-4">
           {([
             ['generica',  'Actividad Genérica'],
             ['solicitud', 'Nueva Solicitud'],
@@ -1842,8 +1842,8 @@ export function TimelineTab({ exp }: Props) {
               onClick={() => setTabModal(val)}
               className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
                 tabModal === val
-                  ? 'bg-white text-[#1b3a57] shadow-sm'
-                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                  ? 'bg-white text-[#242C4F] shadow-sm'
+                  : 'text-[#758A93] hover:text-[#242C4F]'
               }`}>
               {lbl}
             </button>
@@ -1868,7 +1868,7 @@ export function TimelineTab({ exp }: Props) {
               <button
                 type="button"
                 onClick={() => setModalEscrito(true)}
-                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#4a9ab5] text-[#1b3a57] text-xs font-semibold hover:bg-[rgba(27,58,87,0.05)] transition-colors"
+                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#4a9ab5] text-[#242C4F] text-xs font-semibold hover:bg-[rgba(27,58,87,0.05)] transition-colors"
               >
                 <Icon name="article" size={16} />
                 Generar Escrito
@@ -1876,7 +1876,7 @@ export function TimelineTab({ exp }: Props) {
             )}
           </div>
           <div>
-            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Título <span className="text-[#C3292F]">*</span></label>
             <input type="text" className="field-input w-full" value={formAct.titulo} onChange={e => setFormAct(p => ({ ...p, titulo: e.target.value }))} autoFocus />
           </div>
           <div>
@@ -1884,7 +1884,7 @@ export function TimelineTab({ exp }: Props) {
             <input type="date" className="field-input w-full" value={formAct.fecha} onChange={e => setFormAct(p => ({ ...p, fecha: e.target.value }))} />
           </div>
           <div>
-            <label className="field-label">Descripción <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Descripción <span className="text-[#C3292F]">*</span></label>
             <textarea className="field-input w-full resize-y" style={{ minHeight: 72 }} value={formAct.descripcion} onChange={e => setFormAct(p => ({ ...p, descripcion: e.target.value }))} />
           </div>
           <div>
@@ -1915,7 +1915,7 @@ export function TimelineTab({ exp }: Props) {
               <div
                 onClick={() => setFormAct(p => ({ ...p, mostrar_en_agenda: !p.mostrar_en_agenda }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  formAct.mostrar_en_agenda ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  formAct.mostrar_en_agenda ? 'bg-[#256386]' : 'bg-[rgba(0,0,0,0.15)]'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -1923,15 +1923,15 @@ export function TimelineTab({ exp }: Props) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Mostrar en agenda</p>
-                <p className="text-[11px] text-[#4a6a84]">Aparecerá en el calendario en la fecha de vencimiento</p>
+                <p className="text-sm font-medium text-[#242C4F]">Mostrar en agenda</p>
+                <p className="text-[11px] text-[#758A93]">Aparecerá en el calendario en la fecha de vencimiento</p>
               </div>
             </label>
           )}
           {formAct.fecha_vencimiento && (
             <div>
               <label className="field-label">Fecha de aviso (opcional)</label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1">
+              <p className="text-[10px] text-[#9AA6B2] mb-1">
                 A partir de qué fecha recibir el aviso de proximidad al vencimiento.
               </p>
               <input
@@ -1959,8 +1959,8 @@ export function TimelineTab({ exp }: Props) {
                     onClick={() => setFormAct(p => ({ ...p, rango_aviso: op.value }))}
                     className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
                       formAct.rango_aviso === op.value
-                        ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                        : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        ? 'bg-[#256386] border-[#242C4F] text-white'
+                        : 'border-[rgba(0,0,0,0.12)] text-[#758A93] hover:bg-[#EEEBE6]'
                     }`}
                   >
                     {op.label}
@@ -1972,21 +1972,21 @@ export function TimelineTab({ exp }: Props) {
           <div>
             <label className="field-label">Adjunto</label>
             {adjuntoNuevaAct ? (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[rgba(0,0,0,0.12)] bg-[#f5f5f5]">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[rgba(0,0,0,0.12)] bg-[#EEEBE6]">
                 <Icon name="attach_file" size={18} />
-                <span className="text-xs text-[#1b3a57] flex-1 truncate">{adjuntoNuevaAct.name}</span>
-                <span className="text-[10px] text-[#4a6a84]">{(adjuntoNuevaAct.size / 1024).toFixed(0)} KB</span>
+                <span className="text-xs text-[#242C4F] flex-1 truncate">{adjuntoNuevaAct.name}</span>
+                <span className="text-[10px] text-[#758A93]">{(adjuntoNuevaAct.size / 1024).toFixed(0)} KB</span>
                 <button
                   onClick={() => setAdjuntoNuevaAct(null)}
-                  className="p-0.5 rounded text-[#4a6a84] hover:text-red-600 transition-colors"
+                  className="p-0.5 rounded text-[#758A93] hover:text-red-600 transition-colors"
                 >
                   <Icon name="close" size={14} />
                 </button>
               </div>
             ) : (
               <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
-                <Icon name="attach_file" size={18} className="text-[#4a6a84] group-hover:text-[#1b3a57]" />
-                <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57]">Adjuntar archivo</span>
+                <Icon name="attach_file" size={18} className="text-[#758A93] group-hover:text-[#242C4F]" />
+                <span className="text-xs text-[#758A93] group-hover:text-[#242C4F]">Adjuntar archivo</span>
                 <input
                   type="file"
                   className="hidden"
@@ -2001,23 +2001,23 @@ export function TimelineTab({ exp }: Props) {
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-[#1b3a57] w-4 h-4 flex-shrink-0"
+                  className="mt-0.5 accent-[#256386] w-4 h-4 flex-shrink-0"
                   checked={esImpulsorio}
                   onChange={e => setEsImpulsorio(e.target.checked)}
                 />
                 <div>
-                  <p className="text-sm font-semibold text-[#1b3a57] group-hover:text-[#2a5278]">
+                  <p className="text-sm font-semibold text-[#242C4F] group-hover:text-[#2a5278]">
                     Marcar como movimiento impulsorio
                   </p>
-                  <p className="text-xs text-[#7a9ab4] mt-0.5">
+                  <p className="text-xs text-[#9AA6B2] mt-0.5">
                     Resetea el timer de 3 meses desde la fecha de esta actividad.
                   </p>
                 </div>
               </label>
               {esImpulsorio && (
-                <div className="mt-2 flex items-start gap-2 px-3 py-2.5 bg-[#C4DFE8] rounded-xl">
-                  <Icon name="schedule" size={14} className="text-[#1b3a57] flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-[#1b3a57]">
+                <div className="mt-2 flex items-start gap-2 px-3 py-2.5 bg-[#E4EDF2] rounded-xl">
+                  <Icon name="schedule" size={14} className="text-[#242C4F] flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-[#242C4F]">
                     El plazo procesal se reiniciará a partir del{' '}
                     <span className="font-bold">{formAct.fecha || 'hoy'}</span>.
                     Nueva alerta: en 75 días.
@@ -2049,13 +2049,13 @@ export function TimelineTab({ exp }: Props) {
         size="sm"
         footer={
           <>
-            <button onClick={() => { setReplyTarget(null); limpiarFormReply() }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => { setReplyTarget(null); limpiarFormReply() }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarReply}
               disabled={!formReply.texto.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar
             </button>
@@ -2064,13 +2064,13 @@ export function TimelineTab({ exp }: Props) {
       >
         <div className="space-y-3 py-1">
           {replyTarget && (
-            <div className="bg-[#f5f5f5] rounded-xl px-3 py-2 flex items-start gap-2">
-              <Icon name="reply" size={14} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-[#4a6a84] line-clamp-2">{replyTarget.act.titulo}</p>
+            <div className="bg-[#EEEBE6] rounded-xl px-3 py-2 flex items-start gap-2">
+              <Icon name="reply" size={14} className="text-[#758A93] mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-[#758A93] line-clamp-2">{replyTarget.act.titulo}</p>
             </div>
           )}
           <div>
-            <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Comentario <span className="text-[#C3292F]">*</span></label>
             <textarea
               className="field-input w-full resize-none"
               style={{ minHeight: 80 }}
@@ -2104,7 +2104,7 @@ export function TimelineTab({ exp }: Props) {
           {formReply.fecha_vencimiento && (
             <div>
               <label className="field-label">Fecha de aviso (opcional)</label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
+              <p className="text-[10px] text-[#9AA6B2] mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
               <input
                 type="date"
                 className="field-input w-full"
@@ -2125,13 +2125,13 @@ export function TimelineTab({ exp }: Props) {
         size="md"
         footer={
           <>
-            <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarEdicion}
               disabled={!formEdit.titulo.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar cambios
             </button>
@@ -2140,7 +2140,7 @@ export function TimelineTab({ exp }: Props) {
       >
         <div className="space-y-3 py-1">
           <div>
-            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Título <span className="text-[#C3292F]">*</span></label>
             <input type="text" className="field-input w-full" value={formEdit.titulo} onChange={e => setFormEdit(p => ({ ...p, titulo: e.target.value }))} />
           </div>
           <div>

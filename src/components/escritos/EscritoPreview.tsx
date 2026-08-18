@@ -47,7 +47,7 @@ export function EscritoPreview({ exp, template, datos, onAtras, onGenerar }: Esc
         <textarea
           value={cuerpoEditado}
           onChange={e => setCuerpoEditado(e.target.value)}
-          className="w-full h-[500px] p-4 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+          className="w-full h-[500px] p-4 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#242C4F]"
         />
       )}
 

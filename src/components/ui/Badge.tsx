@@ -7,32 +7,32 @@ interface BadgeConfig {
 }
 
 const ESTADO_CONFIG: Record<string, BadgeConfig> = {
-  EN_TRAMITE:           { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  'EN TRAMITACIÓN':     { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  'EN TRAMITACION':     { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  EN_PLAZO_CONTESTAR:   { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#2a5278]' },
-  'EN ANÁLISIS':        { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#2a5278]' },
-  SUSPENSION_TERMINOS:  { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  'AUDIENCIA PACTADA':  { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]', dot: 'bg-[#7dbad2]' },
-  EN_PRUEBA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  EN_TRAMITE:           { bg: 'bg-[#E4EDF2]',  text: 'text-[#242C4F]', dot: 'bg-[#4a9ab5]' },
+  'EN TRAMITACIÓN':     { bg: 'bg-[#E4EDF2]',  text: 'text-[#242C4F]', dot: 'bg-[#4a9ab5]' },
+  'EN TRAMITACION':     { bg: 'bg-[#E4EDF2]',  text: 'text-[#242C4F]', dot: 'bg-[#4a9ab5]' },
+  EN_PLAZO_CONTESTAR:   { bg: 'bg-[#dbeafe]',  text: 'text-[#242C4F]', dot: 'bg-[#2a5278]' },
+  'EN ANÁLISIS':        { bg: 'bg-[#dbeafe]',  text: 'text-[#242C4F]', dot: 'bg-[#2a5278]' },
+  SUSPENSION_TERMINOS:  { bg: 'bg-[#E3E4E9]',  text: 'text-[#758A93]' },
+  'AUDIENCIA PACTADA':  { bg: 'bg-[#E3E4E9]',  text: 'text-[#758A93]', dot: 'bg-[#7dbad2]' },
+  EN_PRUEBA:            { bg: 'bg-[#E3E4E9]',  text: 'text-[#758A93]' },
   PENDIENTE_GDE:        { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]' },
   PENDIENTE:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
   'PENDIENTE CARGA':    { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
-  CUMPLIDO:             { bg: 'bg-[#dcfce7]',  text: 'text-[#15803d]', dot: 'bg-[#15803d]' },
-  ACUERDO:              { bg: 'bg-[#dcfce7]',  text: 'text-[#15803d]', dot: 'bg-[#15803d]' },
-  ARCHIVADO:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  ARCHIVADA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  URGENTE:              { bg: 'bg-[#fee2e2]',  text: 'text-[#b91c1c]', dot: 'bg-[#b91c1c]' },
-  INSTRUCCIÓN:          { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  'ELEVADA A JUICIO':   { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#1b3a57]' },
-  SENTENCIA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
+  CUMPLIDO:             { bg: 'bg-[#dcfce7]',  text: 'text-[#267F33]', dot: 'bg-[#267F33]' },
+  ACUERDO:              { bg: 'bg-[#dcfce7]',  text: 'text-[#267F33]', dot: 'bg-[#267F33]' },
+  ARCHIVADO:            { bg: 'bg-[#E3E4E9]',  text: 'text-[#758A93]' },
+  ARCHIVADA:            { bg: 'bg-[#E3E4E9]',  text: 'text-[#758A93]' },
+  URGENTE:              { bg: 'bg-[#fee2e2]',  text: 'text-[#C3292F]', dot: 'bg-[#C3292F]' },
+  INSTRUCCIÓN:          { bg: 'bg-[#E4EDF2]',  text: 'text-[#242C4F]', dot: 'bg-[#4a9ab5]' },
+  'ELEVADA A JUICIO':   { bg: 'bg-[#dbeafe]',  text: 'text-[#242C4F]', dot: 'bg-[#256386]' },
+  SENTENCIA:            { bg: 'bg-[#E3E4E9]',  text: 'text-[#758A93]' },
   OBSERVADO:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
-  ASIGNADO:             { bg: 'bg-[#E5E5E5]',  text: 'text-[#1b3a57]', dot: 'bg-[#7dbad2]' },
+  ASIGNADO:             { bg: 'bg-[#E5E5E5]',  text: 'text-[#242C4F]', dot: 'bg-[#7dbad2]' },
 }
 
 const DEFAULT_CONFIG: BadgeConfig = {
-  bg: 'bg-[#e8e8e8]',
-  text: 'text-[#4a6a84]',
+  bg: 'bg-[#E3E4E9]',
+  text: 'text-[#758A93]',
 }
 
 export function EstadoBadge({ code, label }: { code: string; label: string }) {
@@ -47,9 +47,9 @@ export function EstadoBadge({ code, label }: { code: string; label: string }) {
 
 export function AreaBadge({ area }: { area: Area }) {
   const config: Record<Area, string> = {
-    CIVIL:   'bg-[#C4DFE8] text-[#1b3a57]',
-    LABORAL: 'bg-[#dbeafe] text-[#1b3a57]',
-    PENAL:   'bg-[#e8e8e8] text-[#1b3a57]',
+    CIVIL:   'bg-[#E4EDF2] text-[#242C4F]',
+    LABORAL: 'bg-[#dbeafe] text-[#242C4F]',
+    PENAL:   'bg-[#E3E4E9] text-[#242C4F]',
   }
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${config[area]}`}>
@@ -60,10 +60,10 @@ export function AreaBadge({ area }: { area: Area }) {
 
 export function RolBadge({ rol }: { rol: RolSistema }) {
   const config: Record<RolSistema, string> = {
-    REFERENTE:      'bg-[#1b3a57] text-white',
+    REFERENTE:      'bg-[#256386] text-white',
     COORDINADOR:    'bg-[#2a5278] text-white',
-    ABOGADO:        'bg-[#C4DFE8] text-[#1b3a57]',
-    ADMINISTRATIVO: 'bg-[#e8e8e8] text-[#4a6a84]',
+    ABOGADO:        'bg-[#E4EDF2] text-[#242C4F]',
+    ADMINISTRATIVO: 'bg-[#E3E4E9] text-[#758A93]',
   }
   const labels: Record<RolSistema, string> = {
     REFERENTE:      'Referente',

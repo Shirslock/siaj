@@ -10,14 +10,14 @@ import type { Area, Usuario } from '../../types'
 import Icon from '../../components/ui/Icon'
 
 const AREA_CELDA: Record<Area, string> = {
-  CIVIL:   'bg-[rgba(196,223,232,0.60)] text-[#1b3a57]',
-  LABORAL: 'bg-[#dbeafe] text-[#1b3a57]',
-  PENAL:   'bg-[#e8e8e8] text-[#1b3a57]',
+  CIVIL:   'bg-[rgba(196,223,232,0.60)] text-[#242C4F]',
+  LABORAL: 'bg-[#dbeafe] text-[#242C4F]',
+  PENAL:   'bg-[#E3E4E9] text-[#242C4F]',
 }
 
 const filterInputCls =
   'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
-  'text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#1b3a57]'
+  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-[#242C4F]'
 
 const FILTROS_INIT = {
   buscar: '', tipo: '', area: '', causa: '',
@@ -82,13 +82,13 @@ export default function MesaSacoPage() {
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-wide font-medium text-[#4a6a84] mb-1">
+          <p className="text-[10px] uppercase tracking-wide font-medium text-[#758A93] mb-1">
             SIAJ › Mesa SACO
           </p>
-          <h1 className="font-headline font-bold text-2xl text-[#1b3a57] leading-tight">
+          <h1 className="font-headline font-bold text-2xl text-[#242C4F] leading-tight">
             Bandeja Mesa SACO
           </h1>
-          <p className="text-[#4a6a84] text-sm mt-1">
+          <p className="text-[#758A93] text-sm mt-1">
             Consulta de expedientes asignados — vista de solo lectura.
           </p>
         </div>
@@ -107,10 +107,10 @@ export default function MesaSacoPage() {
         {/* Card header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-2">
-            <Icon name="assignment" size={20} className="text-[#1b3a57]" />
-            <span className="font-semibold text-[#1b3a57] text-sm">Actuaciones Asignadas</span>
+            <Icon name="assignment" size={20} className="text-[#242C4F]" />
+            <span className="font-semibold text-[#242C4F] text-sm">Actuaciones Asignadas</span>
           </div>
-          <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-3 py-1 rounded-full border border-[rgba(0,0,0,0.12)]/80">
+          <span className="text-[10px] font-bold bg-[#E3E4E9] text-[#758A93] px-3 py-1 rounded-full border border-[rgba(0,0,0,0.12)]/80">
             {expedientesFiltrados.length} expedientes
           </span>
         </div>
@@ -119,7 +119,7 @@ export default function MesaSacoPage() {
         <div className="flex justify-end px-4 py-2 border-b border-[rgba(0,0,0,0.05)]">
           <button
             onClick={() => setFiltros(FILTROS_INIT)}
-            className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold text-[#758A93] hover:text-[#242C4F] transition-colors"
           >
             <Icon name="filter_alt_off" size={14} />
             Limpiar filtros
@@ -130,11 +130,11 @@ export default function MesaSacoPage() {
           <table className="w-full border-collapse min-w-[900px]">
             <thead>
               {/* Fila 1: labels */}
-              <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
+              <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#E3E4E9]">
                 {['N° Interno','N° Causa','Área','Carátula','Tipo de Gestión','Referencia GDE','Letrado','Línea','Recepción',''].map(col => (
                   <th
                     key={col}
-                    className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap"
+                    className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap"
                   >
                     {col}
                   </th>
@@ -142,7 +142,7 @@ export default function MesaSacoPage() {
               </tr>
 
               {/* Fila 2: inputs de filtro */}
-              <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
+              <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#EEEBE6]">
                 {/* N° Interno — buscar (id/causa/caratula) */}
                 <th className="px-2 py-1.5">
                   <input
@@ -229,7 +229,7 @@ export default function MesaSacoPage() {
             <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
               {expedientesFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-12 text-center text-[#4a6a84] text-sm">
+                  <td colSpan={10} className="px-6 py-12 text-center text-[#758A93] text-sm">
                     No hay expedientes que coincidan con los filtros seleccionados.
                   </td>
                 </tr>
@@ -243,12 +243,12 @@ export default function MesaSacoPage() {
                   return (
                     <tr
                       key={e.id}
-                      className="cursor-pointer hover:bg-[#f0f0f0] transition-colors"
+                      className="cursor-pointer hover:bg-[#E3E4E9] transition-colors"
                       onClick={() => navigate('/expediente/' + e.id)}
                     >
                       {/* N° Interno */}
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-bold text-[#1b3a57]">{e.id}</span>
+                        <span className="font-mono text-xs font-bold text-[#242C4F]">{e.id}</span>
                         <span className={`block text-[10px] px-1.5 py-0.5 rounded font-bold mt-1 w-fit ${AREA_CELDA[e.area]}`}>
                           {e.area}
                         </span>
@@ -256,7 +256,7 @@ export default function MesaSacoPage() {
 
                       {/* N° Causa */}
                       <td className="px-4 py-3">
-                        <span className="font-mono text-[10px] text-[#4a6a84]">
+                        <span className="font-mono text-[10px] text-[#758A93]">
                           {e.numero_causa || '—'}
                         </span>
                       </td>
@@ -268,32 +268,32 @@ export default function MesaSacoPage() {
 
                       {/* Carátula */}
                       <td className="px-4 py-3 max-w-[220px]">
-                        <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2 leading-snug">
+                        <p className="text-sm font-semibold text-[#242C4F] line-clamp-2 leading-snug">
                           {e.caratula}
                         </p>
                       </td>
 
                       {/* Tipo de Gestión */}
-                      <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
+                      <td className="px-4 py-3 text-xs text-[#758A93] whitespace-nowrap">
                         {TIPOS_GESTION.find(t => t.code === e.tipo)?.label || e.tipo}
                       </td>
 
                       {/* Referencia GDE */}
                       <td className="px-4 py-3">
-                        <span className="font-mono text-[10px] text-[#4a6a84]">
+                        <span className="font-mono text-[10px] text-[#758A93]">
                           {e.numero_ee_gde || '—'}
                         </span>
                       </td>
 
                       {/* Letrado */}
-                      <td className="px-4 py-3 text-xs text-[#1b3a57] whitespace-nowrap">
+                      <td className="px-4 py-3 text-xs text-[#242C4F] whitespace-nowrap">
                         {letrado ? getNombreCompleto(letrado) : '—'}
                       </td>
 
                       {/* Línea */}
                       <td className="px-4 py-3">
                         {linea ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8e8e8] text-[#4a6a84]">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E3E4E9] text-[#758A93]">
                             {linea.label.replace('Línea ', '')}
                           </span>
                         ) : (
@@ -302,14 +302,14 @@ export default function MesaSacoPage() {
                       </td>
 
                       {/* Recepción */}
-                      <td className="px-4 py-3 text-xs text-[#4a6a84] whitespace-nowrap">
+                      <td className="px-4 py-3 text-xs text-[#758A93] whitespace-nowrap">
                         {formatFecha(e.fecha_recepcion)}
                       </td>
 
                       {/* Acciones */}
                       <td className="px-4 py-3 text-right">
                         <button
-                          className="p-1.5 hover:bg-[#e8e8e8] rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-[#E3E4E9] rounded-lg transition-colors"
                           onClick={ev => { ev.stopPropagation(); navigate('/expediente/' + e.id) }}
                           aria-label="Ver detalle"
                         >
@@ -326,8 +326,8 @@ export default function MesaSacoPage() {
 
         {/* Footer decorativo */}
         <div className="flex justify-between items-center px-6 py-4 border-t border-[rgba(0,0,0,0.08)]">
-          <span className="text-xs text-[#4a6a84]">Página 1 de 1</span>
-          <span className="text-[10px] font-bold bg-[#1b3a57] text-white px-3 py-1 rounded-full">
+          <span className="text-xs text-[#758A93]">Página 1 de 1</span>
+          <span className="text-[10px] font-bold bg-[#256386] text-white px-3 py-1 rounded-full">
             1
           </span>
         </div>

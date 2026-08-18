@@ -102,9 +102,9 @@ export default function TareasPage() {
   }
 
   const PRIORIDAD_COLOR: Record<string, string> = {
-    alta: 'bg-[#fee2e2] text-[#b91c1c]',
+    alta: 'bg-[#fee2e2] text-[#C3292F]',
     media: 'bg-[#fef3c7] text-[#d97706]',
-    baja: 'bg-[#e8e8e8] text-[#4a6a84]',
+    baja: 'bg-[#E3E4E9] text-[#758A93]',
   }
 
   return (
@@ -112,8 +112,8 @@ export default function TareasPage() {
 
       {/* Header */}
       <div>
-        <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Solicitudes</h1>
-        <p className="text-sm text-[#4a6a84] mt-1">
+        <h1 className="font-headline font-extrabold text-3xl text-[#242C4F]">Solicitudes</h1>
+        <p className="text-sm text-[#758A93] mt-1">
           {solicitudesFiltradas.length} solicitud{solicitudesFiltradas.length !== 1 ? 'es' : ''}
         </p>
       </div>
@@ -126,14 +126,14 @@ export default function TareasPage() {
             onClick={() => setVista(v)}
             className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${
               vista === v
-                ? 'bg-[#1b3a57] text-white'
-                : 'bg-white border border-[rgba(0,0,0,0.10)] text-[#4a6a84] hover:text-[#1b3a57]'
+                ? 'bg-[#256386] text-white'
+                : 'bg-white border border-[rgba(0,0,0,0.10)] text-[#758A93] hover:text-[#242C4F]'
             }`}
           >
             {v === 'mis_solicitudes' ? 'Mis solicitudes' : 'Mis pedidos'}
           </button>
         ))}
-        <p className="text-[11px] text-[#7a9ab4]">
+        <p className="text-[11px] text-[#9AA6B2]">
           {vista === 'mis_solicitudes'
             ? 'Solicitudes que hiciste a otros'
             : 'Pedidos que otros te hicieron a vos'}
@@ -143,7 +143,7 @@ export default function TareasPage() {
       {/* Filtros */}
       <div className="bg-white rounded-2xl shadow-card px-5 py-3 flex items-center gap-3">
         <div className="relative flex-1 min-w-[160px]">
-          <Icon name="search" size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
+          <Icon name="search" size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#758A93] pointer-events-none" />
           <input className="field-input pl-8 w-full text-sm" placeholder="Buscar solicitud..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
         </div>
         <input className="field-input flex-1 min-w-0 text-sm" placeholder="N° actuación..." value={filtroExpediente} onChange={e => setFiltroExpediente(e.target.value)} />
@@ -165,7 +165,7 @@ export default function TareasPage() {
           </select>
         )}
         {hayFiltrosActivos && (
-          <button onClick={limpiarFiltros} className="flex items-center gap-1 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+          <button onClick={limpiarFiltros} className="flex items-center gap-1 text-xs font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
             <Icon name="filter_alt_off" size={14} /> Limpiar
           </button>
         )}
@@ -176,14 +176,14 @@ export default function TareasPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.06)]">
-              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Actuación</th>
-              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Solicitud</th>
-              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#758A93]">Actuación</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#758A93]">Solicitud</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#758A93]">
                 {vista === 'mis_solicitudes' ? 'Dirigida a' : 'Solicitado por'}
               </th>
-              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Prioridad</th>
-              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Fecha límite</th>
-              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">Estado</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#758A93]">Prioridad</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#758A93]">Fecha límite</th>
+              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#758A93]">Estado</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -192,7 +192,7 @@ export default function TareasPage() {
               <tr>
                 <td colSpan={7} className="px-4 py-16 text-center">
                   <Icon name="inbox" size={32} className="text-[#c0c0c0] mx-auto mb-2" />
-                  <p className="text-sm text-[#7a9ab4]">Sin solicitudes para mostrar.</p>
+                  <p className="text-sm text-[#9AA6B2]">Sin solicitudes para mostrar.</p>
                 </td>
               </tr>
               ) : solicitudesFiltradas.map((s, idx) => {
@@ -201,24 +201,24 @@ export default function TareasPage() {
                 <tr key={s.id} className="hover:bg-[#f9fbfc] transition-colors">
                   <td className="px-4 py-3">
                     <button onClick={() => navigate(RUTAS.EXPEDIENTE(s.expediente_id))} className="flex items-center gap-1.5 group">
-                      <Icon name="folder" size={13} className="text-[#4a6a84]" />
-                      <span className="font-mono text-xs font-bold text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">{s.expediente_id}</span>
+                      <Icon name="folder" size={13} className="text-[#758A93]" />
+                      <span className="font-mono text-xs font-bold text-[#758A93] group-hover:text-[#242C4F] transition-colors">{s.expediente_id}</span>
                       <AreaBadge area={s.expediente_area} />
                     </button>
                   </td>
                   <td className="px-4 py-3 max-w-[260px]">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="text-sm font-semibold text-[#1b3a57] truncate">{s.titulo}</p>
+                      <p className="text-sm font-semibold text-[#242C4F] truncate">{s.titulo}</p>
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                        s.tipo === 'interna' ? 'bg-[#dbeafe] text-[#1b3a57]' : 'bg-[#f3e8ff] text-[#7c3aed]'
+                        s.tipo === 'interna' ? 'bg-[#dbeafe] text-[#242C4F]' : 'bg-[#f3e8ff] text-[#7c3aed]'
                       }`}>
                         {s.tipo === 'interna' ? 'Interna' : 'Externa'}
                       </span>
                     </div>
-                    {s.descripcion && <p className="text-[11px] text-[#4a6a84] truncate">{s.descripcion}</p>}
+                    {s.descripcion && <p className="text-[11px] text-[#758A93] truncate">{s.descripcion}</p>}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-xs font-semibold text-[#1b3a57]">
+                    <p className="text-xs font-semibold text-[#242C4F]">
                       {vista === 'mis_solicitudes'
                         ? s.asignado_a_nombre
                         : (() => {
@@ -235,7 +235,7 @@ export default function TareasPage() {
                   </td>
                   <td className="px-4 py-3">
                     {s.fecha_limite ? (
-                      <span className={`flex items-center gap-1 text-xs font-medium ${vencida ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
+                      <span className={`flex items-center gap-1 text-xs font-medium ${vencida ? 'text-[#C3292F]' : 'text-[#758A93]'}`}>
                         {vencida && <Icon name="warning" size={12} />}
                         {formatFecha(s.fecha_limite)}
                       </span>
@@ -243,7 +243,7 @@ export default function TareasPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${
-                      s.estado === 'respondida' ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#fef3c7] text-[#d97706]'
+                      s.estado === 'respondida' ? 'bg-[#dcfce7] text-[#267F33]' : 'bg-[#fef3c7] text-[#d97706]'
                     }`}>
                       <Icon name={s.estado === 'respondida' ? 'check_circle' : 'schedule'} size={11} />
                       {s.estado === 'respondida' ? 'Respondida' : 'Pendiente'}
@@ -253,7 +253,7 @@ export default function TareasPage() {
                     <div className="relative inline-block">
                       <button
                         onClick={() => setMenuSol(menuSol === s.id ? null : s.id)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#E3E4E9] transition-colors"
                       >
                         <Icon name="more_vert" size={16} />
                       </button>
@@ -264,15 +264,15 @@ export default function TareasPage() {
                           }`}
                           onMouseLeave={() => setMenuSol(null)}
                         >
-                          <button onClick={() => { setModalVer(s); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#f5f5f5]">
+                          <button onClick={() => { setModalVer(s); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#242C4F] hover:bg-[#EEEBE6]">
                             <Icon name="visibility" size={14} /> Ver detalle
                           </button>
                           {puedeAdjuntar(s) && (
-                            <button onClick={() => { setModalRespuesta(s); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#f5f5f5]">
+                            <button onClick={() => { setModalRespuesta(s); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#242C4F] hover:bg-[#EEEBE6]">
                               <Icon name="attach_file" size={14} /> Adjuntar respuesta
                             </button>
                           )}
-                          <button onClick={() => { navigate(RUTAS.EXPEDIENTE(s.expediente_id)); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#1b3a57] hover:bg-[#f5f5f5]">
+                          <button onClick={() => { navigate(RUTAS.EXPEDIENTE(s.expediente_id)); setMenuSol(null) }} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#242C4F] hover:bg-[#EEEBE6]">
                             <Icon name="open_in_new" size={14} /> Ver actuación
                           </button>
                         </div>
@@ -288,7 +288,7 @@ export default function TareasPage() {
 
       {/* Modal ver detalle */}
       <Modal open={!!modalVer} onClose={() => setModalVer(null)} titulo="Detalle de solicitud" size="md"
-        footer={<button onClick={() => setModalVer(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8]">Cerrar</button>}
+        footer={<button onClick={() => setModalVer(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9]">Cerrar</button>}
       >
         {modalVer && (
           <div className="space-y-4">
@@ -303,26 +303,26 @@ export default function TareasPage() {
                 ['Fecha límite', modalVer.fecha_limite ? formatFecha(modalVer.fecha_limite) : 'Sin fecha'],
               ] as [string, string][]).map(([label, value]) => (
                 <div key={label} className="flex gap-3 py-2.5 border-b border-[rgba(0,0,0,0.06)] last:border-0">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-28 flex-shrink-0 pt-0.5">{label}</span>
-                  <span className="text-sm text-[#1b3a57]">{value}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#758A93] w-28 flex-shrink-0 pt-0.5">{label}</span>
+                  <span className="text-sm text-[#242C4F]">{value}</span>
                 </div>
               ))}
             </div>
             {modalVer.respuesta && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-widest text-green-700">Respuesta</p>
-                <p className="text-sm text-[#1b3a57]">{modalVer.respuesta.comentario}</p>
+                <p className="text-sm text-[#242C4F]">{modalVer.respuesta.comentario}</p>
                 {modalVer.respuesta.adjunto_nombre && (
                   <div className="flex items-center gap-2 mt-1">
-                    <Icon name="attach_file" size={13} className="text-[#4a6a84]" />
-                    <span className="text-xs text-[#4a6a84]">{modalVer.respuesta.adjunto_nombre}</span>
-                    <button className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#1b3a57] text-white hover:opacity-80 transition-opacity ml-1">
+                    <Icon name="attach_file" size={13} className="text-[#758A93]" />
+                    <span className="text-xs text-[#758A93]">{modalVer.respuesta.adjunto_nombre}</span>
+                    <button className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#256386] text-white hover:opacity-80 transition-opacity ml-1">
                       <Icon name="download" size={11} />
                       Descargar
                     </button>
                   </div>
                 )}
-                <p className="text-[10px] text-[#7a9ab4]">
+                <p className="text-[10px] text-[#9AA6B2]">
                   {formatFecha(modalVer.respuesta.fecha)} · {(() => {
                     const u = getUsuarioById(modalVer.respuesta.respondido_por)
                     return u ? getNombreCompleto(u) : modalVer.respuesta.respondido_por
@@ -338,11 +338,11 @@ export default function TareasPage() {
       <Modal open={!!modalRespuesta} onClose={() => setModalRespuesta(null)} titulo="Adjuntar respuesta" size="md"
         footer={
           <>
-            <button onClick={() => setModalRespuesta(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8]">Cancelar</button>
+            <button onClick={() => setModalRespuesta(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9]">Cancelar</button>
             <button
               onClick={guardarRespuesta}
               disabled={!respForm.comentario.trim()}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               <Icon name="save" size={15} /> Guardar respuesta
             </button>
@@ -351,13 +351,13 @@ export default function TareasPage() {
       >
         {modalRespuesta && (
           <div className="space-y-4">
-            <div className="bg-[#f5f5f5] rounded-xl px-4 py-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">Solicitud</p>
-              <p className="text-sm font-semibold text-[#1b3a57]">{modalRespuesta.titulo}</p>
-              <p className="text-xs text-[#4a6a84] mt-0.5">{modalRespuesta.descripcion}</p>
+            <div className="bg-[#EEEBE6] rounded-xl px-4 py-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#758A93] mb-1">Solicitud</p>
+              <p className="text-sm font-semibold text-[#242C4F]">{modalRespuesta.titulo}</p>
+              <p className="text-xs text-[#758A93] mt-0.5">{modalRespuesta.descripcion}</p>
             </div>
             <div>
-              <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Comentario <span className="text-[#C3292F]">*</span></label>
               <textarea
                 className="field-input w-full resize-y"
                 style={{ minHeight: 80 }}
@@ -368,16 +368,16 @@ export default function TareasPage() {
             </div>
             <div>
               <label className="field-label">Adjunto (opcional)</label>
-              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] cursor-pointer hover:bg-[#f5f5f5] transition-colors">
-                <Icon name="attach_file" size={18} className="text-[#4a6a84]" />
-                <span className="text-sm text-[#4a6a84]">{respForm.adjunto_nombre || 'Seleccionar archivo...'}</span>
+              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] cursor-pointer hover:bg-[#EEEBE6] transition-colors">
+                <Icon name="attach_file" size={18} className="text-[#758A93]" />
+                <span className="text-sm text-[#758A93]">{respForm.adjunto_nombre || 'Seleccionar archivo...'}</span>
                 <input type="file" className="hidden" onChange={e => {
                   const f = e.target.files?.[0]
                   if (f) setRespForm(p => ({ ...p, adjunto_nombre: f.name, adjunto_size: `${(f.size / 1024).toFixed(0)} KB` }))
                 }} />
               </label>
               {respForm.adjunto_nombre && (
-                <p className="text-[10px] text-[#4a6a84] mt-1">{respForm.adjunto_nombre} · {respForm.adjunto_size}</p>
+                <p className="text-[10px] text-[#758A93] mt-1">{respForm.adjunto_nombre} · {respForm.adjunto_size}</p>
               )}
             </div>
           </div>

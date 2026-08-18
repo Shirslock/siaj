@@ -48,7 +48,7 @@ const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(
 
 const filterInputCls =
   'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
-  'text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#1b3a57]'
+  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-[#242C4F]'
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -257,7 +257,7 @@ export default function BandejaAbogadoPage() {
         onClick={e => e.stopPropagation()}
       >
         <button
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
           onClick={() => { navigate(RUTAS.EXPEDIENTE(exp.id)); setMenuAbierto(null) }}
         >
           <Icon name="open_in_new" size={16} />
@@ -267,7 +267,7 @@ export default function BandejaAbogadoPage() {
           <>
             <div className="my-1 border-t border-[rgba(0,0,0,0.06)]" />
             <button
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
               onClick={() => {
                 setModalReasignar(exp)
                 setNuevoAbogadoId(exp.abogado_id ?? '')
@@ -281,7 +281,7 @@ export default function BandejaAbogadoPage() {
         )}
         {sinCausa ? (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
             onClick={() => { setModalAgrupar(exp.id); setMenuAbierto(null) }}
           >
             <Icon name="folder_open" size={16} />
@@ -289,7 +289,7 @@ export default function BandejaAbogadoPage() {
           </button>
         ) : (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
             onClick={() => { setExpADesagrupar(exp); setMenuAbierto(null) }}
           >
             <Icon name="link_off" size={16} />
@@ -332,7 +332,7 @@ export default function BandejaAbogadoPage() {
             </div>
           ) : (
             <div className="flex items-center justify-center">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#f0f7f8] text-[#4a6a84]">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#f0f7f8] text-[#758A93]">
                 <Icon name="description" size={18} />
               </div>
             </div>
@@ -340,9 +340,9 @@ export default function BandejaAbogadoPage() {
         </td>
         {/* N° + badges */}
         <td className="py-3 pl-2 pr-3">
-          <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
+          <p className="font-mono text-xs font-bold text-[#242C4F]">{exp.id}</p>
           {isSuelto && (
-            <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#4a6a84]">
+            <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#758A93]">
               <Icon name="folder_off" size={11} />
               Sin causa
             </span>
@@ -369,8 +369,8 @@ export default function BandejaAbogadoPage() {
                 : 'Plazo vencido'
               return (
                 <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5] cursor-default">
-                  <Icon name="warning" size={10} className="text-[#b91c1c]" />
-                  <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Vencido</span>
+                  <Icon name="warning" size={10} className="text-[#C3292F]" />
+                  <span className="text-[9px] font-black text-[#C3292F] uppercase tracking-wide">Vencido</span>
                 </div>
               )
             }
@@ -390,28 +390,28 @@ export default function BandejaAbogadoPage() {
           })()}
           {exp.es_urgente && (
             <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]">
-              <Icon name="warning" size={10} className="text-[#b91c1c]" />
-              <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Urgente</span>
+              <Icon name="warning" size={10} className="text-[#C3292F]" />
+              <span className="text-[9px] font-black text-[#C3292F] uppercase tracking-wide">Urgente</span>
             </div>
           )}
         </td>
         {/* Carátula */}
         <td className="py-3 px-3 max-w-xs">
-          <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
+          <p className="text-sm font-semibold text-[#242C4F] line-clamp-2">{exp.caratula}</p>
           {exp.numero_causa && (
-            <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{exp.numero_causa}</p>
+            <p className="font-mono text-[10px] text-[#758A93] mt-0.5">{exp.numero_causa}</p>
           )}
         </td>
         {/* Área */}
         <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
         {/* Tipo */}
         <td className="py-3 px-3">
-          <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
+          <span className="text-xs text-[#758A93]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
         </td>
         {/* Letrado (condicional) */}
         {mostrarColumnaLetrado && (
           <td className="py-3 px-3">
-            <span className="text-xs text-[#4a6a84]">
+            <span className="text-xs text-[#758A93]">
               {letrado ? getNombreCompleto(letrado) : '—'}
             </span>
           </td>
@@ -420,12 +420,12 @@ export default function BandejaAbogadoPage() {
         <td className="py-3 px-3"><EstadoBadge code={exp.estado} label={exp.estado} /></td>
         {/* Recepción */}
         <td className="py-3 px-3 whitespace-nowrap">
-          <span className="text-xs text-[#4a6a84]">{formatFecha(exp.fecha_recepcion)}</span>
+          <span className="text-xs text-[#758A93]">{formatFecha(exp.fecha_recepcion)}</span>
         </td>
         {/* Menú */}
         <td className="py-3 px-3 text-center">
           <button
-            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#E3E4E9] text-[#758A93] transition-colors cursor-pointer"
             onClick={e => abrirMenu(e, exp.id)}
           >
             <Icon name="more_vert" size={18} />
@@ -446,23 +446,23 @@ export default function BandejaAbogadoPage() {
       {/* HEADER */}
       <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Actuaciones</h1>
-          <p className="text-sm text-[#4a6a84] mt-1">
+          <h1 className="font-headline font-extrabold text-3xl text-[#242C4F]">Actuaciones</h1>
+          <p className="text-sm text-[#758A93] mt-1">
             Hola, {usuarioActivo?.nombre ?? ''}. Gestionando{' '}
-            <span className="font-semibold text-[#1b3a57]">{activosCount}</span>{' '}
+            <span className="font-semibold text-[#242C4F]">{activosCount}</span>{' '}
             actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
           </p>
         </div>
         <div className="flex items-center gap-3 self-start">
-          <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1">
+          <div className="flex gap-1 bg-[#EEEBE6] rounded-xl p-1">
             {(['activos', 'archivados'] as const).map(val => (
               <button
                 key={val}
                 onClick={() => setTabEstado(val)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
                   tabEstado === val
-                    ? 'bg-white text-[#1b3a57] shadow-sm'
-                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                    ? 'bg-white text-[#242C4F] shadow-sm'
+                    : 'text-[#758A93] hover:text-[#242C4F]'
                 }`}
               >
                 {val === 'activos' ? 'Activos' : 'Archivados'}
@@ -472,7 +472,7 @@ export default function BandejaAbogadoPage() {
           {esAbogadoPenal(usuarioActivo) && (
             <button
               onClick={() => navigate(RUTAS.NUEVA_ACTUACION_PENAL)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#1b3a57] text-white rounded-xl text-sm font-bold hover:bg-[#2a5278] transition-colors flex-shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#256386] text-white rounded-xl text-sm font-bold hover:bg-[#2a5278] transition-colors flex-shrink-0"
             >
               <Icon name="add" size={16} />
               Nueva Actuación
@@ -485,22 +485,22 @@ export default function BandejaAbogadoPage() {
       {poolBase.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
           <Icon name="inbox" size={48} />
-          <p className="mt-4 text-[#4a6a84] text-sm">No tenés expedientes asignados.</p>
+          <p className="mt-4 text-[#758A93] text-sm">No tenés expedientes asignados.</p>
         </div>
       ) : (
         <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
-            <span className="text-xs text-[#4a6a84] font-medium">
+            <span className="text-xs text-[#758A93] font-medium">
               {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
             </span>
 
             <div className="flex items-center gap-4">
-              <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
+              <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#242C4F] hover:opacity-80 transition-opacity">
                 <Icon name="unfold_more" size={14} />
                 Expandir todo
               </button>
               <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+              <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
                 <Icon name="unfold_less" size={14} />
                 Colapsar
               </button>
@@ -509,11 +509,11 @@ export default function BandejaAbogadoPage() {
                 onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
                 className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
                   filtros.soloUrgentes
-                    ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
-                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
+                    ? 'bg-[#fee2e2] border-[#fca5a5] text-[#C3292F]'
+                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#758A93] hover:text-[#242C4F]'
                 }`}
               >
-                <Icon name="warning" size={14} className={filtros.soloUrgentes ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
+                <Icon name="warning" size={14} className={filtros.soloUrgentes ? 'text-[#C3292F]' : 'text-[#758A93]'} />
                 Urgentes
               </button>
               <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
@@ -522,14 +522,14 @@ export default function BandejaAbogadoPage() {
                 className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
                   filtros.soloAlerta
                     ? 'bg-[#fef3c7] border-[#fde68a] text-[#d97706]'
-                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
+                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#758A93] hover:text-[#242C4F]'
                 }`}
               >
-                <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#4a6a84]'} />
+                <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#758A93]'} />
                 Alertas
                 {contadorAlerta > 0 && (
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                    filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#e8e8e8] text-[#4a6a84]'
+                    filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#E3E4E9] text-[#758A93]'
                   }`}>
                     {contadorAlerta}
                   </span>
@@ -538,7 +538,7 @@ export default function BandejaAbogadoPage() {
               <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
               <button
                 onClick={limpiarFiltros}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#758A93] hover:text-[#242C4F] transition-colors"
               >
                 <Icon name="filter_alt_off" size={14} />
                 Limpiar filtros
@@ -549,22 +549,22 @@ export default function BandejaAbogadoPage() {
             <table className="w-full text-sm min-w-[780px]">
               <thead>
                 {/* Fila 1: labels */}
-                <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
+                <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#E3E4E9]">
                   <th className="w-10 px-3 py-2.5" />
-                  <th className="w-40 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">N° Causa / Exp.</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Carátula</th>
-                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Área</th>
-                  <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Tipo</th>
+                  <th className="w-40 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">N° Causa / Exp.</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Carátula</th>
+                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Área</th>
+                  <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Tipo</th>
                   {mostrarColumnaLetrado && (
-                    <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Letrado</th>
+                    <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Letrado</th>
                   )}
-                  <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Estado</th>
-                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Recepción</th>
+                  <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Estado</th>
+                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Recepción</th>
                   <th className="w-16 px-3 py-2.5" />
                 </tr>
 
                 {/* Fila 2: inputs de filtro */}
-                <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
+                <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#EEEBE6]">
                   <th className="px-2 py-1.5" />
                   <th className="px-2 py-1.5">
                     <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
@@ -617,7 +617,7 @@ export default function BandejaAbogadoPage() {
               <tbody className="divide-y divide-outline-variant/20">
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={colSpanTotal} className="py-16 text-center text-[#4a6a84] text-sm">
+                    <td colSpan={colSpanTotal} className="py-16 text-center text-[#758A93] text-sm">
                       <Icon name="search_off" className="block mb-3" size={40} />
                       Sin resultados para los filtros aplicados.
                     </td>
@@ -633,7 +633,7 @@ export default function BandejaAbogadoPage() {
                     return (
                       <Fragment key={numeroCausa}>
                         <tr
-                          className="bg-[#f0f0f0] border-l-4 border-[rgba(27,58,87,0.40)] hover:border-[#1b3a57] cursor-pointer transition-colors"
+                          className="bg-[#E3E4E9] border-l-4 border-[rgba(27,58,87,0.40)] hover:border-[#242C4F] cursor-pointer transition-colors"
                           onClick={() => setExpandedCausas(prev => {
                             const next = new Set(prev)
                             next.has(numeroCausa) ? next.delete(numeroCausa) : next.add(numeroCausa)
@@ -642,22 +642,22 @@ export default function BandejaAbogadoPage() {
                         >
                           <td className="w-10 py-3 px-2 text-center">
                             <div className={`w-7 h-7 rounded-lg flex items-center justify-center mx-auto transition-all ${
-                              isExpanded ? 'bg-[#1b3a57] text-white' : 'bg-[#C4DFE8] text-[#1b3a57]'
+                              isExpanded ? 'bg-[#256386] text-white' : 'bg-[#E4EDF2] text-[#242C4F]'
                             }`}>
                               <Icon name="chevron_right" size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                             </div>
                           </td>
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-1.5">
-                              <Icon name="folder" size={14} className="text-[#1b3a57]" />
-                              <span className="font-mono text-xs font-bold text-[#1b3a57]">{numeroCausa}</span>
+                              <Icon name="folder" size={14} className="text-[#242C4F]" />
+                              <span className="font-mono text-xs font-bold text-[#242C4F]">{numeroCausa}</span>
                             </div>
-                            <p className="text-[10px] text-[#4a6a84] mt-0.5">
+                            <p className="text-[10px] text-[#758A93] mt-0.5">
                               {exps.length} actuación{exps.length !== 1 ? 'es' : ''} agrupada{exps.length !== 1 ? 's' : ''}
                             </p>
                           </td>
                           <td className="py-3 px-3 max-w-[280px]">
-                            <p className="text-sm text-[#1b3a57] line-clamp-2">{principal.caratula}</p>
+                            <p className="text-sm text-[#242C4F] line-clamp-2">{principal.caratula}</p>
                           </td>
                           <td className="py-3 px-3">
                             <div className="flex flex-wrap gap-1">
@@ -665,7 +665,7 @@ export default function BandejaAbogadoPage() {
                             </div>
                           </td>
                           <td className="py-3 px-3">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#1b3a57]">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#242C4F]">
                               <Icon name="link" size={11} />
                               Causa judicial
                             </span>
@@ -675,12 +675,12 @@ export default function BandejaAbogadoPage() {
                             <EstadoBadge code={principal.estado} label={principal.estado} />
                           </td>
                           <td className="py-3 px-3 whitespace-nowrap">
-                            <span className="text-xs text-[#4a6a84]">{formatFecha(principal.fecha_recepcion)}</span>
+                            <span className="text-xs text-[#758A93]">{formatFecha(principal.fecha_recepcion)}</span>
                           </td>
                           <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                             <button
                               onClick={() => navigate(RUTAS.CAUSA(numeroCausa))}
-                              className="text-[11px] font-bold text-[#1b3a57] hover:underline whitespace-nowrap cursor-pointer"
+                              className="text-[11px] font-bold text-[#242C4F] hover:underline whitespace-nowrap cursor-pointer"
                             >
                               Ver todo
                             </button>
@@ -725,7 +725,7 @@ export default function BandejaAbogadoPage() {
             {causasExistentes.map(nc => (
               <button
                 key={nc}
-                className="w-full text-left px-3 py-2 text-sm font-mono text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
+                className="w-full text-left px-3 py-2 text-sm font-mono text-[#242C4F] hover:bg-[#E3E4E9] transition-colors"
                 onClick={() => setInputCausa(nc)}
               >
                 {nc}
@@ -755,9 +755,9 @@ export default function BandejaAbogadoPage() {
         }
       >
         <div className="space-y-3 py-1">
-          <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs font-bold font-mono text-[#1b3a57]">{modalReasignar?.id}</p>
-            <p className="text-xs text-[#4a6a84] line-clamp-2">{modalReasignar?.caratula}</p>
+          <div className="bg-[#EEEBE6] rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs font-bold font-mono text-[#242C4F]">{modalReasignar?.id}</p>
+            <p className="text-xs text-[#758A93] line-clamp-2">{modalReasignar?.caratula}</p>
           </div>
           <div>
             <label className="field-label">Letrado asignado</label>
@@ -796,18 +796,18 @@ export default function BandejaAbogadoPage() {
         }
       >
         <div className="space-y-3 py-1">
-          <p className="text-sm text-[#1b3a57]">¿Confirmás que querés desagrupar esta actuación de la causa?</p>
-          <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs font-bold text-[#1b3a57] font-mono">{expADesagrupar?.id}</p>
-            <p className="text-xs text-[#4a6a84] line-clamp-2">{expADesagrupar?.caratula}</p>
+          <p className="text-sm text-[#242C4F]">¿Confirmás que querés desagrupar esta actuación de la causa?</p>
+          <div className="bg-[#EEEBE6] rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs font-bold text-[#242C4F] font-mono">{expADesagrupar?.id}</p>
+            <p className="text-xs text-[#758A93] line-clamp-2">{expADesagrupar?.caratula}</p>
             {expADesagrupar?.numero_causa && (
-              <p className="text-[11px] text-[#7a9ab4] flex items-center gap-1 mt-1">
+              <p className="text-[11px] text-[#9AA6B2] flex items-center gap-1 mt-1">
                 <Icon name="folder" size={12} />
                 Causa: {expADesagrupar.numero_causa}
               </p>
             )}
           </div>
-          <p className="text-xs text-[#7a9ab4]">
+          <p className="text-xs text-[#9AA6B2]">
             La actuación pasará a estar sin causa asignada. Esta acción se puede revertir agrupándola nuevamente.
           </p>
         </div>

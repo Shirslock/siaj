@@ -21,7 +21,7 @@ function BadgeActivo({ activo }: { activo?: boolean }) {
   const inactivo = activo === false
   return (
     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-      inactivo ? 'bg-[#e8e8e8] text-[#9a9a9a]' : 'bg-green-100 text-green-700'
+      inactivo ? 'bg-[#E3E4E9] text-[#9a9a9a]' : 'bg-green-100 text-green-700'
     }`}>
       {inactivo ? 'Inactivo' : 'Activo'}
     </span>
@@ -35,8 +35,8 @@ function VistaLectura({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
-        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#f0f0f0] px-2 py-0.5 rounded-full">
+        <h2 className="text-lg font-semibold text-[#242C4F]">{tabla.label}</h2>
+        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#E3E4E9] px-2 py-0.5 rounded-full">
           <Icon name="block" size={12} /> Solo lectura
         </span>
       </div>
@@ -45,7 +45,7 @@ function VistaLectura({ tabla }: { tabla: TablaConfig }) {
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.1)]">
               {['ID', 'Valor'].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#758A93]">{c}</th>
               ))}
             </tr>
           </thead>
@@ -53,7 +53,7 @@ function VistaLectura({ tabla }: { tabla: TablaConfig }) {
             {items.map(item => (
               <tr key={item.id} className="hover:bg-[#f8f8f8]">
                 <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.id}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+                <td className="py-2.5 px-4 text-[#242C4F] font-medium">{item.label}</td>
               </tr>
             ))}
           </tbody>
@@ -111,10 +111,10 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <h2 className="text-lg font-semibold text-[#242C4F]">{tabla.label}</h2>
         <button
           onClick={abrirNuevo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#256386] text-white hover:opacity-90 transition-opacity"
         >
           <Icon name="add" size={16} /> Nuevo
         </button>
@@ -125,7 +125,7 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.1)]">
               {['ID', 'Valor', 'Estado', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#758A93]">{c}</th>
               ))}
             </tr>
           </thead>
@@ -133,14 +133,14 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
             {items.map(item => (
               <tr key={item.id} className="hover:bg-[#f8f8f8]">
                 <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.id}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+                <td className="py-2.5 px-4 text-[#242C4F] font-medium">{item.label}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
                 <td className="py-2.5 px-4">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => abrirEditar(item)}
                       title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#e8f0ff] hover:text-[#242C4F] transition-colors"
                     >
                       <Icon name="edit" size={14} />
                     </button>
@@ -159,13 +159,13 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
         size="sm"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors">
               Cancelar
             </button>
             <button
               onClick={guardar}
               disabled={!form.label.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar
             </button>
@@ -186,7 +186,7 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
             </div>
           )}
           <div>
-            <label className="field-label">Valor <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Valor <span className="text-[#C3292F]">*</span></label>
             <input
               type="text"
               className="field-input w-full"
@@ -196,7 +196,7 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
           </div>
           {mostrarDias && (
             <div>
-              <label className="field-label">Días <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Días <span className="text-[#C3292F]">*</span></label>
               <input
                 type="number"
                 min={1}
@@ -211,7 +211,7 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-[#256386]' : 'bg-[rgba(0,0,0,0.15)]'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -219,8 +219,8 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los ítems inactivos no aparecen en los formularios</p>
+                <p className="text-sm font-medium text-[#242C4F]">Activo</p>
+                <p className="text-[11px] text-[#758A93]">Los ítems inactivos no aparecen en los formularios</p>
               </div>
             </label>
           </div>
@@ -277,10 +277,10 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <h2 className="text-lg font-semibold text-[#242C4F]">{tabla.label}</h2>
         <button
           onClick={abrirNuevo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#256386] text-white hover:opacity-90 transition-opacity"
         >
           <Icon name="add" size={16} /> Nuevo
         </button>
@@ -291,23 +291,23 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.1)]">
               {['Nombre', 'Tipo', 'Provincia', 'Localidad', 'Estado', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#758A93]">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
             {items.map(item => (
               <tr key={item.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium max-w-[240px]">
+                <td className="py-2.5 px-4 text-[#242C4F] font-medium max-w-[240px]">
                   <p className="truncate">{item.label}</p>
                 </td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84]">{item.tipo ?? '—'}</td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84]">{item.provincia ?? '—'}</td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84]">{item.localidad ?? '—'}</td>
+                <td className="py-2.5 px-4 text-xs text-[#758A93]">{item.tipo ?? '—'}</td>
+                <td className="py-2.5 px-4 text-xs text-[#758A93]">{item.provincia ?? '—'}</td>
+                <td className="py-2.5 px-4 text-xs text-[#758A93]">{item.localidad ?? '—'}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
                 <td className="py-2.5 px-4">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => abrirEditar(item)} title="Editar" className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors">
+                    <button onClick={() => abrirEditar(item)} title="Editar" className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-[#e8f0ff] hover:text-[#242C4F] transition-colors">
                       <Icon name="edit" size={14} />
                     </button>
                   </div>
@@ -325,14 +325,14 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
         size="md"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">Cancelar</button>
-            <button onClick={guardar} disabled={!form.label.trim()} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity">Guardar</button>
+            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9] transition-colors">Cancelar</button>
+            <button onClick={guardar} disabled={!form.label.trim()} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 disabled:opacity-40 transition-opacity">Guardar</button>
           </>
         }
       >
         <div className="space-y-3">
           <div>
-            <label className="field-label">Nombre <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Nombre <span className="text-[#C3292F]">*</span></label>
             <input type="text" className="field-input w-full" value={form.label} onChange={e => setForm(p => ({ ...p, label: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -357,7 +357,7 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-[#256386]' : 'bg-[rgba(0,0,0,0.15)]'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -365,8 +365,8 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los ítems inactivos no aparecen en los formularios</p>
+                <p className="text-sm font-medium text-[#242C4F]">Activo</p>
+                <p className="text-[11px] text-[#758A93]">Los ítems inactivos no aparecen en los formularios</p>
               </div>
             </label>
           </div>
@@ -385,8 +385,8 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
-        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#f0f0f0] px-2 py-0.5 rounded-full">
+        <h2 className="text-lg font-semibold text-[#242C4F]">{tabla.label}</h2>
+        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#E3E4E9] px-2 py-0.5 rounded-full">
           <Icon name="block" size={12} /> Solo lectura
         </span>
       </div>
@@ -395,7 +395,7 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
           <thead>
             <tr className="border-b border-[rgba(0,0,0,0.1)]">
               {['Código', 'Label', 'Áreas', 'Canal', 'Estado'].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#758A93]">{c}</th>
               ))}
             </tr>
           </thead>
@@ -403,15 +403,15 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
             {items.map(item => (
               <tr key={item.id} className="hover:bg-[#f8f8f8]">
                 <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.code}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+                <td className="py-2.5 px-4 text-[#242C4F] font-medium">{item.label}</td>
                 <td className="py-2.5 px-4">
                   <div className="flex flex-wrap gap-1">
                     {item.areas.map(a => (
-                      <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
+                      <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#E3E4E9] text-[#758A93]'}`}>{a}</span>
                     ))}
                   </div>
                 </td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84] font-mono">{item.canal}</td>
+                <td className="py-2.5 px-4 text-xs text-[#758A93] font-mono">{item.canal}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={(item as unknown as CatalogoItem).activo} /></td>
               </tr>
             ))}

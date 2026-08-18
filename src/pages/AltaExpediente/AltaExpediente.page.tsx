@@ -52,7 +52,7 @@ function SegmentedSelector<T extends string>({
   disabled?: boolean
 }) {
   return (
-    <div className={`flex rounded-lg bg-[#e8e8e8] p-1 gap-0.5 ${disabled ? 'opacity-60' : ''}`}>
+    <div className={`flex rounded-lg bg-[#E3E4E9] p-1 gap-0.5 ${disabled ? 'opacity-60' : ''}`}>
       {options.map(o => (
         <button
           key={o.id}
@@ -61,8 +61,8 @@ function SegmentedSelector<T extends string>({
           onClick={() => onChange(o.id)}
           className={`flex-1 py-2 px-3 rounded-md text-sm transition-all ${
             value === o.id
-              ? 'bg-white shadow-sm font-bold text-[#1b3a57]'
-              : 'font-medium text-[#4a6a84] hover:text-[#1b3a57]'
+              ? 'bg-white shadow-sm font-bold text-[#242C4F]'
+              : 'font-medium text-[#758A93] hover:text-[#242C4F]'
           } ${disabled ? 'cursor-not-allowed' : ''}`}
         >
           {o.label}
@@ -131,22 +131,22 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
       {/* HEADER */}
       <div className="flex items-start justify-between">
         <div>
-          <nav className="text-xs text-[#4a6a84] mb-1 flex items-center gap-1">
+          <nav className="text-xs text-[#758A93] mb-1 flex items-center gap-1">
             <button
-              className="hover:text-[#1b3a57] transition-colors"
+              className="hover:text-[#242C4F] transition-colors"
               onClick={() => navigate(rutaVolver)}
             >
               {modoAbogadoPenal ? 'Actuaciones' : 'Mesa SACO'}
             </button>
             <span>›</span>
-            <span className="text-[#1b3a57]">
+            <span className="text-[#242C4F]">
               {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nueva Actuación'}
             </span>
           </nav>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">
+          <h1 className="font-headline font-extrabold text-3xl text-[#242C4F]">
             {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nueva Actuación'}
           </h1>
-          <p className="text-sm text-[#4a6a84] mt-1">
+          <p className="text-sm text-[#758A93] mt-1">
             Completá los datos según el canal y tipo de gestión.
           </p>
         </div>
@@ -158,10 +158,10 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
       {/* SECCIÓN 1 — Origen y Tipo de Gestión */}
       <div className="bg-white shadow-card rounded-xl p-8">
         <div className="flex items-center gap-3 mb-6">
-          <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
+          <span className="w-7 h-7 rounded-full bg-[#E4EDF2] text-[#242C4F] text-sm font-bold flex items-center justify-center shrink-0">
             1
           </span>
-          <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Origen y Tipo de Gestión</h2>
+          <h2 className="font-headline font-bold text-lg text-[#242C4F]">Origen y Tipo de Gestión</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-5">
@@ -226,8 +226,8 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
         {/* Info canal */}
         {canal && (
           <div className="mt-5 bg-[rgba(196,223,232,0.40)] rounded-lg p-3 flex items-start gap-2">
-            <Icon name="info" size={18} className="text-[#1b3a57] mt-0.5 shrink-0" />
-            <p className="text-sm text-[#4a6a84]">{CANAL_INFO[canal as Canal]}</p>
+            <Icon name="info" size={18} className="text-[#242C4F] mt-0.5 shrink-0" />
+            <p className="text-sm text-[#758A93]">{CANAL_INFO[canal as Canal]}</p>
           </div>
         )}
       </div>
@@ -237,10 +237,10 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           {/* SECCIÓN ◈ — Datos de Recepción */}
           <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-[#e8e8e8] text-[#4a6a84] text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#E3E4E9] text-[#758A93] text-sm font-bold flex items-center justify-center shrink-0">
                 ◈
               </span>
-              <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Datos de Recepción</h2>
+              <h2 className="font-headline font-bold text-lg text-[#242C4F]">Datos de Recepción</h2>
             </div>
 
             <FormularioDinamico
@@ -254,19 +254,19 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           {/* SECCIÓN 2 — Detalles del Expediente */}
           <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#E4EDF2] text-[#242C4F] text-sm font-bold flex items-center justify-center shrink-0">
                 2
               </span>
               <div>
-                <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Detalles de la Actuación</h2>
+                <h2 className="font-headline font-bold text-lg text-[#242C4F]">Detalles de la Actuación</h2>
                 {tipoSeleccionado && (
-                  <p className="text-xs text-[#4a6a84]">{tipoSeleccionado.label}</p>
+                  <p className="text-xs text-[#758A93]">{tipoSeleccionado.label}</p>
                 )}
               </div>
             </div>
 
             {camposTipo.length === 0 ? (
-              <p className="text-sm text-[#4a6a84] italic">
+              <p className="text-sm text-[#758A93] italic">
                 Este tipo de gestión no requiere campos adicionales en la apertura.
               </p>
             ) : (
@@ -282,10 +282,10 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           {/* SECCIÓN 3 — Asignación de Letrado */}
           <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#E4EDF2] text-[#242C4F] text-sm font-bold flex items-center justify-center shrink-0">
                 3
               </span>
-              <h2 className="font-headline font-bold text-lg text-[#1b3a57]">Asignación de Letrado</h2>
+              <h2 className="font-headline font-bold text-lg text-[#242C4F]">Asignación de Letrado</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
@@ -322,7 +322,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
                     <FormField label="Letrado Asignado" hint="Se determina por la línea seleccionada">
                       <input
                         type="text"
-                        className="field-input bg-[#e8e8e8]"
+                        className="field-input bg-[#E3E4E9]"
                         value={abogadoPenal ? getNombreCompleto(abogadoPenal) : ''}
                         placeholder="Seleccioná una línea para asignar letrado"
                         disabled
@@ -346,9 +346,9 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
                 )}
               </div>
 
-              <div className="bg-[#e8e8e8] rounded-xl p-4 flex items-start gap-3">
-                <Icon name="info" size={24} className="text-[#1b3a57] shrink-0" />
-                <p className="text-sm text-[#4a6a84]">
+              <div className="bg-[#E3E4E9] rounded-xl p-4 flex items-start gap-3">
+                <Icon name="info" size={24} className="text-[#242C4F] shrink-0" />
+                <p className="text-sm text-[#758A93]">
                   {area === 'PENAL'
                     ? 'Asignación por línea ferroviaria — seleccioná la línea para determinar el letrado automáticamente.'
                     : 'Asignación secuencial FIFO — se sugiere el siguiente letrado disponible en el área.'}
@@ -360,18 +360,18 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           {/* SECCIÓN 4 — Documento GDE */}
           <div className="bg-white shadow-card rounded-xl p-8">
             <div className="flex items-center gap-3 mb-2">
-              <span className="w-7 h-7 rounded-full bg-[#C4DFE8] text-[#1b3a57] text-sm font-bold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-[#E4EDF2] text-[#242C4F] text-sm font-bold flex items-center justify-center shrink-0">
                 4
               </span>
-              <h2 className="font-headline font-bold text-lg text-[#1b3a57]">
-                Documento GDE <span className="text-[#b91c1c] text-base">*</span>
+              <h2 className="font-headline font-bold text-lg text-[#242C4F]">
+                Documento GDE <span className="text-[#C3292F] text-base">*</span>
               </h2>
             </div>
-            <p className="text-sm text-[#4a6a84] mb-5 ml-10">Adjuntá el PDF de la actuación GDE.</p>
+            <p className="text-sm text-[#758A93] mb-5 ml-10">Adjuntá el PDF de la actuación GDE.</p>
 
             {!archivo ? (
               <div
-                className="border-2 border-dashed border-[rgba(0,0,0,0.12)] rounded-xl p-10 text-center bg-[rgba(232,232,232,0.50)] hover:bg-[#e8e8e8] cursor-pointer group transition-all"
+                className="border-2 border-dashed border-[rgba(0,0,0,0.12)] rounded-xl p-10 text-center bg-[rgba(232,232,232,0.50)] hover:bg-[#E3E4E9] cursor-pointer group transition-all"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
@@ -381,10 +381,10 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
                 }}
               >
                 <Icon name="upload_file" className="block mb-3" size={40} />
-                <p className="text-sm font-medium text-[#4a6a84]">
+                <p className="text-sm font-medium text-[#758A93]">
                   Arrastrá el PDF aquí o hacé click para seleccionar
                 </p>
-                <p className="text-xs text-[#7a9ab4] mt-1">Solo PDF — máximo 10 MB</p>
+                <p className="text-xs text-[#9AA6B2] mt-1">Solo PDF — máximo 10 MB</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -440,11 +440,11 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           </>
         }
       >
-        <p className="text-sm text-[#4a6a84] mb-1">Revisá los datos antes de registrar la actuación.</p>
-        <p className="text-sm text-[#4a6a84] mb-5">Una vez registrado será asignado automáticamente.</p>
+        <p className="text-sm text-[#758A93] mb-1">Revisá los datos antes de registrar la actuación.</p>
+        <p className="text-sm text-[#758A93] mb-5">Una vez registrado será asignado automáticamente.</p>
 
         {/* ── Identificación ── */}
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Identificación</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#758A93] mb-2">Identificación</p>
         <dl className="mb-5">
           {[
             { label: 'Canal',        valor: CANALES.find(c => c.id === canal)?.label ?? '—' },
@@ -454,8 +454,8 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
             { label: 'N° Causa',     valor: (camposMesa['numero_causa'] as string | undefined) || '—' },
           ].map(({ label, valor, mono }) => (
             <div key={label} className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)] last:border-0">
-              <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">{label}</dt>
-              <dd className={`text-sm font-semibold text-[#1b3a57] flex-1 ${mono ? 'font-mono' : ''}`}>{valor}</dd>
+              <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">{label}</dt>
+              <dd className={`text-sm font-semibold text-[#242C4F] flex-1 ${mono ? 'font-mono' : ''}`}>{valor}</dd>
             </div>
           ))}
         </dl>
@@ -463,20 +463,20 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
         <hr className="border-[rgba(0,0,0,0.08)] mb-5" />
 
         {/* ── Asignación ── */}
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Asignación</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#758A93] mb-2">Asignación</p>
         <dl className="mb-5">
           {area === 'PENAL' ? (
             lineaSeleccionada ? (
               <>
                 <div className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)]">
-                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Línea</dt>
-                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">Línea</dt>
+                  <dd className="text-sm font-semibold text-[#242C4F] flex-1">
                     {LINEAS_FERROVIARIAS.find(l => l.id === lineaSeleccionada)?.label ?? lineaSeleccionada}
                   </dd>
                 </div>
                 <div className="flex items-start gap-3 py-2">
-                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Letrado</dt>
-                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">Letrado</dt>
+                  <dd className="text-sm font-semibold text-[#242C4F] flex-1">
                     {(() => {
                       const ab = getUsuarioById(ASIGNACION_PENAL[lineaSeleccionada])
                       return ab ? getNombreCompleto(ab) : '—'
@@ -495,12 +495,12 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           ) : (
             <>
               <div className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)]">
-                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Criterio</dt>
-                <dd className="text-sm font-semibold text-[#1b3a57] flex-1">Secuencial FIFO</dd>
+                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">Criterio</dt>
+                <dd className="text-sm font-semibold text-[#242C4F] flex-1">Secuencial FIFO</dd>
               </div>
               <div className="flex items-start gap-3 py-2">
-                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">Letrado sugerido</dt>
-                <dd className="text-sm font-semibold text-[#1b3a57] flex-1">
+                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">Letrado sugerido</dt>
+                <dd className="text-sm font-semibold text-[#242C4F] flex-1">
                   {(() => {
                     const fifo = area ? getAbogadosFifo(area as 'CIVIL' | 'LABORAL') : []
                     return fifo[0] ? getNombreCompleto(fifo[0]) : '—'
@@ -514,17 +514,17 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
         <hr className="border-[rgba(0,0,0,0.08)] mb-5" />
 
         {/* ── Datos de Recepción ── */}
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Datos de Recepción</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#758A93] mb-2">Datos de Recepción</p>
         <dl className="mb-5">
           {CAMPOS_COMUNES_MESA.filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '').length === 0 ? (
-            <p className="text-sm text-[#4a6a84] italic">Sin datos adicionales.</p>
+            <p className="text-sm text-[#758A93] italic">Sin datos adicionales.</p>
           ) : (
             CAMPOS_COMUNES_MESA
               .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '')
               .map(c => (
                 <div key={c.id} className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)] last:border-0">
-                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">{c.label}</dt>
-                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">{String(camposMesa[c.id])}</dd>
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">{c.label}</dt>
+                  <dd className="text-sm font-semibold text-[#242C4F] flex-1">{String(camposMesa[c.id])}</dd>
                 </div>
               ))
           )}
@@ -533,18 +533,18 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
         <hr className="border-[rgba(0,0,0,0.08)] mb-5" />
 
         {/* ── Campos del tipo ── */}
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] mb-2">Campos del tipo</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#758A93] mb-2">Campos del tipo</p>
         <dl>
           {tipo && getCamposFormulario(tipo, 'mesa', area || undefined)
             .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '').length === 0 ? (
-            <p className="text-sm text-[#4a6a84] italic">Sin campos adicionales completados.</p>
+            <p className="text-sm text-[#758A93] italic">Sin campos adicionales completados.</p>
           ) : (
             tipo && getCamposFormulario(tipo, 'mesa', area || undefined)
               .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '')
               .map(c => (
                 <div key={c.id} className="flex items-start gap-3 py-2 border-b border-[rgba(0,0,0,0.05)] last:border-0">
-                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#4a6a84] w-36 flex-shrink-0">{c.label}</dt>
-                  <dd className="text-sm font-semibold text-[#1b3a57] flex-1">{String(camposMesa[c.id])}</dd>
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-[#758A93] w-36 flex-shrink-0">{c.label}</dt>
+                  <dd className="text-sm font-semibold text-[#242C4F] flex-1">{String(camposMesa[c.id])}</dd>
                 </div>
               ))
           )}

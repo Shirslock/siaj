@@ -19,8 +19,8 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
 const AVATAR_COLORS: Record<RolSistema, string> = {
   REFERENTE:      'bg-[#1b3a57] text-white',
   COORDINADOR:    'bg-[#2a5278] text-white',
-  ABOGADO:        'bg-[#4a6a84] text-white',
-  ADMINISTRATIVO: 'bg-[#7a9ab4] text-white',
+  ABOGADO:        'bg-[#758A93] text-white',
+  ADMINISTRATIVO: 'bg-[#9AA6B2] text-white',
 }
 
 const ROL_LABEL: Record<RolSistema, string> = {
@@ -91,7 +91,7 @@ export function Sidebar({ activePage }: SidebarProps) {
               <p className="text-sm font-semibold text-[#1b3a57] truncate leading-tight">
                 {getNombreCompleto(usuarioActivo)}
               </p>
-              <p className="text-[10px] text-[#4a6a84] truncate">
+              <p className="text-[10px] text-[#758A93] truncate">
                 {ROL_LABEL[usuarioActivo.rolSistema]}
               </p>
             </div>
@@ -110,7 +110,7 @@ export function Sidebar({ activePage }: SidebarProps) {
               title={sidebarCollapsed ? item.label : undefined}
               className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg mb-0.5 transition-colors group ${
                 active
-                  ? 'bg-[#C4DFE8] text-[#1b3a57] border-l-2 border-[#1b3a57]'
+                  ? 'bg-[#E4EDF2] text-[#1b3a57] border-l-2 border-[#1b3a57]'
                   : 'text-[#1b3a57] hover:bg-[#d8d8d8] border-l-2 border-transparent'
               } ${sidebarCollapsed ? 'justify-center' : ''}`}
             >

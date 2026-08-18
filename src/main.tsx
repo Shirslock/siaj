@@ -37,7 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         toastStyle={{
           fontFamily: 'Inter, sans-serif',
           fontSize: '14px',
-          color: '#1b3a57',
+          color: '#242C4F',
           borderRadius: '12px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
         }}

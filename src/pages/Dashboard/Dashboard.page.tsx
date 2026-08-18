@@ -42,17 +42,17 @@ function WidgetCard({
     <div
       onClick={onClick}
       className={`p-4 rounded-xl border bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#242C4F]' : ''
       } ${
-        highlight ? 'border-[#1b3a57] ring-2 ring-[#1b3a57] ring-offset-1' : 'border-[rgba(0,0,0,0.07)]'
+        highlight ? 'border-[#242C4F] ring-2 ring-[#256386] ring-offset-1' : 'border-[rgba(0,0,0,0.07)]'
       }`}
     >
       {titulo && (
-        <p className="text-[11px] font-semibold text-[#4a6a84] uppercase tracking-wide mb-0.5">
+        <p className="text-[11px] font-semibold text-[#758A93] uppercase tracking-wide mb-0.5">
           {titulo}
         </p>
       )}
-      {sub && <p className="text-[11px] text-[#7a9ab4] mb-3">{sub}</p>}
+      {sub && <p className="text-[11px] text-[#9AA6B2] mb-3">{sub}</p>}
       {children}
     </div>
   )
@@ -77,14 +77,14 @@ function TarjetaVencimiento({
     <div
       onClick={onClick}
       className={`p-4 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#1b3a57] hover:ring-offset-1' : ''
+        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#256386] hover:ring-offset-1' : ''
       }`}
     >
       <div className="flex items-center gap-1.5 mb-1.5">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.dot }} />
-        <p className="text-[11px] text-[#7a9ab4] uppercase tracking-wide">{label}</p>
+        <p className="text-[11px] text-[#9AA6B2] uppercase tracking-wide">{label}</p>
       </div>
-      <p className="text-[28px] font-semibold text-[#1b3a57] leading-none">{valor}</p>
+      <p className="text-[28px] font-semibold text-[#242C4F] leading-none">{valor}</p>
     </div>
   )
 }
@@ -108,13 +108,13 @@ function KpiCard({
     <div
       onClick={onClick}
       className={`p-4 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white border-l-4 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#1b3a57] hover:ring-offset-1' : ''
+        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#256386] hover:ring-offset-1' : ''
       }`}
       style={{ borderLeftColor: badgeColor ? barColors[badgeColor] : '#e0e6ec' }}
     >
-      <p className="text-[11px] text-[#7a9ab4] uppercase tracking-wide mb-1.5">{label}</p>
-      <p className="text-[24px] font-semibold text-[#1b3a57] leading-none mb-1">{value}</p>
-      {sub && <p className="text-[11px] text-[#7a9ab4]">{sub}</p>}
+      <p className="text-[11px] text-[#9AA6B2] uppercase tracking-wide mb-1.5">{label}</p>
+      <p className="text-[24px] font-semibold text-[#242C4F] leading-none mb-1">{value}</p>
+      {sub && <p className="text-[11px] text-[#9AA6B2]">{sub}</p>}
     </div>
   )
 }
@@ -126,7 +126,7 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
 
   if (!panel) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-8 text-[#7a9ab4]">
+      <div className="h-full flex flex-col items-center justify-center text-center p-8 text-[#9AA6B2]">
         <Icon name="timeline" size={40} className="mb-3 opacity-40" />
         <p className="text-sm font-medium mb-1">Sin selección</p>
         <p className="text-[12px]">
@@ -140,20 +140,20 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,0,0,0.07)] flex-shrink-0">
         <div>
-          <p className="text-[12px] font-semibold text-[#1b3a57]">{panel.titulo}</p>
-          <p className="text-[11px] text-[#7a9ab4]">{panel.expedientes.length} actuaciones</p>
+          <p className="text-[12px] font-semibold text-[#242C4F]">{panel.titulo}</p>
+          <p className="text-[11px] text-[#9AA6B2]">{panel.expedientes.length} actuaciones</p>
         </div>
         <button
           onClick={onCerrar}
-          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#f0f0f0] transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#E3E4E9] transition-colors"
         >
-          <Icon name="close" size={16} className="text-[#4a6a84]" />
+          <Icon name="close" size={16} className="text-[#758A93]" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto divide-y divide-[rgba(0,0,0,0.05)]">
         {panel.expedientes.length === 0 ? (
-          <p className="text-[12px] text-[#7a9ab4] text-center py-8">
+          <p className="text-[12px] text-[#9AA6B2] text-center py-8">
             Sin actuaciones en este indicador.
           </p>
         ) : (
@@ -161,7 +161,7 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
             <div
               key={exp.id}
               onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
-              className="px-4 py-3 hover:bg-[#f5f5f5] cursor-pointer transition-colors"
+              className="px-4 py-3 hover:bg-[#EEEBE6] cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-2 mb-0.5">
                 <span
@@ -175,12 +175,12 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
                 >
                   {exp.area}
                 </span>
-                <span className="text-[11px] text-[#7a9ab4]">{exp.id}</span>
+                <span className="text-[11px] text-[#9AA6B2]">{exp.id}</span>
               </div>
-              <p className="text-[12px] text-[#1b3a57] font-medium line-clamp-2 mb-0.5">
+              <p className="text-[12px] text-[#242C4F] font-medium line-clamp-2 mb-0.5">
                 {exp.caratula}
               </p>
-              <p className="text-[11px] text-[#7a9ab4]">
+              <p className="text-[11px] text-[#9AA6B2]">
                 {exp.estadoProcesal ?? exp.estado}
                 {exp.abogado_id && (() => {
                   const u = getUsuarioById(exp.abogado_id)
@@ -271,8 +271,8 @@ function PanelLetrado({
             }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#4a6a84' }} axisLine={false} tickLine={false} width={110} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#758A93' }} axisLine={false} tickLine={false} width={110} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Bar dataKey="value" fill="#2a78d6" radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
           </BarChart>
@@ -344,8 +344,8 @@ function PanelLetrado({
               {DATA_VINCULOS_AREA.map(d => (
                 <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
                   <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                  <span className="text-[#4a6a84]">{d.name}</span>
-                  <span className="font-semibold text-[#1b3a57] ml-auto pl-3">{d.value}</span>
+                  <span className="text-[#758A93]">{d.name}</span>
+                  <span className="font-semibold text-[#242C4F] ml-auto pl-3">{d.value}</span>
                 </div>
               ))}
             </div>
@@ -361,8 +361,8 @@ function PanelLetrado({
               onClick={() => setPanelActivo({ titulo: 'Actuaciones por estado', expedientes: misExpedientes })}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a9ab4' }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
-              <YAxis tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#9AA6B2' }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
               <Bar dataKey="value" fill="#7F77DD" radius={[4, 4, 0, 0]} barSize={26} cursor="pointer" />
             </BarChart>
@@ -443,7 +443,7 @@ function FunnelChart({ onSelect }: { onSelect?: (label: string) => void }) {
               y={midY - maxH / 2 - 20}
               textAnchor="middle"
               fontSize={10}
-              fill="#4a6a84"
+              fill="#758A93"
               fontFamily="system-ui,sans-serif"
             >
               {d.label}
@@ -464,7 +464,7 @@ function FunnelChart({ onSelect }: { onSelect?: (label: string) => void }) {
               y={midY + maxH / 2 + 30}
               textAnchor="middle"
               fontSize={9}
-              fill="#7a9ab4"
+              fill="#9AA6B2"
               fontFamily="system-ui,sans-serif"
             >
               causas
@@ -563,7 +563,7 @@ function GaugeUrgencia({ urgentes, total }: { urgentes: number; total: number })
           </PieChart>
         </ResponsiveContainer>
         <p className="text-[22px] font-semibold -mt-6" style={{ color }}>{pct.toFixed(1)}%</p>
-        <p className="text-[11px] text-[#7a9ab4]">{urgentes} urgentes sobre {total} activas</p>
+        <p className="text-[11px] text-[#9AA6B2]">{urgentes} urgentes sobre {total} activas</p>
       </div>
     </WidgetCard>
   )
@@ -574,7 +574,7 @@ function TablaComplejidad({ setPanelActivo, expedientes }: { setPanelActivo: Set
     <WidgetCard titulo="Complejidad por letrado">
       <table className="w-full text-[12px]">
         <thead>
-          <tr className="text-[10px] text-[#7a9ab4] uppercase">
+          <tr className="text-[10px] text-[#9AA6B2] uppercase">
             <th className="text-left pb-2">Letrado</th>
             <th className="text-right pb-2">Urgentes</th>
             <th className="text-right pb-2">Total</th>
@@ -589,11 +589,11 @@ function TablaComplejidad({ setPanelActivo, expedientes }: { setPanelActivo: Set
               <tr
                 key={row.letrado}
                 onClick={() => setPanelActivo({ titulo: `Complejidad — ${row.letrado}`, expedientes })}
-                className="cursor-pointer hover:bg-[#f5f5f5] transition-colors"
+                className="cursor-pointer hover:bg-[#EEEBE6] transition-colors"
               >
-                <td className="py-1.5 text-[#1b3a57] font-medium">{row.letrado}</td>
-                <td className="py-1.5 text-right text-[#4a6a84]">{row.urgentes}</td>
-                <td className="py-1.5 text-right text-[#4a6a84]">{row.total}</td>
+                <td className="py-1.5 text-[#242C4F] font-medium">{row.letrado}</td>
+                <td className="py-1.5 text-right text-[#758A93]">{row.urgentes}</td>
+                <td className="py-1.5 text-right text-[#758A93]">{row.total}</td>
                 <td className="py-1.5 text-right">
                   <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${color}`}>{pct}%</span>
                 </td>
@@ -619,7 +619,7 @@ function HeatMapLugares({ setPanelActivo, expedientes }: { setPanelActivo: SetPa
     <WidgetCard titulo="Top lugares de hechos">
       <table className="w-full text-[12px]">
         <thead>
-          <tr className="text-[10px] text-[#7a9ab4] uppercase">
+          <tr className="text-[10px] text-[#9AA6B2] uppercase">
             <th className="text-left pb-2">Estación / Km</th>
             <th className="text-center pb-2">Civil</th>
             <th className="text-center pb-2">Laboral</th>
@@ -636,11 +636,11 @@ function HeatMapLugares({ setPanelActivo, expedientes }: { setPanelActivo: SetPa
                 onClick={() => setPanelActivo({ titulo: `Lugar de hechos — ${row.lugar}`, expedientes })}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <td className="py-1.5 text-[#1b3a57]">{row.lugar}</td>
+                <td className="py-1.5 text-[#242C4F]">{row.lugar}</td>
                 <td className={`text-center py-1.5 rounded ${bg(row.civil)}`}>{row.civil}</td>
                 <td className={`text-center py-1.5 rounded ${bg(row.laboral)}`}>{row.laboral}</td>
                 <td className={`text-center py-1.5 rounded ${bg(row.penal)}`}>{row.penal}</td>
-                <td className="text-right py-1.5 font-semibold text-[#1b3a57]">{total}</td>
+                <td className="text-right py-1.5 font-semibold text-[#242C4F]">{total}</td>
               </tr>
             )
           })}
@@ -711,8 +711,8 @@ function PanelGerencia({
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={DATA_INGRESADAS_CERRADAS} margin={{ left: 0, right: 10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="ingresadas" name="Ingresadas" fill="#2a78d6" radius={[4, 4, 0, 0]} barSize={16} />
@@ -747,8 +747,8 @@ function PanelGerencia({
             }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis dataKey="area" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="area" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {SUBESTADOS_KEYS.map((key, i) => (
@@ -772,8 +772,8 @@ function PanelGerencia({
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={DATA_ESTACIONALIDAD} margin={{ left: 0, right: 10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis dataKey="mes" tick={{ fontSize: 9, fill: '#7a9ab4' }} axisLine={false} tickLine={false} interval={1} />
-            <YAxis tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="mes" tick={{ fontSize: 9, fill: '#9AA6B2' }} axisLine={false} tickLine={false} interval={1} />
+            <YAxis tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey="Civil" stroke={COLOR_AREA.CIVIL} strokeWidth={2} dot={false} />
@@ -796,8 +796,8 @@ function PanelGerencia({
             }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#4a6a84' }} axisLine={false} tickLine={false} width={140} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#758A93' }} axisLine={false} tickLine={false} width={140} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Bar dataKey="value" fill="#2a78d6" radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
           </BarChart>
@@ -817,8 +817,8 @@ function PanelGerencia({
             }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="juzgado" tick={{ fontSize: 10, fill: '#4a6a84' }} axisLine={false} tickLine={false} width={130} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="juzgado" tick={{ fontSize: 10, fill: '#758A93' }} axisLine={false} tickLine={false} width={130} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="ganadas" name="Ganadas" fill="#97C459" radius={[0, 4, 4, 0]} barSize={12} cursor="pointer" />
@@ -836,14 +836,14 @@ function HeaderPowerBI() {
   return (
     <div className="flex items-center justify-between pb-4 mb-4 border-b border-[rgba(0,0,0,0.07)]">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.08)] text-[11px] text-[#7a9ab4]">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.08)] text-[11px] text-[#9AA6B2]">
           <div className="w-2 h-2 rounded-full bg-[#F2C811]" />
           Power BI
         </div>
-        <span className="text-[13px] font-semibold text-[#1b3a57]">SIAJ Analytics</span>
-        <span className="text-[11px] text-[#7a9ab4]">Actualizado hace 3 min</span>
+        <span className="text-[13px] font-semibold text-[#242C4F]">SIAJ Analytics</span>
+        <span className="text-[11px] text-[#9AA6B2]">Actualizado hace 3 min</span>
       </div>
-      <button className="flex items-center gap-1.5 text-[12px] text-[#4a6a84] border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-1.5 hover:bg-[#f5f5f5] transition-colors">
+      <button className="flex items-center gap-1.5 text-[12px] text-[#758A93] border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-1.5 hover:bg-[#EEEBE6] transition-colors">
         <Icon name="download" size={14} />
         Exportar
       </button>
@@ -869,9 +869,9 @@ export default function DashboardPage() {
     <div className="flex flex-col h-full p-6">
       <HeaderPowerBI />
 
-      <p className="text-[#4a6a84] text-sm mb-4">
+      <p className="text-[#758A93] text-sm mb-4">
         Bienvenido/a,{' '}
-        <span className="font-semibold text-[#1b3a57]">
+        <span className="font-semibold text-[#242C4F]">
           {usuarioActivo?.nombre} {usuarioActivo?.apellido}
         </span>
       </p>

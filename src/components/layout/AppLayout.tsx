@@ -47,7 +47,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const esConfiguracion = pathname === '/configuracion'
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-[#EEEBE6]">
       <Sidebar activePage={activePage} />
       <Topbar titulo={titulo} />
       <main

@@ -24,8 +24,8 @@ type TipoFiltro = 'todas' | 'tareas' | 'actividades' | 'audiencias' | 'sistema'
 
 const TIPO_COLOR: Record<string, string> = {
   AUDIENCIA:  'bg-purple-100 text-purple-800 border-purple-300',
-  TAREA:      'bg-[#dbeafe] text-[#1b3a57] border-blue-200',
-  ACTIVIDAD:  'bg-[#C4DFE8] text-[#1b3a57] border-[#a8cdd8]',
+  TAREA:      'bg-[#dbeafe] text-[#242C4F] border-blue-200',
+  ACTIVIDAD:  'bg-[#E4EDF2] text-[#242C4F] border-[#a8cdd8]',
   SISTEMA:    'bg-slate-100 text-slate-700 border-slate-300',
 }
 
@@ -201,9 +201,9 @@ export default function AgendaPage() {
     return (
       <div className="bg-white rounded-2xl shadow-card overflow-hidden flex-1">
         {/* Header días */}
-        <div className="grid grid-cols-5 border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
+        <div className="grid grid-cols-5 border-b border-[rgba(0,0,0,0.08)] bg-[#E3E4E9]">
           {DIAS_SEMANA.map(d => (
-            <div key={d} className="px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#4a6a84] text-center">
+            <div key={d} className="px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#758A93] text-center">
               {d}
             </div>
           ))}
@@ -248,9 +248,9 @@ export default function AgendaPage() {
                 <div
                   key={iso}
                   onClick={() => { setDiaSeleccionado(iso); setFormEvento({ ...BLANK_EVENTO, fecha: iso }) }}
-                  className={`border-b border-r border-[rgba(0,0,0,0.05)] min-h-[120px] p-2 cursor-pointer transition-colors hover:bg-[#f0f0f0] ${isSel ? 'bg-[rgba(196,223,232,0.30)]' : ''}`}
+                  className={`border-b border-r border-[rgba(0,0,0,0.05)] min-h-[120px] p-2 cursor-pointer transition-colors hover:bg-[#E3E4E9] ${isSel ? 'bg-[rgba(196,223,232,0.30)]' : ''}`}
                 >
-                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${isToday ? 'bg-[#1b3a57] text-white' : 'text-[#1b3a57]'}`}>
+                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${isToday ? 'bg-[#256386] text-white' : 'text-[#242C4F]'}`}>
                     {fecha.getDate()}
                   </span>
                   <div className="mt-1 space-y-0.5">
@@ -258,7 +258,7 @@ export default function AgendaPage() {
                       <EventoChip key={ev.id} ev={ev} onClick={() => setAgendaEvDetalle(ev)} />
                     ))}
                     {evs.length > 3 && (
-                      <p className="text-[9px] text-[#4a6a84] font-bold">+{evs.length - 3} más</p>
+                      <p className="text-[9px] text-[#758A93] font-bold">+{evs.length - 3} más</p>
                     )}
                     {evsCustom.map(ev => (
                       <EventoChip key={ev.id} ev={ev} onClick={() => setEventoDetalle(ev)} />
@@ -293,18 +293,18 @@ export default function AgendaPage() {
               <div
                 key={iso}
                 onClick={() => setDiaSeleccionado(iso)}
-                className={`border-r border-[rgba(0,0,0,0.05)] cursor-pointer transition-colors ${isSel ? 'bg-[rgba(196,223,232,0.20)]' : 'hover:bg-[#f9f9f9]'}`}
+                className={`border-r border-[rgba(0,0,0,0.05)] cursor-pointer transition-colors ${isSel ? 'bg-[rgba(196,223,232,0.20)]' : 'hover:bg-[#E3E4E9]'}`}
               >
                 {/* Header columna */}
-                <div className={`px-3 py-3 border-b border-[rgba(0,0,0,0.08)] text-center ${isToday ? 'bg-[#1b3a57]' : 'bg-[#f9f9f9]'}`}>
-                  <p className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-white' : 'text-[#4a6a84]'}`}>
+                <div className={`px-3 py-3 border-b border-[rgba(0,0,0,0.08)] text-center ${isToday ? 'bg-[#256386]' : 'bg-[#E3E4E9]'}`}>
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-white' : 'text-[#758A93]'}`}>
                     {DIAS_FULL[i]}
                   </p>
-                  <p className={`text-2xl font-bold mt-0.5 ${isToday ? 'text-white' : 'text-[#1b3a57]'}`}>
+                  <p className={`text-2xl font-bold mt-0.5 ${isToday ? 'text-white' : 'text-[#242C4F]'}`}>
                     {fecha.getDate()}
                   </p>
                   {total > 0 && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-[#C4DFE8] text-[#1b3a57]'}`}>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-[#E4EDF2] text-[#242C4F]'}`}>
                       {total} evento{total !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -332,7 +332,7 @@ export default function AgendaPage() {
                     </button>
                   ))}
                   {total === 0 && (
-                    <p className="text-[10px] text-[#4a6a84] text-center pt-8 opacity-50">Sin eventos</p>
+                    <p className="text-[10px] text-[#758A93] text-center pt-8 opacity-50">Sin eventos</p>
                   )}
                 </div>
               </div>
@@ -356,16 +356,16 @@ export default function AgendaPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={navAnterior} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#1b3a57]">
+          <button onClick={navAnterior} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#E3E4E9] text-[#242C4F]">
             <Icon name="arrow_back" size={18} />
           </button>
-          <h1 className="font-headline font-extrabold text-2xl text-[#1b3a57] min-w-[260px] text-center">
+          <h1 className="font-headline font-extrabold text-2xl text-[#242C4F] min-w-[260px] text-center">
             {tituloHeader}
           </h1>
-          <button onClick={navSiguiente} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#1b3a57]">
+          <button onClick={navSiguiente} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#E3E4E9] text-[#242C4F]">
             <Icon name="arrow_forward" size={18} />
           </button>
-          <button onClick={irHoy} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-[rgba(0,0,0,0.15)] hover:bg-[#e8e8e8] text-[#1b3a57] transition-colors">
+          <button onClick={irHoy} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-[rgba(0,0,0,0.15)] hover:bg-[#E3E4E9] text-[#242C4F] transition-colors">
             Hoy
           </button>
         </div>
@@ -373,12 +373,12 @@ export default function AgendaPage() {
         <div className="flex items-center gap-2 flex-wrap">
 
           {/* Toggle vista */}
-          <div className="flex items-center gap-1 bg-[#e8e8e8] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#E3E4E9] rounded-xl p-1">
             {(['mes','semana'] as Vista[]).map(v => (
               <button
                 key={v}
                 onClick={() => setVista(v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${vista === v ? 'bg-white shadow-sm text-[#1b3a57]' : 'text-[#4a6a84] hover:text-[#1b3a57]'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${vista === v ? 'bg-white shadow-sm text-[#242C4F]' : 'text-[#758A93] hover:text-[#242C4F]'}`}
               >
                 {v === 'mes' ? 'Mes' : 'Semana'}
               </button>
@@ -386,7 +386,7 @@ export default function AgendaPage() {
           </div>
 
           {/* Filtro tipo */}
-          <div className="flex items-center gap-1 bg-[#e8e8e8] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#E3E4E9] rounded-xl p-1">
             {([
               { key: 'todas'      as TipoFiltro, label: 'Todas' },
               { key: 'tareas'     as TipoFiltro, label: 'Tareas' },
@@ -396,7 +396,7 @@ export default function AgendaPage() {
               <button
                 key={f.key}
                 onClick={() => setFiltroTipo(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filtroTipo === f.key ? 'bg-white shadow-sm text-[#1b3a57]' : 'text-[#4a6a84] hover:text-[#1b3a57]'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filtroTipo === f.key ? 'bg-white shadow-sm text-[#242C4F]' : 'text-[#758A93] hover:text-[#242C4F]'}`}
               >
                 {f.label}
               </button>
@@ -408,7 +408,7 @@ export default function AgendaPage() {
             <select
               value={filtroArea}
               onChange={e => setFiltroArea(e.target.value)}
-              className="px-2 py-1.5 rounded-lg text-xs border border-[rgba(0,0,0,0.15)] bg-white text-[#1b3a57] focus:outline-none"
+              className="px-2 py-1.5 rounded-lg text-xs border border-[rgba(0,0,0,0.15)] bg-white text-[#242C4F] focus:outline-none"
             >
               <option value="">Todas las áreas</option>
               <option value="CIVIL">Civil</option>
@@ -422,7 +422,7 @@ export default function AgendaPage() {
             <select
               value={filtroAbogado}
               onChange={e => setFiltroAbogado(e.target.value)}
-              className="px-2 py-1.5 rounded-lg text-xs border border-[rgba(0,0,0,0.15)] bg-white text-[#1b3a57] focus:outline-none max-w-[180px]"
+              className="px-2 py-1.5 rounded-lg text-xs border border-[rgba(0,0,0,0.15)] bg-white text-[#242C4F] focus:outline-none max-w-[180px]"
             >
               <option value="">Todos los letrados</option>
               {abogadosFiltro.map(u => (
@@ -457,17 +457,17 @@ export default function AgendaPage() {
 
         {/* Panel lateral día */}
         <div className="w-72 flex-shrink-0 bg-white rounded-2xl shadow-card p-4 sticky top-4">
-          <p className="text-sm font-bold text-[#1b3a57] mb-1">
+          <p className="text-sm font-bold text-[#242C4F] mb-1">
             {new Date(diaSel + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
-          <p className="text-xs text-[#4a6a84] mb-3">
+          <p className="text-xs text-[#758A93] mb-3">
             {eventosPanel.length + eventosCustomPanel.length} evento{(eventosPanel.length + eventosCustomPanel.length) !== 1 ? 's' : ''}
           </p>
 
           {eventosPanel.length === 0 && eventosCustomPanel.length === 0 ? (
             <div className="py-8 text-center">
-              <Icon name="inbox" size={32} className="block mb-2 mx-auto text-[#4a6a84]" />
-              <p className="text-xs text-[#4a6a84]">Sin eventos para este día.</p>
+              <Icon name="inbox" size={32} className="block mb-2 mx-auto text-[#758A93]" />
+              <p className="text-xs text-[#758A93]">Sin eventos para este día.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -498,7 +498,7 @@ export default function AgendaPage() {
                         className={`flex-shrink-0 p-0.5 rounded-lg transition-colors ${
                           ev.estado === 'COMPLETADA'
                             ? 'text-green-600 opacity-100 cursor-default'
-                            : 'text-[#4a6a84] hover:bg-green-100 hover:text-green-600'
+                            : 'text-[#758A93] hover:bg-green-100 hover:text-green-600'
                         }`}
                       >
                         <Icon name="check_circle" size={16} />
@@ -506,12 +506,12 @@ export default function AgendaPage() {
                     )}
                   </div>
                   <p
-                    className="text-sm font-semibold text-[#1b3a57] cursor-pointer hover:underline"
+                    className="text-sm font-semibold text-[#242C4F] cursor-pointer hover:underline"
                     onClick={() => navigate(RUTAS.EXPEDIENTE(ev.expediente_id))}
                   >
                     {ev.titulo}
                   </p>
-                  <p className="text-[10px] font-mono text-[#4a6a84] mt-0.5">{ev.expediente_id}</p>
+                  <p className="text-[10px] font-mono text-[#758A93] mt-0.5">{ev.expediente_id}</p>
                 </div>
               ))}
               {eventosCustomPanel.map(ev => (
@@ -570,9 +570,9 @@ export default function AgendaPage() {
             <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full border ${TIPO_COLOR[agendaEvDetalle.tipo ?? 'ACTIVIDAD']}`}>
               {agendaEvDetalle.tipo === 'AUDIENCIA' ? 'Audiencia' : agendaEvDetalle.tipo === 'TAREA' ? 'Tarea' : 'Actividad'}
             </span>
-            <p className="text-sm text-[#4a6a84]">📅 {agendaEvDetalle.fecha_vencimiento}</p>
-            <p className="text-sm text-[#4a6a84]">📁 Actuación: <span className="font-mono font-bold text-[#1b3a57]">{agendaEvDetalle.expediente_id}</span></p>
-            <p className="text-sm text-[#4a6a84]">🏛️ Área: {agendaEvDetalle.area}</p>
+            <p className="text-sm text-[#758A93]">📅 {agendaEvDetalle.fecha_vencimiento}</p>
+            <p className="text-sm text-[#758A93]">📁 Actuación: <span className="font-mono font-bold text-[#242C4F]">{agendaEvDetalle.expediente_id}</span></p>
+            <p className="text-sm text-[#758A93]">🏛️ Área: {agendaEvDetalle.area}</p>
           </div>
         )}
       </Modal>
@@ -597,8 +597,8 @@ export default function AgendaPage() {
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${COLOR_EVENTO[eventoDetalle.tipo]}`}>
               {eventoDetalle.tipo.charAt(0).toUpperCase() + eventoDetalle.tipo.slice(1)}
             </span>
-            <p className="text-sm text-[#4a6a84]">📅 {eventoDetalle.fecha} {eventoDetalle.hora && `· ${eventoDetalle.hora}`}</p>
-            {eventoDetalle.descripcion && <p className="text-sm text-[#1b3a57]">{eventoDetalle.descripcion}</p>}
+            <p className="text-sm text-[#758A93]">📅 {eventoDetalle.fecha} {eventoDetalle.hora && `· ${eventoDetalle.hora}`}</p>
+            {eventoDetalle.descripcion && <p className="text-sm text-[#242C4F]">{eventoDetalle.descripcion}</p>}
           </div>
         )}
       </Modal>

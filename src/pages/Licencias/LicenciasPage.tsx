@@ -34,7 +34,7 @@ function getEstado(l: Licencia): 'activa' | 'proxima' | 'finalizada' {
 const ESTADO_STYLE = {
   activa:     'bg-green-100 text-green-700',
   proxima:    'bg-blue-100 text-blue-700',
-  finalizada: 'bg-[#e8e8e8] text-[#4a6a84]',
+  finalizada: 'bg-[#E3E4E9] text-[#758A93]',
 }
 
 function SistemaLicencias({ licencias, esCoord }: { licencias: Licencia[]; esCoord: boolean }) {
@@ -76,7 +76,7 @@ function SistemaLicencias({ licencias, esCoord }: { licencias: Licencia[]; esCoo
         {(filtroUsuario || filtroEstado) && (
           <button
             onClick={() => { setFiltroUsuario(''); setFiltroEstado('') }}
-            className="flex items-center gap-1 text-xs text-[#4a6a84] hover:text-[#1b3a57]"
+            className="flex items-center gap-1 text-xs text-[#758A93] hover:text-[#242C4F]"
           >
             <Icon name="filter_list_off" size={14} /> Limpiar
           </button>
@@ -86,15 +86,15 @@ function SistemaLicencias({ licencias, esCoord }: { licencias: Licencia[]; esCoo
       {filtradas.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-8 text-center">
           <ClockIcon className="w-9 h-9 text-[#c0c0c0] mx-auto mb-2" />
-          <p className="text-sm text-[#4a6a84]">No hay licencias para mostrar.</p>
+          <p className="text-sm text-[#758A93]">No hay licencias para mostrar.</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-card overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[rgba(0,0,0,0.06)] bg-[#f9f9f9]">
+              <tr className="border-b border-[rgba(0,0,0,0.06)] bg-[#E3E4E9]">
                 {['Usuario', 'Motivo', 'Desde', 'Hasta', 'Reemplazante', 'Estado'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93]">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -105,13 +105,13 @@ function SistemaLicencias({ licencias, esCoord }: { licencias: Licencia[]; esCoo
                 const estado = getEstado(l)
                 return (
                   <tr key={l.id} className="hover:bg-[#f9fbfc] transition-colors">
-                    <td className="px-4 py-3 text-sm font-semibold text-[#1b3a57]">{u ? getNombreCompleto(u) : '—'}</td>
-                    <td className="px-4 py-3 text-sm text-[#4a6a84] capitalize">
+                    <td className="px-4 py-3 text-sm font-semibold text-[#242C4F]">{u ? getNombreCompleto(u) : '—'}</td>
+                    <td className="px-4 py-3 text-sm text-[#758A93] capitalize">
                       {l.motivo === 'otro' ? l.motivo_detalle : MOTIVOS.find(m => m.value === l.motivo)?.label}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#4a6a84]">{formatFecha(l.fecha_inicio)}</td>
-                    <td className="px-4 py-3 text-sm text-[#4a6a84]">{formatFecha(l.fecha_fin)}</td>
-                    <td className="px-4 py-3 text-sm text-[#1b3a57]">{reempl ? getNombreCompleto(reempl) : '—'}</td>
+                    <td className="px-4 py-3 text-sm text-[#758A93]">{formatFecha(l.fecha_inicio)}</td>
+                    <td className="px-4 py-3 text-sm text-[#758A93]">{formatFecha(l.fecha_fin)}</td>
+                    <td className="px-4 py-3 text-sm text-[#242C4F]">{reempl ? getNombreCompleto(reempl) : '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize ${ESTADO_STYLE[estado]}`}>
                         {estado}
@@ -236,12 +236,12 @@ export default function LicenciasPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Licencias</h1>
-          <p className="text-sm text-[#4a6a84] mt-1">Gestioná tus ausencias y designá reemplazantes.</p>
+          <h1 className="font-headline font-extrabold text-3xl text-[#242C4F]">Licencias</h1>
+          <p className="text-sm text-[#758A93] mt-1">Gestioná tus ausencias y designá reemplazantes.</p>
         </div>
         <button
           onClick={() => { setForm(BLANK); setErrores({}); setModalNueva(true) }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1b3a57] text-white text-sm font-bold hover:opacity-90 transition-opacity shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#256386] text-white text-sm font-bold hover:opacity-90 transition-opacity shadow-sm"
         >
           <Icon name="add" size={18} />
           Nueva licencia
@@ -256,14 +256,14 @@ export default function LicenciasPage() {
             onClick={() => setVista(v)}
             className={`px-5 py-2 rounded-xl text-sm font-bold transition-colors ${
               vista === v
-                ? 'bg-[#1b3a57] text-white'
-                : 'bg-white border border-[rgba(0,0,0,0.10)] text-[#4a6a84] hover:text-[#1b3a57]'
+                ? 'bg-[#256386] text-white'
+                : 'bg-white border border-[rgba(0,0,0,0.10)] text-[#758A93] hover:text-[#242C4F]'
             }`}
           >
             {v === 'mis_licencias' ? 'Mis licencias' : v === 'soy_reemplazante' ? 'Como reemplazante' : 'Licencias del sistema'}
           </button>
         ))}
-        <p className="text-[11px] text-[#7a9ab4]">
+        <p className="text-[11px] text-[#9AA6B2]">
           {vista === 'mis_licencias'
             ? 'Tus licencias registradas'
             : vista === 'soy_reemplazante'
@@ -279,15 +279,15 @@ export default function LicenciasPage() {
           {misLicencias.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-card p-8 text-center">
               <ClockIcon className="w-9 h-9 text-[#c0c0c0] mx-auto mb-2" />
-              <p className="text-sm text-[#4a6a84]">No tenés licencias registradas.</p>
+              <p className="text-sm text-[#758A93]">No tenés licencias registradas.</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow-card overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[rgba(0,0,0,0.06)] bg-[#f9f9f9]">
+                  <tr className="border-b border-[rgba(0,0,0,0.06)] bg-[#E3E4E9]">
                     {['Motivo', 'Desde', 'Hasta', 'Reemplazante', 'Estado', ''].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93]">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -298,12 +298,12 @@ export default function LicenciasPage() {
                     const puedeEliminar = l.fecha_inicio >= HOY
                     return (
                       <tr key={l.id} className="hover:bg-[#f9fbfc] transition-colors">
-                        <td className="px-4 py-3 text-sm font-semibold text-[#1b3a57] capitalize">
+                        <td className="px-4 py-3 text-sm font-semibold text-[#242C4F] capitalize">
                           {l.motivo === 'otro' ? l.motivo_detalle : MOTIVOS.find(m => m.value === l.motivo)?.label}
                         </td>
-                        <td className="px-4 py-3 text-sm text-[#4a6a84]">{formatFecha(l.fecha_inicio)}</td>
-                        <td className="px-4 py-3 text-sm text-[#4a6a84]">{formatFecha(l.fecha_fin)}</td>
-                        <td className="px-4 py-3 text-sm text-[#1b3a57]">{reempl ? getNombreCompleto(reempl) : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[#758A93]">{formatFecha(l.fecha_inicio)}</td>
+                        <td className="px-4 py-3 text-sm text-[#758A93]">{formatFecha(l.fecha_fin)}</td>
+                        <td className="px-4 py-3 text-sm text-[#242C4F]">{reempl ? getNombreCompleto(reempl) : '—'}</td>
                         <td className="px-4 py-3">
                           <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize ${ESTADO_STYLE[estado]}`}>
                             {estado}
@@ -313,7 +313,7 @@ export default function LicenciasPage() {
                           {puedeEliminar && (
                             <button
                               onClick={() => setModalEliminar(l)}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors ml-auto"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#758A93] hover:bg-red-50 hover:text-red-600 transition-colors ml-auto"
                             >
                               <Icon name="delete" size={15} />
                             </button>
@@ -332,15 +332,15 @@ export default function LicenciasPage() {
           {comoReemplazante.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-card p-8 text-center">
               <ClockIcon className="w-9 h-9 text-[#c0c0c0] mx-auto mb-2" />
-              <p className="text-sm text-[#4a6a84]">No sos reemplazante de ningún colega en este momento.</p>
+              <p className="text-sm text-[#758A93]">No sos reemplazante de ningún colega en este momento.</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow-card overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[rgba(0,0,0,0.06)] bg-[#f9f9f9]">
+                  <tr className="border-b border-[rgba(0,0,0,0.06)] bg-[#E3E4E9]">
                     {['Titular', 'Motivo', 'Desde', 'Hasta', 'Estado'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93]">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -350,12 +350,12 @@ export default function LicenciasPage() {
                     const estado  = getEstado(l)
                     return (
                       <tr key={l.id} className="hover:bg-[#f9fbfc] transition-colors">
-                        <td className="px-4 py-3 text-sm font-semibold text-[#1b3a57]">{titular ? getNombreCompleto(titular) : '—'}</td>
-                        <td className="px-4 py-3 text-sm text-[#4a6a84] capitalize">
+                        <td className="px-4 py-3 text-sm font-semibold text-[#242C4F]">{titular ? getNombreCompleto(titular) : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[#758A93] capitalize">
                           {l.motivo === 'otro' ? l.motivo_detalle : MOTIVOS.find(m => m.value === l.motivo)?.label}
                         </td>
-                        <td className="px-4 py-3 text-sm text-[#4a6a84]">{formatFecha(l.fecha_inicio)}</td>
-                        <td className="px-4 py-3 text-sm text-[#4a6a84]">{formatFecha(l.fecha_fin)}</td>
+                        <td className="px-4 py-3 text-sm text-[#758A93]">{formatFecha(l.fecha_inicio)}</td>
+                        <td className="px-4 py-3 text-sm text-[#758A93]">{formatFecha(l.fecha_fin)}</td>
                         <td className="px-4 py-3">
                           <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize ${ESTADO_STYLE[estado]}`}>
                             {estado}
@@ -389,12 +389,12 @@ export default function LicenciasPage() {
         size="md"
         footer={
           <>
-            <button onClick={() => setModalNueva(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8]">
+            <button onClick={() => setModalNueva(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9]">
               Cancelar
             </button>
             <button
               onClick={guardar}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#256386] text-white hover:opacity-90 transition-opacity"
             >
               <Icon name="save" size={15} />
               Guardar licencia
@@ -406,7 +406,7 @@ export default function LicenciasPage() {
 
           {/* Motivo */}
           <div>
-            <label className="field-label">Motivo <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Motivo <span className="text-[#C3292F]">*</span></label>
             <div className="grid grid-cols-2 gap-2">
               {MOTIVOS.map(m => (
                 <label
@@ -414,27 +414,27 @@ export default function LicenciasPage() {
                   className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors ${
                     form.motivo === m.value
                       ? 'bg-[rgba(196,223,232,0.30)] border-[#4a9ab5]'
-                      : 'border-[rgba(0,0,0,0.10)] hover:bg-[#f5f5f5]'
+                      : 'border-[rgba(0,0,0,0.10)] hover:bg-[#EEEBE6]'
                   }`}
                 >
                   <input
                     type="radio"
                     name="motivo"
-                    className="accent-[#1b3a57]"
+                    className="accent-[#256386]"
                     checked={form.motivo === m.value}
                     onChange={() => setForm(p => ({ ...p, motivo: m.value, motivo_detalle: '' }))}
                   />
-                  <span className="text-sm text-[#1b3a57]">{m.label}</span>
+                  <span className="text-sm text-[#242C4F]">{m.label}</span>
                 </label>
               ))}
             </div>
-            {errores.motivo && <p className="text-[11px] text-[#b91c1c] mt-1">{errores.motivo}</p>}
+            {errores.motivo && <p className="text-[11px] text-[#C3292F] mt-1">{errores.motivo}</p>}
           </div>
 
           {/* Detalle si es "otro" */}
           {form.motivo === 'otro' && (
             <div>
-              <label className="field-label">Especificá el motivo <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Especificá el motivo <span className="text-[#C3292F]">*</span></label>
               <input
                 type="text"
                 className="field-input w-full"
@@ -442,14 +442,14 @@ export default function LicenciasPage() {
                 value={form.motivo_detalle}
                 onChange={e => setForm(p => ({ ...p, motivo_detalle: e.target.value }))}
               />
-              {errores.motivo_detalle && <p className="text-[11px] text-[#b91c1c] mt-1">{errores.motivo_detalle}</p>}
+              {errores.motivo_detalle && <p className="text-[11px] text-[#C3292F] mt-1">{errores.motivo_detalle}</p>}
             </div>
           )}
 
           {/* Fechas */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="field-label">Fecha de inicio <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Fecha de inicio <span className="text-[#C3292F]">*</span></label>
               <input
                 type="date"
                 className="field-input w-full"
@@ -457,10 +457,10 @@ export default function LicenciasPage() {
                 value={form.fecha_inicio}
                 onChange={e => setForm(p => ({ ...p, fecha_inicio: e.target.value, fecha_fin: '' }))}
               />
-              {errores.fecha_inicio && <p className="text-[11px] text-[#b91c1c] mt-1">{errores.fecha_inicio}</p>}
+              {errores.fecha_inicio && <p className="text-[11px] text-[#C3292F] mt-1">{errores.fecha_inicio}</p>}
             </div>
             <div>
-              <label className="field-label">Fecha de fin <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Fecha de fin <span className="text-[#C3292F]">*</span></label>
               <input
                 type="date"
                 className="field-input w-full"
@@ -468,13 +468,13 @@ export default function LicenciasPage() {
                 value={form.fecha_fin}
                 onChange={e => setForm(p => ({ ...p, fecha_fin: e.target.value }))}
               />
-              {errores.fecha_fin && <p className="text-[11px] text-[#b91c1c] mt-1">{errores.fecha_fin}</p>}
+              {errores.fecha_fin && <p className="text-[11px] text-[#C3292F] mt-1">{errores.fecha_fin}</p>}
             </div>
           </div>
 
           {/* Reemplazante */}
           <div>
-            <label className="field-label">Reemplazante designado <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Reemplazante designado <span className="text-[#C3292F]">*</span></label>
             <select
               className="field-input w-full"
               value={form.reemplazante_id}
@@ -485,8 +485,8 @@ export default function LicenciasPage() {
                 <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
               ))}
             </select>
-            {errores.reemplazante_id && <p className="text-[11px] text-[#b91c1c] mt-1">{errores.reemplazante_id}</p>}
-            <p className="text-[11px] text-[#7a9ab4] mt-1">
+            {errores.reemplazante_id && <p className="text-[11px] text-[#C3292F] mt-1">{errores.reemplazante_id}</p>}
+            <p className="text-[11px] text-[#9AA6B2] mt-1">
               Este usuario tendrá acceso temporal a tus actuaciones durante el período indicado.
             </p>
           </div>
@@ -509,7 +509,7 @@ export default function LicenciasPage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setModalEliminar(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8]">
+            <button onClick={() => setModalEliminar(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#758A93] hover:bg-[#E3E4E9]">
               Cancelar
             </button>
             <button
@@ -525,10 +525,10 @@ export default function LicenciasPage() {
           <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
             <Icon name="delete" size={24} className="text-red-600" />
           </div>
-          <p className="text-sm text-[#1b3a57]">
+          <p className="text-sm text-[#242C4F]">
             ¿Eliminás la licencia del <strong>{modalEliminar ? formatFecha(modalEliminar.fecha_inicio) : ''}</strong> al <strong>{modalEliminar ? formatFecha(modalEliminar.fecha_fin) : ''}</strong>?
           </p>
-          <p className="text-xs text-[#4a6a84] mt-2">El reemplazante perderá el acceso temporal a tus actuaciones.</p>
+          <p className="text-xs text-[#758A93] mt-2">El reemplazante perderá el acceso temporal a tus actuaciones.</p>
         </div>
       </Modal>
     </div>

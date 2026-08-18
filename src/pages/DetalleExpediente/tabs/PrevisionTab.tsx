@@ -19,15 +19,15 @@ export function PrevisionTab({ exp }: Props) {
 
   function MetricCard({ titulo, valor, subtitulo, highlight }: { titulo: string; valor: string; subtitulo?: string; highlight?: boolean }) {
     return (
-      <div className={`rounded-2xl shadow-card p-5 ${highlight ? 'bg-[#C4DFE8]' : 'bg-white'}`}>
-        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${highlight ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>
+      <div className={`rounded-2xl shadow-card p-5 ${highlight ? 'bg-[#E4EDF2]' : 'bg-white'}`}>
+        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${highlight ? 'text-[#242C4F]' : 'text-[#758A93]'}`}>
           {titulo}
         </p>
-        <p className={`text-2xl font-headline font-bold ${highlight ? 'text-[#1b3a57]' : 'text-[#1b3a57]'}`}>
+        <p className={`text-2xl font-headline font-bold ${highlight ? 'text-[#242C4F]' : 'text-[#242C4F]'}`}>
           {valor}
         </p>
         {subtitulo && (
-          <p className={`text-xs mt-1 ${highlight ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>{subtitulo}</p>
+          <p className={`text-xs mt-1 ${highlight ? 'text-[#242C4F]' : 'text-[#758A93]'}`}>{subtitulo}</p>
         )}
       </div>
     )
@@ -66,13 +66,13 @@ export function PrevisionTab({ exp }: Props) {
       {montoBase > 0 && (
         <div className="bg-white rounded-2xl shadow-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[rgba(0,0,0,0.12)]">
-            <p className="text-sm font-semibold text-[#1b3a57]">Evolución estimada</p>
+            <p className="text-sm font-semibold text-[#242C4F]">Evolución estimada</p>
           </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[rgba(0,0,0,0.10)]">
                 {['Período', 'Tasa mensual', 'Acumulada', 'Monto estimado'].map(col => (
-                  <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
+                  <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#758A93]">
                     {col}
                   </th>
                 ))}
@@ -83,11 +83,11 @@ export function PrevisionTab({ exp }: Props) {
                 const factor = 1 + parseFloat(row.acumulada) / 100
                 const montoRow = montoBase * factor
                 return (
-                  <tr key={i} className="hover:bg-[#f0f0f0] transition-colors">
-                    <td className="py-3 px-4 text-xs font-medium text-[#1b3a57]">{row.periodo}</td>
-                    <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.tasa}</td>
-                    <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.acumulada}</td>
-                    <td className="py-3 px-4 text-xs font-mono text-[#1b3a57]">{formatMonto(montoRow)}</td>
+                  <tr key={i} className="hover:bg-[#E3E4E9] transition-colors">
+                    <td className="py-3 px-4 text-xs font-medium text-[#242C4F]">{row.periodo}</td>
+                    <td className="py-3 px-4 text-xs text-[#758A93]">{row.tasa}</td>
+                    <td className="py-3 px-4 text-xs text-[#758A93]">{row.acumulada}</td>
+                    <td className="py-3 px-4 text-xs font-mono text-[#242C4F]">{formatMonto(montoRow)}</td>
                   </tr>
                 )
               })}
@@ -96,7 +96,7 @@ export function PrevisionTab({ exp }: Props) {
         </div>
       )}
 
-      <p className="text-[11px] text-[#4a6a84] text-center">
+      <p className="text-[11px] text-[#758A93] text-center">
         Integración SIGEJ pendiente — Datos calculados en base a tasa de actualización interna SOFSA.
         Los valores son estimativos y no tienen carácter oficial.
       </p>

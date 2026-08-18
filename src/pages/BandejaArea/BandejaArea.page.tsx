@@ -49,7 +49,7 @@ function nombreAbogado(id: string | undefined): string {
 
 const filterInputCls =
   'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
-  'text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#1b3a57]'
+  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-[#242C4F]'
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -213,7 +213,7 @@ export default function BandejaAreaPage() {
         onClick={e => e.stopPropagation()}
       >
         <button
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
           onClick={() => { navigate(RUTAS.EXPEDIENTE(exp.id)); setMenuAbierto(null) }}
         >
           <Icon name="open_in_new" size={16} />
@@ -221,7 +221,7 @@ export default function BandejaAreaPage() {
         </button>
         {sinCausa ? (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
             onClick={() => { setModalAgrupar(exp.id); setMenuAbierto(null) }}
           >
             <Icon name="folder_open" size={16} />
@@ -229,7 +229,7 @@ export default function BandejaAreaPage() {
           </button>
         ) : (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
             onClick={() => desagrupar(exp.id)}
           >
             <Icon name="link_off" size={16} />
@@ -240,7 +240,7 @@ export default function BandejaAreaPage() {
           <>
             <hr className="border-[rgba(0,0,0,0.12)] my-1" />
             <button
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#E3E4E9] transition-colors cursor-pointer"
               onClick={() => { setModalReasignar(exp.id); setMenuAbierto(null) }}
             >
               <Icon name="forward" size={16} />
@@ -290,7 +290,7 @@ export default function BandejaAreaPage() {
           </td>
           {/* N° + Principal badge */}
           <td className="py-3 pl-2 pr-3">
-            <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
+            <p className="font-mono text-xs font-bold text-[#242C4F]">{exp.id}</p>
             {exp.es_principal && (
               <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 w-fit bg-green-100 text-green-700 border border-green-200/60">
                 Principal · PJN
@@ -299,31 +299,31 @@ export default function BandejaAreaPage() {
           </td>
           {/* Carátula */}
           <td className="py-3 px-3 max-w-xs">
-            <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
+            <p className="text-sm font-semibold text-[#242C4F] line-clamp-2">{exp.caratula}</p>
             {exp.numero_causa && (
-              <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{exp.numero_causa}</p>
+              <p className="font-mono text-[10px] text-[#758A93] mt-0.5">{exp.numero_causa}</p>
             )}
           </td>
           {/* Área */}
           <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
           {/* Tipo */}
           <td className="py-3 px-3">
-            <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
+            <span className="text-xs text-[#758A93]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
           </td>
           {/* Letrado */}
           <td className="py-3 px-3">
-            <span className="text-xs text-[#1b3a57]">{nombreAbogado(exp.abogado_id)}</span>
+            <span className="text-xs text-[#242C4F]">{nombreAbogado(exp.abogado_id)}</span>
           </td>
           {/* Estado */}
           <td className="py-3 px-3"><EstadoBadge code={exp.estado} label={exp.estado} /></td>
           {/* Recepción */}
           <td className="py-3 px-3 whitespace-nowrap">
-            <span className="text-xs text-[#4a6a84]">{formatFecha(exp.fecha_recepcion)}</span>
+            <span className="text-xs text-[#758A93]">{formatFecha(exp.fecha_recepcion)}</span>
           </td>
           {/* Menú */}
           <td className="py-3 px-3 text-center">
             <button
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#E3E4E9] text-[#758A93] transition-colors cursor-pointer"
               onClick={e => abrirMenu(e, exp.id)}
             >
               <Icon name="more_vert" size={18} />
@@ -343,8 +343,8 @@ export default function BandejaAreaPage() {
       {/* HEADER */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Actuaciones del Área</h1>
-          <p className="text-sm text-[#4a6a84] mt-1">
+          <h1 className="font-headline font-extrabold text-3xl text-[#242C4F]">Actuaciones del Área</h1>
+          <p className="text-sm text-[#758A93] mt-1">
             {filtros.area
               ? `Área ${AREA_LABEL[filtros.area as Area]} — ${expedientesFiltrados.length} expediente${expedientesFiltrados.length !== 1 ? 's' : ''}.`
               : `Todas las áreas — ${expedientesFiltrados.length} expediente${expedientesFiltrados.length !== 1 ? 's' : ''}.`
@@ -357,16 +357,16 @@ export default function BandejaAreaPage() {
       <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
         {/* Sub-header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
-          <span className="text-xs text-[#4a6a84] font-medium">
+          <span className="text-xs text-[#758A93] font-medium">
             {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
           </span>
           <div className="flex items-center gap-3">
-            <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
+            <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#242C4F] hover:opacity-80 transition-opacity">
               <Icon name="unfold_more" size={14} />
               Expandir todo
             </button>
             <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+            <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
               <Icon name="unfold_less" size={14} />
               Colapsar
             </button>
@@ -375,15 +375,15 @@ export default function BandejaAreaPage() {
               onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
               className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
                 filtros.soloUrgentes
-                  ? 'text-[#b91c1c]'
-                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                  ? 'text-[#C3292F]'
+                  : 'text-[#758A93] hover:text-[#242C4F]'
               }`}
             >
               <Icon name="warning" size={14} />
               {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
             </button>
             <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={limpiarFiltros} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+            <button onClick={limpiarFiltros} className="flex items-center gap-1 text-[10px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
               <Icon name="filter_alt_off" size={14} />
               Limpiar filtros
             </button>
@@ -394,20 +394,20 @@ export default function BandejaAreaPage() {
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               {/* Fila 1: labels */}
-              <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
-                <th className="w-10 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84]" />
-                <th className="w-44 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">N° Causa / Exp.</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Carátula</th>
-                <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Área</th>
-                <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Tipo</th>
-                <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Letrado</th>
-                <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Estado</th>
-                <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Recepción</th>
+              <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#E3E4E9]">
+                <th className="w-10 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93]" />
+                <th className="w-44 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">N° Causa / Exp.</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Carátula</th>
+                <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Área</th>
+                <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Tipo</th>
+                <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Letrado</th>
+                <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Estado</th>
+                <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Recepción</th>
                 <th className="w-16 px-3 py-2.5" />
               </tr>
 
               {/* Fila 2: inputs de filtro */}
-              <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
+              <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#EEEBE6]">
                 {/* expand — sin filtro */}
                 <th className="px-2 py-1.5" />
                 {/* N° Causa / Exp — buscar */}
@@ -473,7 +473,7 @@ export default function BandejaAreaPage() {
             <tbody className="divide-y divide-outline-variant/20">
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center text-[#4a6a84] text-sm">
+                  <td colSpan={9} className="py-16 text-center text-[#758A93] text-sm">
                     <Icon name="inbox" className="block mb-3" size={40} />
                     Sin resultados para los filtros aplicados.
                   </td>
@@ -491,13 +491,13 @@ export default function BandejaAreaPage() {
                     <Fragment key={numeroCausa}>
                       {/* Fila causa */}
                       <tr
-                        className="bg-[#f0f0f0] border-l-4 border-[rgba(27,58,87,0.30)] hover:border-[rgba(27,58,87,0.60)] cursor-pointer transition-colors"
+                        className="bg-[#E3E4E9] border-l-4 border-[rgba(27,58,87,0.30)] hover:border-[rgba(27,58,87,0.60)] cursor-pointer transition-colors"
                         onClick={() => toggleCausa(numeroCausa)}
                       >
                         {/* Expand icon */}
                         <td className="w-10 py-3 px-2 text-center">
                           <div className={`w-7 h-7 rounded-lg flex items-center justify-center mx-auto transition-all ${
-                            isExpanded ? 'bg-[#1b3a57] text-white' : 'bg-[#C4DFE8] text-[#1b3a57]'
+                            isExpanded ? 'bg-[#256386] text-white' : 'bg-[#E4EDF2] text-[#242C4F]'
                           }`}>
                             <Icon name="chevron_right" size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                           </div>
@@ -505,13 +505,13 @@ export default function BandejaAreaPage() {
                         {/* N° Causa */}
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Icon name="folder" size={14} className="text-[#1b3a57]" />
-                            <span className="font-mono text-xs font-bold text-[#1b3a57]">{numeroCausa}</span>
+                            <Icon name="folder" size={14} className="text-[#242C4F]" />
+                            <span className="font-mono text-xs font-bold text-[#242C4F]">{numeroCausa}</span>
                           </div>
-                          <p className="text-[10px] text-[#4a6a84] mt-0.5">{exps.length} expediente{exps.length !== 1 ? 's' : ''} vinculado{exps.length !== 1 ? 's' : ''}</p>
+                          <p className="text-[10px] text-[#758A93] mt-0.5">{exps.length} expediente{exps.length !== 1 ? 's' : ''} vinculado{exps.length !== 1 ? 's' : ''}</p>
                         </td>
                         {/* Carátula */}
-                        <td className="py-3 px-3 text-sm text-[#4a6a84]">—</td>
+                        <td className="py-3 px-3 text-sm text-[#758A93]">—</td>
                         {/* Área */}
                         <td className="py-3 px-3">
                           <div className="flex flex-wrap gap-1">
@@ -520,7 +520,7 @@ export default function BandejaAreaPage() {
                         </td>
                         {/* Tipo */}
                         <td className="py-3 px-3">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#1b3a57]">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#242C4F]">
                             <Icon name="link" size={11} />
                             Causa judicial
                           </span>
@@ -528,11 +528,11 @@ export default function BandejaAreaPage() {
                         {/* Letrado */}
                         <td className="py-3 px-3">
                           {abogadoIds.length === 0 ? (
-                            <span className="text-xs text-[#4a6a84]">—</span>
+                            <span className="text-xs text-[#758A93]">—</span>
                           ) : abogadoIds.length === 1 ? (
-                            <span className="text-xs text-[#1b3a57]">{nombreAbogado(abogadoIds[0])}</span>
+                            <span className="text-xs text-[#242C4F]">{nombreAbogado(abogadoIds[0])}</span>
                           ) : (
-                            <span className="text-xs text-[#1b3a57]">{nombreAbogado(abogadoIds[0])} <span className="text-[#4a6a84]">+{abogadoIds.length - 1}</span></span>
+                            <span className="text-xs text-[#242C4F]">{nombreAbogado(abogadoIds[0])} <span className="text-[#758A93]">+{abogadoIds.length - 1}</span></span>
                           )}
                         </td>
                         {/* Estado */}
@@ -541,12 +541,12 @@ export default function BandejaAreaPage() {
                         </td>
                         {/* Recepción */}
                         <td className="py-3 px-3 whitespace-nowrap">
-                          <span className="text-xs text-[#4a6a84]">{formatFecha(principal.fecha_recepcion)}</span>
+                          <span className="text-xs text-[#758A93]">{formatFecha(principal.fecha_recepcion)}</span>
                         </td>
                         {/* Ver todo */}
                         <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                           <button
-                            className="text-[11px] font-bold text-[#1b3a57] hover:underline whitespace-nowrap"
+                            className="text-[11px] font-bold text-[#242C4F] hover:underline whitespace-nowrap"
                             onClick={() => navigate(RUTAS.CAUSA(numeroCausa))}
                           >
                             Ver todo
@@ -567,34 +567,34 @@ export default function BandejaAreaPage() {
                     className="transition-colors"
                   >
                     <td className="w-10 py-3 px-2 text-center">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto bg-[#e8e8e8]">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto bg-[#E3E4E9]">
                         <Icon name="description" size={18} />
                       </div>
                     </td>
                     <td className="py-3 px-3">
-                      <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
-                      <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#4a6a84]">
+                      <p className="font-mono text-xs font-bold text-[#242C4F]">{exp.id}</p>
+                      <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#758A93]">
                         <Icon name="folder_off" size={11} />
                         Sin causa
                       </span>
                     </td>
                     <td className="py-3 px-3 max-w-xs">
-                      <p className="text-sm text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
+                      <p className="text-sm text-[#242C4F] line-clamp-2">{exp.caratula}</p>
                     </td>
                     <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
                     <td className="py-3 px-3">
-                      <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
+                      <span className="text-xs text-[#758A93]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
                     </td>
                     <td className="py-3 px-3">
-                      <span className="text-xs text-[#1b3a57]">{nombreAbogado(exp.abogado_id)}</span>
+                      <span className="text-xs text-[#242C4F]">{nombreAbogado(exp.abogado_id)}</span>
                     </td>
                     <td className="py-3 px-3"><EstadoBadge code={exp.estado} label={exp.estado} /></td>
                     <td className="py-3 px-3 whitespace-nowrap">
-                      <span className="text-xs text-[#4a6a84]">{formatFecha(exp.fecha_recepcion)}</span>
+                      <span className="text-xs text-[#758A93]">{formatFecha(exp.fecha_recepcion)}</span>
                     </td>
                     <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
                       <button
-                        className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto hover:bg-[#E3E4E9] text-[#758A93] transition-colors cursor-pointer"
                         onClick={e => abrirMenu(e, exp.id)}
                       >
                         <Icon name="more_vert" size={18} />
@@ -636,7 +636,7 @@ export default function BandejaAreaPage() {
             {causasExistentes.map(nc => (
               <button
                 key={nc}
-                className="w-full text-left px-3 py-2 text-sm font-mono text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
+                className="w-full text-left px-3 py-2 text-sm font-mono text-[#242C4F] hover:bg-[#E3E4E9] transition-colors"
                 onClick={() => setInputCausa(nc)}
               >
                 {nc}

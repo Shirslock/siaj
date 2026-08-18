@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIAJ — Guía de estilos v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#242c4f; --navy-hover:#32395a; --navy-active:#3f4665;
+  --teal:#256386; --teal-hover:#1e5271; --teal-active:#18415a; --teal-soft:#e4edf2;
+  --cream:#eeebe6; --paper:#fff;
+  --ink:#404040; --ink-muted:#758a93; --ink-faint:#9aa6b2;
+  --line:#bcc0c9; --line-soft:#e3e4e9;
+  --civil:#211c84; --penal:#4d55cc; --laboral:#7a73d1;
+  --danger:#c3292f; --success:#267f33; --warning:#fdc84a; --info:#0051ad;
+  --urgent:#ff7444; --neutral:#9aa6b2; --neutral-dark:#758a93;
+  --act-doc:#967e76;
+  --interna:#c44e8b; --externa:#2e838d;
+  --ag-aud:#e8a0bf; --ag-tar:#ba90c6; --ag-act:#6e85b7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.55}
+header{background:var(--teal);color:#fff;padding:28px 40px}
+header h1{font-family:"Public Sans",sans-serif;font-size:30px;margin:0 0 4px}
+header p{margin:0;opacity:.85;font-size:13px}
+main{max-width:1080px;margin:0 auto;padding:32px 40px 80px}
+section{background:var(--paper);border-radius:6px;box-shadow:0 1px 2px rgba(36,44,79,.06);padding:26px 28px;margin-bottom:22px}
+h2{font-family:"Public Sans",sans-serif;font-size:18px;color:var(--navy);margin:0 0 4px}
+h2 + .sub{color:var(--ink-muted);font-size:12.5px;margin:0 0 18px}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin:22px 0 10px;font-weight:700}
+h3:first-of-type{margin-top:0}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.sw{border:1px solid var(--line-soft);border-radius:6px;overflow:hidden}
+.sw .chip{height:56px}
+.sw .meta{padding:8px 10px}
+.sw .name{font-weight:600;font-size:12.5px;color:var(--navy)}
+.sw .hex{font-size:11.5px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.sw .use{font-size:11px;color:var(--ink-faint);margin-top:3px;display:block;line-height:1.35}
+.badges{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;line-height:1}
+.badge.outline{background:transparent;border:1px solid var(--urgent);color:var(--urgent)}
+.badge.dark-text{color:var(--navy)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:700;color:var(--navy);border-bottom:1px solid var(--line);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--cream);padding:1px 5px;border-radius:3px}
+.btn{display:inline-flex;align-items:center;padding:8px 16px;border-radius:4px;font-size:14px;font-weight:600;border:none;cursor:pointer;margin-right:8px}
+.btn.p{background:var(--teal);color:#fff}
+.btn.s{background:#fff;color:var(--teal);border:1px solid var(--line)}
+.btn.g{background:transparent;color:var(--teal)}
+.btn.d{background:var(--danger);color:#fff}
+.note{border-left:3px solid var(--warning);background:#fffaf0;padding:12px 16px;border-radius:0 4px 4px 0;font-size:13px}
+.type-demo{border:1px solid var(--line-soft);border-radius:6px;padding:16px 18px}
+.type-demo > div{margin-bottom:12px}
+.type-demo .lbl{font-size:11px;color:var(--ink-faint);margin-bottom:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>SIAJ — Guía de estilos</h1>
+  <p>Sistema Integral de Asuntos Jurídicos · SOFSA / Trenes Argentinos · v1.0 — extraída del Figma</p>
+</header>
+
+<main>
+
+<section>
+  <h2>Cómo usar esta guía</h2>
+  <p class="sub">Referencia visual del archivo <code>siaj-theme.css</code>.</p>
+  <p>Todos los colores del sistema viven en <code>siaj-theme.css</code>. Ningún componente debería declarar un hex propio: si un color no está acá, se agrega primero al archivo de tokens y recién después se usa.</p>
+  <p>El archivo trae los tokens en tres formatos para que cada equipo tome el que le sirva: bloque <code>@theme</code> de Tailwind v4, variables CSS en <code>:root</code> para uso sin Tailwind, y clases de composición ya armadas (<code>.badge</code>, <code>.btn</code>, <code>.field-input</code>, <code>.card</code>).</p>
+</section>
+
+<section>
+  <h2>Base</h2>
+  <p class="sub">La estructura fija de la aplicación.</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:var(--navy)"></div><div class="meta"><div class="name">navy</div><div class="hex">#242C4F</div><span class="use">Sidebar. Títulos y datos fuertes.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--teal)"></div><div class="meta"><div class="name">teal</div><div class="hex">#256386</div><span class="use">Topbar, botones primarios, tabs activos, filtros.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--cream)"></div><div class="meta"><div class="name">cream</div><div class="hex">#EEEBE6</div><span class="use">Fondo general de la app.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--paper);border-bottom:1px solid var(--line-soft)"></div><div class="meta"><div class="name">paper</div><div class="hex">#FFFFFF</div><span class="use">Cards, tablas, modales, inputs.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--ink)"></div><div class="meta"><div class="name">ink</div><div class="hex">#404040</div><span class="use">Texto de cuerpo y celdas.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--ink-muted)"></div><div class="meta"><div class="name">ink-muted</div><div class="hex">#758A93</div><span class="use">Labels, texto secundario.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--ink-faint)"></div><div class="meta"><div class="name">ink-faint</div><div class="hex">#9AA6B2</div><span class="use">Placeholders, deshabilitado.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--line)"></div><div class="meta"><div class="name">line</div><div class="hex">#BCC0C9</div><span class="use">Bordes de input y card.</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--line-soft)"></div><div class="meta"><div class="name">line-soft</div><div class="hex">#E3E4E9</div><span class="use">Separador de filas.</span></div></div>
+  </div>
+
+  <h3>Estados interactivos de la base</h3>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:var(--navy-hover)"></div><div class="meta"><div class="name">navy-hover</div><div class="hex">#32395A</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--navy-active)"></div><div class="meta"><div class="name">navy-active</div><div class="hex">#3F4665</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--teal-hover)"></div><div class="meta"><div class="name">teal-hover</div><div class="hex">#1E5271</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--teal-active)"></div><div class="meta"><div class="name">teal-active</div><div class="hex">#18415A</div></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Áreas jurídicas</h2>
+  <p class="sub">Un color por área. No reutilizar estos tres en ningún otro contexto — identifican el área y nada más.</p>
+  <div class="badges">
+    <span class="badge" style="background:var(--civil)">Civil</span>
+    <span class="badge" style="background:var(--penal)">Penal</span>
+    <span class="badge" style="background:var(--laboral)">Laboral</span>
+  </div>
+  <div class="swatches" style="margin-top:14px">
+    <div class="sw"><div class="chip" style="background:var(--civil)"></div><div class="meta"><div class="name">area-civil</div><div class="hex">#211C84</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--penal)"></div><div class="meta"><div class="name">area-penal</div><div class="hex">#4D55CC</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--laboral)"></div><div class="meta"><div class="name">area-laboral</div><div class="hex">#7A73D1</div></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Semáforo y estados</h2>
+  <p class="sub">Mismo color para el mismo significado en toda la app: rojo es siempre "algo está fuera de término o sin responder", verde siempre "cerrado o cumplido".</p>
+  <div class="badges">
+    <span class="badge" style="background:var(--warning);color:var(--navy)">Por vencer</span>
+    <span class="badge" style="background:var(--danger)">Vencido</span>
+    <span class="badge" style="background:var(--warning);color:var(--navy)">En curso</span>
+    <span class="badge" style="background:var(--success)">Cumplido</span>
+    <span class="badge" style="background:var(--neutral)">No procedente</span>
+    <span class="badge" style="background:var(--info)">Principal</span>
+    <span class="badge" style="background:var(--urgent)">⚠ Urgente</span>
+    <span class="badge outline">⚠ Urgente</span>
+  </div>
+
+  <h3>Prioridad de solicitudes</h3>
+  <div class="badges">
+    <span class="badge" style="background:var(--danger)">Alta</span>
+    <span class="badge" style="background:var(--warning);color:var(--navy)">Media</span>
+    <span class="badge" style="background:var(--success)">Baja</span>
+    <span class="badge" style="background:var(--danger)">Pendiente</span>
+    <span class="badge" style="background:var(--success)">Completada</span>
+    <span class="badge" style="background:var(--warning);color:var(--navy)">En curso</span>
+    <span class="badge" style="background:var(--interna)">Interna</span>
+    <span class="badge" style="background:var(--externa)">Externa</span>
+  </div>
+
+  <h3>Tipo de gestión, estados procesales y roles</h3>
+  <p style="margin:0 0 10px;font-size:13px;color:var(--ink-muted)">Toda la familia neutra usa dos grises. El estado procesal no lleva color propio: el color lo aporta el semáforo.</p>
+  <div class="badges">
+    <span class="badge" style="background:var(--neutral-dark)">Causa Judicial</span>
+    <span class="badge" style="background:var(--neutral)">Asignado</span>
+    <span class="badge" style="background:var(--neutral)">Traba de litis</span>
+    <span class="badge" style="background:var(--neutral)">Sentencia 1° instancia favorable</span>
+    <span class="badge" style="background:var(--neutral)">Ejecución de sentencia</span>
+    <span class="badge" style="background:var(--neutral)">Finalizado</span>
+    <span class="badge" style="background:var(--neutral)">Actor</span>
+    <span class="badge" style="background:var(--neutral-dark)">Demandado</span>
+    <span class="badge" style="background:var(--neutral)">Tercero</span>
+    <span class="badge" style="background:var(--neutral-dark)">Perito</span>
+  </div>
+</section>
+
+<section>
+  <h2>Timeline y agenda</h2>
+  <h3>Tipos de actividad</h3>
+  <div class="badges">
+    <span class="badge" style="background:var(--act-doc)">Presentación</span>
+    <span class="badge" style="background:var(--act-doc)">Contestación</span>
+    <span class="badge" style="background:var(--act-doc)">Movimiento</span>
+    <span class="badge" style="background:var(--act-doc)">Recepción</span>
+    <span class="badge" style="background:var(--neutral-dark)">Pericia</span>
+    <span class="badge" style="background:var(--neutral-dark)">Traslado</span>
+    <span class="badge" style="background:var(--neutral-dark)">Notificación</span>
+    <span class="badge" style="background:var(--neutral-dark)">Nota/Respuesta</span>
+    <span class="badge" style="background:var(--neutral-dark)">Otro</span>
+  </div>
+
+  <h3>Eventos de agenda</h3>
+  <div class="badges">
+    <span class="badge" style="background:var(--ag-aud);color:var(--navy)">Audiencia</span>
+    <span class="badge" style="background:var(--ag-tar)">Tarea</span>
+    <span class="badge" style="background:var(--ag-act)">Actividad</span>
+  </div>
+</section>
+
+<section>
+  <h2>Botones</h2>
+  <p class="sub">Cuatro variantes. El primario es teal, no navy.</p>
+  <button class="btn p">Nueva actuación</button>
+  <button class="btn s">Cancelar</button>
+  <button class="btn g">Ver actuación</button>
+  <button class="btn d">Eliminar</button>
+</section>
+
+<section>
+  <h2>Formularios</h2>
+  <div style="max-width:340px">
+    <label style="display:block;font-size:12px;color:var(--ink-muted);margin-bottom:4px">N° Expediente Electrónico (GDE)</label>
+    <input placeholder="GDE..." style="width:100%;padding:8px 12px;font-size:14px;border:1px solid var(--line);border-radius:4px;color:var(--ink)">
+    <p style="font-size:11px;color:var(--ink-faint);margin:5px 0 0">Único campo obligatorio al alta.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Tipografía</h2>
+  <div class="note" style="margin-bottom:16px">
+    <strong>Pendiente de confirmar:</strong> la familia de títulos del Figma no está identificada. Mientras tanto se usan las del prototipo — Public Sans para títulos, Inter para cuerpo. Al confirmarla, se cambia solo <code>--font-display</code> y el resto del sistema queda intacto.
+  </div>
+  <div class="type-demo">
+    <div><div class="lbl">page-title · 32px · display</div><div style="font-family:'Public Sans';font-size:32px;color:var(--navy)">Actuaciones</div></div>
+    <div><div class="lbl">section · 18px · display</div><div style="font-family:'Public Sans';font-size:18px;color:var(--navy)">Datos de la actuación</div></div>
+    <div><div class="lbl">body · 14px · body</div><div style="font-size:14px">SOFSA SA c/ Peralta Oscar Héctor s/ Lanzamiento judicializado</div></div>
+    <div><div class="lbl">label · 12px · body</div><div style="font-size:12px;color:var(--ink-muted)">Letrado asignado</div></div>
+    <div><div class="lbl">badge · 11px · body 600</div><div style="font-size:11px;font-weight:600">Causa Judicial</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Forma y layout</h2>
+  <table>
+    <tr><th>Token</th><th>Valor</th><th>Dónde se aplica</th></tr>
+    <tr><td><code>radius-badge</code></td><td>4px</td><td>Badges y chips</td></tr>
+    <tr><td><code>radius-control</code></td><td>4px</td><td>Inputs, botones, tabs, ítems de sidebar</td></tr>
+    <tr><td><code>radius-card</code></td><td>6px</td><td>Cards, tablas, modales, barra de tabs</td></tr>
+    <tr><td><code>shadow-card</code></td><td>0 1px 2px rgba(36,44,79,.06)</td><td>Contenedores sobre el fondo crema</td></tr>
+    <tr><td><code>spacing-topbar</code></td><td>88px</td><td>Alto de la topbar</td></tr>
+    <tr><td><code>spacing-sidebar</code></td><td>280px</td><td>Sidebar desplegado</td></tr>
+    <tr><td><code>spacing-sidebar-collapsed</code></td><td>170px</td><td>Sidebar contraído (solo íconos)</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Migración desde la paleta anterior</h2>
+  <p class="sub">Equivalencias para reemplazar los hex actuales del prototipo. Los tres primeros son cambios de identidad, no de matiz: la app pasa de fondo gris claro a fondo crema, y el color de acción pasa de navy a teal.</p>
+  <table>
+    <tr><th>Hex anterior</th><th>Token nuevo</th><th>Nota</th></tr>
+    <tr><td><code>#1b3a57</code></td><td>navy <code>#242C4F</code> o teal <code>#256386</code></td><td>Se separa en dos: navy para sidebar y texto, teal para acciones y topbar.</td></tr>
+    <tr><td><code>#f5f5f5</code></td><td>cream <code>#EEEBE6</code></td><td>Fondo general.</td></tr>
+    <tr><td><code>#E5E5E5</code></td><td>navy <code>#242C4F</code></td><td>El sidebar pasa de claro a oscuro.</td></tr>
+    <tr><td><code>#4a6a84</code></td><td>ink-muted <code>#758A93</code></td><td>Texto secundario.</td></tr>
+    <tr><td><code>#7a9ab4</code></td><td>ink-faint <code>#9AA6B2</code></td><td>Placeholders.</td></tr>
+    <tr><td><code>rgba(0,0,0,0.12)</code></td><td>line <code>#BCC0C9</code></td><td>Bordes ahora son sólidos.</td></tr>
+    <tr><td><code>#C4DFE8</code> / <code>#4a9ab5</code></td><td>teal-soft <code>#E4EDF2</code></td><td>El accent celeste se reduce a fondo suave.</td></tr>
+    <tr><td><code>#15803d</code></td><td>success <code>#267F33</code></td><td></td></tr>
+    <tr><td><code>#d97706</code></td><td>warning <code>#FDC84A</code></td><td>Ámbar más claro: requiere texto navy, no blanco.</td></tr>
+    <tr><td><code>#b91c1c</code></td><td>danger <code>#C3292F</code></td><td></td></tr>
+    <tr><td><code>#2a78d6</code> / <code>#1baf7a</code> / <code>#7F77DD</code></td><td>area-civil / area-laboral / area-penal</td><td>Los colores de área del dashboard se alinean con los badges.</td></tr>
+  </table>
+</section>
+
+</main>
+</body>
+</html>
