@@ -253,8 +253,14 @@ export default function BandejaAreaPage() {
   }
 
   function renderFilasChild(exps: Expediente[]) {
-    return exps.map((exp, idx) => {
-      const isLast = idx === exps.length - 1
+    // El principal siempre va primero; el resto conserva su orden relativo (sort estable).
+    const expsOrdenados = [...exps].sort((a, b) => {
+      if (a.es_principal && !b.es_principal) return -1
+      if (!a.es_principal && b.es_principal) return 1
+      return 0
+    })
+    return expsOrdenados.map((exp, idx) => {
+      const isLast = idx === expsOrdenados.length - 1
       return (
         <tr
           key={exp.id}

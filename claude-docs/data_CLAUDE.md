@@ -142,10 +142,11 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 **Reseteado a partir de `feat/matriz-saco-demandas`:** se eliminaron todas las actuaciones de
 ejemplo previas (las 13 con escenarios de vencimientos/agrupación/vínculos descriptas más abajo
 en el historial de este doc — ⚠️ **ya no existen en el código**, quedan solo como referencia si
-hace falta reconstruir algún escenario). `EXPEDIENTES_MOCK` tiene 4 actuaciones base, pensadas
-para recorrer los flujos MATRIZ SACO manualmente. Se exporta también como `EXPEDIENTES_ABOGADO`
-(alias de compatibilidad). El store carga `expedientes: EXPEDIENTES_MOCK`. `QUEUE_MESA` está
-vacío (`[]`).
+hace falta reconstruir algún escenario). `EXPEDIENTES_MOCK` tiene 6 actuaciones base — las 4
+originales de MATRIZ SACO más dos agregadas para poder probar el flujo Penal completo (Carta SAE
+→ Iniciar Querella, y el ciclo Archivo ↔ Desarchivado). Se exporta también como
+`EXPEDIENTES_ABOGADO` (alias de compatibilidad). El store carga `expedientes: EXPEDIENTES_MOCK`.
+`QUEUE_MESA` está vacío (`[]`).
 
 | # | ID | Tipo | Área | Estado (código) | Letrado | Causa / rol |
 |---|----|------|------|-----------------|---------|-------------|
@@ -153,16 +154,20 @@ vacío (`[]`).
 | 02 | L-0100/2026 | DEMANDA_LABORAL | LABORAL | ASIGNADO | PIRES UR_012 | sin `numero_causa` — recorrer manualmente |
 | 03 | C-0043/2026 | LANZAMIENTO | CIVIL | JUICIO_INICIADO | CASANO UR_004 | sin `numero_causa` — probar botón "Iniciar Juicio" → crea `LANZAMIENTO_JUDICIALIZADO` nuevo |
 | 04 | P-0100/2026 | OFICIO (variante_penal) | PENAL | EN ANÁLISIS | DESIDERI UR_019 | `numero_causa: 'IPP-2026-00845'` — probar `abg_tipo_solicitud` (10 tipos + sub-formularios en modal): trae "Citaciones a Testimonial" completo y "Solicitud de Averiguación de Paradero..." sin completar (badge) |
+| 05 | P-0101/2026 | CARTA_SUCESO | PENAL | EN_ANALISIS | DESIDERI UR_019 | `numero_causa: '88.441/2026'` — probar el flujo "Iniciar Querella" del menú `+` (`exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`) |
+| 06 | P-0102/2026 | QUERELLA | PENAL | ARCHIVO | DESIDERI UR_019 | `numero_causa: '52.100/2025'`, `es_principal: true` — probar el ciclo Archivo ↔ Desarchivado (ver Sección 13 de `CLAUDE.md`) |
 
 Las 3 primeras tienen `numero_causa: null` y por lo tanto **`es_principal: false`** (regla:
 nunca `es_principal: true` sin número de causa real — ver Sección 7 de `CLAUDE.md`). P-0100/2026
-sí tiene causa real pero también `es_principal: false` (no forma parte de ningún grupo-causa de
-ejemplo, no tiene vínculos).
+y P-0101/2026 sí tienen causa real pero también `es_principal: false` (ninguna forma parte de un
+grupo-causa de ejemplo — cada una tiene una causa propia sin otra actuación agrupada). P-0102/2026
+es la única con `es_principal: true`: representa el caso de una causa con una sola actuación
+(coherente con la regla, no forma grupo con nada).
 
 **Regla clave — `estado`/`estadoProcesal` usan el CÓDIGO del catálogo, no el label:**
 - Tipos con flujo (`getEstadosProcesales` los mapea): usar el `codigo` exacto (`EN_PRUEBA`, `TRABA_LITIS`, `ACUERDO_EXTRAJUDICIAL`, etc.), NO el label con tildes.
-- Área PENAL (cualquier tipo): el detalle usa `getEtapasPenales` → códigos `ASIGNADO`/`EN_ANALISIS`/`ACEPTADO`/`RECHAZADO`/`INSTRUCCION`/`JUICIO`/`EJECUCION_PENAL`/`ARCHIVO`.
-- Tipos sin catálogo de flujo (OFICIO, CARTA_DOC, MEDIACION, SECLO): usan los labels libres de `ESTADOS_POR_TIPO` (`'EN ANÁLISIS'`, `'RESPONDIDO'`, etc.).
+- Área PENAL (cualquier tipo): el detalle usa `getEtapasPenales(tipo)` — que **ignora `tipo`** y devuelve siempre el mismo ciclo para QUERELLA/DEFENSA_PENAL/CARTA_SUCESO → códigos `ASIGNADO`/`EN_ANALISIS`/`ACEPTADO`/`RECHAZADO`/`INSTRUCCION`/`JUICIO`/`EJECUCION_PENAL`/`ARCHIVO`/`DESARCHIVADO`. `DESARCHIVADO` es sub-estado transitorio (solo alcanzable desde `ARCHIVO`, única salida `ARCHIVO`) — ver Sección 13 de `CLAUDE.md`.
+- Tipos sin catálogo de flujo (OFICIO en área Civil/Laboral, CARTA_DOC, MEDIACION, SECLO): usan los labels libres de `ESTADOS_POR_TIPO` (`'EN ANÁLISIS'`, `'RESPONDIDO'`, etc.). **`ESTADOS_POR_TIPO` NO aplica a tipos de área PENAL** — cualquier entrada ahí para QUERELLA/DEFENSA_PENAL/CARTA_SUCESO es inalcanzable en la UI real (el fallback que la lee nunca se ejecuta para `exp.area === 'PENAL'`). La entrada `CARTA_SUCESO` ya se eliminó del catálogo por tener valores ficticios (`'CARGADA'`) sin correspondencia real; `QUERELLA` y `DEFENSA_PENAL` quedan con el mismo problema, detectado pero no eliminado todavía.
 - Cada MOVIMIENTO del timeline lleva `estadoExpediente` = el código destino de esa transición.
 
 **`TAREAS_MAP_INICIAL`** ahora es `{}` (vacío) — el store lo carga como `tareasMap` inicial, y
@@ -177,14 +182,16 @@ poblado (unused-locals); si se vuelve a necesitar poblar tareas de ejemplo, rein
 **Documentos en el mock:** todos los documentos tienen campo `id` obligatorio (`DOC_..._001`). Las 4 actuaciones actuales tienen `documentos: []`.
 
 **Exports de infraestructura conservados** (no son actuaciones de ejemplo, no se tocaron):
-`CARTA_SUCESO_QUEUE`, `CAUSAS_PENALES`, `ESTADOS_POR_TIPO` — mocks del módulo Penal y catálogo
-de estados libres, fuera de alcance de la reconstrucción MATRIZ SACO.
+`CARTA_SUCESO_QUEUE`, `CAUSAS_PENALES` — mocks del módulo Penal fuera de alcance de la
+reconstrucción MATRIZ SACO. `ESTADOS_POR_TIPO` ya no tiene entrada `CARTA_SUCESO` (ver nota sobre
+código/label más arriba) — sigue vigente para los tipos no-Penal sin catálogo de flujo propio.
 
-**Ejemplo Nueva Querella:** el expediente `P-0019/2024` (Carta Suceso) que documentaba el flujo
-"Nueva Querella" del menú `+` de DetalleExpediente **ya no existe** en el mock — se eliminó junto
-con el resto de actuaciones de ejemplo (ver nota arriba). El mecanismo (`confirmarNuevaQuerella`,
-ver `pages_CLAUDE.md`) no se tocó, solo falta un expediente `CARTA_SUCESO` de ejemplo para volver
-a probarlo manualmente.
+**Ejemplo Iniciar Querella (antes "Nueva Querella"):** el expediente `P-0019/2024` (Carta Suceso)
+que documentaba este flujo en la v1 del mock ya no existe — pero desde esta rama hay un
+reemplazo funcional: **`P-0101/2026`** (fila 05 de la tabla de arriba), listo para disparar
+"Iniciar Querella" desde el menú `+` de `DetalleExpediente`. El mecanismo (`confirmarNuevaQuerella`,
+ver `pages_CLAUDE.md`) no se tocó — solo se renombró el texto de UI ("Nueva Querella" →
+"Iniciar Querella"), los identificadores internos quedan igual.
 
 **Escenarios perdidos con el reseteo (referencia histórica, reconstruir si se necesitan):** las
 13 actuaciones previas cubrían agrupación por causa (2 grupos con badge "Principal · PJN"),

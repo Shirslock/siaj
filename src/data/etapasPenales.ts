@@ -351,6 +351,15 @@ export const ETAPAS_QUERELLA: EtapaPenal[] = [
     codigo: 'ARCHIVO', label: 'Archivo', numero: 6,
     subActividades: [SUB_8_1, SUB_8_2],
   },
+  {
+    // numero: -2 — sub-estado transitorio, fuera del camino lineal (mismo patrón que RECHAZADO).
+    // Solo alcanzable desde ARCHIVO ("Desarchivar actuación") y con una única salida posible: ARCHIVO
+    // ("Volver a Archivo"). En este sub-estado se admite cargar una única actividad genérica antes de
+    // volver a archivar. Ver DetalleExpediente.page.tsx (select de Cambiar Estado) y TimelinePenal.tsx
+    // (restricción de "Nueva Actividad").
+    codigo: 'DESARCHIVADO', label: 'Desarchivado', numero: -2,
+    subActividades: [],
+  },
 ]
 
 // ── Helpers de acceso ─────────────────────────────────

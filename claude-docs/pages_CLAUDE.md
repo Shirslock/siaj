@@ -128,7 +128,7 @@ SACO. Checklist independiente (`TAREAS_RECURSO_QUEJA`), toggle "Iniciar"/"En tr�
 `toggleQuejaEnTramite`. No bloquea el avance a Ejecución de Sentencia; si prospera, se
 retrocede manualmente a REF (motivo obligatorio, como cualquier retroceso).
 
-## DetalleExpediente — Acciones del menú `+` (Iniciar Juicio / Nueva Querella)
+## DetalleExpediente — Acciones del menú `+` (Iniciar Juicio / Iniciar Querella)
 
 Ambas acciones viven en el menú `+` del header y crean/transforman actuaciones. Se muestran
 condicionalmente por `tipo` y estado:
@@ -139,10 +139,20 @@ condicionalmente por `tipo` y estado:
   (`es_juicio_iniciado`, `fecha_inicio_juicio`, `campos_mesa.mesa_*`, incluye `mesa_ubicacion`/
   `mesa_linea`). **LANZAMIENTO es la única excepción**: crea un expediente nuevo de
   `tipo: 'LANZAMIENTO_JUDICIALIZADO'` — ver "Flujo Iniciar Juicio → Lanzamiento" abajo.
-- **Nueva Querella** (Penal): `show` si `exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`.
-  SÍ crea un expediente nuevo de `tipo: 'QUERELLA'`, análogo a "Iniciar Juicio → Lanzamiento" pero para el flujo penal.
+- **Iniciar Querella** (Penal): `show` si `exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`.
+  SÍ crea un expediente nuevo de `tipo: 'QUERELLA'`, análogo a "Iniciar Juicio → Lanzamiento" pero
+  para el flujo penal. Se llamaba "Nueva Querella" (label del menú, título del modal, título de la
+  actividad registrada en la Carta SAE de origen) — renombrado a "Iniciar Querella" / "Querella
+  iniciada" en la UI; el identificador interno `confirmarNuevaQuerella` y el resto de variables
+  (`formQuerella`, `BLANK_QUERELLA`) no cambiaron.
+- **"Nueva Actuación"** (Penal, sin `show` propio en esta lista): existía también como opción
+  duplicada de este menú — navegaba a la misma ruta genérica `RUTAS.NUEVA_ACTUACION_PENAL` sin
+  precompletar nada del expediente abierto. Se eliminó del menú `+` de `DetalleExpediente` por
+  redundante; sigue disponible solo desde el botón "+ Nueva Actuación" del header de
+  `BandejaAbogado.page.tsx` (gate `esAbogadoPenal(usuarioActivo)`), que es el único punto de
+  acceso ahora.
 
-### Flujo Nueva Querella (`confirmarNuevaQuerella`)
+### Flujo Iniciar Querella (`confirmarNuevaQuerella`)
 
 Modal con carátula (obligatoria), fuero→juzgado en cascada (`FUEROS_PENAL` + `getJuzgadosPorFuero`
 de `data/juzgadosPJN`), fiscalía, N° causa/IPP, letrado (`USUARIOS` ABOGADO/COORDINADOR) y observaciones.
@@ -166,7 +176,10 @@ puede tener `es_principal: true` (ver Sección 7 de `CLAUDE.md`).
 
 **Resultado en Bandeja:** Carta y Querella quedan agrupadas bajo `causaComun`; si `tieneCausaReal`
 la Querella es la cabecera del grupo (`es_principal: true`, ver regla en `data_CLAUDE.md` /
-`es_principal` en `types_CLAUDE.md`).
+`es_principal` en `types_CLAUDE.md`). Al expandir el grupo, la actuación `es_principal: true`
+siempre se renderiza primero (sort estable aplicado justo antes del render en
+`BandejaAbogado.page.tsx`/`BandejaArea.page.tsx`/`TablaExpedientes.tsx` — ver Sección 7 de
+`CLAUDE.md`), así que la Querella recién creada aparece arriba de la Carta SAE de origen.
 
 ### Flujo Iniciar Juicio → Lanzamiento (`confirmarIniciarJuicio`, rama LANZAMIENTO)
 

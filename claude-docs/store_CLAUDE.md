@@ -21,7 +21,7 @@ Solo sessionStorage para ID del usuario activo.
 ```ts
 // Expedientes
 setExpedienteActivo(id)
-agregarExpediente(exp)                 // exp: Expediente completo (con id). Lo appendea a expedientes[]. Usado por "Nueva Querella" (QUERELLA derivada de una Carta SAE) y por "Iniciar Juicio" cuando el origen es LANZAMIENTO (LANZAMIENTO_JUDICIALIZADO nuevo)
+agregarExpediente(exp)                 // exp: Expediente completo (con id). Lo appendea a expedientes[]. Usado por "Iniciar Querella" (QUERELLA derivada de una Carta SAE) y por "Iniciar Juicio" cuando el origen es LANZAMIENTO (LANZAMIENTO_JUDICIALIZADO nuevo)
 actualizarCampoMesa(id, campo, valor)
 actualizarCampoAbogado(id, campo, valor)
 actualizarEstado(id, estado)

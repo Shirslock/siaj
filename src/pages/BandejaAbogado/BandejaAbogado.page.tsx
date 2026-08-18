@@ -18,7 +18,9 @@ import { toast } from 'react-toastify'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'CERRADO', 'CUMPLIDO', 'COMPLETADA'] as const
+// 'ARCHIVO' es el código de estado terminal real del ciclo Penal (etapasPenales.ts) —
+// distinto de 'ARCHIVADO'/'ARCHIVADA' que usan los demás tipos.
+const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA'] as const
 
 // ─── Types & helpers ───────────────────────────────────────────────────────────
 
@@ -686,7 +688,15 @@ export default function BandejaAbogadoPage() {
                             </button>
                           </td>
                         </tr>
-                        {isExpanded && exps.map((exp, idx, arr) => renderExpRow(exp, idx, arr))}
+                        {isExpanded && (() => {
+                          // El principal siempre va primero; el resto conserva su orden relativo (sort estable).
+                          const expsOrdenados = [...exps].sort((a, b) => {
+                            if (a.es_principal && !b.es_principal) return -1
+                            if (!a.es_principal && b.es_principal) return 1
+                            return 0
+                          })
+                          return expsOrdenados.map((exp, idx, arr) => renderExpRow(exp, idx, arr))
+                        })()}
                       </Fragment>
                     )
                   }
