@@ -5,22 +5,15 @@
 /* =========================================================================
    SIAJ — Design Tokens
    Sistema Integral de Asuntos Jurídicos · SOFSA / Trenes Argentinos
-   Versión 1.0 — extraído de las capturas de Figma (agosto 2026)
 
-   CÓMO USARLO
-   -----------
-   Tailwind v4 (prototipo SIAJ):
-     Pegar este bloque en `src/index.css` reemplazando el @theme actual.
-     Los tokens quedan disponibles como clases: bg-navy, text-teal,
-     border-line, bg-badge-civil, etc.
+   ESTE bloque @theme es la FUENTE DE VERDAD — ya está integrado y en uso
+   (Tailwind v4 genera bg-navy, text-teal, border-line, rounded-badge, etc.
+   automáticamente a partir de cada variable --color-, --radius- y --spacing-
+   de acá). Si falta un token o hay que corregir un valor, se edita ACÁ primero.
 
-   Tailwind v3 (si el equipo de desarrollo usa config JS):
-     Copiar los valores al `theme.extend.colors` de tailwind.config.js
-     respetando los mismos nombres.
-
-   Sin Tailwind (CSS plano):
-     Las mismas variables están declaradas en :root más abajo,
-     usables como var(--color-navy).
+   docs/siaj-theme.css es un ESPEJO/ENTREGABLE para diseño y para quien
+   reciba el prototipo fuera de este repo — no lo importa ni lo lee la app.
+   Ante cualquier diferencia entre los dos archivos, gana este.
 
    REGLA: ningún hex hardcodeado en componentes. Si falta un color,
    se agrega acá primero.
@@ -72,6 +65,7 @@
   --color-urgent: #ff7444;        /* Badge Urgente */
   --color-neutral: #9aa6b2;       /* No procedente · roles de intervinientes */
   --color-neutral-dark: #758a93;  /* Tipo de gestión (Causa Judicial) · estados procesales */
+  --color-disabled: #cbcbcb;      /* No procedente — único badge con texto oscuro (--color-ink) */
 
   /* ---------------------------------------------------------------------
      5. TIPOS DE ACTIVIDAD DEL TIMELINE
@@ -119,9 +113,10 @@
   /* ---------------------------------------------------------------------
      10. LAYOUT
      --------------------------------------------------------------------- */
-  --spacing-topbar: 88px;         /* Alto de la topbar */
+  --spacing-topbar: 90px;         /* Alto de la topbar */
   --spacing-sidebar: 280px;       /* Sidebar desplegado */
   --spacing-sidebar-collapsed: 170px;
+  --spacing-control: 45px;        /* Alto de input/select de la barra de filtros */
 }
 
 /* =========================================================================
@@ -144,6 +139,7 @@
   --color-info: #0051ad;
   --color-urgent: #ff7444;
   --color-neutral: #9aa6b2;
+  --color-disabled: #cbcbcb;
 }
 
 /* ── Clases de campo reutilizables ── */

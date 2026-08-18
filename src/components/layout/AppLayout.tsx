@@ -47,12 +47,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const esConfiguracion = pathname === '/configuracion'
 
   return (
-    <div className="min-h-screen bg-[#EEEBE6]">
+    <div className="min-h-screen bg-cream">
       <Sidebar activePage={activePage} />
       <Topbar titulo={titulo} />
       <main
-        className={`pt-16 transition-all duration-200 ${
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
+        className={`pt-[var(--spacing-topbar)] transition-all duration-200 ${
+          sidebarCollapsed ? 'ml-[var(--spacing-sidebar-collapsed)]' : 'ml-[var(--spacing-sidebar)]'
         }`}
       >
         <div className={esConfiguracion ? 'w-full' : 'max-w-screen-xl mx-auto'}>

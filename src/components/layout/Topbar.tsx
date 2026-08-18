@@ -84,8 +84,8 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-[#63B2DA] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
-        sidebarCollapsed ? 'left-16' : 'left-64'
+      className={`fixed top-0 right-0 h-[var(--spacing-topbar)] bg-teal z-50 flex items-center justify-between px-[32px] transition-all duration-200 ${
+        sidebarCollapsed ? 'left-[var(--spacing-sidebar-collapsed)]' : 'left-[var(--spacing-sidebar)]'
       }`}
     >
       {/* Título */}
@@ -263,6 +263,12 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               )}
             </div>
           )}
+        </div>
+
+        {/* Logo Trenes Argentinos */}
+        <div className="border-l-[3px] border-white pl-2.5 flex-shrink-0">
+          <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">TRENES</p>
+          <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">ARGENTINOS</p>
         </div>
       </div>
     </header>

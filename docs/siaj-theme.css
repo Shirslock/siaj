@@ -26,22 +26,22 @@
   /* ---------------------------------------------------------------------
      1. BASE / CHROME — la estructura fija de la app
      --------------------------------------------------------------------- */
-  --color-navy: #242c4f;          /* Sidebar. Texto de títulos y datos fuertes. */
+  --color-navy: #242c4f;          /* Figma: "Primario/Azul Secretaría". Sidebar. Texto de títulos y datos fuertes. */
   --color-navy-hover: #32395a;    /* Hover de ítem de sidebar */
   --color-navy-active: #3f4665;   /* Ítem de sidebar seleccionado (variante oscura) */
 
-  --color-teal: #256386;          /* Topbar. Botones primarios. Tabs activos. Filtros. */
+  --color-teal: #256386;          /* Figma: "Primario/Azul Oscuro". Topbar. Botones primarios. Tabs activos. Filtros. */
   --color-teal-hover: #1e5271;
   --color-teal-active: #18415a;
   --color-teal-soft: #e4edf2;     /* Fondo suave para chips/estados sobre blanco */
 
-  --color-cream: #eeebe6;         /* Fondo general de la aplicación */
+  --color-cream: #eeebe6;         /* Figma: "Neutro/Gris Claro". Fondo general de la aplicación */
   --color-paper: #ffffff;         /* Cards, tablas, modales, inputs */
 
   /* ---------------------------------------------------------------------
      2. TEXTO Y LÍNEAS
      --------------------------------------------------------------------- */
-  --color-ink: #404040;           /* Texto de cuerpo / celdas de tabla */
+  --color-ink: #404040;           /* Figma: "Neutro/Gris Oscuro". Texto de cuerpo / celdas de tabla */
   --color-ink-strong: #242c4f;    /* Títulos (= navy) */
   --color-ink-muted: #758a93;     /* Labels de columna, texto secundario */
   --color-ink-faint: #9aa6b2;     /* Placeholders, texto deshabilitado */
@@ -61,17 +61,23 @@
      --------------------------------------------------------------------- */
   --color-danger: #c3292f;        /* Vencido · Pendiente · Prioridad Alta */
   --color-success: #267f33;       /* Cumplido · Completada · Respondido · Prioridad Baja */
-  --color-warning: #fdc84a;       /* Por vencer · En curso · Prioridad Media */
+  --color-warning: #fdc84a;       /* Figma: "Semáforo/Amarillo" */
+  --color-grayscale-400: #e8e8e8; /* Figma: "Light/Grayscale/400" — separadores, 66 usos */       /* Por vencer · En curso · Prioridad Media */
   --color-info: #0051ad;          /* Principal (cabecera de grupo-causa) */
   --color-urgent: #ff7444;        /* Badge Urgente */
-  --color-neutral: #9aa6b2;       /* No procedente · roles de intervinientes */
+  --color-neutral: #9aa6b2;       /* Estados procesales · roles de intervinientes */
+  --color-disabled: #cbcbcb;      /* No procedente — ÚNICO badge con texto oscuro (#404040) */
+  --color-warning-ink: #d97706;   /* Ámbar de TEXTO sobre fondo claro (no viene del Figma) */
+  --color-warning-soft: #fef3c7;  /* Fondo del par anterior */
   --color-neutral-dark: #758a93;  /* Tipo de gestión (Causa Judicial) · estados procesales */
 
   /* ---------------------------------------------------------------------
      5. TIPOS DE ACTIVIDAD DEL TIMELINE
      --------------------------------------------------------------------- */
-  --color-act-doc: #967e76;       /* Presentación · Contestación · Movimiento · Recepción */
-  --color-act-neutral: #758a93;   /* Pericia · Traslado · Notificación · Nota/Respuesta · Otro */
+  /* TODOS los tipos de actividad usan el mismo marrón, sin excepción:
+     Movimiento · Recepción · Contestación · Presentación · Pericia · Traslado
+     · Notificación · Nota/Respuesta · Audiencia · Otro */
+  --color-act-doc: #967e76;
 
   /* ---------------------------------------------------------------------
      6. SOLICITUDES
@@ -87,18 +93,17 @@
   --color-agenda-actividad: #6e85b7;
 
   /* ---------------------------------------------------------------------
-     8. TIPOGRAFÍA
-     ⚠ PENDIENTE: confirmar la familia de títulos del manual de marca de
-     Trenes Argentinos. Hasta entonces se conservan las del prototipo.
+     8. TIPOGRAFÍA — DIN Pro, familia única (confirmado por export de Figma)
+     ⚠ DIN Pro es licenciada. Verificar licencia web con Comunicación de
+     Trenes Argentinos antes de productivo. Fallback: system-ui.
      --------------------------------------------------------------------- */
-  --font-display: "Public Sans", system-ui, sans-serif;  /* Títulos de página, carátulas */
-  --font-body: "Inter", system-ui, sans-serif;           /* Cuerpo, tablas, formularios */
+  --font-sans: "DIN Pro", system-ui, sans-serif;
 
-  --text-page-title: 2rem;        /* "Actuaciones", "Agenda" — 32px */
-  --text-section: 1.125rem;       /* "Datos de la actuación" — 18px */
-  --text-body: 0.875rem;          /* Celdas de tabla, labels — 14px */
-  --text-label: 0.75rem;          /* Labels de formulario — 12px */
-  --text-badge: 0.6875rem;        /* Texto de badge — 11px */
+  --text-page-title: 32px;        /* lh 40 · w700 — "Actuaciones", "SIAJ" */
+  --text-navbar: 24px;            /* lh 29 · w700 — nombre del dashboard en navbar */
+  --text-body: 19px;              /* lh 24 · w400 — celdas de tabla, ítems de sidebar */
+  --text-secondary: 16px;         /* lh 20 · w400 — inputs y filtros */
+  --text-label: 13px;             /* lh 16 · w700 — badges, botones, toggles */
 
   /* ---------------------------------------------------------------------
      9. FORMA Y ELEVACIÓN
@@ -113,7 +118,10 @@
   /* ---------------------------------------------------------------------
      10. LAYOUT
      --------------------------------------------------------------------- */
-  --spacing-topbar: 88px;         /* Alto de la topbar */
+  --spacing-topbar: 90px;         /* Alto de la topbar */
+  --spacing-row: 80px;            /* Alto de fila de tabla */
+  --spacing-control: 45px;        /* Alto de input y botón de filtro */
+  --spacing-gutter: 24px;         /* Padding horizontal del contenido */
   --spacing-sidebar: 280px;       /* Sidebar desplegado */
   --spacing-sidebar-collapsed: 170px;
 }
@@ -134,7 +142,8 @@
   --color-area-laboral: #7a73d1;
   --color-danger: #c3292f;
   --color-success: #267f33;
-  --color-warning: #fdc84a;
+  --color-warning: #fdc84a;       /* Figma: "Semáforo/Amarillo" */
+  --color-grayscale-400: #e8e8e8; /* Figma: "Light/Grayscale/400" — separadores, 66 usos */
   --color-info: #0051ad;
   --color-urgent: #ff7444;
   --color-neutral: #9aa6b2;
@@ -147,7 +156,7 @@
 
 /* --- Formularios ------------------------------------------------------- */
 .field-label {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: var(--text-label);
   color: var(--color-ink-muted);
   display: block;
@@ -157,7 +166,7 @@
 .field-input {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   color: var(--color-ink);
   background: var(--color-paper);
@@ -188,12 +197,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  padding: 4px 8px;
   border-radius: var(--radius-badge);
-  font-family: var(--font-body);
-  font-size: var(--text-badge);
-  font-weight: 600;
-  line-height: 1;
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: 700;
+  line-height: 16px;
   color: #fff;
   white-space: nowrap;
 }
@@ -202,8 +211,9 @@
 .badge--laboral  { background: var(--color-area-laboral); }
 .badge--tipo     { background: var(--color-neutral-dark); }
 .badge--estado   { background: var(--color-neutral); }
+.badge--noproc   { background: var(--color-disabled); color: var(--color-ink); }
 .badge--vencido  { background: var(--color-danger); }
-.badge--porvencer{ background: var(--color-warning); color: var(--color-ink-strong); }
+.badge--porvencer{ background: var(--color-warning); }  /* texto BLANCO por decisión de marca */
 .badge--cumplido { background: var(--color-success); }
 .badge--principal{ background: var(--color-info); }
 .badge--urgente  { background: var(--color-urgent); }
@@ -223,11 +233,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
+  gap: 7px;
+  height: 34px;
   border-radius: var(--radius-control);
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 120ms ease;
 }
@@ -238,7 +250,7 @@
 .btn--secondary {
   background: var(--color-paper);
   color: var(--color-teal);
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-teal);
 }
 .btn--secondary:hover { background: var(--color-cream); }
 
@@ -256,7 +268,7 @@
 
 /* --- Tabla ------------------------------------------------------------- */
 .table-header {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   font-weight: 700;
   color: var(--color-ink-strong);
@@ -285,3 +297,61 @@
 
 /* --- Topbar ------------------------------------------------------------ */
 .topbar { background: var(--color-teal); height: var(--spacing-topbar); color: #fff; }
+
+/* --- Toggle Activos/Archivados -----------------------------------------
+   Invertido respecto de lo esperable: el seleccionado es el CLARO.
+   ----------------------------------------------------------------------- */
+.toggle-opt {
+  height: 34px;
+  padding: 8px 4px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  background: var(--color-teal);
+  color: var(--color-cream);
+  font-weight: 500;
+}
+.toggle-opt--active { background: var(--color-paper); color: var(--color-teal); font-weight: 700; }
+
+/* --- Botón Urgente (filtro con dos estados) ---------------------------- */
+.btn-urgente          { background: var(--color-teal); color: #fff; }
+.btn-urgente--activo  { background: var(--color-urgent); color: #fff; }
+
+/* --- Sidebar: medidas exactas del Figma -------------------------------- */
+.sidebar {
+  padding: 24px 32px 32px;
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-item { height: 40px; padding: 8px; gap: 16px; display: flex; align-items: center; }
+.sidebar-icon { width: 24px; height: 24px; }
+.sidebar-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--color-teal); }
+.sidebar-divider { border-top: 1px solid var(--color-cream); }
+.sidebar-brand { font-size: var(--text-page-title); font-weight: 700; color: #fff; }
+/* Variante clara documentada en Figma (fondo #EEEBE6, texto e íconos #242C4F,
+   avatar #404040). No se usa hoy — no implementar hasta que negocio la pida. */
+
+/* --- Tabla: medidas exactas del Figma ---------------------------------- */
+.table-row       { height: var(--spacing-row); padding: 0 24px 0 20px; }
+.table-cell      { font-size: var(--text-body); line-height: 24px; color: var(--color-ink); }
+.table-separator { border-bottom: 1px solid var(--color-grayscale-400); }
+
+/* --- Barra de filtros -------------------------------------------------- */
+.filter-control {
+  height: var(--spacing-control);
+  padding: 8px 16px;
+  gap: 8px;
+  border-radius: var(--radius-control);
+  font-size: var(--text-secondary);
+  line-height: 20px;
+}
+.filter-control--input  { background: var(--color-paper); border: 1px solid var(--color-line); color: var(--color-ink); }
+.filter-control--select { background: var(--color-teal); color: #fff; border: none; }
+
+/* --- Badge: alto fijo de 30px ------------------------------------------ */
+.badge { height: 30px; gap: 4px; }
+
+/* --- Navbar ------------------------------------------------------------ */
+.topbar { height: 90px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: var(--text-navbar); line-height: 29px; font-weight: 700; color: #fff; }

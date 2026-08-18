@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
-import { TIPOS_GESTION } from '../../data/catalogos'
+import { TIPOS_GESTION, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
@@ -47,8 +47,35 @@ function construirItems(exps: Expediente[]): ItemBandeja[] {
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
 const filterInputCls =
-  'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
-  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-[#242C4F]'
+  'h-[45px] px-[16px] text-xs border border-line rounded-[4px] bg-paper ' +
+  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-teal'
+
+// Select con punto 10px a la izquierda y chevron 12px a la derecha — mismo
+// patrón para los desplegables de la barra de filtros (Área, Tipo, Letrado,
+// Línea, Estado).
+function FiltroSelect({
+  value, onChange, ariaLabel, children,
+}: {
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+  ariaLabel: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative flex-shrink-0">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-white/50 pointer-events-none" />
+      <select
+        value={value}
+        onChange={onChange}
+        aria-label={ariaLabel}
+        className="appearance-none h-[45px] pl-8 pr-8 rounded-[4px] bg-teal text-white text-xs border-none focus:outline-none"
+      >
+        {children}
+      </select>
+      <Icon name="expand_more" size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
+    </div>
+  )
+}
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -71,6 +98,7 @@ export default function BandejaAbogadoPage() {
     tipo:       '',
     estado:     '',
     letrado:    esAbogado ? (usuarioActivo?.id ?? '') : '',
+    linea:      '',
     fechaDesde: '',
     fechaHasta: '',
     soloUrgentes: false,
@@ -128,6 +156,7 @@ export default function BandejaAbogadoPage() {
       if (filtros.area      && e.area !== filtros.area)             return false
       if (filtros.tipo      && e.tipo !== filtros.tipo)             return false
       if (filtros.estado    && e.estado !== filtros.estado)         return false
+      if (filtros.linea     && e.linea !== filtros.linea)           return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
@@ -454,15 +483,15 @@ export default function BandejaAbogadoPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 self-start">
-          <div className="flex gap-1 bg-[#EEEBE6] rounded-xl p-1">
+          <div className="flex gap-1 bg-cream rounded-xl p-1">
             {(['activos', 'archivados'] as const).map(val => (
               <button
                 key={val}
                 onClick={() => setTabEstado(val)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
+                className={`w-[80px] h-[34px] flex items-center justify-center px-1 rounded-lg text-sm font-bold transition-colors ${
                   tabEstado === val
-                    ? 'bg-white text-[#242C4F] shadow-sm'
-                    : 'text-[#758A93] hover:text-[#242C4F]'
+                    ? 'bg-white text-teal'
+                    : 'bg-teal text-cream'
                 }`}
               >
                 {val === 'activos' ? 'Activos' : 'Archivados'}
@@ -481,16 +510,16 @@ export default function BandejaAbogadoPage() {
         </div>
       </div>
 
-      {/* TABLA */}
+      {/* TOOLBAR — sin card, directo sobre el fondo crema */}
       {poolBase.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-card p-12 text-center">
           <Icon name="inbox" size={48} />
           <p className="mt-4 text-[#758A93] text-sm">No tenés expedientes asignados.</p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
-            <span className="text-xs text-[#758A93] font-medium">
+        <>
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center h-[30px] px-2 rounded-badge text-[10px] font-bold tracking-wide bg-neutral text-white">
               {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
             </span>
 
@@ -535,85 +564,65 @@ export default function BandejaAbogadoPage() {
                   </span>
                 )}
               </button>
-              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button
-                onClick={limpiarFiltros}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#758A93] hover:text-[#242C4F] transition-colors"
-              >
-                <Icon name="filter_alt_off" size={14} />
-                Limpiar filtros
-              </button>
             </div>
           </div>
+
+          {/* BARRA DE FILTROS — reemplaza las filas de <thead> */}
+          <div className="flex items-center flex-wrap gap-2">
+            <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+            <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+            <FiltroSelect value={filtros.area} onChange={e => setFiltro('area', e.target.value)} ariaLabel="Área">
+              <option value="">Área: Todas</option>
+              <option value="CIVIL">Civil</option>
+              <option value="LABORAL">Laboral</option>
+              <option value="PENAL">Penal</option>
+            </FiltroSelect>
+            <FiltroSelect value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} ariaLabel="Tipo de Gestión">
+              <option value="">Tipo: Todos</option>
+              {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
+            </FiltroSelect>
+            <FiltroSelect value={filtros.letrado} onChange={e => setFiltro('letrado', e.target.value)} ariaLabel="Letrado">
+              <option value="">Letrado: Todos</option>
+              <option value={usuarioActivo?.id ?? ''} style={{ fontWeight: 'bold' }}>★ Mis actuaciones</option>
+              <option disabled>──────────────</option>
+              {abogadosDisponibles
+                .filter(u => u.id !== usuarioActivo?.id)
+                .map(u => (
+                  <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
+                ))
+              }
+            </FiltroSelect>
+            <FiltroSelect value={filtros.linea} onChange={e => setFiltro('linea', e.target.value)} ariaLabel="Línea">
+              <option value="">Línea: Todas</option>
+              {LINEAS_FERROVIARIAS.map(l => (
+                <option key={l.id} value={l.id}>{l.label}</option>
+              ))}
+            </FiltroSelect>
+            <FiltroSelect value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} ariaLabel="Estado">
+              <option value="">Estado: Todos</option>
+              {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
+            </FiltroSelect>
+            <span className="text-[#404040] text-xs whitespace-nowrap ml-1">Recepción:</span>
+            <label className="relative h-[45px] px-4 rounded-[4px] bg-teal text-white text-xs flex items-center gap-2 cursor-pointer overflow-hidden flex-shrink-0">
+              <Icon name="calendar" size={16} />
+              {filtros.fechaDesde ? formatFecha(filtros.fechaDesde) : 'Día/Mes/Año'}
+              <input
+                type="date"
+                value={filtros.fechaDesde}
+                onChange={e => setFiltro('fechaDesde', e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </label>
+            <button
+              onClick={limpiarFiltros}
+              className="w-[74px] h-[32px] rounded-[4px] bg-teal text-white text-xs font-bold hover:opacity-90 transition-opacity flex-shrink-0"
+            >
+              Limpiar
+            </button>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[780px]">
-              <thead>
-                {/* Fila 1: labels */}
-                <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#E3E4E9]">
-                  <th className="w-10 px-3 py-2.5" />
-                  <th className="w-40 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">N° Causa / Exp.</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Carátula</th>
-                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Área</th>
-                  <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Tipo</th>
-                  {mostrarColumnaLetrado && (
-                    <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Letrado</th>
-                  )}
-                  <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Estado</th>
-                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Recepción</th>
-                  <th className="w-16 px-3 py-2.5" />
-                </tr>
-
-                {/* Fila 2: inputs de filtro */}
-                <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#EEEBE6]">
-                  <th className="px-2 py-1.5" />
-                  <th className="px-2 py-1.5">
-                    <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
-                  </th>
-                  <th className="px-2 py-1.5">
-                    <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
-                  </th>
-                  <th className="px-2 py-1.5">
-                    <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
-                      <option value="">Todas</option>
-                      <option value="CIVIL">Civil</option>
-                      <option value="LABORAL">Laboral</option>
-                      <option value="PENAL">Penal</option>
-                    </select>
-                  </th>
-                  <th className="px-2 py-1.5">
-                    <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} className={filterInputCls}>
-                      <option value="">Todos</option>
-                      {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
-                    </select>
-                  </th>
-                  <th className="px-2 py-1.5">
-                    <select value={filtros.letrado} onChange={e => setFiltro('letrado', e.target.value)} className={filterInputCls}>
-                      <option value="">Todos</option>
-                      <option value={usuarioActivo?.id ?? ''} style={{ fontWeight: 'bold' }}>★ Mis actuaciones</option>
-                      <option disabled>──────────────</option>
-                      {abogadosDisponibles
-                        .filter(u => u.id !== usuarioActivo?.id)
-                        .map(u => (
-                          <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
-                        ))
-                      }
-                    </select>
-                  </th>
-                  <th className="px-2 py-1.5">
-                    <select value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} className={filterInputCls}>
-                      <option value="">Todos</option>
-                      {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
-                    </select>
-                  </th>
-                  <th className="px-2 py-1.5">
-                    <div className="flex items-center gap-1">
-                      <input type="date" value={filtros.fechaDesde} onChange={e => setFiltro('fechaDesde', e.target.value)} className={filterInputCls} />
-                      <input type="date" value={filtros.fechaHasta} onChange={e => setFiltro('fechaHasta', e.target.value)} className={filterInputCls} />
-                    </div>
-                  </th>
-                  <th className="px-2 py-1.5" />
-                </tr>
-              </thead>
               <tbody className="divide-y divide-outline-variant/20">
                 {items.length === 0 && (
                   <tr>
@@ -695,7 +704,7 @@ export default function BandejaAbogadoPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </>
       )}
 
       {/* MODAL AGRUPAR */}

@@ -12,11 +12,12 @@ import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
 import type { Expediente, Area, Usuario } from '../../types'
 import Icon from '../../components/ui/Icon'
+import { CHART_COLORS } from '../../styles/chartTokens'
 
 const COLOR_AREA: Record<Area, string> = {
-  CIVIL:   '#2a78d6',
-  LABORAL: '#1baf7a',
-  PENAL:   '#7F77DD',
+  CIVIL:   CHART_COLORS.civil,
+  LABORAL: CHART_COLORS.laboral,
+  PENAL:   CHART_COLORS.penal,
 }
 
 interface Panel {
@@ -101,7 +102,7 @@ function KpiCard({
   const barColors = {
     red:  '#e34948',
     amber: '#eda100',
-    blue: '#2a78d6',
+    blue: CHART_COLORS.teal,
     gris: '#8aa0b3',
   }
   return (
@@ -274,7 +275,7 @@ function PanelLetrado({
             <XAxis type="number" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#758A93' }} axisLine={false} tickLine={false} width={110} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-            <Bar dataKey="value" fill="#2a78d6" radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
+            <Bar dataKey="value" fill={CHART_COLORS.civil} radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
           </BarChart>
         </ResponsiveContainer>
       </WidgetCard>
@@ -364,7 +365,7 @@ function PanelLetrado({
               <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#9AA6B2' }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
               <YAxis tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="value" fill="#7F77DD" radius={[4, 4, 0, 0]} barSize={26} cursor="pointer" />
+              <Bar dataKey="value" fill={CHART_COLORS.penal} radius={[4, 4, 0, 0]} barSize={26} cursor="pointer" />
             </BarChart>
           </ResponsiveContainer>
         </WidgetCard>
@@ -611,7 +612,7 @@ function HeatMapLugares({ setPanelActivo, expedientes }: { setPanelActivo: SetPa
   const bg = (v: number) => {
     if (v === 0) return 'bg-transparent'
     const intensidad = Math.min(1, v / max)
-    if (intensidad > 0.66) return 'bg-[#2a78d6] text-white'
+    if (intensidad > 0.66) return 'bg-area-civil text-white'
     if (intensidad > 0.33) return 'bg-[#85B7EB]'
     return 'bg-[#e6f1fb]'
   }
@@ -715,7 +716,7 @@ function PanelGerencia({
             <YAxis tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="ingresadas" name="Ingresadas" fill="#2a78d6" radius={[4, 4, 0, 0]} barSize={16} />
+            <Bar dataKey="ingresadas" name="Ingresadas" fill={CHART_COLORS.civil} radius={[4, 4, 0, 0]} barSize={16} />
             <Bar dataKey="cerradas" name="Cerradas" fill="#97C459" radius={[4, 4, 0, 0]} barSize={16} />
           </BarChart>
         </ResponsiveContainer>
@@ -799,7 +800,7 @@ function PanelGerencia({
             <XAxis type="number" tick={{ fontSize: 11, fill: '#9AA6B2' }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#758A93' }} axisLine={false} tickLine={false} width={140} />
             <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-            <Bar dataKey="value" fill="#2a78d6" radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
+            <Bar dataKey="value" fill={CHART_COLORS.civil} radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
           </BarChart>
         </ResponsiveContainer>
       </WidgetCard>

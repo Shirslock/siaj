@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
-import { TIPOS_GESTION } from '../../data/catalogos'
+import { TIPOS_GESTION, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { USUARIOS, getUsuarioById, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -48,8 +48,35 @@ function nombreAbogado(id: string | undefined): string {
 }
 
 const filterInputCls =
-  'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
-  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-[#242C4F]'
+  'h-[45px] px-[16px] text-xs border border-line rounded-[4px] bg-paper ' +
+  'text-[#242C4F] placeholder-[#a0b0bc] focus:outline-none focus:border-teal'
+
+// Select con punto 10px a la izquierda y chevron 12px a la derecha — mismo
+// patrón para los desplegables de la barra de filtros (Área, Tipo, Letrado,
+// Línea, Estado).
+function FiltroSelect({
+  value, onChange, ariaLabel, children,
+}: {
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+  ariaLabel: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative flex-shrink-0">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-white/50 pointer-events-none" />
+      <select
+        value={value}
+        onChange={onChange}
+        aria-label={ariaLabel}
+        className="appearance-none h-[45px] pl-8 pr-8 rounded-[4px] bg-teal text-white text-xs border-none focus:outline-none"
+      >
+        {children}
+      </select>
+      <Icon name="expand_more" size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
+    </div>
+  )
+}
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -59,7 +86,7 @@ export default function BandejaAreaPage() {
   const { usuarioActivo } = useUIStore()
 
   const [filtros, setFiltros] = useState({
-    buscar: '', area: '', tipo: '', estado: '',
+    buscar: '', area: '', tipo: '', estado: '', linea: '',
     fechaDesde: '', fechaHasta: '', letrado_id: '',
     soloUrgentes: false,
   })
@@ -88,6 +115,7 @@ export default function BandejaAreaPage() {
       if (filtros.letrado_id && e.abogado_id !== filtros.letrado_id) return false
       if (filtros.tipo && e.tipo !== filtros.tipo) return false
       if (filtros.estado && e.estado !== filtros.estado) return false
+      if (filtros.linea && e.linea !== filtros.linea) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes) {
@@ -152,7 +180,7 @@ export default function BandejaAreaPage() {
     setFiltros(prev => ({ ...prev, [key]: val }))
   }
   function limpiarFiltros() {
-    setFiltros({ buscar: '', area: '', tipo: '', estado: '', fechaDesde: '', fechaHasta: '', letrado_id: '', soloUrgentes: false })
+    setFiltros({ buscar: '', area: '', tipo: '', estado: '', linea: '', fechaDesde: '', fechaHasta: '', letrado_id: '', soloUrgentes: false })
   }
   function toggleCausa(nc: string) {
     setExpandedCausas(prev => {
@@ -353,125 +381,87 @@ export default function BandejaAreaPage() {
         </div>
       </div>
 
-      {/* TABLA */}
-      <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
-        {/* Sub-header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
-          <span className="text-xs text-[#758A93] font-medium">
-            {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
-          </span>
-          <div className="flex items-center gap-3">
-            <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#242C4F] hover:opacity-80 transition-opacity">
-              <Icon name="unfold_more" size={14} />
-              Expandir todo
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
-              <Icon name="unfold_less" size={14} />
-              Colapsar
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button
-              onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
-              className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
-                filtros.soloUrgentes
-                  ? 'text-[#C3292F]'
-                  : 'text-[#758A93] hover:text-[#242C4F]'
-              }`}
-            >
-              <Icon name="warning" size={14} />
-              {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={limpiarFiltros} className="flex items-center gap-1 text-[10px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
-              <Icon name="filter_alt_off" size={14} />
-              Limpiar filtros
-            </button>
-          </div>
+      {/* TOOLBAR — sin card, directo sobre el fondo crema */}
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center h-[30px] px-2 rounded-badge text-[10px] font-bold tracking-wide bg-neutral text-white">
+          {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
+        </span>
+        <div className="flex items-center gap-3">
+          <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#242C4F] hover:opacity-80 transition-opacity">
+            <Icon name="unfold_more" size={14} />
+            Expandir todo
+          </button>
+          <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+          <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#758A93] hover:text-[#242C4F] transition-colors">
+            <Icon name="unfold_less" size={14} />
+            Colapsar
+          </button>
+          <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+          <button
+            onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
+            className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+              filtros.soloUrgentes
+                ? 'text-[#C3292F]'
+                : 'text-[#758A93] hover:text-[#242C4F]'
+            }`}
+          >
+            <Icon name="warning" size={14} />
+            {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
+          </button>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[900px]">
-            <thead>
-              {/* Fila 1: labels */}
-              <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#E3E4E9]">
-                <th className="w-10 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93]" />
-                <th className="w-44 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">N° Causa / Exp.</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Carátula</th>
-                <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Área</th>
-                <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Tipo</th>
-                <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Letrado</th>
-                <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Estado</th>
-                <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#758A93] whitespace-nowrap">Recepción</th>
-                <th className="w-16 px-3 py-2.5" />
-              </tr>
+      {/* BARRA DE FILTROS — reemplaza las filas de <thead> */}
+      <div className="flex items-center flex-wrap gap-2">
+        <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+        <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+        <FiltroSelect value={filtros.area} onChange={e => setFiltro('area', e.target.value)} ariaLabel="Área">
+          <option value="">Área: Todas</option>
+          <option value="CIVIL">Civil</option>
+          <option value="LABORAL">Laboral</option>
+          <option value="PENAL">Penal</option>
+        </FiltroSelect>
+        <FiltroSelect value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} ariaLabel="Tipo de Gestión">
+          <option value="">Tipo: Todos</option>
+          {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
+        </FiltroSelect>
+        <FiltroSelect value={filtros.letrado_id} onChange={e => setFiltro('letrado_id', e.target.value)} ariaLabel="Letrado">
+          <option value="">Letrado: Todos</option>
+          {letradosUnicos.map(u => <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>)}
+        </FiltroSelect>
+        <FiltroSelect value={filtros.linea} onChange={e => setFiltro('linea', e.target.value)} ariaLabel="Línea">
+          <option value="">Línea: Todas</option>
+          {LINEAS_FERROVIARIAS.map(l => (
+            <option key={l.id} value={l.id}>{l.label}</option>
+          ))}
+        </FiltroSelect>
+        <FiltroSelect value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} ariaLabel="Estado">
+          <option value="">Estado: Todos</option>
+          {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
+        </FiltroSelect>
+        <span className="text-[#404040] text-xs whitespace-nowrap ml-1">Recepción:</span>
+        <label className="relative h-[45px] px-4 rounded-[4px] bg-teal text-white text-xs flex items-center gap-2 cursor-pointer overflow-hidden flex-shrink-0">
+          <Icon name="calendar" size={16} />
+          {filtros.fechaDesde ? formatFecha(filtros.fechaDesde) : 'Día/Mes/Año'}
+          <input
+            type="date"
+            value={filtros.fechaDesde}
+            onChange={e => setFiltro('fechaDesde', e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
+        </label>
+        <button
+          onClick={limpiarFiltros}
+          className="w-[74px] h-[32px] rounded-[4px] bg-teal text-white text-xs font-bold hover:opacity-90 transition-opacity flex-shrink-0"
+        >
+          Limpiar
+        </button>
+      </div>
 
-              {/* Fila 2: inputs de filtro */}
-              <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#EEEBE6]">
-                {/* expand — sin filtro */}
-                <th className="px-2 py-1.5" />
-                {/* N° Causa / Exp — buscar */}
-                <th className="px-2 py-1.5">
-                  <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
-                </th>
-                {/* Carátula — buscar (compartido) */}
-                <th className="px-2 py-1.5">
-                  <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
-                </th>
-                {/* Área */}
-                <th className="px-2 py-1.5">
-                  <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
-                    <option value="">Todas</option>
-                    <option value="CIVIL">Civil</option>
-                    <option value="LABORAL">Laboral</option>
-                    <option value="PENAL">Penal</option>
-                  </select>
-                </th>
-                {/* Tipo */}
-                <th className="px-2 py-1.5">
-                  <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} className={filterInputCls}>
-                    <option value="">Todos</option>
-                    {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
-                  </select>
-                </th>
-                {/* Letrado */}
-                <th className="px-2 py-1.5">
-                  <select value={filtros.letrado_id} onChange={e => setFiltro('letrado_id', e.target.value)} className={filterInputCls}>
-                    <option value="">Todos</option>
-                    {letradosUnicos.map(u => <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>)}
-                  </select>
-                </th>
-                {/* Estado */}
-                <th className="px-2 py-1.5">
-                  <select value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} className={filterInputCls}>
-                    <option value="">Todos</option>
-                    {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
-                  </select>
-                </th>
-                {/* Recepción desde / hasta */}
-                <th className="px-2 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={filtros.fechaDesde}
-                      onChange={e => setFiltro('fechaDesde', e.target.value)}
-                      className={filterInputCls}
-                    />
-
-                    <input
-                      type="date"
-                      value={filtros.fechaHasta}
-                      onChange={e => setFiltro('fechaHasta', e.target.value)}
-                      className={filterInputCls}
-                    />
-                  </div>
-                </th>
-                {/* Acciones — sin filtro */}
-                <th className="px-2 py-1.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/20">
-              {items.length === 0 && (
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[900px]">
+          <tbody className="divide-y divide-outline-variant/20">
+            {items.length === 0 && (
                 <tr>
                   <td colSpan={9} className="py-16 text-center text-[#758A93] text-sm">
                     <Icon name="inbox" className="block mb-3" size={40} />
@@ -607,7 +597,6 @@ export default function BandejaAreaPage() {
             </tbody>
           </table>
         </div>
-      </div>
 
       {/* MODAL AGRUPAR */}
       <Modal
