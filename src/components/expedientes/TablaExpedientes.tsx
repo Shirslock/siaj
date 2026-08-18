@@ -36,7 +36,12 @@ export function TablaExpedientes({ expedientes, compact = false }: Props) {
           </tr>
         </thead>
         <tbody className="divide-y divide-outline-variant/30">
-          {expedientes.map(exp => {
+          {[...expedientes].sort((a, b) => {
+            // El principal siempre va primero; el resto conserva su orden relativo (sort estable).
+            if (a.es_principal && !b.es_principal) return -1
+            if (!a.es_principal && b.es_principal) return 1
+            return 0
+          }).map(exp => {
             const abogado = exp.abogado_id ? getUsuarioById(exp.abogado_id) : undefined
             return (
               <tr

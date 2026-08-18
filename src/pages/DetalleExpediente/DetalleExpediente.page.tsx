@@ -6,7 +6,7 @@ import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
-import { USUARIOS, getNombreCompleto, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
+import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
 import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
 import { getCausalesPorEstado } from '../../data/causalesFinalizacion'
@@ -26,7 +26,7 @@ import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
-type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_actuacion_penal' | 'nueva_querella'
+type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_querella'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
@@ -204,7 +204,6 @@ export default function DetalleExpedientePage() {
 
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
-    if (a === 'nueva_actuacion_penal') { navigate(RUTAS.NUEVA_ACTUACION_PENAL); return }
     if (a === 'estado') {
       if (exp!.area === 'PENAL') {
         setNuevoEstado('')
@@ -582,7 +581,7 @@ export default function DetalleExpedientePage() {
       id:               `${exp!.id}_QRL_${Date.now()}`,
       expediente_id:    exp!.id,
       tipo:             'MOVIMIENTO',
-      titulo:           'Nueva Querella iniciada',
+      titulo:           'Querella iniciada',
       descripcion:      `Se inició la Querella ${idQuerella} — ${formQuerella.caratula.trim()}. La causa penal pasa a tramitarse como Querella.`,
       fecha:            HOY,
       activo:           true,
@@ -705,13 +704,12 @@ export default function DetalleExpedientePage() {
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-card-lg z-10 overflow-hidden border border-[rgba(0,0,0,0.10)]">
                 {[
-                  { key: 'nueva_actuacion_penal' as AccionMenu, icon: 'add_circle', label: 'Nueva Actuación', show: esAbogadoPenal(usuarioActivo) },
                   { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
                   { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' },
-                  { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Nueva Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada },
+                  { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Iniciar Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada },
                 ]
                 .filter(item => item.show)
                 .map(item => (
@@ -801,14 +799,29 @@ export default function DetalleExpedientePage() {
               <label className="field-label">Nuevo estado procesal</label>
               <select className="field-input w-full" value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
                 <option value="">Seleccionar…</option>
-                {getEtapasPenales(exp.tipo)
-                  .filter(e => e.codigo !== 'ASIGNADO' && e.codigo !== exp.estadoProcesal)
-                  .sort((a, b) => {
-                    if (a.codigo === 'RECHAZADO') return 1
-                    if (b.codigo === 'RECHAZADO') return -1
-                    return a.numero - b.numero
-                  })
-                  .map(e => <option key={e.codigo} value={e.codigo}>{e.label}</option>)}
+                {(() => {
+                  const estadoCodPenal = exp.estadoProcesal ?? exp.estado
+                  // DESARCHIVADO es un sub-estado transitorio: desde ahí la única salida es volver a Archivo.
+                  if (estadoCodPenal === 'DESARCHIVADO') {
+                    return <option value="ARCHIVO">Volver a Archivo</option>
+                  }
+                  const opciones = getEtapasPenales(exp.tipo)
+                    .filter(e => e.codigo !== 'ASIGNADO' && e.codigo !== estadoCodPenal && e.codigo !== 'DESARCHIVADO')
+                    .sort((a, b) => {
+                      if (a.codigo === 'RECHAZADO') return 1
+                      if (b.codigo === 'RECHAZADO') return -1
+                      return a.numero - b.numero
+                    })
+                  return (
+                    <>
+                      {opciones.map(e => <option key={e.codigo} value={e.codigo}>{e.label}</option>)}
+                      {/* Solo desde Archivo se puede desarchivar la actuación */}
+                      {estadoCodPenal === 'ARCHIVO' && (
+                        <option value="DESARCHIVADO">Desarchivar actuación</option>
+                      )}
+                    </>
+                  )
+                })()}
               </select>
             </div>
             <div>
@@ -1281,11 +1294,11 @@ export default function DetalleExpedientePage() {
         </div>
       </Modal>
 
-      {/* Modal: Nueva Querella */}
+      {/* Modal: Iniciar Querella */}
       <Modal
         open={accion === 'nueva_querella'}
         onClose={() => { setAccion(null); setFormQuerella(BLANK_QUERELLA) }}
-        titulo="Nueva Querella"
+        titulo="Iniciar Querella"
         size="md"
         footer={
           <>

@@ -743,6 +743,13 @@ export function TimelinePenal({ exp }: Props) {
   const countProcesales = historialCompleto.filter(e => e.kind === 'procesal').length
   const countGenericas  = historialCompleto.filter(e => e.kind === 'generica').length
 
+  // ── Restricción: en el sub-estado DESARCHIVADO solo se admite UNA actividad
+  // genérica antes de volver a Archivo. actividadesActuales ya viene acotado a
+  // lo registrado desde el último cambio de estado (el que llevó a DESARCHIVADO).
+  const enDesarchivado = (exp.estadoProcesal ?? exp.estado) === 'DESARCHIVADO'
+  const yaCargoUnaActividadEnDesarchivado =
+    enDesarchivado && gruposHistorial.actividadesActuales.some(a => a.kind === 'generica')
+
   // ── Render de una entrada individual ────────────────
 
   function renderEntrada(entrada: EntradaHistorial) {
@@ -888,13 +895,20 @@ export function TimelinePenal({ exp }: Props) {
               ))}
             </div>
             {/* Botón Nueva Actividad */}
-            <button
-              onClick={() => { setTabNueva('procesales'); setModalNueva(true) }}
-              className="flex items-center gap-1.5 px-3 py-2 bg-[#1b3a57] text-white rounded-xl text-xs font-bold hover:bg-[#2a5278] transition-colors"
-            >
-              <Icon name="add" size={14} />
-              Nueva Actividad
-            </button>
+            {yaCargoUnaActividadEnDesarchivado ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#fef3c7] border border-[#fde68a] text-[11px] font-bold text-[#d97706]">
+                <Icon name="info" size={14} />
+                Ya se registró una actividad en Desarchivado. Volvé a Archivo para continuar.
+              </div>
+            ) : (
+              <button
+                onClick={() => { setTabNueva(enDesarchivado ? 'genericas' : 'procesales'); setModalNueva(true) }}
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#1b3a57] text-white rounded-xl text-xs font-bold hover:bg-[#2a5278] transition-colors"
+              >
+                <Icon name="add" size={14} />
+                Nueva Actividad
+              </button>
+            )}
           </div>
         </div>
 

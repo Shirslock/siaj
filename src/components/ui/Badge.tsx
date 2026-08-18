@@ -28,6 +28,7 @@ const ESTADO_CONFIG: Record<string, BadgeConfig> = {
   SENTENCIA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
   OBSERVADO:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
   ASIGNADO:             { bg: 'bg-[#E5E5E5]',  text: 'text-[#1b3a57]', dot: 'bg-[#7dbad2]' },
+  DESARCHIVADO:         { bg: 'bg-[#fef3c7]',  text: 'text-[#854f0b]', dot: 'bg-[#d97706]' },
 }
 
 const DEFAULT_CONFIG: BadgeConfig = {
