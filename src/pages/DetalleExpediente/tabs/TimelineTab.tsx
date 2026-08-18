@@ -6,14 +6,14 @@ import { useExpedientesStore } from '../../../store/expedientes.store'
 import { useUIStore } from '../../../store/ui.store'
 import { Modal } from '../../../components/ui/Modal'
 import { formatFecha } from '../../../utils/format'
-import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia } from '../../../data/estadosProcesales'
+import { getEstadoProcesal, getEstadosProcesales, calcularUrgencia, TAREAS_RECURSO_QUEJA } from '../../../data/estadosProcesales'
 import Icon from '../../../components/ui/Icon'
 import { toast } from 'react-toastify'
 import {
   actividadesToFilas, tareasToFilas, exportarExcel, exportarPDF,
   type FilaTimelineExport,
 } from '../../../utils/exportTimeline'
-import { useTareasStore } from '../../../store/tareas.store'
+import { useSolicitudesStore, PERSONAS_POR_AREA } from '../../../store/tareas.store'
 import { useNotificacionesStore } from '../../../store/notificaciones.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
@@ -30,6 +30,8 @@ const TIPOS: { value: TipoActividad; label: string }[] = [
   { value: 'NOTIFICACION',   label: 'Notificación' },
   { value: 'MOVIMIENTO',     label: 'Movimiento' },
   { value: 'NOTA_RESPUESTA', label: 'Nota / Respuesta' },
+  { value: 'RECURSO_INCIDENTE', label: 'Interposición de Recurso' },
+  { value: 'DILIGENCIAMIENTO', label: 'Diligenciamiento' },
   { value: 'OTRO',           label: 'Otro' },
 ]
 
@@ -487,10 +489,14 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
     NOTIFICACION:   'notifications',
     MOVIMIENTO:     'swap_horiz',
     NOTA_RESPUESTA: 'edit_note',
+    RECURSO_INCIDENTE: 'gavel',
+    DILIGENCIAMIENTO: 'forward',
     OTRO:           'more_horiz',
   }
   const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
     (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
+  const esSolicitud = act.id?.startsWith('SOL_') || act.titulo.startsWith('Solicitud:')
+  const iconoActividad = isSistema ? 'swap_horiz' : esSolicitud ? 'task' : (iconMap[act.tipo] ?? 'radio_button_unchecked')
 
   return (
     <div className="flex flex-col mb-3">
@@ -500,7 +506,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
           <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
             isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
           }`}>
-            <Icon name={isSistema ? 'swap_horiz' : (iconMap[act.tipo] ?? 'radio_button_unchecked')} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
+            <Icon name={iconoActividad} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
           </div>
           {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)] mt-1" />}
         </div>
@@ -514,6 +520,18 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
           <div className="flex items-start justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
+              {act.es_solicitud && act.tipo === 'NOTA_RESPUESTA' && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
+                  <Icon name="check" size={9} />
+                  RESPUESTA
+                </span>
+              )}
+              {act.es_solicitud && act.tipo !== 'NOTA_RESPUESTA' && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
+                  <Icon name="task" size={9} />
+                  SOLICITUD
+                </span>
+              )}
               {act.escrito_estado === 'GENERADO' && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
                   Pendiente de aprobación externa
@@ -882,6 +900,85 @@ function LogAuditoriaList({ log }: { log: LogAuditoria[] }) {
   )
 }
 
+// ── Bloque "Recurso de Queja" — trámite paralelo ─────────────────────────────
+// Aplica desde REF en adelante en los 4 ciclos de Demanda Civil/Laboral.
+// No suspende el avance a Ejecución de Sentencia. Checklist propio,
+// independiente del EstadoProcesal de la cadena principal.
+
+const QUEJA_KEY_SUFFIX = 'RECURSO_QUEJA_PARALELO'
+
+function RecursoQuejaBlock({ exp }: { exp: Expediente }) {
+  const { tareasMap, toggleQuejaEnTramite, actualizarTarea } = useExpedientesStore()
+  const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
+  const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
+
+  const key = `${exp.id}__${QUEJA_KEY_SUFFIX}`
+  const tareas = tareasMap[key] ?? TAREAS_RECURSO_QUEJA
+  const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
+
+  const estadoSintetico: NonNullable<ReturnType<typeof getEstadoProcesal>> = {
+    codigo: QUEJA_KEY_SUFFIX,
+    label: 'Recurso de Queja',
+    siguiente: undefined,
+    tareas: TAREAS_RECURSO_QUEJA,
+  }
+
+  function guardarTarea() {
+    if (!tareaSeleccionada) return
+    actualizarTarea(exp.id, QUEJA_KEY_SUFFIX, tareaSeleccionada.id, cambiosLocales)
+    setTareaSeleccionada(null)
+    setCambiosLocales({})
+  }
+
+  return (
+    <div className="p-4 rounded-xl border-2 border-dashed border-[#AFA9EC] bg-[#f5f4ff] mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[12px] font-bold text-[#534ab7]">Recurso de Queja (trámite paralelo)</p>
+        <button
+          onClick={() => toggleQuejaEnTramite(exp.id, !exp.queja_en_tramite)}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${
+            exp.queja_en_tramite
+              ? 'bg-[#534ab7] text-white hover:opacity-90'
+              : 'bg-white border border-[#AFA9EC] text-[#534ab7] hover:bg-[#eeedfe]'
+          }`}
+        >
+          {exp.queja_en_tramite ? 'En trámite' : 'Iniciar'}
+        </button>
+      </div>
+
+      {exp.queja_en_tramite && (
+        <div className="flex gap-4 items-start">
+          <div className="flex-1 min-w-0">
+            <TareasBlock
+              exp={exp}
+              tareas={tareas}
+              estadoProcesal={estadoSintetico}
+              completadas={completadas}
+              total={tareas.length}
+              tareaSeleccionada={tareaSeleccionada}
+              setTareaSeleccionada={(t) => { setTareaSeleccionada(t); setCambiosLocales({}) }}
+            />
+          </div>
+          {tareaSeleccionada && (
+            <TareaDetailPanel
+              tarea={tareaSeleccionada}
+              estadoLabel="Recurso de Queja"
+              cambiosLocales={cambiosLocales}
+              setCambiosLocales={setCambiosLocales}
+              onGuardar={guardarTarea}
+              onCerrar={() => { setTareaSeleccionada(null); setCambiosLocales({}) }}
+            />
+          )}
+        </div>
+      )}
+
+      <p className="text-[10px] text-[#7a67c9] mt-2 italic">
+        No suspende el avance a Ejecución de Sentencia. Si prospera, retroceder manualmente a REF (requiere motivo).
+      </p>
+    </div>
+  )
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export function TimelineTab({ exp }: Props) {
@@ -895,7 +992,7 @@ export function TimelineTab({ exp }: Props) {
     editarActividad, eliminarActividad,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
-  const { agregarTarea } = useTareasStore()
+  const { agregarSolicitud } = useSolicitudesStore()
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null)
   const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
@@ -934,24 +1031,66 @@ export function TimelineTab({ exp }: Props) {
 
   function guardarSolicitud() {
     if (!formSolicitud.titulo.trim()) return
-    agregarTarea({
-      titulo:              formSolicitud.titulo,
-      descripcion:         formSolicitud.descripcion,
+
+    const esExterna = !!formSolicitud.area_destinataria
+    // Destinatario obligatorio: interno vía asignado_a, externo vía área destinataria
+    if (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria) {
+      toast.error('Debés seleccionar un destinatario.')
+      return
+    }
+
+    // Nombres de destinatarios (internos por USUARIOS, externos por PERSONAS_POR_AREA)
+    const nombres = formSolicitud.asignado_a.map(id => {
+      const u = getUsuarioById(id)
+      if (u) return `${u.apellido}, ${u.nombre}`
+      return PERSONAS_POR_AREA.find(p => p.id === id)?.nombre ?? id
+    })
+    const asignadoNombre = nombres.length ? nombres.join(', ') : (formSolicitud.area_destinataria || 'Sin asignar')
+
+    agregarSolicitud({
+      tipo:                esExterna ? 'externa' : 'interna',
+      titulo:              formSolicitud.titulo.trim(),
+      descripcion:         formSolicitud.descripcion.trim(),
       expediente_id:       exp.id,
-      expediente_caratula: exp.caratula,
+      expediente_caratula: exp.caratula ?? exp.id,
       expediente_area:     exp.area,
-      asignado_a:          formSolicitud.asignado_a[0] ?? '',
       creado_por:          usuarioActivo?.id ?? '',
-      fecha_limite:        formSolicitud.fecha_limite || null,
-      prioridad:           formSolicitud.prioridad,
-      estado:              'pendiente',
-      mostrar_en_agenda:   false,
+      asignado_a:          formSolicitud.asignado_a,
+      asignado_a_nombre:   asignadoNombre,
       area_destinataria:   formSolicitud.area_destinataria || undefined,
       persona_contacto_id: formSolicitud.persona_contacto_id || undefined,
       persona_contacto:    formSolicitud.persona_contacto || undefined,
-      etiquetas:           [],
+      prioridad:           formSolicitud.prioridad,
+      fecha_limite:        formSolicitud.fecha_limite || null,
+      estado:              'pendiente',
       created_at:          new Date().toISOString(),
     })
+
+    const prioridadLabel = {
+      alta:  '🔴 Alta',
+      media: '🟡 Media',
+      baja:  '🟢 Baja',
+    }[formSolicitud.prioridad] ?? formSolicitud.prioridad
+
+    agregarActividad(exp.id, {
+      id: `SOL_${Date.now()}`,
+      expediente_id: exp.id,
+      tipo: 'OTRO' as TipoActividad,
+      titulo: `Solicitud: ${formSolicitud.titulo.trim()}`,
+      descripcion: [
+        formSolicitud.descripcion.trim(),
+        `Asignado a: ${asignadoNombre}`,
+        `Prioridad: ${prioridadLabel}`,
+        formSolicitud.fecha_limite ? `Fecha límite: ${formSolicitud.fecha_limite}` : null,
+      ].filter(Boolean).join('\n'),
+      fecha: new Date().toISOString().split('T')[0],
+      activo: true,
+      subitems: [],
+      estadoExpediente: exp.estadoProcesal ?? exp.estado,
+      es_solicitud: true,
+      ...(formSolicitud.fecha_limite ? { fecha_vencimiento: formSolicitud.fecha_limite, fecha_aviso: formSolicitud.fecha_limite } : {}),
+    } as Actividad)
+
     toast.success('Solicitud creada.')
     cerrarModal()
   }
@@ -1351,6 +1490,12 @@ export function TimelineTab({ exp }: Props) {
         {/* ── Columna izquierda: feed ── */}
         <div className="flex-1 min-w-0 space-y-0">
 
+          {/* Recurso de Queja — trámite paralelo, solo desde REF en adelante */}
+          {(filtroTab === 'todo' || filtroTab === 'tareas') &&
+            (exp.estadoProcesal === 'REF' || exp.estadoProcesal === 'EJECUCION_SENTENCIA') && (
+            <RecursoQuejaBlock exp={exp} />
+          )}
+
           {/* Bloque tareas (tab todo o tareas) */}
           {(filtroTab === 'todo' || filtroTab === 'tareas') && !esEstadoInicial && estadoProcesal && (
             <TareasBlock
@@ -1400,7 +1545,7 @@ export function TimelineTab({ exp }: Props) {
                             onToggleSnapshot={() => {}}
                             tareasHistoricas={[]}
                           />
-                          {esLetrado && (
+                          {esLetrado && !a.es_solicitud && (
                             <div className="pl-14 pb-2 -mt-2 flex items-center gap-2">
                               <button
                                 onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
@@ -1532,7 +1677,21 @@ export function TimelineTab({ exp }: Props) {
                                   <Icon name="description" size={14} className="text-[#4a6a84]" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
+                                    {a.es_solicitud && a.tipo === 'NOTA_RESPUESTA' && (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
+                                        <Icon name="check" size={9} />
+                                        RESPUESTA
+                                      </span>
+                                    )}
+                                    {a.es_solicitud && a.tipo !== 'NOTA_RESPUESTA' && (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
+                                        <Icon name="task" size={9} />
+                                        SOLICITUD
+                                      </span>
+                                    )}
+                                  </div>
                                   {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
                                   {(a.doc_gde || a.adjunto_nombre) && (
                                     <div className="flex flex-wrap gap-3 mt-1">
@@ -1540,7 +1699,7 @@ export function TimelineTab({ exp }: Props) {
                                       {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
                                     </div>
                                   )}
-                                  {esLetrado && (
+                                  {esLetrado && !a.es_solicitud && (
                                     <div className="flex items-center gap-2 mt-1.5">
                                       <button
                                         onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
@@ -1664,7 +1823,7 @@ export function TimelineTab({ exp }: Props) {
               disabled={
                 tabModal === 'generica'
                   ? (!formAct.titulo.trim() || !formAct.descripcion.trim())
-                  : !formSolicitud.titulo.trim()
+                  : (!formSolicitud.titulo.trim() || (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria))
               }
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >

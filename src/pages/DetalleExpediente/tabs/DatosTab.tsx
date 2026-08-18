@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import type { Expediente, CampoFormulario } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { getCamposFormulario } from '../../../data/formularios'
@@ -8,8 +8,14 @@ import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
+import { ModalSolicitudPenal } from '../../../components/expedientes/ModalSolicitudPenal'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
+
+// Tipos con flujo MATRIZ SACO — muestran el campo bloqueado "Causal de finalización"
+const TIPOS_FINALIZACION_LIBRE = new Set([
+  'DEMANDA_CIVIL', 'DEMANDA_LABORAL', 'DEMANDA_CIVIL_ACTORA', 'DEMANDA_LABORAL_ACTORA',
+])
 
 function getJuzgadoLabel(id: string): string {
   return ALL_JUZGADOS.find(j => j.id === id)?.label ?? id
@@ -27,15 +33,7 @@ function valorDisplay(campo: CampoFormulario, val: unknown): React.ReactNode {
   if (campo.type === 'linea')   return getLineaLabel(String(val))
   if (campo.type === 'multiselect') {
     if (!Array.isArray(val) || val.length === 0) return '—'
-    return (
-      <div className="flex flex-wrap gap-1.5">
-        {(val as string[]).map(v => (
-          <span key={v} className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
-            {v}
-          </span>
-        ))}
-      </div>
-    )
+    return (val as string[]).join(', ')
   }
   return String(val)
 }
@@ -83,6 +81,7 @@ export function DatosTab({ exp }: Props) {
   const [draftTop, setDraftTop] = useState<Record<string, unknown>>({})
   const [draftMesa, setDraftMesa] = useState<Record<string, unknown>>({})
   const [draftAbogado, setDraftAbogado] = useState<Record<string, unknown>>({})
+  const [modalSolTipo, setModalSolTipo] = useState<string | null>(null)
 
   const camposMesa    = getCamposFormulario(exp.tipo, 'mesa', exp.area)
   const camposAbogado = getCamposFormulario(exp.tipo, 'abogado', exp.area)
@@ -124,8 +123,16 @@ export function DatosTab({ exp }: Props) {
       return <textarea className="field-input resize-y w-full text-sm" style={{ minHeight: 72 }} value={val} onChange={e => change(e.target.value)} />
     }
     if (campo.type === 'select' && campo.options) {
+      // mesa_tipo_lanzamiento se completa una única vez (al Iniciar Juicio) y
+      // queda bloqueado apenas tiene valor — no se puede corregir desde acá.
+      const bloqueadoPorLanzamiento = campo.id === 'mesa_tipo_lanzamiento' && !!exp.campos_mesa?.['mesa_tipo_lanzamiento']
       return (
-        <select className="field-input w-full text-sm" value={val} onChange={e => change(e.target.value)}>
+        <select
+          disabled={bloqueadoPorLanzamiento}
+          className={`field-input w-full text-sm${bloqueadoPorLanzamiento ? ' bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed' : ''}`}
+          value={val}
+          onChange={e => change(e.target.value)}
+        >
           <option value="">Seleccionar…</option>
           {(campo.options as Array<string | { value: string; label: string }>).map(opt => {
             const v = typeof opt === 'string' ? opt : opt.value
@@ -233,7 +240,15 @@ export function DatosTab({ exp }: Props) {
             <div key={si} className="flex items-center gap-2">
               <select
                 value={slotVal}
-                onChange={e => { const n = [...slots]; n[si] = e.target.value; commit(n) }}
+                onChange={e => {
+                  const nuevoValor = e.target.value
+                  const n = [...slots]; n[si] = nuevoValor; commit(n)
+                  if (campo.id === 'abg_tipo_solicitud' && nuevoValor) {
+                    const yaExistiaData = !!(exp.campos_abogado
+                      ?.abg_solicitudes_detalle as Record<string, unknown> | undefined)?.[nuevoValor]
+                    if (!yaExistiaData) setModalSolTipo(nuevoValor)
+                  }
+                }}
                 className="field-input flex-1 text-sm"
               >
                 <option value="">Seleccioná una opción…</option>
@@ -252,7 +267,7 @@ export function DatosTab({ exp }: Props) {
             </div>
           ))}
           {slots.filter(v => v !== '').length < opts.length && (
-            <button type="button" onClick={() => commit([...slots, ''])}
+            <button type="button" onClick={() => setDraft(p => ({ ...p, [campo.id]: [...slots, ''] }))}
               className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1">
               <Icon name="add" size={14} />
               Agregar otro
@@ -332,6 +347,19 @@ export function DatosTab({ exp }: Props) {
         <FieldRow label="Fecha de Recepción" edit={false}
           value={formatFecha(exp.fecha_recepcion)}
         />
+        {TIPOS_FINALIZACION_LIBRE.has(exp.tipo) && (
+          <FieldRow label="Causal de finalización" edit={false}
+            value={
+              <input
+                type="text"
+                disabled
+                readOnly
+                className="field-input w-full bg-[#f5f5f5] text-[#4a6a84] cursor-not-allowed"
+                value={exp.causal_finalizacion ?? 'Se completa automáticamente al finalizar la actuación'}
+              />
+            }
+          />
+        )}
 
         {/* ── SECCIÓN 2: Datos de Recepción ── */}
         <Seccion titulo="Datos de Recepción" />
@@ -438,18 +466,82 @@ export function DatosTab({ exp }: Props) {
 
             {/* Campos abogado del tipo */}
             {camposAbogado.map(campo => (
-              <FieldRow
-                key={campo.id}
-                label={campo.label}
-                edit={edit}
-                value={valorDisplay(campo, exp.campos_abogado[campo.id])}
-                input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
-              />
+              <Fragment key={campo.id}>
+                <FieldRow
+                  label={campo.label}
+                  edit={edit}
+                  value={valorDisplay(campo, exp.campos_abogado[campo.id])}
+                  input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
+                />
+                {campo.id === 'abg_tipo_solicitud' && (
+                  <SolicitudesPenalesDetalle
+                    exp={exp}
+                    vals={edit ? draftAbogado : exp.campos_abogado}
+                    onVer={setModalSolTipo}
+                  />
+                )}
+              </Fragment>
             ))}
           </>
         )}
 
       </dl>
+
+      {modalSolTipo && (
+        <ModalSolicitudPenal
+          open={!!modalSolTipo}
+          onClose={() => setModalSolTipo(null)}
+          expId={exp.id}
+          tipo={modalSolTipo}
+          dataInicial={(exp.campos_abogado
+            ?.abg_solicitudes_detalle as Record<string, { campos: Record<string, string>; archivos: Record<string, string[]> }> | undefined)
+            ?.[modalSolTipo]}
+        />
+      )}
+    </div>
+  )
+}
+
+// Fila con la lista de tipos de solicitud seleccionados en abg_tipo_solicitud,
+// cada uno con botón "Ver" para abrir su sub-formulario en modal.
+function SolicitudesPenalesDetalle({
+  exp, vals, onVer,
+}: {
+  exp: Expediente
+  vals: Record<string, unknown>
+  onVer: (tipo: string) => void
+}) {
+  const seleccionados = Array.isArray(vals['abg_tipo_solicitud']) ? vals['abg_tipo_solicitud'] as string[] : []
+  if (seleccionados.length === 0) return null
+
+  const detalles = (exp.campos_abogado?.abg_solicitudes_detalle as Record<string, { campos?: Record<string, string> }> | undefined) ?? {}
+
+  return (
+    <div className="pb-3 -mt-1 pl-[13.5rem] space-y-1.5">
+      {seleccionados.map(tipoSel => {
+        const detalle = detalles[tipoSel]
+        const tieneData = detalle && Object.keys(detalle.campos ?? {}).length > 0
+
+        return (
+          <div key={tipoSel}
+            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#f5f5f5] border border-[rgba(0,0,0,0.06)]">
+            <span className="text-[12px] text-[#1b3a57]">
+              {tipoSel}
+              {!tieneData && (
+                <span className="ml-1.5 text-[10px] text-[#d97706] font-semibold">
+                  · Sin completar
+                </span>
+              )}
+            </span>
+            <button
+              onClick={() => onVer(tipoSel)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-[#1b3a57] hover:text-[#2a5278] transition-colors">
+              <Icon name="visibility" size={13} />
+              Ver
+            </button>
+          </div>
+        )
+      })}
     </div>
   )
 }

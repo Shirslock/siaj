@@ -119,6 +119,8 @@ export interface Expediente {
   fecha_ultimo_impulsorio?: string
   es_querella_iniciada?: boolean
   id_querella_derivada?: string   // id del expediente QUERELLA derivado
+  causal_finalizacion?: string    // bloqueado, se autocompleta al Finalizar
+  queja_en_tramite?: boolean      // flag Recurso de Queja en trámite paralelo
 }
 
 export interface VinculoExpediente {
@@ -168,6 +170,8 @@ export type TipoActividad =
   | 'NOTIFICACION'
   | 'MOVIMIENTO'
   | 'NOTA_RESPUESTA'
+  | 'RECURSO_INCIDENTE'
+  | 'DILIGENCIAMIENTO'
   | 'OTRO'
 
 export interface ChecklistItem {
@@ -234,6 +238,8 @@ export interface Actividad {
   fecha_aviso?: string
   escrito_id?: string                    // referencia al EscritoTemplate usado, si vino del generador
   escrito_estado?: EstadoEscritoActividad // GENERADO = se descargó el .docx y falta la aprobación externa
+  es_solicitud?: boolean                 // true = entrada de solicitud/respuesta, sin reply/edit/delete
+  solicitud_id?: string                  // referencia cruzada a la Solicitud de useSolicitudesStore
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'
@@ -275,6 +281,7 @@ export interface EstadoProcesal {
   siguiente?: string
   tareas: Tarea[]
   esArchivado?: boolean
+  grupoCausal?: 'PRE_SENTENCIA_1' | 'SENTENCIA_1' | 'INSTANCIA_RECURSIVA' | 'EJECUCION_SENTENCIA' | 'LANZAMIENTO'
 }
 
 export type EntradaTimeline =

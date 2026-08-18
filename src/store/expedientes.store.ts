@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply, LogAuditoria } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_MOCK, TAREAS_MAP_INICIAL } from '../data/expedientes.mock'
+import { TAREAS_RECURSO_QUEJA } from '../data/estadosProcesales'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -41,6 +42,7 @@ interface ExpedientesState {
   agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
   actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
   eliminarRegistroPenal: (expId: string, registroId: string) => void
+  toggleQuejaEnTramite: (expId: string, activar: boolean) => void
 }
 
 function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
@@ -343,4 +345,16 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
       [expId]: (s.registrosPenales[expId] ?? []).filter(r => r.id !== registroId),
     },
   })),
+
+  toggleQuejaEnTramite: (expId, activar) => set(s => {
+    const fn = (e: Expediente) => ({ ...e, queja_en_tramite: activar })
+    const keyQueja = `${expId}__RECURSO_QUEJA_PARALELO`
+    return {
+      expedientes: applyToArr(s.expedientes, expId, fn),
+      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
+      tareasMap: activar && !s.tareasMap[keyQueja]
+        ? { ...s.tareasMap, [keyQueja]: TAREAS_RECURSO_QUEJA }
+        : s.tareasMap,
+    }
+  }),
 }))

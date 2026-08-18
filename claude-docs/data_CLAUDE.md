@@ -8,7 +8,9 @@
 | `formularios.ts` | Campos por tipo (mesa + abogado) | FORMULARIOS.md |
 | `usuarios.ts` | 32 usuarios reales con roles y asignaciones | Roles.xlsx |
 | `expedientes.mock.ts` | Datos de ejemplo para el prototipo — ver mocks disponibles abajo | Creado manualmente |
-| `estadosProcesales.ts` | Estados y tareas por tipo de gestión | Diseño funcional |
+| `estadosProcesales.ts` | Estados y tareas por tipo de gestión — 13 ciclos | Diseño funcional / MATRIZ SACO |
+| `causalesFinalizacion.ts` | Catálogo de causales de finalización por `grupoCausal` | MATRIZ SACO |
+| `solicitudesPenales.ts` | Config de sub-formularios por tipo de `abg_tipo_solicitud` (OFICIO Penal) | MATRIZ SACO |
 | `audiencias.mock.ts` | Audiencias de ejemplo para el módulo Agenda | Creado manualmente |
 
 ---
@@ -70,17 +72,52 @@ Estos 5 campos aparecen en TODOS los tipos al dar de alta:
 
 ## Estados procesales (estadosProcesales.ts)
 
-DEMANDA_CIVIL tiene el ciclo completo:
-ASIGNADO → INICIO → TRABA_LITIS → EN_PRUEBA → ALEGATOS → SENTENCIA → CERRADO
+Los 4 ciclos MATRIZ SACO — `ESTADOS_DEMANDA_CIVIL`, `ESTADOS_DEMANDA_LABORAL` (ciclo propio,
+ya NO alias del civil), `ESTADOS_DEMANDA_CIVIL_ACTORA`, `ESTADOS_DEMANDA_LABORAL_ACTORA` —
+comparten la misma estructura de códigos:
+
+ASIGNADO → INICIO → TRABA_LITIS → EN_PRUEBA (`PRUEBA` en las variantes `_ACTORA`) → ALEGATO
+→ SENTENCIA_1_FAV | SENTENCIA_1_DESFAV → APELACION → SENTENCIA_2_FAV | SENTENCIA_2_DESFAV
+→ REF → EJECUCION_SENTENCIA → FINALIZADO (`esArchivado: true`)
+
+Cada nodo tiene `grupoCausal` (`PRE_SENTENCIA_1` / `SENTENCIA_1` / `INSTANCIA_RECURSIVA` /
+`EJECUCION_SENTENCIA`) que el modal "Finalizar actuación" usa para resolver el catálogo de
+causales vía `getCausalesPorEstado()` de `causalesFinalizacion.ts`. `EJECUCION_SENTENCIA`
+incluye como última tarea "Registrar causal de finalización".
+
+**Recurso de Queja** ya no es un nodo lineal — `REF.siguiente` va directo a
+`EJECUCION_SENTENCIA`. Es un checklist paralelo (`TAREAS_RECURSO_QUEJA`, exportado desde este
+mismo archivo), activable con `toggleQuejaEnTramite` del store cuando `estadoProcesal` es
+`REF` o `EJECUCION_SENTENCIA`.
+
+La ramificación `ALEGATO`/`APELACION` (Sentencia Favorable/Desfavorable, decisión del letrado)
+y la de `EN_ANALISIS` (ciclo A/B) se resuelven en `DetalleExpediente.page.tsx` con
+`getRamificaciones(codigoEstado, tipo)` — ver `pages_CLAUDE.md` / `CLAUDE.md` Sección 13.
 
 El estado ASIGNADO no tiene tareas — avanza desde Acciones → Cambiar estado.
 Los demás estados tienen tareas que deben completarse para avanzar.
 
 ```ts
 import { getEstadosProcesales, getEstadoProcesal } from './estadosProcesales'
+import { getCausalesPorEstado } from './causalesFinalizacion'
 const estados = getEstadosProcesales('DEMANDA_CIVIL')
 const estado = getEstadoProcesal('DEMANDA_CIVIL', 'INICIO')
+const causales = getCausalesPorEstado(estado?.grupoCausal)
 ```
+
+**LANZAMIENTO_JUDICIALIZADO** también fue reconstruido MATRIZ SACO (11 estados, terminal propio
+`TERMINADO` en vez de `FINALIZADO`, `grupoCausal: 'LANZAMIENTO'` con catálogo propio en
+`causalesFinalizacion.ts`), con dos particularidades que no tienen los 4 ciclos de Demanda:
+
+- **Split Operativo/Comercial** por `campos_mesa.mesa_tipo_lanzamiento` — el circuito Comercial
+  salta directo `INICIO → SENTENCIA_LANZAMIENTO → MANDAMIENTO_LIBRADO →
+  LANZAMIENTO_EFECTIVIZADO → TERMINADO` (`getSiguienteLanzamiento()` en
+  `DetalleExpediente.page.tsx`, prioridad sobre la ramificación genérica).
+- **Bifurcación por vulnerabilidad** desde `CONSTATACION_JUDICIAL` → `SENTENCIA_LANZAMIENTO`
+  (sin vulnerables) | `TRASLADO_DEFENSOR_OFICIAL` (con vulnerables) — mismo mecanismo
+  `getRamificaciones()`/`RAMIFICACIONES_POR_CODIGO` que ALEGATO/APELACION.
+
+Ver Sección 13 de `CLAUDE.md` para el detalle completo de la cadena.
 
 ---
 
@@ -102,58 +139,67 @@ puedeReasignar(usuario)              // → true solo si abogado_coordinador
 
 ## Mocks disponibles (expedientes.mock.ts)
 
-`EXPEDIENTES_MOCK` — 13 actuaciones basadas en el flujo real del prototipo. Se exporta también como
+**Reseteado a partir de `feat/matriz-saco-demandas`:** se eliminaron todas las actuaciones de
+ejemplo previas (las 13 con escenarios de vencimientos/agrupación/vínculos descriptas más abajo
+en el historial de este doc — ⚠️ **ya no existen en el código**, quedan solo como referencia si
+hace falta reconstruir algún escenario). `EXPEDIENTES_MOCK` tiene 6 actuaciones base — las 4
+originales de MATRIZ SACO más dos agregadas para poder probar el flujo Penal completo (Carta SAE
+→ Iniciar Querella, y el ciclo Archivo ↔ Desarchivado). Se exporta también como
 `EXPEDIENTES_ABOGADO` (alias de compatibilidad). El store carga `expedientes: EXPEDIENTES_MOCK`.
-
-**Regla clave — `estado`/`estadoProcesal` usan el CÓDIGO del catálogo, no el label:**
-- Tipos con flujo (`getEstadosProcesales` los mapea): usar el `codigo` exacto (`EN_PRUEBA`, `TRABA_LITIS`, `ACUERDO_EXTRAJUDICIAL`, etc.), NO el label con tildes.
-- Área PENAL (cualquier tipo): el detalle usa `getEtapasPenales` → códigos `ASIGNADO`/`EN_ANALISIS`/`ACEPTADO`/`RECHAZADO`/`INSTRUCCION`/`JUICIO`/`EJECUCION_PENAL`/`ARCHIVO`.
-- Tipos sin catálogo de flujo (OFICIO, CARTA_DOC, MEDIACION, SECLO): usan los labels libres de `ESTADOS_POR_TIPO` (`'EN ANÁLISIS'`, `'RESPONDIDO'`, etc.).
-- Cada MOVIMIENTO del timeline lleva `estadoExpediente` = el código destino de esa transición.
+`QUEUE_MESA` está vacío (`[]`).
 
 | # | ID | Tipo | Área | Estado (código) | Letrado | Causa / rol |
 |---|----|------|------|-----------------|---------|-------------|
-| 01 | C-0001/2023 | DEMANDA_CIVIL | CIVIL | EN_PRUEBA | CASANO UR_004 | **45.201/2023 · Principal** · `es_juicio_iniciado`, vínculo→P-0001 |
-| 02 | C-0004/2023 | OFICIO | CIVIL | EN ANÁLISIS | CASANO UR_004 | 45.201/2023 · secundario |
-| 03 | C-0007/2024 | OFICIO | CIVIL | RESPONDIDO | CASANO UR_004 | 45.201/2023 · secundario |
-| 04 | L-0002/2022 | DEMANDA_LABORAL | LABORAL | TRABA_LITIS | PIRES UR_012 | **78.910/2022 · Principal** · tarea vencida |
-| 05 | L-0005/2022 | OFICIO | LABORAL | EN ANÁLISIS | PIRES UR_012 | 78.910/2022 · secundario |
-| 06 | C-0009/2024 | COBRO_CANON | CIVIL | ACUERDO_EXTRAJUDICIAL | FERRARI UR_007 | suelta (ciclo A) |
-| 07 | L-0008/2023 | DEMANDA_LABORAL | LABORAL | SENTENCIA | MOLINELLI UR_010 | suelta · `es_principal` (juicio, badge PJN) |
-| 08 | P-0001/2024 | QUERELLA | PENAL | INSTRUCCION | DESIDERI UR_019 | suelta · vínculo→C-0001 (mismo siniestro) |
-| 08b | P-0019/2024 | CARTA_SUCESO | PENAL | EN_ANALISIS | DESIDERI UR_019 | suelta · `es_principal` · **ejemplo del flujo "Nueva Querella"** |
-| 09 | P-0002/2023 | DEFENSA_PENAL | PENAL | ACEPTADO | BIONDI UR_023 | suelta |
-| 10 | P-0003/2024 | QUERELLA | PENAL | EN_ANALISIS | PRINOTTI UR_024 | suelta · tarea vencida |
-| 11 | C-0042/2026 | LANZAMIENTO_JUDICIALIZADO | CIVIL | INICIO | CASANO UR_004 | **8821/2026 · Principal** · juicio iniciado · vínculo ANTECEDENTE→C-0041 |
-| 12 | C-0041/2026 | LANZAMIENTO | CIVIL | JUICIO_INICIADO | CASANO UR_004 | 8821/2026 · antecedente administrativo de C-0042 |
+| 01 | C-0100/2026 | DEMANDA_CIVIL | CIVIL | ASIGNADO | CASANO UR_004 | sin `numero_causa` — recorrer manualmente |
+| 02 | L-0100/2026 | DEMANDA_LABORAL | LABORAL | ASIGNADO | PIRES UR_012 | sin `numero_causa` — recorrer manualmente |
+| 03 | C-0043/2026 | LANZAMIENTO | CIVIL | JUICIO_INICIADO | CASANO UR_004 | sin `numero_causa` — probar botón "Iniciar Juicio" → crea `LANZAMIENTO_JUDICIALIZADO` nuevo |
+| 04 | P-0100/2026 | OFICIO (variante_penal) | PENAL | EN ANÁLISIS | DESIDERI UR_019 | `numero_causa: 'IPP-2026-00845'` — probar `abg_tipo_solicitud` (10 tipos + sub-formularios en modal): trae "Citaciones a Testimonial" completo y "Solicitud de Averiguación de Paradero..." sin completar (badge) |
+| 05 | P-0101/2026 | CARTA_SUCESO | PENAL | EN_ANALISIS | DESIDERI UR_019 | `numero_causa: '88.441/2026'` — probar el flujo "Iniciar Querella" del menú `+` (`exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`) |
+| 06 | P-0102/2026 | QUERELLA | PENAL | ARCHIVO | DESIDERI UR_019 | `numero_causa: '52.100/2025'`, `es_principal: true` — probar el ciclo Archivo ↔ Desarchivado (ver Sección 13 de `CLAUDE.md`) |
 
-**Par LANZAMIENTO (C-0042 ↔ C-0041):** el lanzamiento administrativo `C-0041/2026` deriva en el
-lanzamiento judicializado `C-0042/2026` (mismo `numero_causa` 8821/2026, mismo letrado UR_004). El
-vínculo se modela con `tipo_relacion: 'ANTECEDENTE'` y `C-0042` es el `es_principal`.
+Las 3 primeras tienen `numero_causa: null` y por lo tanto **`es_principal: false`** (regla:
+nunca `es_principal: true` sin número de causa real — ver Sección 7 de `CLAUDE.md`). P-0100/2026
+y P-0101/2026 sí tienen causa real pero también `es_principal: false` (ninguna forma parte de un
+grupo-causa de ejemplo — cada una tiene una causa propia sin otra actuación agrupada). P-0102/2026
+es la única con `es_principal: true`: representa el caso de una causa con una sola actuación
+(coherente con la regla, no forma grupo con nada).
 
-**Agrupación por causa:** los expedientes con el mismo `numero_causa` se agrupan en bandeja (`BandejaAbogado`/`BandejaArea`); el que tiene `es_principal: true` muestra el badge verde "Principal · PJN". Grupo 1 = causa `45.201/2023` (3 exp, principal C-0001, CASANO). Grupo 2 = causa `78.910/2022` (2 exp, principal L-0002, PIRES). Las 5 sueltas tienen `numero_causa` único o `null`.
+**Regla clave — `estado`/`estadoProcesal` usan el CÓDIGO del catálogo, no el label:**
+- Tipos con flujo (`getEstadosProcesales` los mapea): usar el `codigo` exacto (`EN_PRUEBA`, `TRABA_LITIS`, `ACUERDO_EXTRAJUDICIAL`, etc.), NO el label con tildes.
+- Área PENAL (cualquier tipo): el detalle usa `getEtapasPenales(tipo)` — que **ignora `tipo`** y devuelve siempre el mismo ciclo para QUERELLA/DEFENSA_PENAL/CARTA_SUCESO → códigos `ASIGNADO`/`EN_ANALISIS`/`ACEPTADO`/`RECHAZADO`/`INSTRUCCION`/`JUICIO`/`EJECUCION_PENAL`/`ARCHIVO`/`DESARCHIVADO`. `DESARCHIVADO` es sub-estado transitorio (solo alcanzable desde `ARCHIVO`, única salida `ARCHIVO`) — ver Sección 13 de `CLAUDE.md`.
+- Tipos sin catálogo de flujo (OFICIO en área Civil/Laboral, CARTA_DOC, MEDIACION, SECLO): usan los labels libres de `ESTADOS_POR_TIPO` (`'EN ANÁLISIS'`, `'RESPONDIDO'`, etc.). **`ESTADOS_POR_TIPO` NO aplica a tipos de área PENAL** — cualquier entrada ahí para QUERELLA/DEFENSA_PENAL/CARTA_SUCESO es inalcanzable en la UI real (el fallback que la lee nunca se ejecuta para `exp.area === 'PENAL'`). La entrada `CARTA_SUCESO` ya se eliminó del catálogo por tener valores ficticios (`'CARGADA'`) sin correspondencia real; `QUERELLA` y `DEFENSA_PENAL` quedan con el mismo problema, detectado pero no eliminado todavía.
+- Cada MOVIMIENTO del timeline lleva `estadoExpediente` = el código destino de esa transición.
 
-**Vínculos entre áreas:** C-0001/2023 (civil) ↔ P-0001/2024 (penal) — mismo siniestro, bidireccional (aparece en el tab "Vinculados").
+**`TAREAS_MAP_INICIAL`** ahora es `{}` (vacío) — el store lo carga como `tareasMap` inicial, y
+`TimelineTab` lo completa de forma lazy con `inicializarTareas(expId, estadoCodigo, tareas)` a
+medida que se navega por los estados. `ASIGNADO` no tiene tareas en ningún ciclo (`tareas: []`).
+Ya no hay tareas pre-populadas de ejemplo (antes: `C-0001/2023__EN_PRUEBA`,
+`L-0002/2022__TRABA_LITIS`, `C-0009/2024__ACUERDO_EXTRAJUDICIAL` — perdidas con el reseteo).
 
-**Letrados:** IDs reales de `usuarios.ts` (CASANO UR_004, PIRES UR_012, FERRARI UR_007, MOLINELLI UR_010 civil/laboral; DESIDERI UR_019, BIONDI UR_023, PRINOTTI UR_024 penal por línea). El usuario por defecto del store es LOPEZ UR_018 (referente) — para ver "Mis actuaciones" de letrado, cambiar a CASANO UR_004.
+Helper `tarea(id, nombre, over?)` — **removido** del mock junto con `TAREAS_MAP_INICIAL`
+poblado (unused-locals); si se vuelve a necesitar poblar tareas de ejemplo, reintroducirlo.
 
-**Semáforo de vencimientos resultante** (fechas relativas con `addDays`): 2 vencidos (L-0002, P-0003), 2 por-vencer <7d (C-0004, P-0001), 2 por-vencer <30d (C-0001, L-0005), 4 sin alerta.
+**Documentos en el mock:** todos los documentos tienen campo `id` obligatorio (`DOC_..._001`). Las 4 actuaciones actuales tienen `documentos: []`.
 
-**`TAREAS_MAP_INICIAL`** (exportado del mock, cargado por el store como `tareasMap`): tareas del sub-estado activo de las 3 actuaciones con flujo civil/laboral/ciclo-A:
-- `C-0001/2023__EN_PRUEBA` — incluye una tarea con `fecha_aviso: addDays(0)` (aviso hoy) → alimenta el panel "Tareas hoy" del dashboard de CASANO.
-- `L-0002/2022__TRABA_LITIS` — tarea vencida (`fechaVencimiento: addDays(-5)`).
-- `C-0009/2024__ACUERDO_EXTRAJUDICIAL` — 2 cumplidas + 1 en curso.
+**Exports de infraestructura conservados** (no son actuaciones de ejemplo, no se tocaron):
+`CARTA_SUCESO_QUEUE`, `CAUSAS_PENALES` — mocks del módulo Penal fuera de alcance de la
+reconstrucción MATRIZ SACO. `ESTADOS_POR_TIPO` ya no tiene entrada `CARTA_SUCESO` (ver nota sobre
+código/label más arriba) — sigue vigente para los tipos no-Penal sin catálogo de flujo propio.
 
-Helper `tarea(id, nombre, over?)` en el mock completa el shape de `Tarea` con defaults.
+**Ejemplo Iniciar Querella (antes "Nueva Querella"):** el expediente `P-0019/2024` (Carta Suceso)
+que documentaba este flujo en la v1 del mock ya no existe — pero desde esta rama hay un
+reemplazo funcional: **`P-0101/2026`** (fila 05 de la tabla de arriba), listo para disparar
+"Iniciar Querella" desde el menú `+` de `DetalleExpediente`. El mecanismo (`confirmarNuevaQuerella`,
+ver `pages_CLAUDE.md`) no se tocó — solo se renombró el texto de UI ("Nueva Querella" →
+"Iniciar Querella"), los identificadores internos quedan igual.
 
-**Ejemplo Nueva Querella (`P-0019/2024`):** Carta Suceso (SAE) tipo `CARTA_SUCESO`, área PENAL, sin
-`numero_causa`. Sirve para probar el flujo "Nueva Querella" del menú `+` de DetalleExpediente (ver
-`pages_CLAUDE.md`): al crear la Querella, ambas se agrupan bajo una causa común (la que se tipee en el
-modal, o el `id` de la Carta si se deja vacío) y la Querella pasa a ser la cabecera (`es_principal: true`).
-
-**Documentos en el mock:** todos los documentos tienen campo `id` obligatorio (`DOC_..._001`). Actualmente las 13 actuaciones tienen `documentos: []`.
-
-**Exports de infraestructura conservados** (no son actuaciones de ejemplo): `QUEUE_MESA`, `CARTA_SUCESO_QUEUE`, `CAUSAS_PENALES`, `ESTADOS_POR_TIPO`.
+**Escenarios perdidos con el reseteo (referencia histórica, reconstruir si se necesitan):** las
+13 actuaciones previas cubrían agrupación por causa (2 grupos con badge "Principal · PJN"),
+vínculos cross-área (C-0001 civil ↔ P-0001 penal, mismo siniestro), semáforo de vencimientos
+(2 vencidas, 4 por-vencer), par LANZAMIENTO administrativo→judicializado (`tipo_relacion:
+'ANTECEDENTE'`) y el ejemplo de Nueva Querella (`P-0019/2024`). Nada de esto tiene reemplazo
+todavía en las 4 actuaciones MATRIZ SACO — quien necesite probar esos escenarios (dashboard,
+bandeja agrupada, vínculos) tiene que agregar mocks a mano.
 
 ---
 
@@ -172,10 +218,67 @@ La sección `variante_penal` del OFICIO en área PENAL tiene:
 - `abg_datos_contacto`, `abg_fecha_hecho`, `abg_lugar_hecho`
 - `abg_damnificado`, `abg_imputado`
 - `abg_tipo_hecho` — multiselect con 7 opciones penales
-- `abg_tipo_solicitud` — multiselect con 6 opciones:
-  Solicitud de información / Solicitud de filmaciones / Solicitud de intervención /
-  Citaciones / Solicitud de asistencia a MARC / Otros
+- `abg_tipo_solicitud` — multiselect con **10 opciones** (`TIPOS_SOLICITUD_PENAL` en
+  `solicitudesPenales.ts`, reemplazó las 6 opciones anteriores):
+  Solicitud de Información / Solicitud de Filmaciones Estáticas / Solicitud de Filmaciones
+  Dinámicas / Notificación Conciliación / Notificación Reparación Integral / Notificación
+  Suspensión de Juicio a Prueba (Probation) / Solicitud de Intervención / Citaciones a
+  Testimonial / Citaciones a Indagatoria / Solicitud de Averiguación de Paradero (Búsqueda de
+  Personas)
 - `abg_num_siniestro` — "Accidente Ferroviario (N° Siniestro)", type text, mono
+- `abg_solicitudes_detalle` — **no es un campo de `FORMULARIOS`**, se guarda directo en
+  `campos_abogado` (tipado `Record<string, unknown>`, sin interfaz propia en `types/index.ts`).
+  Ver sección siguiente.
+
+### Sub-formularios de `abg_tipo_solicitud` (`solicitudesPenales.ts` + `ModalSolicitudPenal.tsx`)
+
+Cada uno de los 10 tipos tiene su propio set de campos (`CONFIG_SOLICITUDES_PENALES[tipo]`),
+completado en un modal aparte en vez de inline en `DatosTab`:
+
+```ts
+export interface CampoSolicitudPenal {
+  id: string
+  label: string
+  tipo: 'text' | 'textarea' | 'date' | 'time' | 'money' | 'select'
+  options?: string[]
+  permiteArchivo?: boolean   // agrega botón "Adjuntar archivo" → agregarDocumento()
+  full?: boolean
+}
+```
+
+- **Solicitud de Averiguación de Paradero** es el único con `camposCondicionales`: el select
+  "Tipo de Requerimiento" (`Colaboración` / `Información`) determina qué campos extra aparecen
+  (`pase_areas` vs `memo_ggo` + `respuesta_area`).
+- El detalle completado vive en `campos_abogado.abg_solicitudes_detalle: Record<string, {
+  campos: Record<string,string>, archivos: Record<string,string[]> }>` — key = el string exacto
+  del tipo (mismo valor que aparece en el array de `abg_tipo_solicitud`).
+- `ModalSolicitudPenal` (`src/components/expedientes/ModalSolicitudPenal.tsx`) lee/escribe ese
+  bloque vía `actualizarCampoAbogado(expId, 'abg_solicitudes_detalle', {...actual, [tipo]:
+  {campos, archivos}})` — guarda inmediato al hacer click en "Guardar" del modal, independiente
+  del modo edición del resto de `DatosTab`.
+- Archivos adjuntos usan `agregarDocumento()` del store igual que el resto del sistema — quedan
+  en la tab Documentos de la actuación, no hay repositorio separado por solicitud.
+- Integración en `DatosTab.tsx`: debajo de la fila `abg_tipo_solicitud` se lista cada tipo
+  seleccionado con badge "· Sin completar" (si `abg_solicitudes_detalle[tipo]` no tiene campos)
+  y botón "Ver" que abre el modal. Al elegir un tipo **nuevo** en el multiselect (sin entrada
+  previa en `abg_solicitudes_detalle`) el modal se abre automáticamente.
+
+## formularios.ts — DEMANDA_LABORAL (MATRIZ SACO)
+
+- `mesa_juicio` ("Tipo de Juicio"): agregadas 4 opciones — `INDEMNIZACIÓN POR FALLECIMIENTO`,
+  `REINSTALACIÓN LABORAL`, `MEDIDA CAUTELAR`, `INDEMNIZACIÓN ART. 212`.
+- `abg_tipo_hecho` ("Tipo de hecho"): **cambió de `type: 'text'` a `type: 'select'`** con 5
+  opciones — `DOBLE INDEMNIZACIÓN`, `INEXISTENCIA DE VÍNCULO LABORAL`, `DESAFUERO`,
+  `CONSIGNACIÓN LABORAL`, `EMPLEADO FERROBAIRES`. En DEMANDA_CIVIL sigue siendo texto libre.
+
+## formularios.ts — LANZAMIENTO_JUDICIALIZADO.mesa (MATRIZ SACO)
+
+- `mesa_tipo_lanzamiento` ("Tipo de lanzamiento"): campo nuevo, `type: 'select'`, opciones
+  `['Operativo', 'Comercial']`, ubicado justo después de `mesa_juicio`. Determina el circuito de
+  estados (split Operativo/Comercial, ver Sección 13 de `CLAUDE.md`). Se completa una única vez
+  desde el modal "Iniciar Juicio" (campo obligatorio para ese tipo origen) y queda bloqueado en
+  `DatosTab` apenas tiene valor (`disabled` + estilo gris, chequeado por `campo.id ===
+  'mesa_tipo_lanzamiento'`, no por un flag genérico de formulario).
 
 ## Reglas de formularios
 

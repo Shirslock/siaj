@@ -26,16 +26,18 @@ Agregar:
 add, add_circle, add_link, arrow_back, arrow_forward, article,
 assign_file, attach_file, check, check_circle, chevron_right,
 close, construction, create_new_folder, delete, description,
-download, drag_indicator, edit, expand_less, expand_more,
+download, drag_indicator, edit, edit_note, expand_less, expand_more,
 filter_alt_off, folder, folder_off, folder_open, folder_shared,
 forward, gavel, history, inbox, info, link, link_off,
-menu, menu_open, more_vert, notes, notifications_none,
+menu, menu_open, more_horiz, more_vert, notes, notifications_none,
 open_in_new, person_add, person_search, people, picture_as_pdf,
 radio_button_unchecked, refresh, reply, save, schedule, search,
 search_off, settings, subdirectory_arrow_right, swap_horiz,
-table_chart, timeline, trending_up, unfold_less, unfold_more,
+table_chart, task, timeline, trending_up, unfold_less, unfold_more,
 upload_file, visibility, warning, work
 
+Nota: `more_horiz` → EllipsisHorizontalIcon · `edit_note` → PencilSquareIcon (entrada NOTA_RESPUESTA del timeline)
+Nota: `task` → CheckBadgeIcon (icono del módulo Solicitudes y de las entradas de solicitud en el timeline)
 Nota: `reply` → ArrowUturnLeftIcon · `notes` → ChatBubbleLeftEllipsisIcon
 Nota: `expand_more` → ChevronDownIcon, `expand_less` → ChevronUpIcon
 Nota: `drag_indicator` → Bars3Icon (handle de drag en DocumentosTab)
