@@ -121,18 +121,12 @@ Civil/Laboral).
    **actividad genérica nueva**: tipo `RECURSO_INCIDENTE` agregado al union `TipoActividad`,
    disponible como opción en el modal "Nueva Actividad" de cualquier estado.
 
-3. **Recurso de Queja no suspende** — se sacó del camino lineal (antes: `REF → RECURSO_QUEJA
-   → EJECUCION_SENTENCIA`; ahora: `REF → EJECUCION_SENTENCIA` directo). Se modela como
-   **flag paralelo** con checklist propio:
-   - `Expediente.queja_en_tramite?: boolean`
-   - `TAREAS_RECURSO_QUEJA: Tarea[]` — checklist independiente (interposición, seguimiento
-     ante Cámara, resolución, "si prospera: retroceder a REF con motivo").
-   - Acción `toggleQuejaEnTramite(expId, activar)` en el store — inicializa
-     `tareasMap[`${expId}__RECURSO_QUEJA_PARALELO`]`.
-   - Bloque visual en el timeline/Datos, visible solo si `estadoProcesal` es `REF` o
-     `EJECUCION_SENTENCIA`, con toggle "Iniciar"/"En trámite".
-   - Si la Queja prospera: el letrado retrocede manualmente a REF, usando el mecanismo de
-     motivo obligatorio (punto 4).
+3. ~~**Recurso de Queja no suspende** — flag paralelo con checklist propio~~ —
+   **ELIMINADO COMPLETO** (ver sección 6). Decisión confirmada en reunión con área de negocio:
+   se dio de baja el sistema entero (flag `queja_en_tramite`, checklist `TAREAS_RECURSO_QUEJA`,
+   acción `toggleQuejaEnTramite`, bloque visual condicional). `REF.siguiente` sigue apuntando
+   directo a `EJECUCION_SENTENCIA` como quedó descripto abajo, pero ya no hay trámite paralelo
+   asociado a ese tramo.
 
 4. **Retroceso a etapa anterior — motivo obligatorio** — antes el campo Motivo del modal
    "Cambiar estado" era siempre opcional. Ahora, cuando la opción seleccionada pertenece al
@@ -312,6 +306,12 @@ flujo completo de Iniciar Juicio → selección Operativo/Comercial → creació
 
 ## 5. OFICIO Penal — 10 tipos de Solicitud con sub-formulario en modal
 
+> **⚠️ SUPERADO por la sección 6** — esta implementación (campo `abg_tipo_solicitud` en Datos
+> Maestros + `ModalSolicitudPenal.tsx`) fue migrada por completo al modal "Nueva Actividad" de
+> `TimelinePenal.tsx`. El campo, el componente y el guardado en `abg_solicitudes_detalle`
+> descriptos abajo **ya no existen** en el código — se dejan documentados como referencia
+> histórica del diseño original. Ver sección 6 para la arquitectura vigente.
+
 **Origen:** MATRIZ SACO sección 2.5 — reemplazo de las 6 opciones libres de `abg_tipo_solicitud`
 por 10 tipos con campos propios cada uno.
 
@@ -352,6 +352,93 @@ modal solo; "Agregar otro" suma un slot vacío correctamente.
 
 ---
 
+## 6. Migración Solicitudes Penal a TimelinePenal + baja Recurso de Queja + paridad Comentar/Editar/Eliminar
+
+### Migración de las 10 Solicitudes Penal (de Datos Maestros a Nueva Actividad)
+- Eliminado el campo `abg_tipo_solicitud` de `OFICIO.variante_penal.abogado`
+  (`formularios.ts`) y todo su bloque en `DatosTab.tsx` (render del multiselect condicional,
+  estado `modalSolTipo`, componente `SolicitudesPenalesDetalle`).
+- Eliminado `src/components/expedientes/ModalSolicitudPenal.tsx` — el sub-formulario se integró
+  inline en el modal "Nueva Actividad" de `TimelinePenal.tsx`.
+- 10 nuevos valores en el union `TipoActividad` (`types/index.ts`): `SOLICITUD_INFORMACION`,
+  `SOLICITUD_FILMACIONES_ESTATICAS`, `SOLICITUD_FILMACIONES_DINAMICAS`,
+  `NOTIFICACION_CONCILIACION`, `NOTIFICACION_REPARACION_INTEGRAL`, `NOTIFICACION_PROBATION`,
+  `SOLICITUD_INTERVENCION`, `CITACION_TESTIMONIAL`, `CITACION_INDAGATORIA`,
+  `SOLICITUD_AVERIGUACION_PARADERO`. Aparecen como opciones sueltas en el select de Tipo del
+  modal "Nueva Actividad" de `TimelinePenal.tsx`, mezcladas con el resto (sin optgroup
+  separador).
+- `Actividad` (`types/index.ts`) gana `solicitud_penal_campos?: Record<string,string>` y
+  `solicitud_penal_archivos?: Record<string,string[]>`.
+- `solicitudesPenales.ts`: `CONFIG_SOLICITUDES_PENALES` (keyed por label) se mantiene igual;
+  se agrega `TIPO_ACTIVIDAD_SOLICITUD_PENAL: Record<string,string>` (código → label) y
+  `getConfigPorTipoActividad(tipoActividad)`.
+- Repetible: no hay restricción de unicidad — se puede crear el mismo tipo de solicitud varias
+  veces como actividades distintas.
+- Editable: botón "Editar" (ver más abajo, ampliado a toda actividad genérica) recarga
+  `formAct` + `camposSolPenal`/`archivosSolPenal` y usa `editarActividad` del store en vez de
+  `agregarActividad`. Se amplió el `Pick` de la firma de `editarActividad` en el store para
+  incluir `solicitud_penal_campos` y `solicitud_penal_archivos`.
+- Completar después: badge "Sin completar" en el feed cuando
+  `!solicitudEstaCompleta(tipo, campos)` — helper en `solicitudesPenales.ts` que compara contra
+  el total de campos de la config (fijos + condicionales aplicables según el campo disparador),
+  tratando todos como obligatorios (no hay flag `obligatorio?` por campo todavía).
+
+### Baja completa de Recurso de Queja
+Decisión confirmada en reunión con área de negocio: se eliminó el sistema entero (no solo el
+nodo lineal, ya dado de baja en la sección 3 original).
+- `types/index.ts`: quitado `Expediente.queja_en_tramite?: boolean`.
+- `estadosProcesales.ts`: quitado el array `TAREAS_RECURSO_QUEJA` y los comentarios que lo
+  referenciaban.
+- `expedientes.store.ts`: quitada la acción `toggleQuejaEnTramite` (firma + implementación) y
+  el import de `TAREAS_RECURSO_QUEJA`.
+- `TimelineTab.tsx`: quitado el componente `RecursoQuejaBlock` completo y su renderizado
+  condicional (`estadoProcesal === 'REF' || 'EJECUCION_SENTENCIA'`).
+- No confundir con `etapasPenales.ts` nodo `INS_5_14 "Recurso de Queja"` (sub-actividad lineal
+  del ciclo Instrucción Penal) — es un concepto distinto, no tocado por esta baja.
+
+### Paridad Comentar/Editar/Eliminar en TimelinePenal
+`TimelinePenal.tsx` solo tenía "Editar" (y solo para las 10 solicitudes). Se portó el mismo
+patrón que `TimelineTab.tsx`:
+- "Comentar" (reutiliza `agregarReply` del store) + menú ⋮ con "Editar"/"Eliminar" (reutiliza
+  `editarActividad`/`eliminarActividad`), visibles para `esLetrado && !act.es_solicitud`,
+  excluyendo `RECEPCION` y movimientos de sistema (mismo criterio que Civil/Laboral).
+- `abrirEdicionSolicitud` generalizada a `abrirEdicionActividad`: aplica a cualquier actividad
+  genérica; solo carga `camposSolPenal`/`archivosSolPenal` si `getConfigPorTipoActividad`
+  devuelve algo para ese tipo.
+- Componente `ReplyList` duplicado localmente en `TimelinePenal.tsx` (no importado desde
+  `TimelineTab.tsx` para evitar import circular, ya que `TimelineTab` importa `TimelinePenal`).
+- `historialCompleto` ahora filtra `act.eliminado` (soft-delete) antes de armar las entradas.
+
+### ⚠️ Bandera demo temporal — `esLetrado`
+En **ambos** archivos (`TimelineTab.tsx` y `TimelinePenal.tsx`), `esLetrado` quedó hardcodeado
+en `true` para destrabar pruebas con cualquier usuario. Comentario en el código marca la regla
+real a restaurar después de la demo:
+```
+const esLetrado =
+  usuarioActivo?.id === exp.abogado_id ||
+  usuarioActivo?.rolSistema === 'COORDINADOR'
+```
+Regla de negocio (sesión HU Timeline Civil/Laboral): "Abogado, Asistente y Coordinador pueden
+editar tareas y agregar actividades" — no incluye Referente. Asistente Jurídico hoy cae bajo
+`rolSistema: 'ABOGADO'` (ver `types_CLAUDE.md`); confirmar si necesita distinguirse aparte.
+**Recordatorio: revertir antes de producción.**
+
+### Cómo verificar
+Con cualquier usuario activo (demo flag), en un Oficio Penal:
+- Tab Timeline → "+ Nueva Actividad" → select Tipo trae los 10 tipos de solicitud sueltos en el
+  listado, sin encabezado.
+- Elegir "Citaciones a Testimonial" → sub-formulario inline aparece debajo → completar 2 de 8
+  campos → Guardar → badge "Sin completar" visible en el feed.
+- Editar esa actividad (menú ⋮ o botón "Editar") → completar los 6 restantes → Guardar → badge
+  desaparece.
+- Botones "Comentar" y menú ⋮ (Editar/Eliminar) visibles en cualquier actividad genérica, no
+  solo las de solicitud. Eliminar una → desaparece del feed (soft-delete, log de auditoría).
+- Tab Datos de un Oficio Penal: el campo "Tipo de solicitud" ya no existe.
+- Cualquier Demanda Civil/Laboral en `REF`/`EJECUCION_SENTENCIA`: ya no aparece el bloque
+  "Recurso de Queja".
+
+---
+
 ## Pendientes / temas abiertos (heredados del documento fuente)
 
 | Tema | Estado |
@@ -363,3 +450,5 @@ modal solo; "Agregar otro" suma un slot vacío correctamente.
 | Módulo de Previsión de Sentencias | Cuando se incorpore, va a requerir ajustar el ingreso a `EJECUCION_SENTENCIA` (nota ya presente en el checklist de ese estado). |
 | Actividad "Diligenciamiento" | **Implementado** — agregado a `TipoActividad` (`types/index.ts`) y al select de Tipo en `TimelineTab.tsx` (Civil/Laboral), junto a "Interposición de Recurso". `TimelinePenal.tsx` no lo tiene porque tampoco tiene `RECURSO_INCIDENTE` (lista `TIPOS` propia, más corta) — evaluar si negocio lo quiere también ahí. |
 | `Actividad.solicitud_id` | Campo agregado al tipo pero no completado en todos los puntos donde se crea una solicitud — pendiente de trazabilidad completa. |
+| `esLetrado` hardcodeado en `true` | **Bandera demo temporal** en `TimelineTab.tsx` y `TimelinePenal.tsx` (ver sección 6) — revertir a la regla real (`abogado_id` match o `rolSistema === 'COORDINADOR'`) antes de producción. |
+| `CampoSolicitudPenal.obligatorio?` | No existe todavía — `solicitudEstaCompleta` (sección 6) trata todos los campos de cada tipo de Solicitud Penal como obligatorios por igual. |

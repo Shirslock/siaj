@@ -120,7 +120,6 @@ export interface Expediente {
   es_querella_iniciada?: boolean
   id_querella_derivada?: string   // id del expediente QUERELLA derivado
   causal_finalizacion?: string    // bloqueado, se autocompleta al Finalizar
-  queja_en_tramite?: boolean      // flag Recurso de Queja en trámite paralelo
 }
 
 export interface VinculoExpediente {
@@ -172,6 +171,16 @@ export type TipoActividad =
   | 'NOTA_RESPUESTA'
   | 'RECURSO_INCIDENTE'
   | 'DILIGENCIAMIENTO'
+  | 'SOLICITUD_INFORMACION'
+  | 'SOLICITUD_FILMACIONES_ESTATICAS'
+  | 'SOLICITUD_FILMACIONES_DINAMICAS'
+  | 'NOTIFICACION_CONCILIACION'
+  | 'NOTIFICACION_REPARACION_INTEGRAL'
+  | 'NOTIFICACION_PROBATION'
+  | 'SOLICITUD_INTERVENCION'
+  | 'CITACION_TESTIMONIAL'
+  | 'CITACION_INDAGATORIA'
+  | 'SOLICITUD_AVERIGUACION_PARADERO'
   | 'OTRO'
 
 export interface ChecklistItem {
@@ -240,6 +249,8 @@ export interface Actividad {
   escrito_estado?: EstadoEscritoActividad // GENERADO = se descargó el .docx y falta la aprobación externa
   es_solicitud?: boolean                 // true = entrada de solicitud/respuesta, sin reply/edit/delete
   solicitud_id?: string                  // referencia cruzada a la Solicitud de useSolicitudesStore
+  solicitud_penal_campos?: Record<string, string>    // datos del sub-formulario de Solicitud Penal (por tipo)
+  solicitud_penal_archivos?: Record<string, string[]> // archivos adjuntos del sub-formulario, por campo
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'

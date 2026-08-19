@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import type { Expediente, CampoFormulario } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { getCamposFormulario } from '../../../data/formularios'
@@ -8,7 +8,6 @@ import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
-import { ModalSolicitudPenal } from '../../../components/expedientes/ModalSolicitudPenal'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 
@@ -81,7 +80,6 @@ export function DatosTab({ exp }: Props) {
   const [draftTop, setDraftTop] = useState<Record<string, unknown>>({})
   const [draftMesa, setDraftMesa] = useState<Record<string, unknown>>({})
   const [draftAbogado, setDraftAbogado] = useState<Record<string, unknown>>({})
-  const [modalSolTipo, setModalSolTipo] = useState<string | null>(null)
 
   const camposMesa    = getCamposFormulario(exp.tipo, 'mesa', exp.area)
   const camposAbogado = getCamposFormulario(exp.tipo, 'abogado', exp.area)
@@ -243,11 +241,6 @@ export function DatosTab({ exp }: Props) {
                 onChange={e => {
                   const nuevoValor = e.target.value
                   const n = [...slots]; n[si] = nuevoValor; commit(n)
-                  if (campo.id === 'abg_tipo_solicitud' && nuevoValor) {
-                    const yaExistiaData = !!(exp.campos_abogado
-                      ?.abg_solicitudes_detalle as Record<string, unknown> | undefined)?.[nuevoValor]
-                    if (!yaExistiaData) setModalSolTipo(nuevoValor)
-                  }
                 }}
                 className="field-input flex-1 text-sm"
               >
@@ -466,82 +459,18 @@ export function DatosTab({ exp }: Props) {
 
             {/* Campos abogado del tipo */}
             {camposAbogado.map(campo => (
-              <Fragment key={campo.id}>
-                <FieldRow
-                  label={campo.label}
-                  edit={edit}
-                  value={valorDisplay(campo, exp.campos_abogado[campo.id])}
-                  input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
-                />
-                {campo.id === 'abg_tipo_solicitud' && (
-                  <SolicitudesPenalesDetalle
-                    exp={exp}
-                    vals={edit ? draftAbogado : exp.campos_abogado}
-                    onVer={setModalSolTipo}
-                  />
-                )}
-              </Fragment>
+              <FieldRow
+                key={campo.id}
+                label={campo.label}
+                edit={edit}
+                value={valorDisplay(campo, exp.campos_abogado[campo.id])}
+                input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
+              />
             ))}
           </>
         )}
 
       </dl>
-
-      {modalSolTipo && (
-        <ModalSolicitudPenal
-          open={!!modalSolTipo}
-          onClose={() => setModalSolTipo(null)}
-          expId={exp.id}
-          tipo={modalSolTipo}
-          dataInicial={(exp.campos_abogado
-            ?.abg_solicitudes_detalle as Record<string, { campos: Record<string, string>; archivos: Record<string, string[]> }> | undefined)
-            ?.[modalSolTipo]}
-        />
-      )}
-    </div>
-  )
-}
-
-// Fila con la lista de tipos de solicitud seleccionados en abg_tipo_solicitud,
-// cada uno con botón "Ver" para abrir su sub-formulario en modal.
-function SolicitudesPenalesDetalle({
-  exp, vals, onVer,
-}: {
-  exp: Expediente
-  vals: Record<string, unknown>
-  onVer: (tipo: string) => void
-}) {
-  const seleccionados = Array.isArray(vals['abg_tipo_solicitud']) ? vals['abg_tipo_solicitud'] as string[] : []
-  if (seleccionados.length === 0) return null
-
-  const detalles = (exp.campos_abogado?.abg_solicitudes_detalle as Record<string, { campos?: Record<string, string> }> | undefined) ?? {}
-
-  return (
-    <div className="pb-3 -mt-1 pl-[13.5rem] space-y-1.5">
-      {seleccionados.map(tipoSel => {
-        const detalle = detalles[tipoSel]
-        const tieneData = detalle && Object.keys(detalle.campos ?? {}).length > 0
-
-        return (
-          <div key={tipoSel}
-            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#f5f5f5] border border-[rgba(0,0,0,0.06)]">
-            <span className="text-[12px] text-[#1b3a57]">
-              {tipoSel}
-              {!tieneData && (
-                <span className="ml-1.5 text-[10px] text-[#d97706] font-semibold">
-                  · Sin completar
-                </span>
-              )}
-            </span>
-            <button
-              onClick={() => onVer(tipoSel)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-[#1b3a57] hover:text-[#2a5278] transition-colors">
-              <Icon name="visibility" size={13} />
-              Ver
-            </button>
-          </div>
-        )
-      })}
     </div>
   )
 }
