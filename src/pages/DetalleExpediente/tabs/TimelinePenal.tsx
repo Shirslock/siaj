@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type {
   Expediente,
   Actividad,
@@ -10,6 +10,7 @@ import type {
   CampoPenal,
   EtapaPenal,
   TipoActividad,
+  Reply,
 } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { useUIStore } from '../../../store/ui.store'
@@ -21,6 +22,7 @@ import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
 import { useSolicitudesStore, PERSONAS_POR_AREA } from '../../../store/tareas.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
+import { TIPO_ACTIVIDAD_SOLICITUD_PENAL, getConfigPorTipoActividad, solicitudEstaCompleta } from '../../../data/solicitudesPenales'
 
 interface Props { exp: Expediente }
 
@@ -51,7 +53,7 @@ const BLANK_ACT = {
 
 type EntradaHistorial =
   | { kind: 'sistema';  fecha: string; etapaAnteriorLabel: string; etapaNuevaLabel: string; descripcion: string; doc_gde?: string | null }
-  | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null }
+  | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null; timelineIdx: number; act: Actividad }
   | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; etapaCodigo: string; resultado: string | null }
 
 // ── Helpers ───────────────────────────────────────────
@@ -404,9 +406,15 @@ export function TimelinePenal({ exp }: Props) {
   const {
     registrosPenales, agregarRegistroPenal, actualizarRegistroPenal,
     agregarActividad, actualizarEstado, actualizarExpediente,
+    agregarDocumento, editarActividad, eliminarActividad, agregarReply,
   } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const { agregarSolicitud } = useSolicitudesStore()
+  // ⚠️ MODO DEMO TEMPORAL — cualquier rol puede Comentar/Editar/Eliminar
+  // para facilitar pruebas. Regla real (revertir después de la demo):
+  //   usuarioActivo?.id === exp.abogado_id
+  //   || usuarioActivo?.rolSistema === 'COORDINADOR'
+  const esLetrado = true
 
   const registros = registrosPenales[exp.id] ?? []
 
@@ -427,6 +435,12 @@ export function TimelinePenal({ exp }: Props) {
   const [tabNueva,       setTabNueva]       = useState<'procesales' | 'genericas' | 'solicitud'>('procesales')
   const [formAct,        setFormAct]        = useState(BLANK_ACT)
   const [formSolicitud,  setFormSolicitud]  = useState(BLANK_SOLICITUD)
+  const [camposSolPenal,   setCamposSolPenal]   = useState<Record<string, string>>({})
+  const [archivosSolPenal, setArchivosSolPenal] = useState<Record<string, string[]>>({})
+  const [actividadEditando, setActividadEditando] = useState<{ act: Actividad; globalIdx: number } | null>(null)
+  const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
+  const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+  const [menuActividad, setMenuActividad] = useState<{ act: Actividad; globalIdx: number; x: number; y: number } | null>(null)
 
   // Estado para modal de detalle de actividad procesal
   const [modalDetalle, setModalDetalle] = useState(false)
@@ -455,6 +469,9 @@ export function TimelinePenal({ exp }: Props) {
     setFormAct(BLANK_ACT)
     setTabNueva('procesales')
     setFormSolicitud(BLANK_SOLICITUD)
+    setCamposSolPenal({})
+    setArchivosSolPenal({})
+    setActividadEditando(null)
   }
 
   function guardarSolicitudPenal() {
@@ -547,21 +564,95 @@ export function TimelinePenal({ exp }: Props) {
 
   function guardarActividadGenerica() {
     if (!formAct.titulo.trim()) return
-    agregarActividad(exp.id, {
-      id:            `ACT_${Date.now()}`,
-      expediente_id: exp.id,
-      tipo:          formAct.tipo,
-      titulo:        formAct.titulo,
-      descripcion:   formAct.descripcion,
-      fecha:         formAct.fecha,
-      activo:        true,
-      subitems:      [],
-      doc_gde:       formAct.doc_gde.trim() || null,
-      tareasSnapshot: [],
-    })
-    toast.success('Actividad registrada.')
+
+    const config = getConfigPorTipoActividad(formAct.tipo)
+    const datosExtra = config ? {
+      solicitud_penal_campos:   camposSolPenal,
+      solicitud_penal_archivos: archivosSolPenal,
+    } : {}
+
+    if (actividadEditando) {
+      editarActividad(
+        exp.id,
+        actividadEditando.globalIdx,
+        {
+          titulo:      formAct.titulo,
+          descripcion: formAct.descripcion,
+          fecha:       formAct.fecha,
+          doc_gde:     formAct.doc_gde.trim() || null,
+          ...datosExtra,
+        },
+        usuarioActivo?.id ?? '',
+      )
+      toast.success('Solicitud actualizada.')
+    } else {
+      agregarActividad(exp.id, {
+        id:            `ACT_${Date.now()}`,
+        expediente_id: exp.id,
+        tipo:          formAct.tipo,
+        titulo:        formAct.titulo,
+        descripcion:   formAct.descripcion,
+        fecha:         formAct.fecha,
+        activo:        true,
+        subitems:      [],
+        doc_gde:       formAct.doc_gde.trim() || null,
+        tareasSnapshot: [],
+        ...datosExtra,
+      })
+      toast.success('Actividad registrada.')
+    }
     closeModalNueva()
   }
+
+  function abrirEdicionActividad(act: Actividad, globalIdx: number) {
+    setActividadEditando({ act, globalIdx })
+    setFormAct({
+      tipo:        act.tipo,
+      titulo:      act.titulo,
+      descripcion: act.descripcion ?? '',
+      fecha:       act.fecha,
+      doc_gde:     act.doc_gde ?? '',
+    })
+    // Solo cargar campos de solicitud penal si el tipo corresponde
+    const config = getConfigPorTipoActividad(act.tipo)
+    setCamposSolPenal(config ? (act.solicitud_penal_campos ?? {}) : {})
+    setArchivosSolPenal(config ? (act.solicitud_penal_archivos ?? {}) : {})
+    setTabNueva('genericas')
+    setModalNueva(true)
+  }
+
+  function confirmarReply() {
+    if (!replyTarget || !formReply.texto.trim()) return
+    agregarReply(exp.id, replyTarget.globalIdx, {
+      autor_id:          usuarioActivo?.id ?? '',
+      texto:             formReply.texto.trim(),
+      fecha:             formReply.fecha,
+      doc_gde:           formReply.doc_gde || undefined,
+      fecha_vencimiento: formReply.fecha_vencimiento || undefined,
+      fecha_aviso:       formReply.fecha_aviso || undefined,
+    })
+    setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
+    setReplyTarget(null)
+    toast.success('Comentario agregado.')
+  }
+
+  function confirmarEliminacion(globalIdx: number) {
+    if (!confirm('¿Eliminás esta actividad? Quedará un registro de auditoría.')) return
+    eliminarActividad(exp.id, globalIdx, usuarioActivo?.id ?? '')
+    toast.success('Actividad eliminada. Registro de auditoría generado.')
+  }
+
+  function esMovimientoSistema(act: Actividad): boolean {
+    return act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
+      (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
+  }
+
+  useEffect(() => {
+    if (!menuActividad) return
+    const handler = () => setMenuActividad(null)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [menuActividad])
 
   // ── Acción: cambiar estado desde stepper ────────────
 
@@ -622,7 +713,8 @@ export function TimelinePenal({ exp }: Props) {
     type EntradaConIdx = EntradaHistorial & { _idx: number }
     const entradas: EntradaConIdx[] = []
 
-    exp.timeline.forEach(act => {
+    exp.timeline.forEach((act, timelineIdx) => {
+      if (act.eliminado) return
       const esSistema =
         act.tipo === 'MOVIMIENTO' && act.titulo.startsWith('Cambio de estado')
       if (esSistema) {
@@ -637,7 +729,7 @@ export function TimelinePenal({ exp }: Props) {
           _idx: entradas.length,
         })
       } else {
-        entradas.push({ kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, _idx: entradas.length })
+        entradas.push({ kind: 'generica', fecha: act.fecha, titulo: act.titulo, descripcion: act.descripcion ?? '', tipo: act.tipo, doc_gde: act.doc_gde, timelineIdx, act, _idx: entradas.length })
       }
     })
 
@@ -776,34 +868,65 @@ export function TimelinePenal({ exp }: Props) {
     }
     if (entrada.kind === 'generica') {
       return (
-        <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Icon name={entrada.tipo === 'NOTA_RESPUESTA' ? 'check' : entrada.titulo.startsWith('Solicitud:') ? 'task' : 'description'} size={16} className="text-[#4a6a84]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <p className="text-sm font-semibold text-[#1b3a57]">{entrada.titulo}</p>
-              {entrada.tipo === 'NOTA_RESPUESTA' && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
-                  <Icon name="check" size={9} />
-                  RESPUESTA
-                </span>
+        <div>
+          <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Icon name={entrada.tipo === 'NOTA_RESPUESTA' ? 'check' : entrada.titulo.startsWith('Solicitud:') ? 'task' : 'description'} size={16} className="text-[#4a6a84]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <p className="text-sm font-semibold text-[#1b3a57]">{entrada.titulo}</p>
+                {entrada.tipo === 'NOTA_RESPUESTA' && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
+                    <Icon name="check" size={9} />
+                    RESPUESTA
+                  </span>
+                )}
+                {entrada.tipo !== 'NOTA_RESPUESTA' && entrada.titulo.startsWith('Solicitud:') && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
+                    <Icon name="task" size={9} />
+                    SOLICITUD
+                  </span>
+                )}
+                {TIPO_ACTIVIDAD_SOLICITUD_PENAL[entrada.tipo] && !solicitudEstaCompleta(entrada.tipo, entrada.act.solicitud_penal_campos) && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#faeeda] text-[#854f0b]">
+                    Sin completar
+                  </span>
+                )}
+              </div>
+              {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
+              {entrada.doc_gde && (
+                <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                  <Icon name="attach_file" size={12} />{entrada.doc_gde}
+                </p>
               )}
-              {entrada.tipo !== 'NOTA_RESPUESTA' && entrada.titulo.startsWith('Solicitud:') && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
-                  <Icon name="task" size={9} />
-                  SOLICITUD
-                </span>
+              {esLetrado && !entrada.act.es_solicitud && (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <button
+                    onClick={() => setReplyTarget({ act: entrada.act, globalIdx: entrada.timelineIdx })}
+                    className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                  >
+                    <Icon name="reply" size={13} />
+                    Comentar
+                  </button>
+                  {entrada.act.tipo !== 'RECEPCION' && !esMovimientoSistema(entrada.act) && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        const r = e.currentTarget.getBoundingClientRect()
+                        setMenuActividad({ act: entrada.act, globalIdx: entrada.timelineIdx, x: r.left, y: r.bottom + 4 })
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                    >
+                      <Icon name="more_vert" size={14} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-            {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
-            {entrada.doc_gde && (
-              <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
-                <Icon name="attach_file" size={12} />{entrada.doc_gde}
-              </p>
-            )}
+            <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
           </div>
-          <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+          <ReplyList replies={entrada.act.replies ?? []} />
         </div>
       )
     }
@@ -1359,9 +1482,16 @@ export function TimelinePenal({ exp }: Props) {
               <select
                 className="field-input w-full"
                 value={formAct.tipo}
-                onChange={e => setFormAct(p => ({ ...p, tipo: e.target.value as TipoActividad }))}
+                onChange={e => {
+                  setFormAct(p => ({ ...p, tipo: e.target.value as TipoActividad }))
+                  setCamposSolPenal({})
+                  setArchivosSolPenal({})
+                }}
               >
                 {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                {Object.entries(TIPO_ACTIVIDAD_SOLICITUD_PENAL).map(([codigo, label]) => (
+                  <option key={codigo} value={codigo}>{label}</option>
+                ))}
               </select>
               {formAct.tipo === 'PRESENTACION' && (
                 <button
@@ -1417,9 +1547,239 @@ export function TimelinePenal({ exp }: Props) {
                 />
               </div>
             </div>
+
+            {(() => {
+              const config = getConfigPorTipoActividad(formAct.tipo)
+              if (!config) return null
+
+              const campoDisparadorVal = config.camposCondicionales
+                ? camposSolPenal[config.camposCondicionales.campoDisparador]
+                : undefined
+
+              const camposCondicionales =
+                config.camposCondicionales && campoDisparadorVal
+                  ? config.camposCondicionales.opciones[campoDisparadorVal] ?? []
+                  : []
+
+              const todosCampos = [...config.campos, ...camposCondicionales]
+
+              function handleFileUpload(campoId: string, file: File) {
+                const docId = `DOC_SOL_${Date.now()}`
+                agregarDocumento(exp.id, {
+                  id: docId,
+                  nombre: file.name,
+                  tipo: file.name.split('.').pop()?.toUpperCase() ?? 'FILE',
+                  fecha: new Date().toISOString().split('T')[0],
+                  size: `${Math.round(file.size / 1024)} KB`,
+                  icon: 'attach_file',
+                  color: 'text-[#4a6a84]',
+                })
+                setArchivosSolPenal(p => ({
+                  ...p,
+                  [campoId]: [...(p[campoId] ?? []), docId],
+                }))
+                toast.success(`${file.name} agregado al repositorio de Documentos.`)
+              }
+
+              return (
+                <div className="col-span-2 mt-2 pt-3 border-t border-dashed border-[rgba(0,0,0,0.1)]">
+                  <p className="text-[11px] font-bold text-[#4a6a84] uppercase tracking-wide mb-2">
+                    Datos de la solicitud
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {todosCampos.map(c => (
+                      <div key={c.id} className={c.full ? 'col-span-2' : ''}>
+                        <label className="field-label">{c.label}</label>
+                        {c.tipo === 'select' ? (
+                          <select
+                            className="field-input w-full"
+                            value={camposSolPenal[c.id] ?? ''}
+                            onChange={e => setCamposSolPenal(p => ({ ...p, [c.id]: e.target.value }))}
+                          >
+                            <option value="">Seleccionar...</option>
+                            {c.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        ) : c.tipo === 'textarea' ? (
+                          <textarea
+                            className="field-input w-full resize-none"
+                            style={{ minHeight: 60 }}
+                            value={camposSolPenal[c.id] ?? ''}
+                            onChange={e => setCamposSolPenal(p => ({ ...p, [c.id]: e.target.value }))}
+                          />
+                        ) : (
+                          <input
+                            type={c.tipo === 'money' ? 'number' : c.tipo}
+                            className="field-input w-full"
+                            value={camposSolPenal[c.id] ?? ''}
+                            onChange={e => setCamposSolPenal(p => ({ ...p, [c.id]: e.target.value }))}
+                          />
+                        )}
+                        {c.permiteArchivo && (
+                          <label className="flex items-center gap-1.5 text-[11px] text-[#4a6a84] cursor-pointer mt-1 hover:text-[#1b3a57]">
+                            <Icon name="attach_file" size={13} />
+                            Adjuntar archivo
+                            <input
+                              type="file"
+                              hidden
+                              onChange={e => {
+                                const f = e.target.files?.[0]
+                                if (f) handleFileUpload(c.id, f)
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         )}
       </Modal>
+
+      {/* ── Menú flotante editar/eliminar actividad ── */}
+      {menuActividad && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ position: 'fixed', left: menuActividad.x, top: menuActividad.y }}
+          className="w-36 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
+        >
+          <button
+            onClick={() => { abrirEdicionActividad(menuActividad.act, menuActividad.globalIdx); setMenuActividad(null) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors text-left"
+          >
+            <Icon name="edit" size={13} />
+            Editar
+          </button>
+          <button
+            onClick={() => { confirmarEliminacion(menuActividad.globalIdx); setMenuActividad(null) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
+          >
+            <Icon name="delete" size={13} />
+            Eliminar
+          </button>
+        </div>
+      )}
+
+      {/* ── Modal agregar comentario (reply) ── */}
+      <Modal
+        open={!!replyTarget}
+        onClose={() => { setReplyTarget(null); setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' }) }}
+        titulo="Agregar comentario"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => { setReplyTarget(null); setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' }) }}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarReply}
+              disabled={!formReply.texto.trim()}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Guardar
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 py-1">
+          {replyTarget && (
+            <div className="bg-[#f5f5f5] rounded-xl px-3 py-2 flex items-start gap-2">
+              <Icon name="reply" size={14} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-[#4a6a84] line-clamp-2">{replyTarget.act.titulo}</p>
+            </div>
+          )}
+          <div>
+            <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+            <textarea
+              className="field-input w-full resize-none"
+              style={{ minHeight: 80 }}
+              placeholder="Escribí tu comentario..."
+              value={formReply.texto}
+              onChange={e => setFormReply(p => ({ ...p, texto: e.target.value }))}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="field-label">Fecha</label>
+            <input type="date" className="field-input w-full" value={formReply.fecha} onChange={e => setFormReply(p => ({ ...p, fecha: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Documento GDE (opcional)</label>
+            <input type="text" className="field-input w-full font-mono" placeholder="EX-2026-..." value={formReply.doc_gde} onChange={e => setFormReply(p => ({ ...p, doc_gde: e.target.value }))} />
+          </div>
+          <div>
+            <label className="field-label">Fecha de vencimiento (opcional)</label>
+            <input
+              type="date"
+              className="field-input w-full"
+              value={formReply.fecha_vencimiento}
+              onChange={e => setFormReply(p => ({
+                ...p,
+                fecha_vencimiento: e.target.value,
+                fecha_aviso: e.target.value ? p.fecha_aviso : '',
+              }))}
+            />
+          </div>
+          {formReply.fecha_vencimiento && (
+            <div>
+              <label className="field-label">Fecha de aviso (opcional)</label>
+              <p className="text-[10px] text-[#7a9ab4] mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
+              <input
+                type="date"
+                className="field-input w-full"
+                max={formReply.fecha_vencimiento}
+                value={formReply.fecha_aviso}
+                onChange={e => setFormReply(p => ({ ...p, fecha_aviso: e.target.value }))}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
+// ── Comentarios (replies) ─────────────────────────────
+
+function ReplyList({ replies }: { replies: Reply[] }) {
+  if (!replies.length) return null
+  return (
+    <div className="ml-10 mr-4 mb-2 space-y-1.5">
+      {replies.map(reply => {
+        const autorU = getUsuarioById(reply.autor_id)
+        return (
+          <div key={reply.id} className="pl-4 border-l-2 border-[#C4DFE8]">
+            <div className="bg-[#f9f9f9] rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-bold text-[#1b3a57]">
+                  {autorU ? getNombreCompleto(autorU) : reply.autor_id}
+                </span>
+                <span className="text-[10px] text-[#7a9ab4]">{formatFecha(reply.fecha)}</span>
+              </div>
+              <p className="text-xs text-[#1b3a57] whitespace-pre-wrap">{reply.texto}</p>
+              {reply.doc_gde && (
+                <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
+                  <Icon name="attach_file" size={11} />
+                  {reply.doc_gde}
+                </p>
+              )}
+              {reply.fecha_vencimiento && (
+                <div className="flex items-center gap-3 mt-1.5">
+                  <span className="text-[10px] text-[#4a6a84]">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
+                  {reply.fecha_aviso && (
+                    <span className="text-[10px] text-[#d97706]">Aviso: {formatFecha(reply.fecha_aviso)}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

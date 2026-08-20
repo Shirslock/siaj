@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { Actividad, ChecklistItem, Documento, Expediente, ItemQueue, FiltrosExpediente, Tarea, VinculoExpediente, Interviniente, SubActividad, RegistroActividadPenal, Reply, LogAuditoria } from '../types'
 import { QUEUE_MESA, EXPEDIENTES_MOCK, TAREAS_MAP_INICIAL } from '../data/expedientes.mock'
-import { TAREAS_RECURSO_QUEJA } from '../data/estadosProcesales'
 
 interface ExpedientesState {
   queue: ItemQueue[]
@@ -35,14 +34,13 @@ interface ExpedientesState {
   editarActividad: (
     expId: string,
     actividadIdx: number,
-    cambios: Partial<Pick<Actividad, 'titulo' | 'descripcion' | 'fecha' | 'doc_gde' | 'fecha_vencimiento' | 'fecha_aviso' | 'estado'>>,
+    cambios: Partial<Pick<Actividad, 'titulo' | 'descripcion' | 'fecha' | 'doc_gde' | 'fecha_vencimiento' | 'fecha_aviso' | 'estado' | 'solicitud_penal_campos' | 'solicitud_penal_archivos'>>,
     usuarioId: string
   ) => void
   eliminarActividad: (expId: string, actividadIdx: number, usuarioId: string) => void
   agregarRegistroPenal: (expId: string, registro: RegistroActividadPenal) => void
   actualizarRegistroPenal: (expId: string, registroId: string, cambios: Partial<RegistroActividadPenal>) => void
   eliminarRegistroPenal: (expId: string, registroId: string) => void
-  toggleQuejaEnTramite: (expId: string, activar: boolean) => void
 }
 
 function applyToArr(exps: Expediente[], id: string, fn: (e: Expediente) => Expediente): Expediente[] {
@@ -346,15 +344,4 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     },
   })),
 
-  toggleQuejaEnTramite: (expId, activar) => set(s => {
-    const fn = (e: Expediente) => ({ ...e, queja_en_tramite: activar })
-    const keyQueja = `${expId}__RECURSO_QUEJA_PARALELO`
-    return {
-      expedientes: applyToArr(s.expedientes, expId, fn),
-      expedienteActivo: applyToActivo(s.expedienteActivo, expId, fn),
-      tareasMap: activar && !s.tareasMap[keyQueja]
-        ? { ...s.tareasMap, [keyQueja]: TAREAS_RECURSO_QUEJA }
-        : s.tareasMap,
-    }
-  }),
 }))

@@ -1,8 +1,8 @@
-// Configuración de sub-formularios para cada tipo de "Solicitud" dentro
-// de OFICIO.variante_penal (campo abg_tipo_solicitud, multiselect).
-// Cada tipo tiene su propio set de campos que se completan en un modal
-// (ver ModalSolicitudPenal.tsx) y se guardan en
-// campos_abogado.abg_solicitudes_detalle[tipo].
+// Configuración de sub-formularios para cada tipo de "Solicitud" en
+// Oficios Penal. Cada tipo tiene su propio set de campos que se completan
+// como sub-formulario inline dentro del modal "Nueva Actividad" en
+// TimelinePenal, y se guardan en la Actividad (solicitud_penal_campos /
+// solicitud_penal_archivos).
 
 export interface CampoSolicitudPenal {
   id:              string
@@ -182,4 +182,49 @@ export const CONFIG_SOLICITUDES_PENALES: Record<string, ConfigSolicitudPenal> = 
       },
     },
   },
+}
+
+// Mapeo código de TipoActividad (usado en el select "Tipo" de Nueva Actividad
+// en TimelinePenal) → label, que a su vez matchea las claves de
+// CONFIG_SOLICITUDES_PENALES.
+export const TIPO_ACTIVIDAD_SOLICITUD_PENAL: Record<string, string> = {
+  SOLICITUD_INFORMACION: 'Solicitud de Información',
+  SOLICITUD_FILMACIONES_ESTATICAS: 'Solicitud de Filmaciones Estáticas',
+  SOLICITUD_FILMACIONES_DINAMICAS: 'Solicitud de Filmaciones Dinámicas',
+  NOTIFICACION_CONCILIACION: 'Notificación Conciliación',
+  NOTIFICACION_REPARACION_INTEGRAL: 'Notificación Reparación Integral',
+  NOTIFICACION_PROBATION: 'Notificación Suspensión de Juicio a Prueba (Probation)',
+  SOLICITUD_INTERVENCION: 'Solicitud de Intervención',
+  CITACION_TESTIMONIAL: 'Citaciones a Testimonial',
+  CITACION_INDAGATORIA: 'Citaciones a Indagatoria',
+  SOLICITUD_AVERIGUACION_PARADERO: 'Solicitud de Averiguación de Paradero (Búsqueda de Personas)',
+}
+
+export function getConfigPorTipoActividad(tipoActividad: string): ConfigSolicitudPenal | undefined {
+  const label = TIPO_ACTIVIDAD_SOLICITUD_PENAL[tipoActividad]
+  return label ? CONFIG_SOLICITUDES_PENALES[label] : undefined
+}
+
+// Compara los campos guardados contra el total de campos de la config
+// (fijos + condicionales que correspondan), tratando todos como
+// obligatorios por ahora (sin flag obligatorio? por campo).
+export function solicitudEstaCompleta(
+  tipoActividad: string,
+  camposGuardados: Record<string, string> = {},
+): boolean {
+  const config = getConfigPorTipoActividad(tipoActividad)
+  if (!config) return true // no aplica
+
+  const campoDisparadorVal = config.camposCondicionales
+    ? camposGuardados[config.camposCondicionales.campoDisparador]
+    : undefined
+
+  const camposCondicionales =
+    config.camposCondicionales && campoDisparadorVal
+      ? config.camposCondicionales.opciones[campoDisparadorVal] ?? []
+      : []
+
+  const todosCampos = [...config.campos, ...camposCondicionales]
+
+  return todosCampos.every(c => (camposGuardados[c.id] ?? '').trim() !== '')
 }

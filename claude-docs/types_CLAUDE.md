@@ -17,7 +17,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `RolSistema` | 'REFERENTE' \| 'COORDINADOR' \| 'ABOGADO' \| 'ADMINISTRATIVO' |
 | `RolBD` | Roles del Excel: abogado, abogada, abogado_coordinador, asistente_jurídico, gerente, adm_mesa |
 | `TipoGestion` | 20 tipos de gestión del sistema |
-| `TipoActividad` | Tipos de actividades del letrado en el timeline — incluye `RECURSO_INCIDENTE` ("Interposición de Recurso") y `DILIGENCIAMIENTO` ("Diligenciamiento" — envío de cédulas) |
+| `TipoActividad` | Tipos de actividades del letrado en el timeline — incluye `RECURSO_INCIDENTE` ("Interposición de Recurso"), `DILIGENCIAMIENTO` ("Diligenciamiento" — envío de cédulas) y los 10 códigos de Solicitud Penal (`SOLICITUD_INFORMACION`, `SOLICITUD_FILMACIONES_ESTATICAS`, `SOLICITUD_FILMACIONES_DINAMICAS`, `NOTIFICACION_CONCILIACION`, `NOTIFICACION_REPARACION_INTEGRAL`, `NOTIFICACION_PROBATION`, `SOLICITUD_INTERVENCION`, `CITACION_TESTIMONIAL`, `CITACION_INDAGATORIA`, `SOLICITUD_AVERIGUACION_PARADERO` — solo elegibles en el modal "Nueva Actividad" de `TimelinePenal.tsx`) |
 | `EstadoActividad` | PENDIENTE \| EN_CURSO \| COMPLETADA \| VENCIDA |
 | `EstadoTarea` | 'sin_estado' \| 'en_curso' \| 'cumplido' \| 'no_procedente' |
 | `UrgenciaTarea` | 'rojo' \| 'ambar' \| 'verde' \| 'gris' |
@@ -59,7 +59,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 - `es_querella_iniciada?: boolean` — marca una Carta SAE (`tipo: 'CARTA_SUCESO'`) cuya Querella ya fue creada; oculta la acción "Iniciar Querella" (antes "Nueva Querella") y muestra el badge "Ver Querella →" en el header
 - `id_querella_derivada?: string` — id del expediente QUERELLA generado desde esa Carta SAE (destino del badge "Ver Querella →")
 - `causal_finalizacion?: string` — causal elegida al finalizar (modal "Finalizar actuación"). Bloqueado/solo-lectura en DatosTab; se autocompleta, nunca se edita a mano.
-- `queja_en_tramite?: boolean` — flag del Recurso de Queja como trámite paralelo (desde REF/EJECUCION_SENTENCIA en los 4 ciclos MATRIZ SACO). Toggle con `toggleQuejaEnTramite` del store.
+- ~~`queja_en_tramite?: boolean`~~ — **ELIMINADO**. El sistema de Recurso de Queja como trámite paralelo fue dado de baja por completo (decisión de negocio); ya no existe este campo ni `toggleQuejaEnTramite` en el store.
 
 ## Campos destacados de EstadoProcesal
 
@@ -76,6 +76,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 - `tipo?: 'AUDIENCIA' | 'TAREA' | 'ACTIVIDAD' | 'SISTEMA'` — clasificación para el módulo Agenda (`AgendaEvent`)
 - `es_solicitud?: boolean` — entrada de solicitud (`tipo: 'OTRO'`) o de respuesta (`tipo: 'NOTA_RESPUESTA'`) del flujo unificado de solicitudes. En el feed es **read-only**: no muestra Comentar ni el menú ⋮, y lleva badge SOLICITUD/RESPUESTA.
 - `solicitud_id?: string` — referencia cruzada a la `Solicitud` de `useSolicitudesStore` (la setea `responderSolicitud` en la actividad `NOTA_RESPUESTA`).
+- `solicitud_penal_campos?: Record<string,string>` / `solicitud_penal_archivos?: Record<string,string[]>` — datos del sub-formulario inline de Solicitud Penal (OFICIO Penal, `TimelinePenal.tsx`), solo presentes cuando `tipo` es uno de los 10 códigos de `TIPO_ACTIVIDAD_SOLICITUD_PENAL` (ver `data_CLAUDE.md`). Reemplazan al viejo `campos_abogado.abg_solicitudes_detalle`.
 
 ## Campos destacados de Documento
 

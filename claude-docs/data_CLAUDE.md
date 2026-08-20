@@ -10,7 +10,7 @@
 | `expedientes.mock.ts` | Datos de ejemplo para el prototipo — ver mocks disponibles abajo | Creado manualmente |
 | `estadosProcesales.ts` | Estados y tareas por tipo de gestión — 13 ciclos | Diseño funcional / MATRIZ SACO |
 | `causalesFinalizacion.ts` | Catálogo de causales de finalización por `grupoCausal` | MATRIZ SACO |
-| `solicitudesPenales.ts` | Config de sub-formularios por tipo de `abg_tipo_solicitud` (OFICIO Penal) | MATRIZ SACO |
+| `solicitudesPenales.ts` | Config de sub-formularios por los 10 tipos de Solicitud Penal (integrados en el modal "Nueva Actividad" de `TimelinePenal.tsx`, no en Datos Maestros) | MATRIZ SACO |
 | `audiencias.mock.ts` | Audiencias de ejemplo para el módulo Agenda | Creado manualmente |
 
 ---
@@ -85,10 +85,9 @@ Cada nodo tiene `grupoCausal` (`PRE_SENTENCIA_1` / `SENTENCIA_1` / `INSTANCIA_RE
 causales vía `getCausalesPorEstado()` de `causalesFinalizacion.ts`. `EJECUCION_SENTENCIA`
 incluye como última tarea "Registrar causal de finalización".
 
-**Recurso de Queja** ya no es un nodo lineal — `REF.siguiente` va directo a
-`EJECUCION_SENTENCIA`. Es un checklist paralelo (`TAREAS_RECURSO_QUEJA`, exportado desde este
-mismo archivo), activable con `toggleQuejaEnTramite` del store cuando `estadoProcesal` es
-`REF` o `EJECUCION_SENTENCIA`.
+**Recurso de Queja fue eliminado por completo** (no solo como nodo lineal) — decisión de
+negocio. `REF.siguiente` va directo a `EJECUCION_SENTENCIA`, sin trámite paralelo asociado.
+Ya no existe `TAREAS_RECURSO_QUEJA` en este archivo.
 
 La ramificación `ALEGATO`/`APELACION` (Sentencia Favorable/Desfavorable, decisión del letrado)
 y la de `EN_ANALISIS` (ciclo A/B) se resuelven en `DetalleExpediente.page.tsx` con
@@ -153,7 +152,7 @@ originales de MATRIZ SACO más dos agregadas para poder probar el flujo Penal co
 | 01 | C-0100/2026 | DEMANDA_CIVIL | CIVIL | ASIGNADO | CASANO UR_004 | sin `numero_causa` — recorrer manualmente |
 | 02 | L-0100/2026 | DEMANDA_LABORAL | LABORAL | ASIGNADO | PIRES UR_012 | sin `numero_causa` — recorrer manualmente |
 | 03 | C-0043/2026 | LANZAMIENTO | CIVIL | JUICIO_INICIADO | CASANO UR_004 | sin `numero_causa` — probar botón "Iniciar Juicio" → crea `LANZAMIENTO_JUDICIALIZADO` nuevo |
-| 04 | P-0100/2026 | OFICIO (variante_penal) | PENAL | EN ANÁLISIS | DESIDERI UR_019 | `numero_causa: 'IPP-2026-00845'` — probar `abg_tipo_solicitud` (10 tipos + sub-formularios en modal): trae "Citaciones a Testimonial" completo y "Solicitud de Averiguación de Paradero..." sin completar (badge) |
+| 04 | P-0100/2026 | OFICIO (variante_penal) | PENAL | EN ANÁLISIS | DESIDERI UR_019 | `numero_causa: 'IPP-2026-00845'` — probar los 10 tipos de Solicitud Penal desde "+ Nueva Actividad" en Timeline (ya no en Datos Maestros): sub-formulario inline, badge "Sin completar" mientras falten campos |
 | 05 | P-0101/2026 | CARTA_SUCESO | PENAL | EN_ANALISIS | DESIDERI UR_019 | `numero_causa: '88.441/2026'` — probar el flujo "Iniciar Querella" del menú `+` (`exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`) |
 | 06 | P-0102/2026 | QUERELLA | PENAL | ARCHIVO | DESIDERI UR_019 | `numero_causa: '52.100/2025'`, `es_principal: true` — probar el ciclo Archivo ↔ Desarchivado (ver Sección 13 de `CLAUDE.md`) |
 
@@ -218,22 +217,25 @@ La sección `variante_penal` del OFICIO en área PENAL tiene:
 - `abg_datos_contacto`, `abg_fecha_hecho`, `abg_lugar_hecho`
 - `abg_damnificado`, `abg_imputado`
 - `abg_tipo_hecho` — multiselect con 7 opciones penales
-- `abg_tipo_solicitud` — multiselect con **10 opciones** (`TIPOS_SOLICITUD_PENAL` en
-  `solicitudesPenales.ts`, reemplazó las 6 opciones anteriores):
-  Solicitud de Información / Solicitud de Filmaciones Estáticas / Solicitud de Filmaciones
-  Dinámicas / Notificación Conciliación / Notificación Reparación Integral / Notificación
-  Suspensión de Juicio a Prueba (Probation) / Solicitud de Intervención / Citaciones a
-  Testimonial / Citaciones a Indagatoria / Solicitud de Averiguación de Paradero (Búsqueda de
-  Personas)
 - `abg_num_siniestro` — "Accidente Ferroviario (N° Siniestro)", type text, mono
-- `abg_solicitudes_detalle` — **no es un campo de `FORMULARIOS`**, se guarda directo en
-  `campos_abogado` (tipado `Record<string, unknown>`, sin interfaz propia en `types/index.ts`).
-  Ver sección siguiente.
+- **`abg_tipo_solicitud` ya NO existe** — ver sección siguiente, se migró de Datos Maestros al
+  modal "Nueva Actividad" de `TimelinePenal.tsx`.
 
-### Sub-formularios de `abg_tipo_solicitud` (`solicitudesPenales.ts` + `ModalSolicitudPenal.tsx`)
+### Solicitud Penal — 10 tipos, integrados en "Nueva Actividad" (`solicitudesPenales.ts`)
 
-Cada uno de los 10 tipos tiene su propio set de campos (`CONFIG_SOLICITUDES_PENALES[tipo]`),
-completado en un modal aparte en vez de inline en `DatosTab`:
+Los 10 tipos de Solicitud Penal ya no viven en Datos Maestros (`abg_tipo_solicitud` fue
+eliminado del formulario, y `ModalSolicitudPenal.tsx` ya no existe). Ahora son 10 valores más
+del union `TipoActividad`, elegibles como opción suelta en el select de Tipo del modal
+"Nueva Actividad" de `TimelinePenal.tsx` (sin optgroup separador):
+
+`SOLICITUD_INFORMACION` / `SOLICITUD_FILMACIONES_ESTATICAS` / `SOLICITUD_FILMACIONES_DINAMICAS`
+/ `NOTIFICACION_CONCILIACION` / `NOTIFICACION_REPARACION_INTEGRAL` / `NOTIFICACION_PROBATION` /
+`SOLICITUD_INTERVENCION` / `CITACION_TESTIMONIAL` / `CITACION_INDAGATORIA` /
+`SOLICITUD_AVERIGUACION_PARADERO`
+
+Cada uno tiene su propio set de campos (`CONFIG_SOLICITUDES_PENALES[label]`, keyed por label —
+sin cambios respecto al diseño original), renderizado como sub-formulario **inline** dentro del
+modal, debajo de título/descripción/fecha/doc_gde:
 
 ```ts
 export interface CampoSolicitudPenal {
@@ -246,22 +248,28 @@ export interface CampoSolicitudPenal {
 }
 ```
 
+- `TIPO_ACTIVIDAD_SOLICITUD_PENAL: Record<string,string>` mapea código de `TipoActividad` →
+  label (para resolver la config) y `getConfigPorTipoActividad(tipoActividad)` hace el lookup
+  directo.
 - **Solicitud de Averiguación de Paradero** es el único con `camposCondicionales`: el select
   "Tipo de Requerimiento" (`Colaboración` / `Información`) determina qué campos extra aparecen
   (`pase_areas` vs `memo_ggo` + `respuesta_area`).
-- El detalle completado vive en `campos_abogado.abg_solicitudes_detalle: Record<string, {
-  campos: Record<string,string>, archivos: Record<string,string[]> }>` — key = el string exacto
-  del tipo (mismo valor que aparece en el array de `abg_tipo_solicitud`).
-- `ModalSolicitudPenal` (`src/components/expedientes/ModalSolicitudPenal.tsx`) lee/escribe ese
-  bloque vía `actualizarCampoAbogado(expId, 'abg_solicitudes_detalle', {...actual, [tipo]:
-  {campos, archivos}})` — guarda inmediato al hacer click en "Guardar" del modal, independiente
-  del modo edición del resto de `DatosTab`.
+- El detalle completado vive en la propia `Actividad`: `solicitud_penal_campos?:
+  Record<string,string>` y `solicitud_penal_archivos?: Record<string,string[]>` (interfaz
+  `Actividad` en `types/index.ts`) — ya no en `campos_abogado.abg_solicitudes_detalle`.
+- Guardado vía `agregarActividad`/`editarActividad` del store (mismas acciones que cualquier
+  actividad genérica) — no hay acción dedicada.
 - Archivos adjuntos usan `agregarDocumento()` del store igual que el resto del sistema — quedan
   en la tab Documentos de la actuación, no hay repositorio separado por solicitud.
-- Integración en `DatosTab.tsx`: debajo de la fila `abg_tipo_solicitud` se lista cada tipo
-  seleccionado con badge "· Sin completar" (si `abg_solicitudes_detalle[tipo]` no tiene campos)
-  y botón "Ver" que abre el modal. Al elegir un tipo **nuevo** en el multiselect (sin entrada
-  previa en `abg_solicitudes_detalle`) el modal se abre automáticamente.
+- **Repetible:** no hay restricción de unicidad — se puede crear el mismo tipo de solicitud
+  varias veces como actividades distintas.
+- **Editable:** el botón "Editar" del feed (visible para cualquier actividad genérica, no solo
+  estas 10) recarga `solicitud_penal_campos`/`archivos` en el formulario y guarda con
+  `editarActividad` en vez de crear una nueva.
+- **Completar después:** badge "Sin completar" en el feed mientras
+  `!solicitudEstaCompleta(tipo, campos)` — helper que compara contra el total de campos de la
+  config (fijos + condicionales aplicables), tratando todos como obligatorios (no hay flag
+  `obligatorio?` por campo todavía).
 
 ## formularios.ts — DEMANDA_LABORAL (MATRIZ SACO)
 

@@ -1,5 +1,4 @@
 import type { CampoFormulario, FormularioSubtipo } from '../types'
-import { TIPOS_SOLICITUD_PENAL } from './solicitudesPenales'
 
 export const CAMPOS_COMUNES_MESA: CampoFormulario[] = [
   { id:'mesa_oficio_judicial',   label:'N° OJ',                  type:'text',     placeholder:'N° OJ' },
@@ -47,7 +46,6 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
         { id:'abg_damnificado',    label:'Parte damnificada',         type:'text' },
         { id:'abg_imputado',       label:'Parte imputada',            type:'text' },
         { id:'abg_tipo_hecho',     label:'Tipo de hecho',    type:'multiselect', options:['APEDREO','APEDREO CON LESIONES','APEDREO CON DAÑO','DAÑO BIENES FFCC','ROBO BIENES FFCC','LESIONES','OTROS'] },
-        { id:'abg_tipo_solicitud', label:'Tipo de solicitud', type:'multiselect', options: TIPOS_SOLICITUD_PENAL },
         { id:'abg_num_siniestro',  label:'Accidente Ferroviario (N° Siniestro)', type:'text', mono:true, placeholder:'Ej: SIN-2026-001' },
       ],
     },

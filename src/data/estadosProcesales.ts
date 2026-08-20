@@ -9,7 +9,6 @@ function tt(id: string, nombre: string): Tarea {
 // Estructura MATRIZ SACO: ASIGNADO → INICIO → TRABA_LITIS → EN_PRUEBA
 // → ALEGATO → SENTENCIA_1_(FAV|DESFAV) → APELACION → SENTENCIA_2_(FAV|DESFAV)
 // → REF → EJECUCION_SENTENCIA → FINALIZADO
-// (Recurso de Queja ya no es nodo lineal: es trámite paralelo, ver TAREAS_RECURSO_QUEJA)
 export const ESTADOS_DEMANDA_CIVIL: EstadoProcesal[] = [
   {
     codigo: 'ASIGNADO',
@@ -324,16 +323,6 @@ export const ESTADOS_DEMANDA_LABORAL: EstadoProcesal[] = [
       tt('DL_FIN_04', 'Cierre en sistema'),
     ],
   },
-]
-
-// ── Recurso de Queja — trámite paralelo (no es nodo de la cadena) ─
-// Aplica desde REF en adelante en los 4 ciclos de Demanda Civil/Laboral.
-// Ver useExpedientesStore.toggleQuejaEnTramite().
-export const TAREAS_RECURSO_QUEJA: Tarea[] = [
-  tt('RQ_01', 'Interposición del recurso de queja'),
-  tt('RQ_02', 'Seguimiento ante la Cámara'),
-  tt('RQ_03', 'Resolución de la queja'),
-  tt('RQ_04', 'Si prospera: retroceder a REF con motivo'),
 ]
 
 // ── Estados genéricos para tipos sin definición específica ──
