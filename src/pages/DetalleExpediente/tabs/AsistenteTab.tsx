@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
+import ReactMarkdown, { type Components } from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import Icon from '../../../components/ui/Icon'
 import saulAvatar from '../../../assets/saul-avatar.jpg'
@@ -12,6 +14,31 @@ const PAUSA_CHISTE_1_MS = 1200
 const PAUSA_CHISTE_2_MS = 600
 const CHISTE_1 = 'Eso no lo sé, por favor preguntale a Nicolás 😅'
 const CHISTE_2 = 'Mentira, ahí te doy la respuesta:'
+
+// Estilos manuales para las respuestas en Markdown del asistente — sin plugin
+// de @tailwindcss/typography (no estaba instalado), aplicados directo con las
+// clases y colores que ya usa el resto de SIAJ.
+const MARKDOWN_COMPONENTS: Components = {
+  p:          ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  h1:         ({ children }) => <h1 className="text-[15px] font-bold text-[#1b3a57] mt-2 mb-1">{children}</h1>,
+  h2:         ({ children }) => <h2 className="text-[14px] font-bold text-[#1b3a57] mt-2 mb-1">{children}</h2>,
+  h3:         ({ children }) => <h3 className="text-[13px] font-semibold text-[#1b3a57] mt-2 mb-1">{children}</h3>,
+  strong:     ({ children }) => <strong className="font-semibold text-[#1b3a57]">{children}</strong>,
+  em:         ({ children }) => <em className="italic">{children}</em>,
+  ul:         ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-0.5">{children}</ul>,
+  ol:         ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-0.5">{children}</ol>,
+  li:         ({ children }) => <li>{children}</li>,
+  a:          ({ children, href }) => <a href={href} target="_blank" rel="noreferrer" className="text-[#185fa5] underline">{children}</a>,
+  code:       ({ children }) => <code className="bg-[#e8e8e8] rounded px-1 py-0.5 text-[12px] font-mono">{children}</code>,
+  blockquote: ({ children }) => <blockquote className="border-l-2 border-[#B5D4F4] pl-2 italic text-[#4a6a84]">{children}</blockquote>,
+  table:      ({ children }) => (
+    <div className="overflow-x-auto mb-2">
+      <table className="text-[12px] border-collapse">{children}</table>
+    </div>
+  ),
+  th:         ({ children }) => <th className="bg-[#f5f5f5] border border-[rgba(0,0,0,0.12)] px-2 py-1 text-left font-semibold text-[#1b3a57]">{children}</th>,
+  td:         ({ children }) => <td className="border border-[rgba(0,0,0,0.12)] px-2 py-1">{children}</td>,
+}
 
 export function AsistenteTab({ exp }: Props) {
   const [input, setInput] = useState('')
@@ -132,14 +159,20 @@ export function AsistenteTab({ exp }: Props) {
                   />
                 )}
                 <div
-                  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
+                  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
                     m.role === 'user'
-                      ? 'bg-[#1b3a57] text-white'
+                      ? 'bg-[#1b3a57] text-white whitespace-pre-wrap'
                       : 'bg-[#f0f4f7] text-[#1b3a57]'
                   }`}
                 >
-                  {m.parts.map((part, i) =>
-                    part.type === 'text' ? <span key={i}>{part.text}</span> : null
+                  {m.role === 'assistant' ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                      {m.parts.filter(p => p.type === 'text').map(p => p.text).join('')}
+                    </ReactMarkdown>
+                  ) : (
+                    m.parts.map((part, i) =>
+                      part.type === 'text' ? <span key={i}>{part.text}</span> : null
+                    )
                   )}
                 </div>
               </div>

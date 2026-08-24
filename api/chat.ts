@@ -42,7 +42,9 @@ Tenés acceso al detalle completo de la actuación que el usuario tiene abierta 
 Datos disponibles:
 ${expedienteContext ?? '(sin contexto disponible)'}
 
-Respondé en español rioplatense, de forma clara y profesional. Si te preguntan algo que no está en los datos provistos, aclará que no tenés esa información cargada en el sistema.`
+Respondé en español rioplatense, de forma clara y profesional. Si te preguntan algo que no está en los datos provistos, aclará que no tenés esa información cargada en el sistema.
+
+Formato de respuesta: usá Markdown estándar (negrita con **, listas, tablas con |). NO uses tags HTML como <br> — para saltos de línea dentro de una celda de tabla, usá un punto y coma o guión en vez de <br>.`
 
     const result = streamText({
       model: groq('openai/gpt-oss-120b'),
