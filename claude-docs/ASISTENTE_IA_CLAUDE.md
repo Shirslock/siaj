@@ -80,10 +80,17 @@ en la doc pública):
 | `GROQ_API_KEY` | Key de console.groq.com. Sin ella, el endpoint responde `agent_disabled`. |
 | `AGENT_ENABLED` | Toggle manual (`'false'` apaga el asistente sin tocar código). Requiere redeploy al cambiarla. |
 
+## Probar en local
+
+`npm run dev` (solo Vite) no sirve `/api/*` — hace falta `vercel dev` para levantar la función
+serverless real. Setup completo (env vars, `vercel link`, cómo apagar el agente) en
+`docs/ASISTENTE_IA.md`.
+
+`vercel.json` tiene un rewrite explícito para `/api/(.*)` antes del catch-all del SPA
+(`/(.*) → /index.html`) — sin eso el catch-all podría interceptar `/api/chat` antes de llegar
+a la función.
+
 ## Pendiente / próximas etapas
 
-- No hay `vercel dev` documentado en el flujo local — `npm run dev` (solo Vite) no sirve `/api`,
-  así que en local el chat cae en error genérico (no crashea, pero no responde). Probar el
-  endpoint real requiere `vercel dev` o el deploy en Vercel con las env vars cargadas.
 - Sin persistencia de conversación — el historial del chat vive solo en el estado de React del
   tab (se pierde al cambiar de tab o refrescar).
