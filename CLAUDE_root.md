@@ -57,6 +57,8 @@ npm run build      # build de producción
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global (`busquedaGlobal`). |
 | `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
+| `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. Ver `claude-docs/NOVEDADES_PJN_CLAUDE.md`. |
+| `src/store/notificaciones.store.ts` | Notificaciones reales del Topbar (ASIGNACION/REASIGNACION/ALERTA_VENCIMIENTO). La campana también mezcla novedades PJN pendientes como entradas virtuales — no persisten en este store. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
 | `src/components/ui/Modal.tsx` | Modal Headless UI. Props: open, onClose, titulo, size, footer. |
@@ -71,6 +73,7 @@ npm run build      # build de producción
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
 | `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
+| `src/utils/pjnVisibilidad.ts` | `filtrarNovedadesPorRol(novedades, expedientes, usuario)` — visibilidad de novedades PJN por rol, compartida entre bandeja central, Sidebar, BandejaAbogado y Topbar. |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
 | `vercel.json` | Rewrites para SPA en Vercel. |
 | `api/chat.ts` | Función serverless (edge) — proxy a Groq para el Asistente IA. Fuera de `src/`, no la builda Vite. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
@@ -265,10 +268,11 @@ El timeline del expediente tiene DOS capas:
 | Actuaciones/ | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | Router por rol — ver Sección 6 |
 | BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer; tabs Activos/Archivados |
 | BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes; filtro por área preseleccionado |
-| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 6 tabs — ver Sección 10a |
+| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 7 tabs — ver Sección 10a |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
+| NovedadesPJN/ | /novedades-pjn | ABOGADO, COORDINADOR, REFERENTE | Bandeja de novedades del Portal PJN — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 
 ### 10a. Tabs de DetalleExpediente
 
@@ -280,6 +284,10 @@ El timeline del expediente tiene DOS capas:
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
+| Saúl (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+
+Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
+muestra un banner arriba del contenido (cualquier tab) con acceso a revisarlas inline.
 
 ---
 

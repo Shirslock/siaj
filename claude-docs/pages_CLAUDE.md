@@ -30,6 +30,7 @@ src/pages/NombrePagina/
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
 | `Agenda/` | /agenda | ABOGADO, COORDINADOR, REFERENTE | ✓ calendario mensual/semanal (lun–vie), filtros por rol, audiencias mock; eventos custom solo se listan/eliminan (sin UI de alta) |
 | `Licencias/` | /licencias | TODOS los roles | ✓ gestor de licencias — alta con motivo/reemplazante, licencias propias, actuaciones a cargo como reemplazante (`LicenciasPage.tsx`) |
+| `NovedadesPJN/` | /novedades-pjn | ABOGADO, COORDINADOR, REFERENTE (no ADMINISTRATIVO) | ✓ bandeja central de novedades detectadas por la sincronización con el Portal PJN — ver `NOVEDADES_PJN_CLAUDE.md` |
 
 ---
 

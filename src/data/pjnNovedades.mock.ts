@@ -1,8 +1,11 @@
 import type { NovedadPJN } from '../types'
 
 // Mock de novedades detectadas por la sincronización con el Portal PJN.
-// Solo aplica a actuaciones con `numero_causa` real cargado — en el mock actual
-// eso reduce el universo a P-0100/2026 y P-0101/2026 (ambas PENAL, letrado UR_019).
+// Solo aplica a actuaciones con `numero_causa` real cargado. En el mock actual eso
+// cubre 3 actuaciones, cruzando área/letrado/rol para poder probar filtrarNovedadesPorRol:
+//   - P-0100/2026 y P-0101/2026 — PENAL, letrado UR_019 (Desideri)
+//   - C-0100/2026 — CIVIL, letrado UR_004 (Casano)
+//   - L-0100/2026 — LABORAL, letrado UR_012 (Pires)
 export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
   {
     id: 'PJN_001',
@@ -22,7 +25,9 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     descripcion: 'El Portal PJN registró la notificación de una cédula electrónica dirigida a esta parte. Fecha de notificación según PJN: 22/08/2026.',
     valor_sugerido: 'Cédula electrónica notificada — corre traslado de la prueba testimonial ofrecida por la fiscalía.',
     fecha_deteccion: '2026-08-23',
-    estado: 'pendiente',
+    estado: 'aplicada',
+    aplicada_por: 'UR_019',
+    fecha_aplicacion: '2026-08-23',
   },
   {
     id: 'PJN_003',
@@ -52,7 +57,9 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     descripcion: 'El Portal PJN detectó un nuevo despacho judicial no registrado en SIAJ. Fecha del despacho según PJN: 20/08/2026.',
     valor_sugerido: 'Se agrega informe médico legal del damnificado, remitido por el Hospital Pirovano.',
     fecha_deteccion: '2026-08-21',
-    estado: 'pendiente',
+    estado: 'descartada',
+    aplicada_por: 'UR_019',
+    fecha_aplicacion: '2026-08-22',
   },
   {
     id: 'PJN_006',
@@ -62,6 +69,46 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     descripcion: 'El Portal PJN registró la notificación de una cédula electrónica dirigida a esta parte. Fecha de notificación según PJN: 19/08/2026.',
     valor_sugerido: 'Cédula electrónica notificada — se fija audiencia testimonial para el 05/09/2026 a las 10:00 hs.',
     fecha_deteccion: '2026-08-20',
+    estado: 'pendiente',
+  },
+  {
+    id: 'PJN_007',
+    expediente_id: 'C-0100/2026',
+    tipo_cambio: 'nuevo_movimiento',
+    titulo: 'Nuevo despacho en el expediente',
+    descripcion: 'El Portal PJN detectó un nuevo despacho judicial no registrado en SIAJ, en el Juzgado Civil y Comercial N°1. Fecha del despacho según PJN: 21/08/2026.',
+    valor_sugerido: 'Se corre traslado de la prueba pericial médica ofrecida por la demandada, por el plazo de 10 días.',
+    fecha_deteccion: '2026-08-22',
+    estado: 'pendiente',
+  },
+  {
+    id: 'PJN_008',
+    expediente_id: 'C-0100/2026',
+    tipo_cambio: 'cambio_estado',
+    titulo: 'PJN reporta cambio de estado procesal',
+    descripcion: 'El Portal PJN muestra el expediente en estado "PRUEBA — PERICIAL EN TRÁMITE", distinto al estado actual registrado en SIAJ ("EN TRAMITACIÓN").',
+    valor_sugerido: 'Portal PJN: expediente con pericia médica en trámite.',
+    fecha_deteccion: '2026-08-23',
+    estado: 'pendiente',
+  },
+  {
+    id: 'PJN_009',
+    expediente_id: 'L-0100/2026',
+    tipo_cambio: 'nueva_resolucion',
+    titulo: 'Nueva resolución judicial',
+    descripcion: 'El Portal PJN detectó una resolución judicial no registrada en SIAJ, dictada el 20/08/2026 por el Juzgado Nacional del Trabajo N°30.',
+    valor_sugerido: 'Resolución: se fija audiencia de conciliación para el 10/09/2026 a las 11:00 hs, previa a la apertura a prueba.',
+    fecha_deteccion: '2026-08-21',
+    estado: 'pendiente',
+  },
+  {
+    id: 'PJN_010',
+    expediente_id: 'L-0100/2026',
+    tipo_cambio: 'cedula_notificada',
+    titulo: 'Cédula notificada en el expediente',
+    descripcion: 'El Portal PJN registró la notificación de una cédula electrónica dirigida a esta parte. Fecha de notificación según PJN: 22/08/2026.',
+    valor_sugerido: 'Cédula electrónica notificada — traslado de la liquidación practicada por la actora.',
+    fecha_deteccion: '2026-08-23',
     estado: 'pendiente',
   },
 ]
