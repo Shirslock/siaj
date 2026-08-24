@@ -22,6 +22,7 @@
 | React Toastify | react-toastify | Toasts/notificaciones |
 | @dnd-kit/core + sortable + utilities | — | Drag-and-drop (DocumentosTab) |
 | Recharts | recharts | Gráficos del Dashboard (donut por área, barras por letrado/sub-estado) |
+| Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`) | `ai@7` | Chat del Asistente IA (`AsistenteTab.tsx`) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 **Sin** tailwind.config.ts — la config vive en `src/index.css` con `@theme { }`.
 **Sin** postcss.config.js — Tailwind v4 usa el plugin de Vite directamente.
@@ -72,6 +73,7 @@ npm run build      # build de producción
 | `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
 | `vercel.json` | Rewrites para SPA en Vercel. |
+| `api/chat.ts` | Función serverless (edge) — proxy a Groq para el Asistente IA. Fuera de `src/`, no la builda Vite. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `deploy.sh` | Script de deploy para GH Pages. |
 
 ---

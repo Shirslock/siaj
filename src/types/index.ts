@@ -1,4 +1,4 @@
-export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO'
+export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO' | 'NOVEDAD_PJN'
 
 export interface Notificacion {
   id: string
@@ -251,6 +251,24 @@ export interface Actividad {
   solicitud_id?: string                  // referencia cruzada a la Solicitud de useSolicitudesStore
   solicitud_penal_campos?: Record<string, string>    // datos del sub-formulario de Solicitud Penal (por tipo)
   solicitud_penal_archivos?: Record<string, string[]> // archivos adjuntos del sub-formulario, por campo
+  origen_pjn?: boolean                   // true si la actividad se creó aplicando una novedad PJN
+}
+
+export type TipoCambioPJN = 'nuevo_movimiento' | 'cambio_estado' | 'nueva_resolucion' | 'cedula_notificada'
+
+export type EstadoNovedadPJN = 'pendiente' | 'aplicada' | 'descartada'
+
+export interface NovedadPJN {
+  id:                 string
+  expediente_id:      string
+  tipo_cambio:        TipoCambioPJN
+  titulo:             string   // resumen corto, ej: "Nuevo despacho en el expediente"
+  descripcion:        string   // detalle completo tal como lo trajo el scraper
+  valor_sugerido?:    string   // texto que se usaría si se aplica como actividad/estado
+  fecha_deteccion:    string
+  estado:             EstadoNovedadPJN
+  aplicada_por?:      string
+  fecha_aplicacion?:  string
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'

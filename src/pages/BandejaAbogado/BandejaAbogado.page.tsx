@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import { usePjnStore } from '../../store/pjn.store'
 import { TIPOS_GESTION } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
@@ -58,6 +59,10 @@ export default function BandejaAbogadoPage() {
   const navigate = useNavigate()
   const { expedientes, actualizarExpediente, asignarAbogado, tareasMap } = useExpedientesStore()
   const { usuarioActivo, busquedaGlobal } = useUIStore()
+  const { novedades: novedadesPjn } = usePjnStore()
+  const expedientesConNovedadPjn = new Set(
+    novedadesPjn.filter(n => n.estado === 'pendiente').map(n => n.expediente_id)
+  )
   const [searchParams] = useSearchParams()
 
   const rolSistema  = usuarioActivo?.rolSistema
@@ -395,6 +400,15 @@ export default function BandejaAbogadoPage() {
               <Icon name="warning" size={10} className="text-[#b91c1c]" />
               <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Urgente</span>
             </div>
+          )}
+          {expedientesConNovedadPjn.has(exp.id) && (
+            <span
+              title="Novedades detectadas por PJN"
+              className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#e6f1fb] text-[#185fa5] text-[9px] font-bold"
+            >
+              <Icon name="refresh" size={9} />
+              PJN
+            </span>
           )}
         </td>
         {/* Carátula */}

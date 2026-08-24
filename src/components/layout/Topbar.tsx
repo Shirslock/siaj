@@ -2,8 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { useNotificacionesStore } from '../../store/notificaciones.store'
+import { usePjnStore } from '../../store/pjn.store'
+import { useExpedientesStore } from '../../store/expedientes.store'
 import { getNombreCompleto } from '../../data/usuarios'
-import type { RolSistema } from '../../types'
+import { filtrarNovedadesPorRol } from '../../utils/pjnVisibilidad'
+import type { RolSistema, Notificacion } from '../../types'
 import Icon from '../ui/Icon'
 import { RUTAS } from '../../utils/routing'
 
@@ -40,6 +43,8 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
   const { sidebarCollapsed, usuarioActivo, busquedaGlobal, setBusquedaGlobal } = useUIStore()
   const { notificaciones, marcarLeida, marcarTodasLeidas, descartar } =
     useNotificacionesStore()
+  const { novedades: novedadesPjn, descartarNovedad } = usePjnStore()
+  const { expedientes } = useExpedientesStore()
 
   const [inputLocal, setInputLocal] = useState(busquedaGlobal)
 
@@ -62,8 +67,29 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
     setBusquedaGlobal('')
   }
 
-  const misNotifs = notificaciones
-    .filter(n => n.destinatarioId === usuarioActivo?.id)
+  // Novedades PJN pendientes visibles para el usuario activo, presentadas como
+  // notificaciones "virtuales" (no viven en notificaciones.store — se descartan
+  // vía usePjnStore, no vía notificaciones.store.descartar).
+  const notifsPjn: Notificacion[] = filtrarNovedadesPorRol(novedadesPjn, expedientes, usuarioActivo)
+    .filter(n => n.estado === 'pendiente')
+    .map(n => {
+      const exp = expedientes.find(e => e.id === n.expediente_id)
+      return {
+        id: `PJN_NTF_${n.id}`,
+        tipo: 'NOVEDAD_PJN' as const,
+        expedienteId: n.expediente_id,
+        tipoGestion: exp?.tipo ?? '',
+        caratula: exp?.caratula ?? n.titulo,
+        numeroCausa: exp?.numero_causa ?? null,
+        leida: false,
+        fecha: n.fecha_deteccion,
+        destinatarioId: usuarioActivo?.id ?? '',
+        titulo: n.titulo,
+        descripcion: n.descripcion,
+      }
+    })
+
+  const misNotifs = [...notificaciones.filter(n => n.destinatarioId === usuarioActivo?.id), ...notifsPjn]
     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
   const noLeidas = misNotifs.filter(n => !n.leida)
 
@@ -190,7 +216,9 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                     <p className="text-sm text-[#4a6a84]">Sin notificaciones</p>
                   </div>
                 ) : (
-                  misNotifs.map(notif => (
+                  misNotifs.map(notif => {
+                    const esPjn = notif.tipo === 'NOVEDAD_PJN'
+                    return (
                     <div
                       key={notif.id}
                       className={`relative group px-4 py-3 border-b border-black/5 last:border-0 transition-colors ${
@@ -206,18 +234,20 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                       <div
                         className="cursor-pointer pl-2"
                         onClick={() => {
-                          marcarLeida(notif.id)
+                          if (!esPjn) marcarLeida(notif.id)
                           setPanelAbierto(false)
                           navigate(RUTAS.EXPEDIENTE(notif.expedienteId))
                         }}
                       >
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${
-                            notif.tipo === 'REASIGNACION'
-                              ? 'bg-[#fef3c7] text-[#d97706]'
-                              : 'bg-[#C4DFE8] text-[#1b3a57]'
+                            esPjn
+                              ? 'bg-[#e6f1fb] text-[#185fa5]'
+                              : notif.tipo === 'REASIGNACION'
+                                ? 'bg-[#fef3c7] text-[#d97706]'
+                                : 'bg-[#C4DFE8] text-[#1b3a57]'
                           }`}>
-                            {notif.tipo === 'REASIGNACION' ? 'Reasignación' : 'Asignación'}
+                            {esPjn ? 'Novedad PJN' : notif.tipo === 'REASIGNACION' ? 'Reasignación' : 'Asignación'}
                           </span>
                           <span className="text-[11px] text-[#4a6a84] truncate">
                             {notif.tipoGestion}
@@ -232,7 +262,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                         </p>
 
                         <p className="text-xs text-[#1b3a57] line-clamp-2 mt-0.5">
-                          {notif.caratula}
+                          {esPjn ? notif.titulo : notif.caratula}
                         </p>
 
                         <p className="text-[10px] text-[#7a9ab4] mt-1">
@@ -243,14 +273,18 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                       <button
                         onClick={e => {
                           e.stopPropagation()
-                          descartar(notif.id)
+                          if (esPjn) {
+                            if (usuarioActivo) descartarNovedad(notif.id.replace('PJN_NTF_', ''), usuarioActivo.id)
+                          } else {
+                            descartar(notif.id)
+                          }
                         }}
                         className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded-md text-[#7a9ab4] opacity-0 group-hover:opacity-100 hover:bg-[#e8e8e8] hover:text-[#1b3a57] transition-all"
                       >
                         <Icon name="close" size={12} />
                       </button>
                     </div>
-                  ))
+                  )})
                 )}
               </div>
 

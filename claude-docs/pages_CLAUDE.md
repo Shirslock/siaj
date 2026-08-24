@@ -24,7 +24,7 @@ src/pages/NombrePagina/
 | `Actuaciones/` | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | ✓ router por rol |
 | `BandejaAbogado/` | /bandeja/abogado (alias→/actuaciones) | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros Urgentes + Por vencer, sincronizada con el buscador global del Topbar (`?q=`) |
 | `BandejaArea/` | /bandeja/area (alias→/actuaciones) | COORDINADOR, REFERENTE | ✓ filtros embebidos |
-| `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 6 tabs |
+| `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 7 tabs |
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
 | `Configuracion/` | /configuracion | REFERENTE únicamente | ✓ panel admin con 28 tablas |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
@@ -43,6 +43,7 @@ src/pages/NombrePagina/
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop con @dnd-kit para reordenar |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
+| Asistente IA | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `ASISTENTE_IA_CLAUDE.md` |
 
 ---
 

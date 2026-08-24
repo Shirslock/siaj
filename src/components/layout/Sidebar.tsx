@@ -1,7 +1,10 @@
 import { useState, useMemo, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
+import { usePjnStore } from '../../store/pjn.store'
+import { useExpedientesStore } from '../../store/expedientes.store'
 import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
+import { filtrarNovedadesPorRol } from '../../utils/pjnVisibilidad'
 import type { RolSistema } from '../../types'
 import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
@@ -10,6 +13,7 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'dashboard',      icon: 'dashboard',    label: 'Panel de Control',       ruta: '/dashboard' },
   { key: 'mesa',           icon: 'inbox',        label: 'Mesa SACO',              ruta: '/mesa' },
   { key: 'actuaciones',    icon: 'work',         label: 'Actuaciones',            ruta: '/actuaciones' },
+  { key: 'novedades_pjn',  icon: 'refresh',      label: 'Novedades PJN',          ruta: '/novedades-pjn' },
   { key: 'agenda',         icon: 'calendar',     label: 'Agenda',                 ruta: '/agenda' },
   { key: 'tareas',         icon: 'task',         label: 'Solicitudes',            ruta: '/tareas' },
   { key: 'licencias',      icon: 'clock',        label: 'Licencias',              ruta: '/licencias' },
@@ -36,6 +40,8 @@ interface SidebarProps {
 
 export function Sidebar({ activePage }: SidebarProps) {
   const { usuarioActivo, sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { novedades } = usePjnStore()
+  const { expedientes } = useExpedientesStore()
   const [showSwitcher, setShowSwitcher] = useState(false)
   const location = useLocation()
   const switcherButtonRef = useRef<HTMLButtonElement>(null)
@@ -45,6 +51,11 @@ export function Sidebar({ activePage }: SidebarProps) {
     const union = new Set(usuarioActivo.roles.flatMap(rol => ROL_ACCESOS[mapRol(rol)].nav))
     return NAV_ITEMS.filter(item => union.has(item.key))
   }, [usuarioActivo])
+
+  const novedadesPendientes = useMemo(
+    () => filtrarNovedadesPorRol(novedades, expedientes, usuarioActivo).filter(n => n.estado === 'pendiente').length,
+    [novedades, expedientes, usuarioActivo]
+  )
 
   const isActive = (item: { key: string; ruta: string }) =>
     activePage === item.key || location.pathname === item.ruta
@@ -114,10 +125,22 @@ export function Sidebar({ activePage }: SidebarProps) {
                   : 'text-[#1b3a57] hover:bg-[#d8d8d8] border-l-2 border-transparent'
               } ${sidebarCollapsed ? 'justify-center' : ''}`}
             >
-              <Icon name={item.icon} className="flex-shrink-0" size={22} />
+              <span className="relative flex-shrink-0">
+                <Icon name={item.icon} size={22} />
+                {item.key === 'novedades_pjn' && novedadesPendientes > 0 && sidebarCollapsed && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-[#b91c1c] text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 leading-none">
+                    {novedadesPendientes > 9 ? '9+' : novedadesPendientes}
+                  </span>
+                )}
+              </span>
               {!sidebarCollapsed && (
-                <span className={`text-sm truncate ${active ? 'font-semibold' : 'font-medium'}`}>
+                <span className={`text-sm truncate flex-1 flex items-center justify-between gap-2 ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.label}
+                  {item.key === 'novedades_pjn' && novedadesPendientes > 0 && (
+                    <span className="min-w-[18px] h-[18px] bg-[#b91c1c] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
+                      {novedadesPendientes > 9 ? '9+' : novedadesPendientes}
+                    </span>
+                  )}
                 </span>
               )}
             </Link>

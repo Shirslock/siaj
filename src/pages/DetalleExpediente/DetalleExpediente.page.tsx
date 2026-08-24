@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
+import { usePjnStore } from '../../store/pjn.store'
+import { NovedadPjnCard } from '../../components/pjn/NovedadPjnCard'
 import type { Expediente } from '../../types'
 import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
@@ -19,13 +21,15 @@ import { IntervinientesTab } from './tabs/IntervinientesTab'
 import { TimelineTab }       from './tabs/TimelineTab'
 import { DocumentosTab }     from './tabs/DocumentosTab'
 import { PrevisionTab }      from './tabs/PrevisionTab'
+import { AsistenteTab }      from './tabs/AsistenteTab'
 import Icon from '../../components/ui/Icon'
+import saulAvatar from '../../assets/saul-avatar.jpg'
 import { toast } from 'react-toastify'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
-type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision'
+type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente'
 type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_querella'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
@@ -109,6 +113,7 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'docs',           label: 'Documentos',     icon: 'folder' },
   { key: 'prevision',      label: 'Previsión',      icon: 'trending_up' },
   { key: 'vinculos',       label: 'Vinculados',     icon: 'account_tree' },
+  { key: 'asistente',      label: 'Saúl',           icon: 'smart_toy' },
 ]
 
 export default function DetalleExpedientePage() {
@@ -118,8 +123,10 @@ export default function DetalleExpedientePage() {
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const { novedades: novedadesPjn } = usePjnStore()
 
   const [tab, setTab] = useState<Tab>('datos')
+  const [mostrarPanelPjn, setMostrarPanelPjn] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accion, setAccion] = useState<AccionMenu | null>(null)
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -190,6 +197,8 @@ export default function DetalleExpedientePage() {
       </div>
     )
   }
+
+  const novedadesDeEstaActuacion = novedadesPjn.filter(n => n.expediente_id === exp.id && n.estado === 'pendiente')
 
   const tipoLabel    = TIPOS_GESTION.find(t => t.code === exp.tipo)?.label ?? exp.tipo
   const juzgadoLabel = exp.juzgado ? (ALL_JUZGADOS.find(j => j.id === exp.juzgado)?.label ?? exp.juzgado) : null
@@ -740,7 +749,10 @@ export default function DetalleExpedientePage() {
                 : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
             }`}
           >
-            <Icon name={t.icon} size={16} />
+            {t.key === 'asistente'
+              ? <img src={saulAvatar} alt="Saúl" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+              : <Icon name={t.icon} size={16} />
+            }
             {t.label}
             {tabCounters[t.key] !== undefined && (
               <span className="text-xs bg-[#e0e0e0] rounded-full px-1.5 py-0.5 text-[#4a6a84]">
@@ -751,6 +763,32 @@ export default function DetalleExpedientePage() {
         ))}
       </div>
 
+      {/* Banner: novedades PJN pendientes */}
+      {novedadesDeEstaActuacion.length > 0 && (
+        <div className="mt-4 p-3 rounded-xl bg-[#e6f1fb] border border-[#B5D4F4] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon name="refresh" size={16} className="text-[#185fa5]" />
+            <span className="text-[13px] text-[#185fa5] font-medium">
+              {novedadesDeEstaActuacion.length}
+              {novedadesDeEstaActuacion.length === 1 ? ' novedad detectada por PJN' : ' novedades detectadas por PJN'}
+            </span>
+          </div>
+          <button
+            onClick={() => setMostrarPanelPjn(v => !v)}
+            className="text-[13px] font-semibold text-[#185fa5] hover:underline"
+          >
+            {mostrarPanelPjn ? 'Ocultar' : 'Revisar'}
+          </button>
+        </div>
+      )}
+      {mostrarPanelPjn && novedadesDeEstaActuacion.length > 0 && (
+        <div className="mt-3 space-y-3">
+          {novedadesDeEstaActuacion.map(n => (
+            <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion={false} />
+          ))}
+        </div>
+      )}
+
       {/* Tab content */}
       {tab === 'datos'          && <DatosTab          exp={exp} />}
       {tab === 'vinculos'       && <VinculosTab        exp={exp} />}
@@ -758,6 +796,7 @@ export default function DetalleExpedientePage() {
       {tab === 'timeline'       && <TimelineTab        exp={exp} />}
       {tab === 'docs'           && <DocumentosTab      exp={exp} />}
       {tab === 'prevision'      && <PrevisionTab       exp={exp} />}
+      {tab === 'asistente'      && <AsistenteTab       exp={exp} />}
 
       {/* Modal: Cambiar estado */}
       <Modal
