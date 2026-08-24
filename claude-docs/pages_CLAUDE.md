@@ -69,7 +69,7 @@ Grupos del sidebar:
 
 `renderCampoInput` (caso `campo.type === 'multiselect'`) renderiza un `<select>` por valor
 elegido ("slot"), con botón "Agregar otro" para sumar un slot vacío y botón "✕" por slot para
-quitarlo. Usado por `abg_tipo_hecho` (OFICIO Penal) y `abg_tipo_solicitud`.
+quitarlo. Usado por `abg_tipo_hecho` (OFICIO Penal).
 
 **Bug corregido — "Agregar otro" no hacía nada:** el helper `commit(newSlots)` filtra
 `v !== ''` antes de escribir en el draft (limpieza necesaria al eliminar un slot o al elegir un
@@ -82,24 +82,11 @@ botón "✕" siguen usando `commit` (ahí sí corresponde filtrar).
 **Modo lectura (`valorDisplay`):** `multiselect` se muestra como texto plano
 (`.join(', ')`) — **no** como chips/pills. Consistente con el resto de campos de solo lectura.
 
-### Sub-formularios de `abg_tipo_solicitud` en modal (OFICIO Penal)
+### Solicitud Penal — ya NO vive en Datos Maestros
 
-`abg_tipo_solicitud` tiene una capa extra sobre el multiselect genérico: cada uno de los 10
-tipos (`TIPOS_SOLICITUD_PENAL`, ver `data_CLAUDE.md`) abre `ModalSolicitudPenal`
-(`src/components/expedientes/ModalSolicitudPenal.tsx`) con su propio set de campos en vez de
-completarse inline.
-
-- Debajo de la fila del campo (dentro del `.map` de `camposAbogado`, vía `Fragment` +
-  componente local `SolicitudesPenalesDetalle`) se lista cada tipo seleccionado con botón "Ver"
-  y badge "· Sin completar" mientras `abg_solicitudes_detalle[tipo]` no tenga campos guardados.
-- **Auto-apertura:** en el `onChange` del `<select>` de cada slot, si `campo.id ===
-  'abg_tipo_solicitud'` y el valor elegido no tiene entrada previa en
-  `abg_solicitudes_detalle`, se abre el modal automáticamente (`setModalSolTipo(nuevoValor)`).
-  Esta lógica está acotada a ese `campo.id` — no afecta a `abg_tipo_hecho` ni a otros
-  `multiselect`.
-- El modal guarda con `actualizarCampoAbogado` **inmediatamente al click en "Guardar"**, sin
-  pasar por el draft/modo-edición del resto de `DatosTab` — se puede completar una solicitud
-  aunque el tab no esté en modo edición.
+`abg_tipo_solicitud` fue eliminado del formulario (`formularios.ts`) y `ModalSolicitudPenal.tsx`
+ya no existe. Los 10 tipos de Solicitud Penal se migraron al modal "Nueva Actividad" de
+`TimelinePenal.tsx` — ver sección "Modal Nueva Actividad — tabs" más abajo.
 
 ---
 
@@ -122,11 +109,10 @@ Modal "Cambiar estado" con lógica de flujo procesal:
 - Todo lo demás (`ALEGATO`, `APELACION`) sale de `RAMIFICACIONES_POR_CODIGO`, un `Record<string, string[]>` por **código de estado**, válido para cualquier tipo — necesario porque esos códigos son idénticos en los 4 ciclos de Demanda Civil/Laboral.
 - Devuelve `[]` si el estado no ramifica (flujo lineal normal vía `.siguiente`).
 
-**Recurso de Queja — trámite paralelo:** bloque visual (`RecursoQuejaBlock` en `TimelineTab.tsx`)
-visible solo cuando `estadoProcesal` es `REF` o `EJECUCION_SENTENCIA`, en los 4 ciclos MATRIZ
-SACO. Checklist independiente (`TAREAS_RECURSO_QUEJA`), toggle "Iniciar"/"En trámite" vía
-`toggleQuejaEnTramite`. No bloquea el avance a Ejecución de Sentencia; si prospera, se
-retrocede manualmente a REF (motivo obligatorio, como cualquier retroceso).
+**Recurso de Queja — ELIMINADO por completo.** Ya no existe `RecursoQuejaBlock` en
+`TimelineTab.tsx`, ni el flag `queja_en_tramite`, ni el checklist `TAREAS_RECURSO_QUEJA`, ni la
+acción `toggleQuejaEnTramite` — decisión de negocio. `REF` avanza directo a
+`EJECUCION_SENTENCIA` sin ningún bloque paralelo asociado.
 
 ## DetalleExpediente — Acciones del menú `+` (Iniciar Juicio / Iniciar Querella)
 
@@ -254,12 +240,22 @@ Orden de renderizado en tab "Todo":
 
 ### Edición / eliminación de actividades (con log de auditoría)
 
-- Solo visible si `esLetrado` (usuario activo === `exp.abogado_id`) y la actividad no es
-  `RECEPCION` ni un movimiento de sistema (`esMovimientoSistema(a)`: `tipo === 'MOVIMIENTO'` +
-  `estadoExpediente` + título "Cambio de estado…"/"Retroceso de estado…"). **No filtrar por
-  `tipo !== 'MOVIMIENTO'` a secas** — el modal "Nueva actividad" usa `MOVIMIENTO` como tipo por
-  defecto (`BLANK_ACT.tipo`), así que esa condición ocultaba el menú de cualquier actividad
-  genérica creada sin cambiar el tipo.
+- Solo visible si `esLetrado` y la actividad no es `RECEPCION` ni un movimiento de sistema
+  (`esMovimientoSistema(a)`: `tipo === 'MOVIMIENTO'` + `estadoExpediente` + título "Cambio de
+  estado…"/"Retroceso de estado…"). **No filtrar por `tipo !== 'MOVIMIENTO'` a secas** — el
+  modal "Nueva actividad" usa `MOVIMIENTO` como tipo por defecto (`BLANK_ACT.tipo`), así que esa
+  condición ocultaba el menú de cualquier actividad genérica creada sin cambiar el tipo.
+- **⚠️ `esLetrado` está hardcodeado en `true` (bandera demo temporal)** en `TimelineTab.tsx` y
+  `TimelinePenal.tsx` — comentario en el código marca la regla real a restaurar:
+  `usuarioActivo?.id === exp.abogado_id || usuarioActivo?.rolSistema === 'COORDINADOR'`
+  (no incluye Referente). Revertir antes de producción — ver `CAMBIOS_MATRIZ_SACO.md` sección 6.
+- **Portado a `TimelinePenal.tsx`:** este patrón (Comentar + menú ⋮ Editar/Eliminar,
+  `historialCompleto` filtrando `act.eliminado`) solo existía en `TimelineTab.tsx` hasta que se
+  portó también a Penal. `TimelinePenal.tsx` mantiene su propia copia local de `<ReplyList>` (no
+  la importa de `TimelineTab.tsx` para evitar un import circular, ya que `TimelineTab` importa
+  `TimelinePenal`). El botón "Editar" ahí es genérico (`abrirEdicionActividad`) — aplica a
+  cualquier actividad, y solo precarga `solicitud_penal_campos`/`archivos` si
+  `getConfigPorTipoActividad` devuelve algo para ese tipo.
 - El menú ⋮ **no** es un dropdown CSS `group-hover` posicionado `absolute` — el contenedor del
   feed tiene `overflow-hidden` (`rounded-2xl overflow-hidden`) y lo recorta. Es un menú controlado
   por estado (`menuActividad`), con `position: fixed` calculado desde
@@ -275,6 +271,14 @@ Orden de renderizado en tab "Todo":
 
 **Civil/Laboral (TimelineTab):** 2 tabs — `'generica'` y `'solicitud'`
 **Penal (TimelinePenal):** 3 tabs — `'procesales'`, `'genericas'` y `'solicitud'`
+
+En el tab `'genericas'` de `TimelinePenal`, el select de Tipo incluye — como opciones sueltas,
+sin optgroup — los 10 tipos de Solicitud Penal (`TIPO_ACTIVIDAD_SOLICITUD_PENAL`, ver
+`data_CLAUDE.md`). Al elegir uno con config (`getConfigPorTipoActividad`), aparece un
+sub-formulario inline debajo de fecha/doc_gde con los campos propios de ese tipo (fijos +
+condicionales si corresponde). Repetible (sin restricción de unicidad), editable (botón
+"Editar" del feed) y completable después (badge "Sin completar" mientras
+`!solicitudEstaCompleta(tipo, campos)`).
 
 El tab **Nueva Solicitud** usa el componente compartido `<SolicitudForm>` (`src/components/SolicitudForm.tsx`).
 - El `expediente_id` se toma automáticamente del expediente abierto — no hay campo para elegirlo.
@@ -308,12 +312,13 @@ import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudFor
 
 ## Sistema de Replies (comentarios anidados)
 
-- Botón "Comentar" visible **solo para el letrado asignado** (`usuarioActivo.id === exp.abogado_id`)
+- Botón "Comentar" visible **solo si `esLetrado`** (regla real: letrado asignado o Coordinador —
+  ver nota de la bandera demo más arriba). Aplica en **ambos** timelines (Civil/Laboral y Penal).
 - Al hacer click → modal con: texto (obligatorio), fecha, doc GDE opcional, fecha vencimiento y fecha aviso opcionales
 - Los replies se almacenan en `act.replies?: Reply[]` vía `agregarReply(expId, actividadIdx, replyData)` en el store
-- `actividadIdx` es la posición en `exp.timeline` (usar `exp.timeline.indexOf(act)`)
-- Se renderizan con `<ReplyList>` debajo de cada actividad, con línea azul lateral (`border-l-2 border-[#C4DFE8]`)
-- Aplica tanto en el período actual como en los bloques colapsables de períodos anteriores
+- `actividadIdx` es la posición en `exp.timeline` (usar `exp.timeline.indexOf(act)`, o el `timelineIdx` ya calculado en `TimelinePenal`)
+- Se renderizan con `<ReplyList>` debajo de cada actividad, con línea azul lateral (`border-l-2 border-[#C4DFE8]`) — `TimelinePenal.tsx` tiene su propia copia local del componente (ver nota más arriba sobre el import circular)
+- Aplica tanto en el período actual como en los bloques colapsables de períodos anteriores (TimelineTab); en TimelinePenal aplica sobre el feed único
 - Exportación: `actividadesToFilas()` emite filas de tipo `'Comentario'` con título `-> NOMBRE_AUTOR` por cada reply
 
 ---

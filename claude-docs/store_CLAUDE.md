@@ -31,7 +31,7 @@ asignarAbogado(expedienteId, abogadoId)
 agregarActividad(expedienteId, actividad)
 agregarSubitem(expId, actividadIndex, subitem)
 agregarReply(expId, actividadIdx, replyData)    // replyData: Omit<Reply, 'id' | 'created_at'>
-editarActividad(expId, actividadIdx, cambios, usuarioId)   // cambios: Partial<Pick<Actividad, 'titulo'|'descripcion'|'fecha'|'doc_gde'|'fecha_vencimiento'|'fecha_aviso'|'estado'>>; agrega entrada a log
+editarActividad(expId, actividadIdx, cambios, usuarioId)   // cambios: Partial<Pick<Actividad, 'titulo'|'descripcion'|'fecha'|'doc_gde'|'fecha_vencimiento'|'fecha_aviso'|'estado'|'solicitud_penal_campos'|'solicitud_penal_archivos'>>; agrega entrada a log
 eliminarActividad(expId, actividadIdx, usuarioId)          // soft-delete: setea eliminado: true + entrada en log; no-op sobre RECEPCION
 
 // Tareas estructuradas (por estado procesal)
@@ -55,11 +55,6 @@ reordenarDocumentos(expId, ordenNuevo)          // ordenNuevo: string[] (array d
 agregarRegistroPenal(expId, registro)
 actualizarRegistroPenal(expId, registroId, cambios)
 eliminarRegistroPenal(expId, registroId)
-
-// Recurso de Queja — trámite paralelo (4 ciclos MATRIZ SACO)
-toggleQuejaEnTramite(expId, activar)   // togglea exp.queja_en_tramite; al activar por primera
-                                        // vez inicializa tareasMap[`${expId}__RECURSO_QUEJA_PARALELO`]
-                                        // con TAREAS_RECURSO_QUEJA (estadosProcesales.ts)
 
 // Filtros
 setFiltros(filtros)
@@ -144,7 +139,7 @@ const tareas = tareasMap[key] ?? estadoProcesal?.tareas ?? []
 - El tercer parámetro `timeline` es opcional; si se pasa, también considera replies con `fecha_aviso <= hoy` y `fecha_vencimiento >= hoy`
 - Usada en BandejaAbogado (fila + filtro) y en DetalleExpediente (badge en header)
 
-**`tareasMap` inicial:** el store lo carga desde `TAREAS_MAP_INICIAL` (exportado de `expedientes.mock.ts`) — actualmente `{}` (vacío, desde el reseteo de mocks en `feat/matriz-saco-demandas`; antes tenía 3 entradas pre-populadas, ver nota en `data_CLAUDE.md`). Al abrir cada estado en TimelineTab se completa de forma lazy con `inicializarTareas(expId, estadoCodigo, tareas)`. La key del checklist paralelo de Recurso de Queja usa el sufijo fijo `RECURSO_QUEJA_PARALELO` en vez de un código de `EstadoProcesal` real (ver `toggleQuejaEnTramite` arriba).
+**`tareasMap` inicial:** el store lo carga desde `TAREAS_MAP_INICIAL` (exportado de `expedientes.mock.ts`) — actualmente `{}` (vacío, desde el reseteo de mocks en `feat/matriz-saco-demandas`; antes tenía 3 entradas pre-populadas, ver nota en `data_CLAUDE.md`). Al abrir cada estado en TimelineTab se completa de forma lazy con `inicializarTareas(expId, estadoCodigo, tareas)`.
 
 ## Acciones — agenda.store.ts
 
