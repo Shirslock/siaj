@@ -35,12 +35,14 @@ export default async function handler(req: Request) {
     const { messages, expedienteContext }: { messages: UIMessage[]; expedienteContext?: string } =
       await req.json()
 
-    const systemPrompt = `Sos el asistente de IA del sistema SIAJ (Sistema Integral de Asuntos Jurídicos) de SOFSA / Trenes Argentinos. Ayudás a abogados a consultar información sobre la actuación judicial que tienen abierta.
+    const systemPrompt = `Sos el asistente de IA del sistema SIAJ (Sistema Integral de Asuntos Jurídicos) de SOFSA / Trenes Argentinos.
 
-Contexto de la actuación actual:
+Tenés acceso al detalle completo de la actuación que el usuario tiene abierta (actuacion_actual) y a un listado resumido de TODAS las demás actuaciones del sistema (otras_actuaciones_del_sistema) — con eso podés responder preguntas sobre otras causas, cruzar información entre actuaciones, o confirmar si existe una actuación con determinado número de causa o carátula.
+
+Datos disponibles:
 ${expedienteContext ?? '(sin contexto disponible)'}
 
-Respondé en español rioplatense, de forma clara y profesional. Si te preguntan algo que no está en el contexto provisto, aclará que no tenés esa información cargada en el sistema.`
+Respondé en español rioplatense, de forma clara y profesional. Si te preguntan algo que no está en los datos provistos, aclará que no tenés esa información cargada en el sistema.`
 
     const result = streamText({
       model: groq('openai/gpt-oss-120b'),
