@@ -18,44 +18,33 @@ export const usePjnStore = create<PjnState>((set, get) => ({
 
     const expStore = useExpedientesStore.getState()
     const HOY = new Date().toISOString().split('T')[0]
-    const texto = textoFinal ?? nov.valor_sugerido ?? nov.descripcion
+    const texto = textoFinal ?? nov.detalle
 
-    // Despachar a la acción real según el tipo de cambio — reutiliza toda la
-    // infraestructura existente de actividades, sin crear un tipo especial.
-    switch (nov.tipo_cambio) {
-      case 'nuevo_movimiento':
-      case 'nueva_resolucion':
-      case 'cedula_notificada':
-        expStore.agregarActividad(nov.expediente_id, {
-          id: `PJN_ACT_${Date.now()}`,
-          expediente_id: nov.expediente_id,
-          tipo: 'MOVIMIENTO',
-          titulo: nov.titulo,
-          descripcion: texto,
-          fecha: HOY,
-          activo: true,
-          subitems: [],
-          origen_pjn: true,
-        })
-        break
-      case 'cambio_estado':
-        // El letrado revisa y confirma — acá solo registramos la novedad como
-        // actividad informativa; el cambio de estado real lo sigue haciendo el
-        // letrado manualmente desde el modal "Cambiar estado" (no forzamos un
-        // estado nuevo sin que el letrado lo confirme explícitamente en su propio flujo).
-        expStore.agregarActividad(nov.expediente_id, {
-          id: `PJN_ACT_${Date.now()}`,
-          expediente_id: nov.expediente_id,
-          tipo: 'MOVIMIENTO',
-          titulo: nov.titulo,
-          descripcion: `${texto}\n\nNota: PJN reporta un cambio de estado. Revisar y actualizar manualmente desde "Cambiar estado" si corresponde.`,
-          fecha: HOY,
-          activo: true,
-          subitems: [],
-          origen_pjn: true,
-        })
-        break
-    }
+    // Nivel 1: sin clasificación — una sola rama, siempre actividad MOVIMIENTO con el
+    // tipo crudo del PJN como título y la metadata cruda (oficina/foja/link) al pie.
+    const metadata = [
+      nov.oficina ? `Oficina: ${nov.oficina}` : null,
+      nov.foja ? `Fs. ${nov.foja}` : null,
+      'PJN',
+    ].filter(Boolean).join(' · ')
+
+    // placeholder — reemplazar por el dominio real del PJN cuando se defina
+    const PJN_BASE_URL = 'https://scw.pjn.gov.ar'
+    const lineaDocumento = nov.tiene_documento && nov.documento_url
+      ? `\n\nDocumento (PJN): ${PJN_BASE_URL}${nov.documento_url}`
+      : ''
+
+    expStore.agregarActividad(nov.expediente_id, {
+      id: `PJN_ACT_${Date.now()}`,
+      expediente_id: nov.expediente_id,
+      tipo: 'MOVIMIENTO',
+      titulo: nov.tipo,
+      descripcion: `${texto}\n\n${metadata}${lineaDocumento}`,
+      fecha: HOY,
+      activo: true,
+      subitems: [],
+      origen_pjn: true,
+    })
 
     set(s => ({
       novedades: s.novedades.map(n =>
