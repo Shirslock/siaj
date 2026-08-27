@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import type { Expediente } from '../../types'
 import { useUIStore } from '../../store/ui.store'
@@ -118,8 +118,16 @@ export default function DetalleExpedientePage() {
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
+  const [searchParams] = useSearchParams()
 
-  const [tab, setTab] = useState<Tab>('datos')
+  const tabValida = (v: string | null): v is Tab =>
+    v === 'datos' || v === 'vinculos' || v === 'intervinientes' ||
+    v === 'timeline' || v === 'docs' || v === 'prevision'
+  const tabInicial: Tab = tabValida(searchParams.get('tab'))
+    ? searchParams.get('tab') as Tab
+    : 'datos'
+
+  const [tab, setTab] = useState<Tab>(tabInicial)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accion, setAccion] = useState<AccionMenu | null>(null)
   const [nuevoEstado, setNuevoEstado] = useState('')

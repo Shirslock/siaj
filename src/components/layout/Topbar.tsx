@@ -1,11 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { useNotificacionesStore } from '../../store/notificaciones.store'
-import { getNombreCompleto } from '../../data/usuarios'
+import { useExpedientesStore } from '../../store/expedientes.store'
+import { getNombreCompleto, USUARIOS } from '../../data/usuarios'
 import type { RolSistema } from '../../types'
 import Icon from '../ui/Icon'
 import { RUTAS } from '../../utils/routing'
+import { useDebounce } from '../../hooks/useDebounce'
+import { buscarGlobal } from '../../utils/busquedaGlobal'
+import type { ResultadoBusqueda, TipoResultado } from '../../utils/busquedaGlobal'
+import { AreaBadge, RolBadge } from '../ui/Badge'
 
 const ROL_LABEL: Record<RolSistema, string> = {
   REFERENTE:      'Referente',
@@ -33,33 +38,94 @@ function fechaRelativa(iso: string): string {
 
 export function Topbar({ titulo, subtitulo }: TopbarProps) {
   const navigate = useNavigate()
-  const location = useLocation()
   const panelRef = useRef<HTMLDivElement>(null)
   const [panelAbierto, setPanelAbierto] = useState(false)
 
   const { sidebarCollapsed, usuarioActivo, busquedaGlobal, setBusquedaGlobal } = useUIStore()
   const { notificaciones, marcarLeida, marcarTodasLeidas, descartar } =
     useNotificacionesStore()
+  const expedientes = useExpedientesStore(s => s.expedientes)
 
   const [inputLocal, setInputLocal] = useState(busquedaGlobal)
+  const [dropdownAbierto, setDropdownAbierto] = useState(false)
+  const [expandido, setExpandido] = useState<Record<TipoResultado, boolean>>({
+    actuacion: false, interviniente: false, documento: false, usuario: false,
+  })
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const queryDebounced = useDebounce(inputLocal, 300)
+
+  const resultados = useMemo(
+    () => buscarGlobal(queryDebounced, expedientes, USUARIOS),
+    [queryDebounced, expedientes]
+  )
+
+  const hayResultados =
+    resultados.actuacion.length > 0 ||
+    resultados.interviniente.length > 0 ||
+    resultados.documento.length > 0 ||
+    resultados.usuario.length > 0
 
   // Sincronizar si el store se limpia externamente
   useEffect(() => {
     setInputLocal(busquedaGlobal)
   }, [busquedaGlobal])
 
+  useEffect(() => {
+    setDropdownAbierto(queryDebounced.trim().length > 0)
+    setExpandido({ actuacion: false, interviniente: false, documento: false, usuario: false })
+  }, [queryDebounced])
+
+  // Cerrar con click afuera y con ESC
+  useEffect(() => {
+    if (!dropdownAbierto) return
+    function handleClickFuera(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownAbierto(false)
+      }
+    }
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setDropdownAbierto(false)
+    }
+    document.addEventListener('mousedown', handleClickFuera)
+    document.addEventListener('keydown', handleEsc)
+    return () => {
+      document.removeEventListener('mousedown', handleClickFuera)
+      document.removeEventListener('keydown', handleEsc)
+    }
+  }, [dropdownAbierto])
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
     setInputLocal(val)
     setBusquedaGlobal(val)
-    if (!location.pathname.includes('/actuaciones')) {
-      navigate(`/actuaciones?q=${encodeURIComponent(val)}`)
-    }
   }
 
   function handleClear() {
     setInputLocal('')
     setBusquedaGlobal('')
+    setDropdownAbierto(false)
+  }
+
+  function irAResultado(r: ResultadoBusqueda) {
+    setDropdownAbierto(false)
+    setInputLocal('')
+    setBusquedaGlobal('')
+
+    switch (r.payload.tipo) {
+      case 'actuacion':
+        navigate(RUTAS.EXPEDIENTE(r.payload.exp.id) + '?tab=datos')
+        break
+      case 'interviniente':
+        navigate(RUTAS.EXPEDIENTE(r.payload.expediente_id) + '?tab=intervinientes')
+        break
+      case 'documento':
+        navigate(RUTAS.EXPEDIENTE(r.payload.expediente_id) + '?tab=docs')
+        break
+      case 'usuario':
+        // informativo, no navega
+        break
+    }
   }
 
   const misNotifs = notificaciones
@@ -99,14 +165,17 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
       </div>
 
       {/* Buscador global */}
-      <div className="flex-1 max-w-md mx-8 relative">
+      <div ref={dropdownRef} className="relative flex-1 max-w-md mx-8">
         <div className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 rounded-xl px-3 py-2 transition-all duration-200 focus-within:bg-white/25 focus-within:border-white/50">
           <Icon name="search" size={15} className="text-white/60 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Buscar..."
+            placeholder="Buscar actuaciones, personas, documentos..."
             value={inputLocal}
             onChange={handleChange}
+            onFocus={() => {
+              if (inputLocal.trim()) setDropdownAbierto(true)
+            }}
             className="flex-1 bg-transparent text-white placeholder-white/50 text-[13px] outline-none min-w-0"
           />
           {inputLocal && (
@@ -119,10 +188,51 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
           )}
         </div>
 
-        {inputLocal && !location.pathname.includes('/actuaciones') && (
-          <div className="absolute top-full left-0 right-0 mt-1 px-3 py-1.5 bg-[#1b3a57] rounded-lg text-[11px] text-white/70 border border-white/10 z-50">
-            <Icon name="search" size={11} className="inline mr-1 opacity-60" />
-            Buscando en Actuaciones...
+        {dropdownAbierto && (
+          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-[rgba(0,0,0,0.08)] max-h-[70vh] overflow-y-auto z-50">
+            {!hayResultados ? (
+              <p className="p-4 text-[13px] text-[#7a9ab4] text-center">
+                No se encontraron resultados para "{queryDebounced}".
+              </p>
+            ) : (
+              <>
+                {resultados.actuacion.length > 0 && (
+                  <GrupoResultados
+                    titulo="Actuaciones"
+                    items={resultados.actuacion}
+                    irAResultado={irAResultado}
+                    verTodosHref={`/actuaciones?q=${encodeURIComponent(queryDebounced)}`}
+                  />
+                )}
+                {resultados.interviniente.length > 0 && (
+                  <GrupoResultados
+                    titulo="Intervinientes"
+                    items={resultados.interviniente}
+                    irAResultado={irAResultado}
+                    expandido={expandido.interviniente}
+                    onExpandir={() => setExpandido(p => ({ ...p, interviniente: true }))}
+                  />
+                )}
+                {resultados.documento.length > 0 && (
+                  <GrupoResultados
+                    titulo="Documentos"
+                    items={resultados.documento}
+                    irAResultado={irAResultado}
+                    expandido={expandido.documento}
+                    onExpandir={() => setExpandido(p => ({ ...p, documento: true }))}
+                  />
+                )}
+                {resultados.usuario.length > 0 && (
+                  <GrupoResultados
+                    titulo="Usuarios"
+                    items={resultados.usuario}
+                    irAResultado={irAResultado}
+                    expandido={expandido.usuario}
+                    onExpandir={() => setExpandido(p => ({ ...p, usuario: true }))}
+                  />
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -266,5 +376,118 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
         </div>
       </div>
     </header>
+  )
+}
+
+function GrupoResultados({
+  titulo, items, irAResultado, verTodosHref, expandido, onExpandir,
+}: {
+  titulo: string
+  items: ResultadoBusqueda[]
+  irAResultado: (r: ResultadoBusqueda) => void
+  verTodosHref?: string
+  expandido?: boolean
+  onExpandir?: () => void
+}) {
+  const navigate = useNavigate()
+  const visibles = expandido ? items : items.slice(0, 5)
+  const hayMas = items.length > 5
+
+  return (
+    <div className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
+      <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-wide text-[#7a9ab4]">
+        {titulo}
+      </p>
+      {visibles.map(r => (
+        <ItemResultado key={`${r.tipo}_${r.id}`} r={r} onClick={() => irAResultado(r)} />
+      ))}
+      {hayMas && !expandido && (
+        verTodosHref ? (
+          <button
+            onClick={() => navigate(verTodosHref)}
+            className="w-full text-left px-3 py-2 text-[12px] font-semibold text-[#1b3a57] hover:bg-[#f5f5f5]"
+          >
+            Ver todos los resultados de {titulo} →
+          </button>
+        ) : (
+          <button
+            onClick={onExpandir}
+            className="w-full text-left px-3 py-2 text-[12px] font-semibold text-[#1b3a57] hover:bg-[#f5f5f5]"
+          >
+            Ver todos los resultados de {titulo} ({items.length}) →
+          </button>
+        )
+      )}
+    </div>
+  )
+}
+
+function ItemResultado({ r, onClick }: { r: ResultadoBusqueda; onClick: () => void }) {
+  const clickeable = r.payload.tipo !== 'usuario'
+
+  const contenido = (() => {
+    switch (r.payload.tipo) {
+      case 'actuacion': {
+        const exp = r.payload.exp
+        return (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-semibold text-[#1b3a57]">{exp.id}</span>
+              <AreaBadge area={exp.area} />
+            </div>
+            <p className="text-[11px] text-[#4a6a84] truncate">
+              {exp.caratula || 'Sin carátula'}
+            </p>
+          </>
+        )
+      }
+      case 'interviniente': {
+        const { int, numero_expediente } = r.payload
+        return (
+          <>
+            <p className="text-[12px] font-semibold text-[#1b3a57]">{int.nombre}</p>
+            <p className="text-[11px] text-[#4a6a84]">
+              {int.rol_procesal} — en {numero_expediente}
+            </p>
+          </>
+        )
+      }
+      case 'documento': {
+        const { doc, numero_expediente } = r.payload
+        return (
+          <div className="flex items-center gap-2">
+            <Icon name={doc.icon || 'description'} size={14} className={doc.color ?? 'text-[#4a6a84]'} />
+            <div>
+              <p className="text-[12px] font-semibold text-[#1b3a57] truncate">{doc.nombre}</p>
+              <p className="text-[11px] text-[#4a6a84]">en {numero_expediente}</p>
+            </div>
+          </div>
+        )
+      }
+      case 'usuario': {
+        const u = r.payload.user
+        return (
+          <div className="flex items-center justify-between">
+            <p className="text-[12px] font-semibold text-[#1b3a57]">
+              {u.apellido}, {u.nombre}
+            </p>
+            <RolBadge rol={u.rolSistema} />
+          </div>
+        )
+      }
+    }
+  })()
+
+  if (!clickeable) {
+    return <div className="px-3 py-2 cursor-default">{contenido}</div>
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left px-3 py-2 hover:bg-[#f5f5f5] transition-colors"
+    >
+      {contenido}
+    </button>
   )
 }
