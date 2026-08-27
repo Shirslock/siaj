@@ -79,13 +79,13 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
         tipo: 'NOVEDAD_PJN' as const,
         expedienteId: n.expediente_id,
         tipoGestion: exp?.tipo ?? '',
-        caratula: exp?.caratula ?? n.titulo,
+        caratula: exp?.caratula ?? n.tipo,
         numeroCausa: exp?.numero_causa ?? null,
         leida: false,
         fecha: n.fecha_deteccion,
         destinatarioId: usuarioActivo?.id ?? '',
-        titulo: n.titulo,
-        descripcion: n.descripcion,
+        titulo: n.tipo,
+        descripcion: n.detalle,
       }
     })
 
