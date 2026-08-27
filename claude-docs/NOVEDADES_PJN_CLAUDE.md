@@ -1,24 +1,36 @@
 # Novedades PJN — sincronización con el Portal PJN
 
-> Rama: `feat/asistente-ia-chat` (desde `develop`).
+> Rama: `feat/asistente-ia-chat` (desde `develop`). Rediseño a **Nivel 1** aplicado en
+> `feat/novedades-pjn-nivel1`.
 
 ## Qué es
 
-Módulo que revisa las novedades que detectaría la sincronización con el Portal PJN
-(nuevos despachos, cambios de estado, resoluciones, cédulas notificadas) sobre las
-actuaciones que tienen `numero_causa` real cargado. El letrado revisa cada novedad y decide
-**Aplicar** (crea una actividad en el timeline de la actuación, reutilizando
-`agregarActividad` del store existente) o **Descartar** (queda registrada como descartada,
-sin tocar el expediente).
+Módulo que revisa los movimientos que detectaría la sincronización con el Portal PJN sobre
+las actuaciones que tienen `numero_causa` real cargado. **Nivel 1** (diseño actual): SIAJ
+**no clasifica ni interpreta** ningún movimiento — lo muestra tal cual viene del PJN (fecha,
+oficina, tipo crudo, detalle, foja, link a documento), agrupado por **corrida de detección**
+(`corrida_id`). El letrado revisa cada movimiento **individualmente** y decide **Aplicar**
+(crea una actividad en el timeline de la actuación, reutilizando `agregarActividad` del store
+existente) o **Descartar** (queda registrado como descartado, sin tocar el expediente). El
+agrupamiento por corrida es solo visual — no cambia el flujo de aplicar/descartar, que sigue
+siendo por movimiento.
 
 En el mock actual esto es **100% simulado** — no hay scraper ni integración real con PJN,
 solo datos hardcodeados en `pjnNovedades.mock.ts` para poder construir y probar el flujo.
+Los datos de la primera corrida de C-0100/2026 (`RUN_C0100_20250619`) están tomados casi
+literal de un historial real de expediente (pedido de alegatos → autos para alegar → dos
+cédulas notificadas el mismo día).
+
+**Nota histórica:** hasta antes de este rediseño, el mock preclasificaba cada movimiento en
+4 categorías (`TipoCambioPJN`: `nuevo_movimiento`/`cambio_estado`/`nueva_resolucion`/
+`cedula_notificada`) — eso quedó descartado por ser más "Nivel 2" de lo que definió negocio
+para esta etapa. `TipoCambioPJN` ya no existe en el código.
 
 ## Arquitectura
 
 ```
-src/types/index.ts          NovedadPJN, TipoCambioPJN, EstadoNovedadPJN, Actividad.origen_pjn
-src/data/pjnNovedades.mock.ts   mock de 10 novedades (ver "Datos del mock" abajo)
+src/types/index.ts          NovedadPJN, EstadoNovedadPJN, Actividad.origen_pjn
+src/data/pjnNovedades.mock.ts   mock de 25 movimientos (ver "Datos del mock" abajo)
 src/store/pjn.store.ts          usePjnStore — aplicarNovedad / descartarNovedad
 src/utils/pjnVisibilidad.ts     filtrarNovedadesPorRol — visibilidad por rol, compartida
 src/components/pjn/NovedadPjnCard.tsx   card reutilizable (bandeja central + banner)
@@ -26,32 +38,49 @@ src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-pjn)
 ```
 
 Puntos de acceso a las novedades:
-- **Bandeja central** (`/novedades-pjn`) — todas las novedades visibles para el usuario, con
-  filtro Pendientes/Todas.
+- **Bandeja central** (`/novedades-pjn`) — todas las novedades visibles para el usuario,
+  agrupadas por `expediente_id + corrida_id` (varias actuaciones conviven ahí), con filtro
+  Pendientes/Todas. Cada grupo muestra un header "N movimientos detectados el
+  {fecha_deteccion}" antes de sus cards, ordenado por `row_index` ascendente; los grupos se
+  ordenan por `fecha_deteccion` descendente.
 - **Banner en `DetalleExpediente.page.tsx`** — si la actuación abierta tiene novedades
   pendientes, aparece arriba del contenido (visible en cualquier tab) con un toggle
-  "Revisar/Ocultar" que despliega las cards inline (`mostrarActuacion={false}`).
+  "Revisar/Ocultar" que despliega las cards inline (`mostrarActuacion={false}`), agrupadas
+  por `corrida_id` (una sola actuación, no hace falta `expediente_id` en la key).
 - **Badge "PJN" en `BandejaAbogado.page.tsx`** — junto a los badges de Urgente/Por vencer, si
   la fila tiene novedades pendientes.
 - **Sidebar** — entrada "Novedades PJN" con badge de contador de pendientes (número junto al
   label expandido, burbuja sobre el ícono cuando el sidebar está colapsado).
 - **Campana del Topbar** — ver "Integración con notificaciones" abajo.
 
-## `aplicarNovedad` — cómo despacha por tipo
+## `aplicarNovedad` — una sola rama, sin clasificación
 
 `usePjnStore.aplicarNovedad(id, usuarioId, textoFinal?)` no crea un tipo de actividad
-especial: todo cae en `tipo: 'MOVIMIENTO'` con `origen_pjn: true` para trazabilidad,
-reutilizando `useExpedientesStore().agregarActividad`.
+especial ni bifurca por tipo (no hay `switch`, `TipoCambioPJN` ya no existe): siempre crea
+una actividad `tipo: 'MOVIMIENTO'` con `origen_pjn: true` para trazabilidad, reutilizando
+`useExpedientesStore().agregarActividad`:
 
-- `nuevo_movimiento` / `nueva_resolucion` / `cedula_notificada` → actividad con el texto
-  editado (o `valor_sugerido`, o `descripcion` como fallback).
-- `cambio_estado` → **no** cambia el estado del expediente automáticamente. Crea una
-  actividad informativa con una nota explícita pidiendo revisar y actualizar manualmente
-  desde el modal "Cambiar estado" — decisión deliberada para no forzar una transición de
-  estado sin confirmación explícita del letrado en su propio flujo.
+- `titulo` = `novedad.tipo` — el texto crudo del PJN tal cual (ej. "ESCRITO AGREGADO",
+  "FIRMA DESPACHO"), sin traducir ni mapear.
+- `descripcion` = el texto editado por el letrado (`textoFinal`, o `novedad.detalle` como
+  fallback) + una línea de metadata cruda al pie (`Oficina: X · Fs. Y · PJN`, omitiendo las
+  partes ausentes) + si `tiene_documento && documento_url`, una línea adicional
+  `Documento (PJN): https://scw.pjn.gov.ar<documento_url>` — el link queda preservado en el
+  historial de la actuación aunque el letrado cierre la novedad.
+- **No** llama a `agregarDocumento` ni crea nada en la tab Documentos — `documento_url` es
+  un link externo al Portal PJN, no un archivo alojado en SIAJ; crear un registro en
+  Documentos sería un documento fantasma sin contenido real. Si más adelante se quiere
+  "traer el archivo real a Documentos", eso requiere que alguien lo baje del PJN y lo suba
+  manualmente, o una integración de backend que no existe todavía — fuera de alcance del
+  mock actual.
 
-`textoFinal` permite que el letrado edite el texto sugerido en el `<textarea>` de
-`NovedadPjnCard` antes de confirmar.
+`textoFinal` permite que el letrado edite el texto sugerido (seedeado con `novedad.detalle`)
+en el `<textarea>` de `NovedadPjnCard` antes de confirmar.
+
+`PJN_BASE_URL = 'https://scw.pjn.gov.ar'` es una constante placeholder (mismo valor en
+`pjn.store.ts` y `NovedadPjnCard.tsx`) — reemplazar por el dominio real del PJN cuando se
+defina. `documento_url` en el mock ya viene con el patrón real del scraper
+(`/scw/viewer.seam?id=...&tipoDoc=...`).
 
 ## Visibilidad por rol (`filtrarNovedadesPorRol`)
 
@@ -81,36 +110,43 @@ calculadas en cada render con `filtrarNovedadesPorRol` y mapeadas a la forma de
 
 ## Datos del mock
 
-4 actuaciones abiertas con `numero_causa` real en `expedientes.mock.ts`, elegidas para cruzar
-área/letrado/rol y poder probar `filtrarNovedadesPorRol` de punta a punta
-(`P-0102/2026` también tiene `numero_causa` pero está `ARCHIVO`, se excluyó por no tener
-sentido trackear novedades sobre una causa cerrada):
+25 movimientos crudos sobre 3 actuaciones con `numero_causa` real, agrupados en 4 corridas
+(`corrida_id`):
 
-| Actuación | Área | numero_causa | Letrado | Novedades |
+| Actuación | Área | Letrado | Corrida | Movimientos |
 |---|---|---|---|---|
-| P-0100/2026 | PENAL | IPP-2026-00845 | UR_019 (Desideri) | PJN_001–PJN_003 |
-| P-0101/2026 | PENAL | 88.441/2026 | UR_019 (Desideri) | PJN_004–PJN_006 |
-| C-0100/2026 | CIVIL | 61.204/2026 | UR_004 (Casano) | PJN_007–PJN_008 |
-| L-0100/2026 | LABORAL | 48.771/2026 | UR_012 (Pires) | PJN_009–PJN_010 |
+| C-0100/2026 | CIVIL | UR_004 (Casano) | `RUN_C0100_20250619` (detectada 19/06/2025) | PJN_001–PJN_005 |
+| C-0100/2026 | CIVIL | UR_004 (Casano) | `RUN_C0100_20260718` (detectada 18/07/2026, "ruidosa" — 10 movimientos, un solo hito sustantivo) | PJN_006–PJN_015 |
+| L-0100/2026 | LABORAL | UR_012 (Pires) | `RUN_L0100_20260821` (ilustrativa) | PJN_016–PJN_020 |
+| P-0100/2026 | PENAL | UR_019 (Desideri) | `RUN_P0100_20260823` (ilustrativa) | PJN_021–PJN_025 |
 
-C-0100 y L-0100 también se expandieron con `campos_mesa`/`campos_abogado` completos (juzgado,
-fuero, monto, tipo de juicio, siniestro, etc.) y 2-3 actividades de timeline además de la
-recepción (contestación de demanda, notificación/audiencia) — quedaron con contexto real para
-que el Asistente IA (tab Saúl) tenga algo sustancioso que responder, no solo el alta.
+La primera corrida de C-0100 (`RUN_C0100_20250619`) reproduce casi literal una secuencia real
+de expediente: pedido de alegatos (fs. 253, `ESCRITO AGREGADO` con `documento_url`) → autos
+para alegar (fs. 254, `FIRMA DESPACHO`) → dos cédulas notificadas el mismo día a las 09:58
+(`CEDULA ELECTRONICA PARTE`). La segunda corrida (`RUN_C0100_20260718`) es intencionalmente
+ruidosa: mucho movimiento de estado interno (`MOVIMIENTO` EN DESPACHO/EN LETRA, `EVENTO`,
+`CAMBIO DE ESTADO DE EXPEDIENTE`, `PASE`/`RECEPCION PASE`, `DEO`) y un solo `FIRMA DESPACHO`
+sustantivo (traslado de un recurso de inconstitucionalidad) — pensada para mostrar en demo
+por qué un futuro Nivel 2 (clasificación/priorización automática) va a importar.
 
-Mezcla de estados en el mock: la mayoría queda `pendiente`, pero `PJN_002` (P-0100) está
-`aplicada` y `PJN_005` (P-0101) está `descartada` — para que la bandeja central no arranque
-con todo en un único estado.
+Mezcla de estados en el mock: la mayoría queda `pendiente`, pero `PJN_003` (EN LETRA) está
+`descartada` y `PJN_004` (autos para alegar) está `aplicada` — para que la bandeja central no
+arranque con todo en un único estado.
 
 Escenarios de rol para probar:
-- **Casano** (ABOGADO, CIVIL) → ve solo las de C-0100.
-- **Pires** (ABOGADO, LABORAL) → ve solo las de L-0100.
-- **Pisano** (COORDINADOR, áreas CIVIL+LABORAL) → ve C-0100 y L-0100, no las PENAL.
-- **Desideri** (ABOGADO, PENAL) → ve solo P-0100/P-0101, sin cambios.
-- **REFERENTE** (López/Tentori/Struzka) → ve las 4 actuaciones.
+- **Casano** (ABOGADO, CIVIL) → ve solo las 2 corridas de C-0100.
+- **Pires** (ABOGADO, LABORAL) → ve solo la corrida de L-0100.
+- **Desideri** (ABOGADO, PENAL) → ve solo la corrida de P-0100.
+- **Pisano** (COORDINADOR, áreas CIVIL+LABORAL) → ve C-0100 y L-0100, no la de PENAL.
+- **REFERENTE** (López/Tentori/Struzka) → ve las 4 corridas, de las 3 actuaciones.
 
 ## Pendiente / próximas etapas
 
 - Sin integración real con el Portal PJN — todo el flujo de detección es mock.
 - Sin persistencia — las novedades y su estado (aplicada/descartada) viven solo en memoria
   del store (`usePjnStore`), se pierden al recargar.
+- **Nivel 2** (fuera de alcance de esta etapa, decisión de negocio pendiente): clasificar
+  automáticamente los movimientos crudos (equivalente al viejo `TipoCambioPJN`), priorizar
+  los sustantivos sobre el ruido de estado interno (`EN DESPACHO`/`EN LETRA`/`EVENTO`/`PASE`),
+  y eventualmente sugerir acciones por tipo (como hacía `aplicarNovedad` antes del rediseño).
+  El caso `RUN_C0100_20260718` del mock quedó armado a propósito para argumentar esto en demo.

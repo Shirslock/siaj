@@ -1,6 +1,6 @@
 # CLAUDE.md — SIAJ Frontend
 # Sistema Integral de Asuntos Jurídicos — SOFSA / Trenes Argentinos
-# Rama activa: develop
+# Rama activa: feat/asistente-ia-chat (desde develop)
 
 > Fuente de verdad para Claude Code. Leer completo antes de escribir código.
 > Cada subcarpeta tiene su propio CLAUDE.md con documentación específica.
@@ -74,6 +74,8 @@ npm run build      # build de producción
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
 | `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
 | `src/utils/pjnVisibilidad.ts` | `filtrarNovedadesPorRol(novedades, expedientes, usuario)` — visibilidad de novedades PJN por rol, compartida entre bandeja central, Sidebar, BandejaAbogado y Topbar. |
+| `src/utils/busquedaGlobal.ts` | `buscarGlobal(query, expedientes, usuarios)` — índice cross-entidad del buscador del Topbar (Actuaciones/Intervinientes/Documentos/Usuarios). Ver Sección 19. |
+| `src/hooks/useDebounce.ts` | Hook genérico `useDebounce<T>(value, delayMs)`. Usado por el buscador del Topbar (300ms). |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
 | `vercel.json` | Rewrites para SPA en Vercel. |
 | `api/chat.ts` | Función serverless (edge) — proxy a Groq para el Asistente IA. Fuera de `src/`, no la builda Vite. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
@@ -545,13 +547,30 @@ por ser el fallback (`!esReferente && !esCoordinador`).
 ## 19. Buscador global (Topbar)
 
 `Topbar.tsx` incluye un input de búsqueda persistente entre todas las páginas, respaldado por
-`busquedaGlobal`/`setBusquedaGlobal` en `ui.store.ts`.
+`busquedaGlobal`/`setBusquedaGlobal` en `ui.store.ts`. Busca en tiempo real (debounce 300ms,
+`hooks/useDebounce.ts`) sobre **4 entidades** vía `utils/busquedaGlobal.ts` (`buscarGlobal()`):
+Actuaciones, Intervinientes, Documentos y Usuarios — no solo Actuaciones como antes.
 
-- Si el usuario escribe estando en `/actuaciones`: filtra en tiempo real (sincroniza con el
-  filtro `buscar` de `BandejaAbogado.page.tsx`).
-- Si escribe desde cualquier otra página: navega a `/actuaciones?q=<texto>` (muestra el hint
-  "Buscando en Actuaciones..." mientras tanto).
-- `BandejaAbogado.page.tsx` lee `busquedaGlobal` o el query param `q` al montar y los vuelca al
-  filtro `buscar`, que matchea `id`, `caratula`, `numero_causa`, `numero_ee_gde` y el label de `tipo`.
-- El botón × limpia `busquedaGlobal` (y por ende el filtro) sin afectar el resto de los filtros
+- `buscarGlobal(query, expedientes, usuarios)` devuelve un `Record<TipoResultado, ResultadoBusqueda[]>`
+  (`TipoResultado = 'actuacion' | 'interviniente' | 'documento' | 'usuario'`). Matchea:
+  - Actuaciones: `id`, `caratula`, `numero_causa`, `campos_mesa.numero_ee_gde`, `tipo`.
+  - Intervinientes: `nombre`, `numero_documento` (recorre `exp.intervinientes` de todos los expedientes).
+  - Documentos: `nombre`, `tipo` (recorre `exp.documentos` de todos los expedientes).
+  - Usuarios: `apellido + nombre`, `cuil` — solo activos (`activo ?? true`).
+- El input ya **no redirige** al tipear. En su lugar despliega un dropdown flotante
+  (`dropdownAbierto`, se abre cuando el query debounceado no está vacío) agrupado por entidad,
+  con `AreaBadge`/`RolBadge` reusados de `components/ui/Badge.tsx`. Cierra con click afuera o ESC.
+- Cada grupo muestra hasta 5 resultados. Si hay más:
+  - **Actuaciones** → botón "Ver todos..." navega a `/actuaciones?q=<texto>` (comportamiento
+    legado reutilizado, `BandejaAbogado.page.tsx` sigue leyendo `busquedaGlobal`/`q` como filtro
+    en vivo — ambos conviven si el usuario está parado en `/actuaciones`).
+  - **Intervinientes / Documentos / Usuarios** → botón "Ver todos... (N)" expande la lista
+    **inline dentro del mismo dropdown** (no hay página central para esas 3 entidades).
+- Click en un resultado de Actuación/Interviniente/Documento navega a
+  `/expediente/:id?tab=<tab>` (`datos`/`intervinientes`/`docs` respectivamente) y limpia el buscador.
+  `DetalleExpediente.page.tsx` lee `?tab=` con `useSearchParams` al montar (`tabInicial`, valida
+  contra las 6 keys reales de `Tab`, fallback a `'datos'` si falta o es inválido) — no rompe la
+  apertura normal sin query param.
+- Usuarios es **informativo**: el ítem no es clickeable (no navega).
+- El botón × limpia `busquedaGlobal` y cierra el dropdown, sin afectar el resto de los filtros
   de la bandeja.

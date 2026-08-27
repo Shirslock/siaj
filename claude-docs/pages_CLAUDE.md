@@ -22,9 +22,9 @@ src/pages/NombrePagina/
 | `MesaSaco/` | /mesa | ADMINISTRATIVO | ✓ filtros embebidos |
 | `AltaExpediente/` | /mesa/alta | ADMINISTRATIVO | ✓ modal confirmación |
 | `Actuaciones/` | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | ✓ router por rol |
-| `BandejaAbogado/` | /bandeja/abogado (alias→/actuaciones) | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros Urgentes + Por vencer, sincronizada con el buscador global del Topbar (`?q=`) |
+| `BandejaAbogado/` | /bandeja/abogado (alias→/actuaciones) | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros Urgentes + Por vencer, sincronizada con el buscador global del Topbar (`busquedaGlobal`/`?q=`) — solo Actuaciones, ver Sección 19 de `CLAUDE_root.md` |
 | `BandejaArea/` | /bandeja/area (alias→/actuaciones) | COORDINADOR, REFERENTE | ✓ filtros embebidos |
-| `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 7 tabs |
+| `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 7 tabs, soporta abrir en tab específica vía `?tab=` (Topbar → resultado de Interviniente/Documento) |
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
 | `Configuracion/` | /configuracion | REFERENTE únicamente | ✓ panel admin con 28 tablas |
 | `Actividades/` | /expediente/:id/actividades | ABOGADO, COORDINADOR, REFERENTE | carpeta vacía |
