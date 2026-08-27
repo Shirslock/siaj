@@ -8,35 +8,29 @@ import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { Button } from '../ui/Button'
 import Icon from '../ui/Icon'
-import type { NovedadPJN, TipoCambioPJN } from '../../types'
+import type { NovedadPJN } from '../../types'
 
 interface Props {
   novedad: NovedadPJN
   mostrarActuacion?: boolean
 }
 
-const ICON_POR_TIPO: Record<TipoCambioPJN, string> = {
-  nuevo_movimiento:  'article',
-  cambio_estado:     'trending_up',
-  nueva_resolucion:  'gavel',
-  cedula_notificada: 'notifications_none',
-}
-
-const LABEL_POR_TIPO: Record<TipoCambioPJN, string> = {
-  nuevo_movimiento:  'Nuevo movimiento',
-  cambio_estado:     'Cambio de estado',
-  nueva_resolucion:  'Nueva resolución',
-  cedula_notificada: 'Cédula notificada',
-}
+// placeholder — reemplazar por el dominio real del PJN cuando se defina
+const PJN_BASE_URL = 'https://scw.pjn.gov.ar'
 
 export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
   const navigate = useNavigate()
   const { usuarioActivo } = useUIStore()
   const { aplicarNovedad, descartarNovedad } = usePjnStore()
   const exp = useExpedientesStore(s => s.expedientes.find(e => e.id === novedad.expediente_id))
-  const [texto, setTexto] = useState(novedad.valor_sugerido ?? novedad.descripcion)
+  const [texto, setTexto] = useState(novedad.detalle)
 
   const pendiente = novedad.estado === 'pendiente'
+
+  const metadata = [
+    novedad.oficina ? `Oficina: ${novedad.oficina}` : null,
+    novedad.foja ? `Fs. ${novedad.foja}` : null,
+  ].filter(Boolean).join(' · ')
 
   function handleAplicar() {
     if (!usuarioActivo) return
@@ -55,13 +49,16 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-start gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-[#e6f1fb] flex items-center justify-center flex-shrink-0">
-            <Icon name={ICON_POR_TIPO[novedad.tipo_cambio]} size={16} className="text-[#185fa5]" />
+            <Icon name="description" size={16} className="text-[#185fa5]" />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wide text-[#185fa5]">
-              {LABEL_POR_TIPO[novedad.tipo_cambio]}
+              {novedad.tipo}
             </p>
-            <p className="text-sm font-semibold text-[#1b3a57]">{novedad.titulo}</p>
+            <p className="text-sm font-semibold text-[#1b3a57]">{novedad.detalle}</p>
+            {metadata && (
+              <p className="text-xs text-[#7a9ab4] mt-0.5">{metadata}</p>
+            )}
             {mostrarActuacion && exp && (
               <button
                 onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
@@ -84,19 +81,30 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
         )}
       </div>
 
-      <p className="text-sm text-[#4a6a84] mb-2">{novedad.descripcion}</p>
-      <p className="text-[11px] text-[#7a9ab4] mb-3">Detectada el {formatFecha(novedad.fecha_deteccion)}</p>
+      <p className="text-[11px] text-[#7a9ab4] mb-2">
+        Movimiento del {formatFecha(novedad.fecha_movimiento)} · detectado el {formatFecha(novedad.fecha_deteccion)}
+      </p>
+
+      {novedad.tiene_documento && novedad.documento_url && (
+        <a
+          href={`${PJN_BASE_URL}${novedad.documento_url}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#185fa5] hover:underline mb-3"
+        >
+          <Icon name="open_in_new" size={13} />
+          Descargar del PJN
+        </a>
+      )}
 
       {pendiente ? (
         <>
-          {novedad.valor_sugerido && (
-            <textarea
-              className="field-input w-full text-sm resize-y mb-3"
-              rows={2}
-              value={texto}
-              onChange={e => setTexto(e.target.value)}
-            />
-          )}
+          <textarea
+            className="field-input w-full text-sm resize-y mb-3"
+            rows={2}
+            value={texto}
+            onChange={e => setTexto(e.target.value)}
+          />
           <div className="flex items-center justify-end gap-2">
             <Button variant="secondary" size="sm" onClick={handleDescartar}>
               Descartar

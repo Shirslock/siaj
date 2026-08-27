@@ -200,6 +200,15 @@ export default function DetalleExpedientePage() {
 
   const novedadesDeEstaActuacion = novedadesPjn.filter(n => n.expediente_id === exp.id && n.estado === 'pendiente')
 
+  const gruposPjnDeEstaActuacion = Object.values(
+    novedadesDeEstaActuacion.reduce<Record<string, typeof novedadesDeEstaActuacion>>((acc, n) => {
+      (acc[n.corrida_id] ??= []).push(n)
+      return acc
+    }, {})
+  )
+    .map(items => items.slice().sort((a, b) => a.row_index - b.row_index))
+    .sort((a, b) => new Date(b[0].fecha_deteccion).getTime() - new Date(a[0].fecha_deteccion).getTime())
+
   const tipoLabel    = TIPOS_GESTION.find(t => t.code === exp.tipo)?.label ?? exp.tipo
   const juzgadoLabel = exp.juzgado ? (ALL_JUZGADOS.find(j => j.id === exp.juzgado)?.label ?? exp.juzgado) : null
   const estadosPosibles = ESTADOS_POR_TIPO[exp.tipo] ?? []
@@ -782,9 +791,18 @@ export default function DetalleExpedientePage() {
         </div>
       )}
       {mostrarPanelPjn && novedadesDeEstaActuacion.length > 0 && (
-        <div className="mt-3 space-y-3">
-          {novedadesDeEstaActuacion.map(n => (
-            <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion={false} />
+        <div className="mt-3 space-y-6">
+          {gruposPjnDeEstaActuacion.map(items => (
+            <div key={items[0].corrida_id}>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#7a9ab4] mb-2">
+                {items.length} {items.length === 1 ? 'movimiento detectado' : 'movimientos detectados'} el {formatFecha(items[0].fecha_deteccion)}
+              </p>
+              <div className="space-y-3">
+                {items.map(n => (
+                  <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion={false} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

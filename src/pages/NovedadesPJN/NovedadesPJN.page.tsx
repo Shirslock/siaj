@@ -5,8 +5,32 @@ import { useUIStore } from '../../store/ui.store'
 import { filtrarNovedadesPorRol } from '../../utils/pjnVisibilidad'
 import { NovedadPjnCard } from '../../components/pjn/NovedadPjnCard'
 import Icon from '../../components/ui/Icon'
+import { formatFecha } from '../../utils/format'
+import type { NovedadPJN } from '../../types'
 
 type Filtro = 'pendientes' | 'todas'
+
+interface GrupoCorrida {
+  key: string
+  expediente_id: string
+  corrida_id: string
+  fecha_deteccion: string
+  items: NovedadPJN[]
+}
+
+function agruparPorCorrida(lista: NovedadPJN[]): GrupoCorrida[] {
+  const grupos: Record<string, GrupoCorrida> = {}
+  lista.forEach(n => {
+    const key = `${n.expediente_id}_${n.corrida_id}`
+    if (!grupos[key]) {
+      grupos[key] = { key, expediente_id: n.expediente_id, corrida_id: n.corrida_id, fecha_deteccion: n.fecha_deteccion, items: [] }
+    }
+    grupos[key].items.push(n)
+  })
+  return Object.values(grupos)
+    .map(g => ({ ...g, items: g.items.slice().sort((a, b) => a.row_index - b.row_index) }))
+    .sort((a, b) => new Date(b.fecha_deteccion).getTime() - new Date(a.fecha_deteccion).getTime())
+}
 
 export default function NovedadesPJNPage() {
   const { novedades } = usePjnStore()
@@ -20,9 +44,8 @@ export default function NovedadesPJNPage() {
   )
 
   const pendientes = visibles.filter(n => n.estado === 'pendiente')
-  const lista = (filtro === 'pendientes' ? pendientes : visibles)
-    .slice()
-    .sort((a, b) => new Date(b.fecha_deteccion).getTime() - new Date(a.fecha_deteccion).getTime())
+  const lista = filtro === 'pendientes' ? pendientes : visibles
+  const grupos = useMemo(() => agruparPorCorrida(lista), [lista])
 
   return (
     <div className="p-6">
@@ -63,9 +86,18 @@ export default function NovedadesPJNPage() {
           <p className="text-sm text-[#4a6a84]">Sin novedades pendientes de PJN.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {lista.map(n => (
-            <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion />
+        <div className="space-y-6">
+          {grupos.map(g => (
+            <div key={g.key}>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#7a9ab4] mb-2">
+                {g.items.length} {g.items.length === 1 ? 'movimiento detectado' : 'movimientos detectados'} el {formatFecha(g.fecha_deteccion)}
+              </p>
+              <div className="space-y-3">
+                {g.items.map(n => (
+                  <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
