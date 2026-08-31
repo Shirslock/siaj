@@ -22,7 +22,7 @@ src/pages/NombrePagina/
 | `MesaSaco/` | /mesa | ADMINISTRATIVO | ✓ filtros embebidos |
 | `AltaExpediente/` | /mesa/alta | ADMINISTRATIVO | ✓ modal confirmación |
 | `Actuaciones/` | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | ✓ router por rol |
-| `BandejaAbogado/` | /bandeja/abogado (alias→/actuaciones) | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros Urgentes + Por vencer, sincronizada con el buscador global del Topbar (`busquedaGlobal`/`?q=`) — solo Actuaciones, ver Sección 19 de `CLAUDE_root.md` |
+| `BandejaAbogado/` | /bandeja/abogado (alias→/actuaciones) | ABOGADO, COORDINADOR, REFERENTE | ✓ filtros Urgentes + Por vencer, sincronizada con el buscador global del Topbar (`busquedaGlobal`/`?q=`) — solo Actuaciones, ver Sección 19 de `CLAUDE_root.md`; botón "Exportar Excel" (`src/utils/exportBandeja.ts`) — ver detalle abajo |
 | `BandejaArea/` | /bandeja/area (alias→/actuaciones) | COORDINADOR, REFERENTE | ✓ filtros embebidos |
 | `DetalleExpediente/` | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | ✓ 7 tabs, soporta abrir en tab específica vía `?tab=` (Topbar → resultado de Interviniente/Documento) |
 | `CausaDetalle/` | /causa/* | ABOGADO, COORDINADOR, REFERENTE | ✓ 4 tabs |
@@ -352,6 +352,31 @@ Todas las tablas con filtros usan thead de 2 filas:
 ```
 
 ---
+
+## Exportar Excel — BandejaAbogado (`src/utils/exportBandeja.ts`)
+
+Botón "Exportar Excel" en la barra de acciones de la tabla (junto a Expandir/Colapsar/
+Urgentes/Alertas/Limpiar filtros), deshabilitado si `items.length === 0`. Descarga
+`Bandeja_Actuaciones_YYYYMMDD.xlsx` con la bandeja tal como está filtrada en pantalla, pero
+**completando cada causa presente en el resultado** con el resto de expedientes que
+comparten `numero_causa` (los "antecedentes"), aunque esas actuaciones adicionales no hayan
+pasado todos los filtros:
+
+- Set base: `expedientesFiltrados` (respeta todos los filtros + `tabEstado` + `poolBase`).
+- Por cada `numero_causa` distinto del set base, se completa el grupo trayendo el resto de
+  expedientes de esa causa desde `poolBase` (ya acotado por rol), **filtrado solo por
+  `filtros.letrado` y `filtros.area`** si están seteados — el resto de filtros (`tipo`,
+  `estado`, fechas, búsqueda, `soloUrgentes`, `soloAlerta`, `tabEstado`) no restringen esta
+  completación.
+- Los "sueltos" (sin `numero_causa` o `=== 'SS'`) se exportan tal cual, sin completar nada.
+- Cada fila indica en `Incluido por` si vino de `Filtro` (estaba en `expedientesFiltrados`) o
+  `Agrupador de causa` (se sumó solo por compartir `numero_causa`).
+
+`construirFilasBandejaExport(items, expedientesFiltrados, poolBase, {letrado, area})` arma las
+filas; `exportarBandejaExcel(filas, nombreArchivo)` genera el `.xlsx` (mismo patrón visual que
+`exportTimeline.ts`: `XLSX.utils.aoa_to_sheet`, headers en negrita, anchos con `!cols`). El
+util define su propio tipo `ItemBandejaExport` (misma forma que el `ItemBandeja` privado del
+page) para no acoplarse a un tipo interno del componente.
 
 ## Reglas
 
