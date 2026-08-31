@@ -1,4 +1,4 @@
-import type { NovedadPJN } from '../types'
+import type { Expediente, NovedadPJN } from '../types'
 
 // Mock de movimientos detectados por la sincronización con el Portal PJN — Nivel 1:
 // datos crudos, sin clasificar, agrupados por corrida (`corrida_id`). El letrado decide
@@ -131,3 +131,59 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     fecha_deteccion: '2026-08-23', fecha_movimiento: '2026-08-22', row_index: 5,
     oficina: 'JCC22', tipo: 'EVENTO', detalle: 'NOTIFICACION', estado: 'pendiente' },
 ]
+
+// Textos crudos realistas para simular la respuesta de una consulta manual — deliberadamente
+// en la misma línea del mock de arriba (tipos sin clasificar, tal cual los expone el PJN).
+const MOVS_MANUAL_MOCK: Array<Pick<NovedadPJN, 'tipo' | 'detalle' | 'oficina' | 'foja'>> = [
+  { tipo: 'ESCRITO AGREGADO', detalle: 'SE PRESENTA Y EVACUA TRASLADO CONFERIDO', oficina: 'ISJ', foja: '312/314' },
+  { tipo: 'FIRMA DESPACHO', detalle: 'PROVEASE COMO SE PIDE. NOTIFIQUESE.', oficina: 'ISJ', foja: '315/315' },
+  { tipo: 'CEDULA ELECTRONICA PARTE', detalle: 'CEDULA N° 26000121987650 - NOTIFICADO EL 31/08/2026 08:40', oficina: 'ISJ' },
+  { tipo: 'MOVIMIENTO', detalle: 'EN LETRA', oficina: 'ISJ' },
+]
+
+// Simula la consulta on-demand del Portal PJN para una causa puntual, ingresando
+// usuario/contraseña propios del letrado. 100% mock en frontend — no hay llamada real
+// a ningún servicio externo.
+export function simularConsultaManualPjn(
+  expediente: Expediente,
+  credenciales: { usuario: string; contrasena: string }
+): Promise<{ corridaId: string; novedades: NovedadPJN[] }> {
+  const corridaId = `RUN_MANUAL_${expediente.id}_${Date.now()}`
+
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (credenciales.contrasena.trim().toLowerCase() === 'error') {
+        reject(new Error('Credenciales inválidas o error de conexión con el Portal PJN.'))
+        return
+      }
+
+      // Mayoría de las veces devuelve novedades, para que la demo luzca bien.
+      const hayNovedades = Math.random() < 0.8
+      if (!hayNovedades) {
+        resolve({ corridaId, novedades: [] })
+        return
+      }
+
+      const cantidad = 1 + Math.floor(Math.random() * 3) // 1-3
+      const HOY = new Date().toISOString().split('T')[0]
+      const elegidos = [...MOVS_MANUAL_MOCK].sort(() => Math.random() - 0.5).slice(0, cantidad)
+
+      const novedades: NovedadPJN[] = elegidos.map((mov, idx) => ({
+        id: `PJN_MANUAL_${expediente.id}_${Date.now()}_${idx}`,
+        expediente_id: expediente.id,
+        corrida_id: corridaId,
+        fecha_deteccion: HOY,
+        fecha_movimiento: HOY,
+        row_index: idx + 1,
+        oficina: mov.oficina,
+        tipo: mov.tipo,
+        detalle: mov.detalle,
+        foja: mov.foja,
+        estado: 'pendiente',
+        origen: 'manual',
+      }))
+
+      resolve({ corridaId, novedades })
+    }, 1200)
+  })
+}

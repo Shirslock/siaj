@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { NovedadPjnCard } from '../../components/pjn/NovedadPjnCard'
+import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import type { Expediente } from '../../types'
 import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
@@ -30,7 +31,7 @@ import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente'
-type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_querella'
+type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_querella' | 'consultar_pjn'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
@@ -728,6 +729,7 @@ export default function DetalleExpedientePage() {
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
                   { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' },
                   { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Iniciar Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada },
+                  { key: 'consultar_pjn' as AccionMenu, icon: 'search', label: 'Consultar Novedad PJN', show: !!exp.numero_causa },
                 ]
                 .filter(item => item.show)
                 .map(item => (
@@ -815,6 +817,13 @@ export default function DetalleExpedientePage() {
       {tab === 'docs'           && <DocumentosTab      exp={exp} />}
       {tab === 'prevision'      && <PrevisionTab       exp={exp} />}
       {tab === 'asistente'      && <AsistenteTab       exp={exp} />}
+
+      {/* Modal: Consultar Novedad PJN (manual) */}
+      <ConsultarNovedadPjnModal
+        expediente={exp}
+        open={accion === 'consultar_pjn'}
+        onClose={() => setAccion(null)}
+      />
 
       {/* Modal: Cambiar estado */}
       <Modal

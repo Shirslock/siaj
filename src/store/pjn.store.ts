@@ -1,12 +1,16 @@
 import { create } from 'zustand'
-import { PJN_NOVEDADES_MOCK } from '../data/pjnNovedades.mock'
+import { PJN_NOVEDADES_MOCK, simularConsultaManualPjn } from '../data/pjnNovedades.mock'
 import { useExpedientesStore } from './expedientes.store'
-import type { NovedadPJN } from '../types'
+import type { Expediente, NovedadPJN } from '../types'
 
 interface PjnState {
   novedades: NovedadPJN[]
   aplicarNovedad: (id: string, usuarioId: string, textoFinal?: string) => void
   descartarNovedad: (id: string, usuarioId: string) => void
+  consultarNovedadIndividual: (
+    expediente: Expediente,
+    credenciales: { usuario: string; contrasena: string }
+  ) => Promise<string>
 }
 
 export const usePjnStore = create<PjnState>((set, get) => ({
@@ -68,5 +72,13 @@ export const usePjnStore = create<PjnState>((set, get) => ({
           : n
       ),
     }))
+  },
+
+  consultarNovedadIndividual: async (expediente, credenciales) => {
+    const resultado = await simularConsultaManualPjn(expediente, credenciales)
+    if (resultado.novedades.length > 0) {
+      set(s => ({ novedades: [...s.novedades, ...resultado.novedades] }))
+    }
+    return resultado.corridaId
   },
 }))

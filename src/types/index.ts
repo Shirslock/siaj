@@ -281,6 +281,7 @@ export interface NovedadPJN {
   estado: EstadoNovedadPJN
   aplicada_por?: string
   fecha_aplicacion?: string
+  origen?: 'automatica' | 'manual'  // opcional — sin valor = 'automatica' (mock original)
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'

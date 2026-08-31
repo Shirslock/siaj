@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { usePjnStore } from '../../store/pjn.store'
+import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import { TIPOS_GESTION } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
@@ -93,6 +94,7 @@ export default function BandejaAbogadoPage() {
   const [expandedCausas, setExpandedCausas] = useState<Set<string>>(new Set())
   const [expADesagrupar,  setExpADesagrupar]  = useState<Expediente | null>(null)
   const [modalReasignar,  setModalReasignar]  = useState<Expediente | null>(null)
+  const [modalConsultarPjn, setModalConsultarPjn] = useState<Expediente | null>(null)
   const [nuevoAbogadoId,  setNuevoAbogadoId]  = useState('')
 
   // Resetear filtros cuando cambia el usuario activo
@@ -301,6 +303,15 @@ export default function BandejaAbogadoPage() {
           >
             <Icon name="link_off" size={16} />
             Desagrupar
+          </button>
+        )}
+        {!!exp.numero_causa && (
+          <button
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            onClick={() => { setModalConsultarPjn(exp); setMenuAbierto(null) }}
+          >
+            <Icon name="search" size={16} />
+            Consultar Novedad PJN
           </button>
         )}
       </div>
@@ -758,6 +769,15 @@ export default function BandejaAbogadoPage() {
           </div>
         )}
       </Modal>
+
+      {/* MODAL CONSULTAR NOVEDAD PJN (manual) */}
+      {modalConsultarPjn && (
+        <ConsultarNovedadPjnModal
+          expediente={modalConsultarPjn}
+          open={!!modalConsultarPjn}
+          onClose={() => setModalConsultarPjn(null)}
+        />
+      )}
 
       {/* MODAL REASIGNAR */}
       <Modal

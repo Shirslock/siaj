@@ -15,6 +15,13 @@ existente) o **Descartar** (queda registrado como descartado, sin tocar el exped
 agrupamiento por corrida es solo visual — no cambia el flujo de aplicar/descartar, que sigue
 siendo por movimiento.
 
+Dos vías para generar novedades, que comparten el mismo modelo de datos y store:
+- **Automática** (`origen: 'automatica'` / sin campo, default): corridas del scraper por
+  favoritos del usuario — ver el resto de esta sección.
+- **Manual / on-demand** (`origen: 'manual'`): el letrado dispara una consulta puntual para
+  una actuación puntual desde el botón "Consultar Novedad PJN" — ver "Consulta manual"
+  más abajo.
+
 En el mock actual esto es **100% simulado** — no hay scraper ni integración real con PJN,
 solo datos hardcodeados en `pjnNovedades.mock.ts` para poder construir y probar el flujo.
 Los datos de la primera corrida de C-0100/2026 (`RUN_C0100_20250619`) están tomados casi
@@ -29,11 +36,12 @@ para esta etapa. `TipoCambioPJN` ya no existe en el código.
 ## Arquitectura
 
 ```
-src/types/index.ts          NovedadPJN, EstadoNovedadPJN, Actividad.origen_pjn
-src/data/pjnNovedades.mock.ts   mock de 25 movimientos (ver "Datos del mock" abajo)
-src/store/pjn.store.ts          usePjnStore — aplicarNovedad / descartarNovedad
+src/types/index.ts          NovedadPJN (incl. origen?), EstadoNovedadPJN, Actividad.origen_pjn
+src/data/pjnNovedades.mock.ts   mock de 25 movimientos + simularConsultaManualPjn (consulta on-demand)
+src/store/pjn.store.ts          usePjnStore — aplicarNovedad / descartarNovedad / consultarNovedadIndividual
 src/utils/pjnVisibilidad.ts     filtrarNovedadesPorRol — visibilidad por rol, compartida
-src/components/pjn/NovedadPjnCard.tsx   card reutilizable (bandeja central + banner)
+src/components/pjn/NovedadPjnCard.tsx   card reutilizable (bandeja central + banner + modal manual)
+src/components/pjn/ConsultarNovedadPjnModal.tsx   modal de consulta manual (ver "Consulta manual" abajo)
 src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-pjn)
 ```
 
@@ -139,6 +147,40 @@ Escenarios de rol para probar:
 - **Desideri** (ABOGADO, PENAL) → ve solo la corrida de P-0100.
 - **Pisano** (COORDINADOR, áreas CIVIL+LABORAL) → ve C-0100 y L-0100, no la de PENAL.
 - **REFERENTE** (López/Tentori/Struzka) → ve las 4 corridas, de las 3 actuaciones.
+
+## Consulta manual on-demand (`origen: 'manual'`)
+
+Problema de negocio que resuelve: el flujo automático depende de que la actuación esté en
+los favoritos del usuario scraper del PJN. La consulta manual le permite al letrado, desde
+una actuación puntual, pedir "consultá el PJN ahora" ingresando su propio usuario/contraseña
+del Portal PJN (que en el diseño real se le pasaría a "la empresa del script" junto con el
+número de causa; en este prototipo es **100% simulado en frontend**, no hay llamada real a
+nada externo).
+
+- **Puntos de entrada**: menú "+" de `DetalleExpediente.page.tsx` y menú "⋮" de una fila en
+  `BandejaAbogado.page.tsx`, ambos con `show: !!exp.numero_causa` (sin causa cargada, no
+  aparece el ítem). Los dos abren `ConsultarNovedadPjnModal`.
+- **`simularConsultaManualPjn(expediente, credenciales)`** (`pjnNovedades.mock.ts`): simula
+  ~1.2s de latencia y devuelve `{ corridaId, novedades }`. Tres desenlaces:
+  - Éxito con 1-3 novedades nuevas (`corrida_id: RUN_MANUAL_<expediente.id>_<timestamp>`,
+    `origen: 'manual'`, `estado: 'pendiente'`) — ocurre la mayoría de las veces para que la
+    demo luzca bien.
+  - Éxito vacío (`novedades: []`).
+  - Error (`Promise` rechazada) si `credenciales.contrasena` (trim + lowercase) es `'error'`
+    — sentinel para poder mostrar el caso de falla en demo a pedido.
+- **`usePjnStore.consultarNovedadIndividual(expediente, credenciales)`**: llama al mock,
+  agrega las novedades resultantes a `novedades` en el state (mismo array que alimenta la
+  bandeja central, el banner y los badges — por eso una consulta manual exitosa se refleja
+  ahí también sin lógica extra) y devuelve el `corridaId`. No captura errores — los propaga
+  para que el modal los maneje.
+- **`ConsultarNovedadPjnModal.tsx`**: 4 estados internos (`form` → `cargando` → `resultados`
+  | `error`). En `resultados` filtra `usePjnStore().novedades` por el `corridaId` devuelto y
+  renderiza una `NovedadPjnCard` por cada una (mismo componente, `mostrarActuacion={false}`)
+  — Aplicar/Descartar funciona igual que en el resto del módulo. Usuario y contraseña viven
+  solo en `useState` local del modal y se descartan al cerrar o reintentar; nunca se
+  persisten (ni state global ni localStorage).
+- **Fuera de alcance** (igual que el resto del módulo): integración real con el Portal PJN,
+  persistencia de novedades o credenciales, clasificación automática (Nivel 2).
 
 ## Pendiente / próximas etapas
 
