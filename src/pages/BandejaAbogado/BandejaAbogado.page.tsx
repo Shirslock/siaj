@@ -4,6 +4,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
+import { construirFilasBandejaExport, exportarBandejaExcel } from '../../utils/exportBandeja'
 import { TIPOS_GESTION } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
@@ -220,6 +221,16 @@ export default function BandejaAbogadoPage() {
   }
 
   function collapseAll() { setExpandedCausas(new Set()) }
+
+  function handleExportarExcel() {
+    const filas = construirFilasBandejaExport(items, expedientesFiltrados, poolBase, {
+      letrado: filtros.letrado,
+      area: filtros.area,
+    })
+    const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    exportarBandejaExcel(filas, `Bandeja_Actuaciones_${hoy}`)
+    toast.success('Excel exportado.')
+  }
 
   function abrirMenu(e: React.MouseEvent<HTMLButtonElement>, expId: string) {
     e.stopPropagation()
@@ -569,6 +580,15 @@ export default function BandejaAbogadoPage() {
               >
                 <Icon name="filter_alt_off" size={14} />
                 Limpiar filtros
+              </button>
+              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+              <button
+                onClick={handleExportarExcel}
+                disabled={items.length === 0}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Icon name="download" size={14} />
+                Exportar Excel
               </button>
             </div>
           </div>
