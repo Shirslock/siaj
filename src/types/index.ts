@@ -1,4 +1,4 @@
-export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO'
+export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO' | 'NOVEDAD_PJN'
 
 export interface Notificacion {
   id: string
@@ -251,6 +251,37 @@ export interface Actividad {
   solicitud_id?: string                  // referencia cruzada a la Solicitud de useSolicitudesStore
   solicitud_penal_campos?: Record<string, string>    // datos del sub-formulario de Solicitud Penal (por tipo)
   solicitud_penal_archivos?: Record<string, string[]> // archivos adjuntos del sub-formulario, por campo
+  origen_pjn?: boolean                   // true si la actividad se creó aplicando una novedad PJN
+}
+
+export type EstadoNovedadPJN = 'pendiente' | 'aplicada' | 'descartada'
+
+export interface NovedadPJN {
+  id: string
+  expediente_id: string
+  corrida_id: string         // agrupa los movimientos de una misma corrida de
+                              // sincronización — solo para agrupar visualmente, no
+                              // cambia el flujo de aplicar/descartar (sigue siendo
+                              // por movimiento individual)
+  fecha_deteccion: string    // fecha en que la corrida detectó este movimiento
+  fecha_movimiento: string   // fecha real del movimiento según el PJN (puede diferir
+                              // de fecha_deteccion)
+  row_index: number          // orden del movimiento dentro de la corrida, tal cual
+                              // lo expone el PJN
+  oficina?: string
+  tipo: string                // texto CRUDO del PJN, sin clasificar — ej. "ESCRITO
+                               // AGREGADO", "MOVIMIENTO", "FIRMA DESPACHO", "CEDULA
+                               // ELECTRONICA TRIBUNAL", "CEDULA ELECTRONICA PARTE",
+                               // "DEO", "EVENTO", "CAMBIO DE ESTADO DE EXPEDIENTE",
+                               // "PASE", "RECEPCION PASE"
+  detalle: string             // texto crudo del PJN
+  foja?: string                // ej. "254/254" — solo cuando el PJN lo expone
+  tiene_documento?: boolean
+  documento_url?: string
+  estado: EstadoNovedadPJN
+  aplicada_por?: string
+  fecha_aplicacion?: string
+  origen?: 'automatica' | 'manual'  // opcional — sin valor = 'automatica' (mock original)
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'

@@ -397,7 +397,7 @@ export function DatosTab({ exp }: Props) {
             >
               <option value="">Seleccionar…</option>
               {(exp.area === 'PENAL'
-                ? ['Denunciante', 'Sin Intervención']
+                ? ['Denunciante', 'Actuación de Oficio', 'Sin Intervención']
                 : ['Actora', 'Demandada', 'Sin Intervención']
               ).map(o => (
                 <option key={o} value={o}>{o}</option>

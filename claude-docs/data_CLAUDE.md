@@ -149,19 +149,19 @@ originales de MATRIZ SACO más dos agregadas para poder probar el flujo Penal co
 
 | # | ID | Tipo | Área | Estado (código) | Letrado | Causa / rol |
 |---|----|------|------|-----------------|---------|-------------|
-| 01 | C-0100/2026 | DEMANDA_CIVIL | CIVIL | ASIGNADO | CASANO UR_004 | sin `numero_causa` — recorrer manualmente |
-| 02 | L-0100/2026 | DEMANDA_LABORAL | LABORAL | ASIGNADO | PIRES UR_012 | sin `numero_causa` — recorrer manualmente |
+| 01 | C-0100/2026 | DEMANDA_CIVIL | CIVIL | ASIGNADO → EN TRAMITACIÓN | CASANO UR_004 | `numero_causa: '61.204/2026'` — campos_mesa/abogado completos + timeline con Contestación y Notificación, para probar Novedades PJN y el Asistente IA con contexto real |
+| 02 | L-0100/2026 | DEMANDA_LABORAL | LABORAL | ASIGNADO → EN TRAMITACIÓN | PIRES UR_012 | `numero_causa: '48.771/2026'` — campos_mesa/abogado completos + timeline con Contestación y Audiencia, mismo propósito que C-0100/2026 |
 | 03 | C-0043/2026 | LANZAMIENTO | CIVIL | JUICIO_INICIADO | CASANO UR_004 | sin `numero_causa` — probar botón "Iniciar Juicio" → crea `LANZAMIENTO_JUDICIALIZADO` nuevo |
 | 04 | P-0100/2026 | OFICIO (variante_penal) | PENAL | EN ANÁLISIS | DESIDERI UR_019 | `numero_causa: 'IPP-2026-00845'` — probar los 10 tipos de Solicitud Penal desde "+ Nueva Actividad" en Timeline (ya no en Datos Maestros): sub-formulario inline, badge "Sin completar" mientras falten campos |
 | 05 | P-0101/2026 | CARTA_SUCESO | PENAL | EN_ANALISIS | DESIDERI UR_019 | `numero_causa: '88.441/2026'` — probar el flujo "Iniciar Querella" del menú `+` (`exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`) |
 | 06 | P-0102/2026 | QUERELLA | PENAL | ARCHIVO | DESIDERI UR_019 | `numero_causa: '52.100/2025'`, `es_principal: true` — probar el ciclo Archivo ↔ Desarchivado (ver Sección 13 de `CLAUDE.md`) |
 
-Las 3 primeras tienen `numero_causa: null` y por lo tanto **`es_principal: false`** (regla:
-nunca `es_principal: true` sin número de causa real — ver Sección 7 de `CLAUDE.md`). P-0100/2026
-y P-0101/2026 sí tienen causa real pero también `es_principal: false` (ninguna forma parte de un
-grupo-causa de ejemplo — cada una tiene una causa propia sin otra actuación agrupada). P-0102/2026
-es la única con `es_principal: true`: representa el caso de una causa con una sola actuación
-(coherente con la regla, no forma grupo con nada).
+Solo C-0043/2026 tiene `numero_causa: null` y por lo tanto **`es_principal: false`** (regla:
+nunca `es_principal: true` sin número de causa real — ver Sección 7 de `CLAUDE.md`). C-0100/2026,
+L-0100/2026, P-0100/2026 y P-0101/2026 sí tienen causa real pero también `es_principal: false`
+(ninguna forma parte de un grupo-causa de ejemplo — cada una tiene una causa propia sin otra
+actuación agrupada). P-0102/2026 es la única con `es_principal: true`: representa el caso de una
+causa con una sola actuación (coherente con la regla, no forma grupo con nada).
 
 **Regla clave — `estado`/`estadoProcesal` usan el CÓDIGO del catálogo, no el label:**
 - Tipos con flujo (`getEstadosProcesales` los mapea): usar el `codigo` exacto (`EN_PRUEBA`, `TRABA_LITIS`, `ACUERDO_EXTRAJUDICIAL`, etc.), NO el label con tildes.
