@@ -10,6 +10,7 @@ import ConfiguracionPage from './pages/Configuracion/Configuracion.page'
 import AgendaPage from './pages/Agenda/Agenda.page'
 import TareasPage from './pages/Tareas/tareas.page'
 import LicenciasPage from './pages/Licencias/LicenciasPage'
+import NovedadesPJNPage from './pages/NovedadesPJN/NovedadesPJN.page'
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/agenda"            element={<AgendaPage />} />
           <Route path="/tareas"            element={<TareasPage />} />
           <Route path="/licencias"         element={<LicenciasPage />} />
+          <Route path="/novedades-pjn"     element={<NovedadesPJNPage />} />
           <Route path="/configuracion"     element={<ConfiguracionPage />} />
         </Routes>
       </AppLayout>

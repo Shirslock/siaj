@@ -76,10 +76,15 @@ setBusquedaGlobal(q)   // buscador global del Topbar (persistente entre páginas
 ```
 
 **Buscador global (`busquedaGlobal`/`setBusquedaGlobal`):** alimenta el input de búsqueda del
-`Topbar`, visible en todas las páginas. Si el usuario escribe estando fuera de `/actuaciones`,
-el Topbar navega a `/actuaciones?q=<texto>`; `BandejaAbogado.page.tsx` lee `busquedaGlobal` (o
-el query param `q` al montar) y lo vuelca al filtro `buscar`, que matchea `id`, `caratula`,
-`numero_causa`, `numero_ee_gde` y el label de `tipo`.
+`Topbar`, visible en todas las páginas. Ya no redirige al tipear: con debounce de 300ms
+(`hooks/useDebounce.ts`) despliega un dropdown flotante con resultados cross-entidad —
+Actuaciones, Intervinientes, Documentos y Usuarios — vía `utils/busquedaGlobal.ts`
+(`buscarGlobal()`). Solo el grupo Actuaciones conserva el comportamiento legado: su "Ver
+todos..." navega a `/actuaciones?q=<texto>`, que `BandejaAbogado.page.tsx` sigue leyendo
+(`busquedaGlobal` o el query param `q` al montar) y vuelca al filtro `buscar` (matchea `id`,
+`caratula`, `numero_causa`, `numero_ee_gde` y el label de `tipo`). Intervinientes/Documentos/
+Usuarios expanden inline dentro del propio dropdown (no navegan). Ver Sección 19 de
+`claude-docs/CLAUDE_root.md`.
 
 ## Acciones — configuracion.store.ts
 

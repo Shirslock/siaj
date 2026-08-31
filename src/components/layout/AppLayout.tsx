@@ -13,6 +13,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/bandeja/area':    'Actuaciones',
   '/agenda':          'Agenda',
   '/configuracion':   'Configuración del Sistema',
+  '/novedades-pjn':   'Novedades PJN',
 }
 
 const PAGE_ACTIVE: Record<string, string> = {
@@ -24,6 +25,7 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/bandeja/area':    'actuaciones',
   '/agenda':          'agenda',
   '/configuracion':   'configuracion',
+  '/novedades-pjn':   'novedades_pjn',
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
