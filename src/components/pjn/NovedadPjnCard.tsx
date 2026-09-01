@@ -14,12 +14,15 @@ import type { NovedadPJN } from '../../types'
 interface Props {
   novedad: NovedadPJN
   mostrarActuacion?: boolean
+  selMode?: boolean
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
 }
 
 // placeholder — reemplazar por el dominio real del PJN cuando se defina
 const PJN_BASE_URL = 'https://scw.pjn.gov.ar'
 
-export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
+export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = false, selected = false, onToggleSelect }: Props) {
   const navigate = useNavigate()
   const { usuarioActivo } = useUIStore()
   const { aplicarNovedad, descartarNovedad } = usePjnStore()
@@ -47,9 +50,19 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[rgba(0,0,0,0.08)] bg-white p-4">
+    <div className={`rounded-xl border bg-white p-4 ${
+      selMode && pendiente && selected ? 'border-[#185fa5] ring-1 ring-[#185fa5]' : 'border-[rgba(0,0,0,0.08)]'
+    }`}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-start gap-2.5 min-w-0">
+          {selMode && pendiente && (
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={() => onToggleSelect?.(novedad.id)}
+              className="mt-1.5 w-4 h-4 flex-shrink-0 accent-[#185fa5]"
+            />
+          )}
           <div className="w-8 h-8 rounded-lg bg-[#e6f1fb] flex items-center justify-center flex-shrink-0">
             <Icon name="description" size={16} className="text-[#185fa5]" />
           </div>
