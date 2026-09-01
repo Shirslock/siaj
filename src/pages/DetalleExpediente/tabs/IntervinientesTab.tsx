@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { Expediente, Interviniente } from '../../../types'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { Modal } from '../../../components/ui/Modal'
+import { AgregarIntervinienteModal } from '../../../components/expedientes/AgregarIntervinienteModal'
 import { ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE } from '../../../data/catalogos'
 import Icon from '../../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -35,15 +36,13 @@ const BLANK: Omit<Interviniente, 'id'> = {
 }
 
 export function IntervinientesTab({ exp }: Props) {
-  const { agregarInterviniente, eliminarInterviniente, editarInterviniente } = useExpedientesStore()
+  const { eliminarInterviniente, editarInterviniente } = useExpedientesStore()
   const [modalAbierto, setModalAbierto] = useState(false)
   const [editando, setEditando] = useState<Interviniente | null>(null)
   const [form, setForm] = useState<Omit<Interviniente, 'id'>>(BLANK)
   const [formNombre, setFormNombre] = useState({ apellido: '', nombre: '' })
   const [verDetalle, setVerDetalle] = useState<Interviniente | null>(null)
   const [confirmarEliminar, setConfirmarEliminar] = useState<Interviniente | null>(null)
-
-  const modoEdicion = !!editando
 
   useEffect(() => {
     if (editando) {
@@ -59,7 +58,7 @@ export function IntervinientesTab({ exp }: Props) {
         observaciones:      editando.observaciones      ?? '',
       })
       const partes = editando.nombre.split(', ')
-      setFormNombre({ apellido: partes[0] ?? '', nombre: partes[1] ?? '' }) 
+      setFormNombre({ apellido: partes[0] ?? '', nombre: partes[1] ?? '' })
     }
   }, [editando])
 
@@ -72,41 +71,25 @@ export function IntervinientesTab({ exp }: Props) {
     setFormNombre({ apellido: '', nombre: '' })
   }
 
-  function cerrarModal() {
+  function cerrarModalEdicion() {
     setEditando(null)
-    setModalAbierto(false)
     resetForm()
   }
 
-  function confirmar() {
+  function confirmarEdicion() {
+    if (!editando) return
     const nombreCompleto = `${formNombre.apellido.trim()}, ${formNombre.nombre.trim()}`
     const formFinal = { ...form, nombre: nombreCompleto }
-
-    if (modoEdicion && editando) {
-      editarInterviniente(exp.id, editando.id, {
-        ...formFinal,
-        contacto_email:     formFinal.contacto_email     || undefined,
-        contacto_telefono:  formFinal.contacto_telefono  || undefined,
-        contacto_domicilio: formFinal.contacto_domicilio || undefined,
-        representado_por:   formFinal.representado_por   || undefined,
-        observaciones:      formFinal.observaciones      || undefined,
-      })
-      toast.success('Interviniente actualizado.')
-      setEditando(null)
-    } else {
-      const nuevo: Interviniente = {
-        ...formFinal,
-        id: `IN_${Date.now()}`,
-        contacto_email:     formFinal.contacto_email     || undefined,
-        contacto_telefono:  formFinal.contacto_telefono  || undefined,
-        contacto_domicilio: formFinal.contacto_domicilio || undefined,
-        representado_por:   formFinal.representado_por   || undefined,
-        observaciones:      formFinal.observaciones      || undefined,
-      }
-      agregarInterviniente(exp.id, nuevo)
-      toast.success('Interviniente agregado.')
-      setModalAbierto(false)
-    }
+    editarInterviniente(exp.id, editando.id, {
+      ...formFinal,
+      contacto_email:     formFinal.contacto_email     || undefined,
+      contacto_telefono:  formFinal.contacto_telefono  || undefined,
+      contacto_domicilio: formFinal.contacto_domicilio || undefined,
+      representado_por:   formFinal.representado_por   || undefined,
+      observaciones:      formFinal.observaciones      || undefined,
+    })
+    toast.success('Interviniente actualizado.')
+    setEditando(null)
     resetForm()
   }
 
@@ -115,7 +98,7 @@ export function IntervinientesTab({ exp }: Props) {
       <div className="space-y-3">
         <div className="flex justify-end">
           <button
-            onClick={() => { resetForm(); setModalAbierto(true) }}
+            onClick={() => setModalAbierto(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             <Icon name="person_add" size={18} />
@@ -200,25 +183,32 @@ export function IntervinientesTab({ exp }: Props) {
         )}
       </div>
 
+      <AgregarIntervinienteModal
+        expedienteId={exp.id}
+        open={modalAbierto}
+        onClose={() => setModalAbierto(false)}
+      />
+
+      {/* Modal editar */}
       <Modal
-        open={modalAbierto || !!editando}
-        onClose={cerrarModal}
-        titulo={modoEdicion ? 'Editar interviniente' : 'Agregar interviniente'}
+        open={!!editando}
+        onClose={cerrarModalEdicion}
+        titulo="Editar interviniente"
         size="lg"
         footer={
           <>
             <button
-              onClick={cerrarModal}
+              onClick={cerrarModalEdicion}
               className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
             >
               Cancelar
             </button>
             <button
-              onClick={confirmar}
+              onClick={confirmarEdicion}
               disabled={!formNombre.apellido.trim() || !formNombre.nombre.trim() || !form.numero_documento.trim()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
-              {modoEdicion ? 'Guardar cambios' : 'Agregar'}
+              Guardar cambios
             </button>
           </>
         }

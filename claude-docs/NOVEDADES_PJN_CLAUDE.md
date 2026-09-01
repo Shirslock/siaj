@@ -36,8 +36,9 @@ para esta etapa. `TipoCambioPJN` ya no existe en el código.
 ## Arquitectura
 
 ```
-src/types/index.ts          NovedadPJN (incl. origen?), EstadoNovedadPJN, Actividad.origen_pjn
+src/types/index.ts          NovedadPJN (incl. origen?, intervinientes_pjn?), EstadoNovedadPJN, Actividad.origen_pjn
                              ActuacionPjnSinCargar, EstadoAlertaActuacionPjn — ver "Causa en PJN sin cargar" abajo
+                             IntervinientePjnCrudo — ver "Intervinientes desde una novedad" abajo
 src/data/pjnNovedades.mock.ts   mock de 25 movimientos + simularConsultaManualPjn (consulta on-demand)
                                  + ACTUACIONES_PJN_SIN_CARGAR_MOCK (3 alertas de causa fantasma)
 src/store/pjn.store.ts          usePjnStore — aplicarNovedad / descartarNovedad / consultarNovedadIndividual
@@ -49,6 +50,8 @@ src/utils/pjnVisibilidad.ts     filtrarNovedadesPorRol — visibilidad por rol, 
 src/utils/pjnVencimiento.ts     esNovedadVencida / diasDesdeDeteccion — flag de vencimiento derivado, ver abajo
 src/components/pjn/NovedadPjnCard.tsx   card reutilizable (bandeja central + banner + modal manual)
 src/components/pjn/ConsultarNovedadPjnModal.tsx   modal de consulta manual (ver "Consulta manual" abajo)
+src/components/expedientes/AgregarIntervinienteModal.tsx   modal de alta de interviniente, extraído de
+                                 IntervinientesTab.tsx para reusarlo desde una novedad — ver abajo
 src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-pjn) — novedades + alertas
 ```
 
@@ -274,6 +277,59 @@ libremente.
   directamente el mensaje de límite alcanzado + botón Cerrar — no hace falta que el letrado
   escriba credenciales para enterarse de que no le quedan intentos (el guard del store
   también está, por las dudas, pero la UI ya evita el intento antes).
+
+## Intervinientes desde una novedad (`IntervinientePjnCrudo`)
+
+El JSON real del PJN también trae datos de intervinientes (partes notificadas, etc.) en
+las novedades que las involucran — ej. una `CEDULA ELECTRONICA PARTE`. Mismo criterio que
+ya usa `documento_url` (no crea un documento fantasma en la tab Documentos): el PJN
+**sugiere** datos, **no auto-carga** — el letrado los revisa/completa contra los catálogos
+de SIAJ y confirma con el botón "Agregar" del modal de siempre antes de que se guarde como
+`Interviniente` real.
+
+```ts
+// src/types/index.ts — campo opcional de NovedadPJN
+intervinientes_pjn?: IntervinientePjnCrudo[]
+
+export interface IntervinientePjnCrudo {
+  nombre: string
+  rol?: string              // texto crudo del PJN (ej. "DEMANDADO") — NO es id de catálogo
+  tipo_documento?: string   // texto crudo (ej. "DNI") — NO es id de catálogo
+  numero_documento?: string
+  domicilio?: string
+  representado_por?: string
+}
+```
+
+- **`AgregarIntervinienteModal.tsx`** (`src/components/expedientes/`): el modal de alta de
+  interviniente, extraído de `IntervinientesTab.tsx` para poder abrirse también desde una
+  card de novedad en la bandeja central (`/novedades-pjn`), fuera del contexto de esa tab.
+  Props `expedienteId`, `open`, `onClose`, y `valoresIniciales?:
+  Partial<Omit<Interviniente, 'id'>>` para pre-cargar — reusa
+  `useExpedientesStore().agregarInterviniente` tal cual. La edición sigue viviendo inline en
+  `IntervinientesTab.tsx` (no se extrajo, solo el alta).
+- **Matching de catálogo**: `NovedadPjnCard.tsx` tiene un helper local (`matchCatalogId`)
+  que compara `rol`/`tipo_documento` crudos (case-insensitive) contra el `label` de
+  `ROLES_INTERVINIENTE`/`TIPOS_DOC_INTERVINIENTE` (`src/data/catalogos.ts`) para
+  preseleccionar el catálogo correcto en los `<select>` del modal. Si no hay match, el
+  campo queda afuera de `valoresIniciales` y el modal cae al default de siempre (primera
+  opción de cada catálogo) — el letrado lo corrige a mano. `nombre`, `numero_documento`,
+  `domicilio`→`contacto_domicilio` y `representado_por` se pre-cargan tal cual, sin
+  matching (son texto libre).
+- **`NovedadPjnCard.tsx`**: cuando `novedad.intervinientes_pjn?.length`, muestra una
+  sub-lista compacta (nombre + rol/documento crudo tal cual vino del PJN) con un botón
+  "Agregar a Intervinientes" por persona que abre `AgregarIntervinienteModal` con
+  `expedienteId={novedad.expediente_id}` y los valores de esa persona pre-cargados.
+- **Mock**: 3 ejemplos en `intervinientes_pjn`, en `CEDULA ELECTRONICA PARTE` (el tipo de
+  novedad que notifica a una parte puntual) — `PJN_001` y `PJN_019` con `rol`/
+  `tipo_documento` que matchean 1 a 1 contra los catálogos (demuestra la pre-selección
+  automática), `PJN_002` con `rol: 'LETRADO APODERADO'` que **no** matchea ningún label de
+  `ROLES_INTERVINIENTE` (demuestra el fallback a default cuando el PJN no usa los mismos
+  términos que el catálogo SIAJ).
+- **Fuera de alcance de esta iteración**: no toca `aplicarNovedad` ni el store de
+  `pjn.store.ts` (100% aditivo a nivel UI, no cambia el flujo de aplicar/descartar), y no
+  aplica a `ActuacionPjnSinCargar` (la alerta de causa sin cargar) — ahí no hay expediente
+  real todavía al que agregarle intervinientes.
 
 ## Integración con notificaciones (Topbar)
 

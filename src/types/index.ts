@@ -282,6 +282,21 @@ export interface NovedadPJN {
   aplicada_por?: string
   fecha_aplicacion?: string
   origen?: 'automatica' | 'manual'  // opcional — sin valor = 'automatica' (mock original)
+  intervinientes_pjn?: IntervinientePjnCrudo[]  // ver IntervinientePjnCrudo — datos crudos, no auto-cargan
+}
+
+// Datos de un interviniente tal cual los expone el JSON real del PJN (ej. partes
+// notificadas en una CEDULA ELECTRONICA PARTE). Texto crudo sin normalizar — `rol` y
+// `tipo_documento` NO son ids de catálogo SIAJ (INT_00X / TC_00X), son el texto tal cual
+// lo manda el PJN (ej. "DEMANDADO", "DNI"); se matchean contra los catálogos al ofrecer
+// la pre-carga en el modal de alta de interviniente, nunca se guardan como id directo.
+export interface IntervinientePjnCrudo {
+  nombre: string
+  rol?: string
+  tipo_documento?: string
+  numero_documento?: string
+  domicilio?: string
+  representado_por?: string
 }
 
 export type EstadoAlertaActuacionPjn = 'pendiente' | 'descartada' | 'resuelta'
