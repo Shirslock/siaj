@@ -6,6 +6,7 @@ import { filtrarNovedadesPorRol, filtrarAlertasActuacionesPorRol } from '../../u
 import { esNovedadVencida } from '../../utils/pjnVencimiento'
 import { NovedadPjnCard } from '../../components/pjn/NovedadPjnCard'
 import { Button } from '../../components/ui/Button'
+import { Modal } from '../../components/ui/Modal'
 import Icon from '../../components/ui/Icon'
 import { formatFecha } from '../../utils/format'
 import { toast } from 'react-toastify'
@@ -36,10 +37,13 @@ function agruparPorCorrida(lista: NovedadPJN[]): GrupoCorrida[] {
 }
 
 export default function NovedadesPJNPage() {
-  const { novedades, actuacionesSinCargar, descartarAlerta, resolverAlerta } = usePjnStore()
+  const { novedades, actuacionesSinCargar, descartarAlerta, resolverAlerta, aplicarNovedades, descartarNovedades } = usePjnStore()
   const { expedientes } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const [filtro, setFiltro] = useState<Filtro>('pendientes')
+  const [selMode, setSelMode] = useState(false)
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
+  const [modalConfirmar, setModalConfirmar] = useState<'aplicar' | 'descartar' | null>(null)
 
   const visibles = useMemo(
     () => filtrarNovedadesPorRol(novedades, expedientes, usuarioActivo),
@@ -59,6 +63,18 @@ export default function NovedadesPJNPage() {
   const lista = filtro === 'pendientes' ? pendientes : filtro === 'vencidas' ? vencidas : visibles
   const grupos = useMemo(() => agruparPorCorrida(lista), [lista])
 
+  // Selección libre en toda la bandeja — cruza expedientes y corridas, no se limita al
+  // filtro/grupo actual. Solo cuentan ids que sigan pendiente (por si algo cambió mientras
+  // tanto, ej. otra pestaña aplicó/descartó una que ya estaba tildada).
+  const novedadesSeleccionadas = useMemo(
+    () => visibles.filter(n => n.estado === 'pendiente' && seleccionados.has(n.id)),
+    [visibles, seleccionados]
+  )
+  const expedientesImpactados = useMemo(
+    () => new Set(novedadesSeleccionadas.map(n => n.expediente_id)).size,
+    [novedadesSeleccionadas]
+  )
+
   function handleDescartarAlerta(id: string) {
     if (!usuarioActivo) return
     descartarAlerta(id, usuarioActivo.id)
@@ -69,6 +85,41 @@ export default function NovedadesPJNPage() {
     if (!usuarioActivo) return
     resolverAlerta(id, usuarioActivo.id)
     toast.success('Alerta marcada como resuelta.')
+  }
+
+  function toggleSelMode() {
+    setSelMode(v => !v)
+    setSeleccionados(new Set())
+  }
+
+  function toggleSelect(id: string) {
+    setSeleccionados(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function cancelarSeleccion() {
+    setSeleccionados(new Set())
+  }
+
+  function handleConfirmarAplicarSeleccionadas() {
+    if (!usuarioActivo) return
+    const ids = novedadesSeleccionadas.map(n => n.id)
+    aplicarNovedades(ids, usuarioActivo.id)
+    toast.success(`Se aplicaron ${ids.length} novedades a ${expedientesImpactados} expedientes.`)
+    setSeleccionados(new Set())
+    setModalConfirmar(null)
+  }
+
+  function handleConfirmarDescartarSeleccionadas() {
+    if (!usuarioActivo) return
+    const ids = novedadesSeleccionadas.map(n => n.id)
+    descartarNovedades(ids, usuarioActivo.id)
+    toast.info(`Se descartaron ${ids.length} novedades de ${expedientesImpactados} expedientes.`)
+    setSeleccionados(new Set())
+    setModalConfirmar(null)
   }
 
   return (
@@ -89,33 +140,61 @@ export default function NovedadesPJNPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-1 bg-[#e5e5e5] rounded-lg p-1">
-          <button
-            onClick={() => setFiltro('pendientes')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-              filtro === 'pendientes' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
-            }`}
-          >
-            Pendientes
-          </button>
-          <button
-            onClick={() => setFiltro('vencidas')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-              filtro === 'vencidas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
-            }`}
-          >
-            Vencidas
-          </button>
-          <button
-            onClick={() => setFiltro('todas')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-              filtro === 'todas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
-            }`}
-          >
-            Todas
-          </button>
+        <div className="flex items-center gap-2">
+          <Button variant={selMode ? 'primary' : 'secondary'} size="sm" onClick={toggleSelMode}>
+            <span className="flex items-center gap-1.5">
+              <Icon name="checklist" size={15} />
+              Modo selección
+            </span>
+          </Button>
+
+          <div className="flex items-center gap-1 bg-[#e5e5e5] rounded-lg p-1">
+            <button
+              onClick={() => setFiltro('pendientes')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                filtro === 'pendientes' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+              }`}
+            >
+              Pendientes
+            </button>
+            <button
+              onClick={() => setFiltro('vencidas')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                filtro === 'vencidas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+              }`}
+            >
+              Vencidas
+            </button>
+            <button
+              onClick={() => setFiltro('todas')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                filtro === 'todas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+              }`}
+            >
+              Todas
+            </button>
+          </div>
         </div>
       </div>
+
+      {selMode && seleccionados.size > 0 && (
+        <div className="mb-4 rounded-xl border border-[#185fa5] bg-[#e6f1fb] px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-10">
+          <p className="text-sm font-bold text-[#1b3a57]">
+            {novedadesSeleccionadas.length} seleccionada{novedadesSeleccionadas.length !== 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={cancelarSeleccion}>
+              Cancelar selección
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setModalConfirmar('descartar')}>
+              Descartar seleccionadas
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => setModalConfirmar('aplicar')}>
+              Aplicar seleccionadas
+            </Button>
+          </div>
+        </div>
+      )}
 
       {alertasVisibles.length > 0 && (
         <div className="mb-6">
@@ -168,13 +247,59 @@ export default function NovedadesPJNPage() {
               </p>
               <div className="space-y-3">
                 {g.items.map(n => (
-                  <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion />
+                  <NovedadPjnCard
+                    key={n.id}
+                    novedad={n}
+                    mostrarActuacion
+                    selMode={selMode}
+                    selected={seleccionados.has(n.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ))}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <Modal
+        open={modalConfirmar === 'aplicar'}
+        onClose={() => setModalConfirmar(null)}
+        titulo="Aplicar novedades seleccionadas"
+        size="sm"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-[#1b3a57]">
+            Vas a aplicar <strong>{novedadesSeleccionadas.length}</strong> novedad{novedadesSeleccionadas.length !== 1 ? 'es' : ''} a{' '}
+            <strong>{expedientesImpactados}</strong> expediente{expedientesImpactados !== 1 ? 's' : ''} distinto{expedientesImpactados !== 1 ? 's' : ''}.
+          </p>
+          <p className="text-xs text-[#7a9ab4]">
+            En modo selección no hay edición individual — cada novedad se aplica con su texto tal cual lo expone el PJN.
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="secondary" size="sm" onClick={() => setModalConfirmar(null)}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={handleConfirmarAplicarSeleccionadas}>Aplicar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={modalConfirmar === 'descartar'}
+        onClose={() => setModalConfirmar(null)}
+        titulo="Descartar novedades seleccionadas"
+        size="sm"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-[#1b3a57]">
+            Vas a descartar <strong>{novedadesSeleccionadas.length}</strong> novedad{novedadesSeleccionadas.length !== 1 ? 'es' : ''} de{' '}
+            <strong>{expedientesImpactados}</strong> expediente{expedientesImpactados !== 1 ? 's' : ''} distinto{expedientesImpactados !== 1 ? 's' : ''}.
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="secondary" size="sm" onClick={() => setModalConfirmar(null)}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={handleConfirmarDescartarSeleccionadas}>Descartar</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
