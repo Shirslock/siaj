@@ -13,7 +13,7 @@ interface PjnState {
     credenciales: { usuario: string; contrasena: string }
   ) => Promise<string>
   descartarAlerta: (id: string, usuarioId: string) => void
-  resolverAlerta: (id: string, expedienteId: string) => void
+  resolverAlerta: (id: string, usuarioId: string) => void
 }
 
 export const usePjnStore = create<PjnState>((set, get) => ({
@@ -97,13 +97,16 @@ export const usePjnStore = create<PjnState>((set, get) => ({
     }))
   },
 
-  // Para cuando, a futuro, se dé de alta el expediente desde la alerta y se linkee acá.
-  resolverAlerta: (id, expedienteId) => {
+  // Decisión de negocio: cargar la actuación que generó la alerta es 100% desacoplado del
+  // flujo de Alta de Expediente normal — no hay auto-consulta al PJN ni linking automático.
+  // "Resuelta" solo confirma que alguien ya vio la alerta y cargó la actuación en algún
+  // lado; no vincula ningún expediente puntual (por eso misma firma que descartarAlerta).
+  resolverAlerta: (id, usuarioId) => {
     const HOY = new Date().toISOString().split('T')[0]
     set(s => ({
       actuacionesSinCargar: s.actuacionesSinCargar.map(a =>
         a.id === id
-          ? { ...a, estado: 'resuelta' as const, expediente_vinculado_id: expedienteId, fecha_resolucion: HOY }
+          ? { ...a, estado: 'resuelta' as const, descartada_por: usuarioId, fecha_resolucion: HOY }
           : a
       ),
     }))
