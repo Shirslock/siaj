@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { FormField } from '../../components/ui/FormField'
 import { formatFecha } from '../../utils/format'
+import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { RUTAS } from '../../utils/routing'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
@@ -307,7 +308,7 @@ export default function BandejaAreaPage() {
           <td className="py-3 px-3 max-w-xs">
             <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
             {exp.numero_causa && (
-              <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{exp.numero_causa}</p>
+              <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{formatNumeroCausaPjn(exp)}</p>
             )}
           </td>
           {/* Área */}
@@ -512,7 +513,7 @@ export default function BandejaAreaPage() {
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <Icon name="folder" size={14} className="text-[#1b3a57]" />
-                            <span className="font-mono text-xs font-bold text-[#1b3a57]">{numeroCausa}</span>
+                            <span className="font-mono text-xs font-bold text-[#1b3a57]">{formatNumeroCausaPjn(principal)}</span>
                           </div>
                           <p className="text-[10px] text-[#4a6a84] mt-0.5">{exps.length} expediente{exps.length !== 1 ? 's' : ''} vinculado{exps.length !== 1 ? 's' : ''}</p>
                         </td>
