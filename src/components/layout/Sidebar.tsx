@@ -4,7 +4,7 @@ import { useUIStore } from '../../store/ui.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
-import { filtrarNovedadesPorRol } from '../../utils/pjnVisibilidad'
+import { filtrarNovedadesPorRol, filtrarAlertasActuacionesPorRol } from '../../utils/pjnVisibilidad'
 import type { RolSistema } from '../../types'
 import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
@@ -40,7 +40,7 @@ interface SidebarProps {
 
 export function Sidebar({ activePage }: SidebarProps) {
   const { usuarioActivo, sidebarCollapsed, toggleSidebar } = useUIStore()
-  const { novedades } = usePjnStore()
+  const { novedades, actuacionesSinCargar } = usePjnStore()
   const { expedientes } = useExpedientesStore()
   const [showSwitcher, setShowSwitcher] = useState(false)
   const location = useLocation()
@@ -52,10 +52,13 @@ export function Sidebar({ activePage }: SidebarProps) {
     return NAV_ITEMS.filter(item => union.has(item.key))
   }, [usuarioActivo])
 
-  const novedadesPendientes = useMemo(
-    () => filtrarNovedadesPorRol(novedades, expedientes, usuarioActivo).filter(n => n.estado === 'pendiente').length,
-    [novedades, expedientes, usuarioActivo]
-  )
+  const novedadesPendientes = useMemo(() => {
+    const novedadesCount = filtrarNovedadesPorRol(novedades, expedientes, usuarioActivo)
+      .filter(n => n.estado === 'pendiente').length
+    const alertasCount = filtrarAlertasActuacionesPorRol(actuacionesSinCargar, usuarioActivo)
+      .filter(a => a.estado === 'pendiente').length
+    return novedadesCount + alertasCount
+  }, [novedades, actuacionesSinCargar, expedientes, usuarioActivo])
 
   const isActive = (item: { key: string; ruta: string }) =>
     activePage === item.key || location.pathname === item.ruta
