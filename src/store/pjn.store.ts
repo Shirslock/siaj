@@ -3,22 +3,44 @@ import { ACTUACIONES_PJN_SIN_CARGAR_MOCK, PJN_NOVEDADES_MOCK, simularConsultaMan
 import { useExpedientesStore } from './expedientes.store'
 import type { ActuacionPjnSinCargar, Expediente, NovedadPJN } from '../types'
 
+// Límite de negocio: 3 consultas manuales exitosas por letrado por día, sumando todas las
+// causas que consulte (no es por causa). Solo cuentan los intentos exitosos — con o sin
+// novedades encontradas; un error de credenciales no consume cupo, se puede reintentar.
+export const MAX_CONSULTAS_DIARIAS = 3
+
 interface PjnState {
   novedades: NovedadPJN[]
   actuacionesSinCargar: ActuacionPjnSinCargar[]
+  consultasManualesPorUsuario: Record<string, { fecha: string; cantidad: number }>
   aplicarNovedad: (id: string, usuarioId: string, textoFinal?: string) => void
+  aplicarNovedades: (ids: string[], usuarioId: string) => void
   descartarNovedad: (id: string, usuarioId: string) => void
+  descartarNovedades: (ids: string[], usuarioId: string) => void
   consultarNovedadIndividual: (
     expediente: Expediente,
-    credenciales: { usuario: string; contrasena: string }
+    credenciales: { usuario: string; contrasena: string },
+    usuarioId: string
   ) => Promise<string>
+  consultasRestantesHoy: (usuarioId: string) => number
   descartarAlerta: (id: string, usuarioId: string) => void
   resolverAlerta: (id: string, usuarioId: string) => void
+}
+
+function hoyISO(): string {
+  return new Date().toISOString().split('T')[0]
 }
 
 export const usePjnStore = create<PjnState>((set, get) => ({
   novedades: PJN_NOVEDADES_MOCK,
   actuacionesSinCargar: ACTUACIONES_PJN_SIN_CARGAR_MOCK,
+  consultasManualesPorUsuario: {},
+
+  aplicarNovedades: (ids, usuarioId) => {
+    ids.forEach(id => {
+      const nov = get().novedades.find(n => n.id === id)
+      if (nov && nov.estado === 'pendiente') get().aplicarNovedad(id, usuarioId)
+    })
+  },
 
   aplicarNovedad: (id, usuarioId, textoFinal) => {
     const nov = get().novedades.find(n => n.id === id)
@@ -71,15 +93,47 @@ export const usePjnStore = create<PjnState>((set, get) => ({
               ...n,
               estado: 'descartada' as const,
               aplicada_por: usuarioId,
-              fecha_aplicacion: new Date().toISOString().split('T')[0],
+              fecha_aplicacion: hoyISO(),
             }
           : n
       ),
     }))
   },
 
-  consultarNovedadIndividual: async (expediente, credenciales) => {
+  descartarNovedades: (ids, usuarioId) => {
+    ids.forEach(id => {
+      const nov = get().novedades.find(n => n.id === id)
+      if (nov && nov.estado === 'pendiente') get().descartarNovedad(id, usuarioId)
+    })
+  },
+
+  consultasRestantesHoy: usuarioId => {
+    const registro = get().consultasManualesPorUsuario[usuarioId]
+    const usadasHoy = registro && registro.fecha === hoyISO() ? registro.cantidad : 0
+    return MAX_CONSULTAS_DIARIAS - usadasHoy
+  },
+
+  consultarNovedadIndividual: async (expediente, credenciales, usuarioId) => {
+    if (get().consultasRestantesHoy(usuarioId) <= 0) {
+      throw new Error(`Alcanzaste el límite de ${MAX_CONSULTAS_DIARIAS} consultas manuales por hoy.`)
+    }
+
     const resultado = await simularConsultaManualPjn(expediente, credenciales)
+
+    // Solo cuentan los intentos exitosos (con o sin novedades) — un error de credenciales
+    // no consume cupo, se puede reintentar sin gastarlo.
+    set(s => {
+      const HOY = hoyISO()
+      const registro = s.consultasManualesPorUsuario[usuarioId]
+      const cantidad = registro && registro.fecha === HOY ? registro.cantidad + 1 : 1
+      return {
+        consultasManualesPorUsuario: {
+          ...s.consultasManualesPorUsuario,
+          [usuarioId]: { fecha: HOY, cantidad },
+        },
+      }
+    })
+
     if (resultado.novedades.length > 0) {
       set(s => ({ novedades: [...s.novedades, ...resultado.novedades] }))
     }
