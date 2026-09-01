@@ -65,7 +65,7 @@ npm run build      # build de producción
 | `src/components/ui/Badge.tsx` | EstadoBadge, AreaBadge, RolBadge. |
 | `src/components/ui/FormField.tsx` | Wrapper label + hint + error para inputs. |
 | `src/components/layout/` | AppLayout, Sidebar, Topbar (con buscador global persistente — ver Sección 19), UserSwitcher. |
-| `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. |
+| `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
 | `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
@@ -284,7 +284,7 @@ El timeline del expediente tiene DOS capas:
 |-----|---------|--------|
 | Datos | DatosTab.tsx | ✓ edición completa |
 | Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
-| Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo (agregar, editar, eliminar) |
+| Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo (agregar vía `AgregarIntervinienteModal.tsx`, editar inline, eliminar) |
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
