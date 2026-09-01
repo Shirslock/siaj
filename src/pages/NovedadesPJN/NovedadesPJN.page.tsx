@@ -36,7 +36,7 @@ function agruparPorCorrida(lista: NovedadPJN[]): GrupoCorrida[] {
 }
 
 export default function NovedadesPJNPage() {
-  const { novedades, actuacionesSinCargar, descartarAlerta } = usePjnStore()
+  const { novedades, actuacionesSinCargar, descartarAlerta, resolverAlerta } = usePjnStore()
   const { expedientes } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const [filtro, setFiltro] = useState<Filtro>('pendientes')
@@ -63,6 +63,12 @@ export default function NovedadesPJNPage() {
     if (!usuarioActivo) return
     descartarAlerta(id, usuarioActivo.id)
     toast.info('Alerta descartada.')
+  }
+
+  function handleResolverAlerta(id: string) {
+    if (!usuarioActivo) return
+    resolverAlerta(id, usuarioActivo.id)
+    toast.success('Alerta marcada como resuelta.')
   }
 
   return (
@@ -134,9 +140,14 @@ export default function NovedadesPJNPage() {
                     </p>
                   </div>
                 </div>
-                <Button variant="secondary" size="sm" onClick={() => handleDescartarAlerta(a.id)}>
-                  Descartar
-                </Button>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => handleDescartarAlerta(a.id)}>
+                    Descartar
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={() => handleResolverAlerta(a.id)}>
+                    Marcar como resuelta
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -134,19 +134,33 @@ export interface ActuacionPjnSinCargar {
   estado: EstadoAlertaActuacionPjn
   descartada_por?: string
   fecha_resolucion?: string
-  expediente_vinculado_id?: string  // si más adelante se da de alta el expediente y se linkea
+  expediente_vinculado_id?: string  // declarado sin usar, ver nota abajo
 }
 ```
 
+**Decisión de negocio: cargar la actuación que generó la alerta es 100% desacoplado del
+flujo normal de Alta de Expediente.** No hay auto-consulta al PJN, no hay linking a un
+expediente, no hay botón "Dar de alta" precargado — Mesa carga el expediente por el flujo
+de siempre, sin relación con la alerta. Esto es intencional, **no** un pendiente de
+conectar. La alerta se cierra a mano con una de dos acciones simétricas:
+- **Descartar** (`descartarAlerta`) — no correspondía / falso positivo.
+- **Marcar como resuelta** (`resolverAlerta`) — confirma que alguien ya vio la alerta y
+  cargó la actuación en algún lado, sin vincular ningún expediente puntual. Misma firma que
+  `descartarAlerta` (`id`, `usuarioId`); no pide ni guarda ningún `expediente_id`.
+
+`expediente_vinculado_id` queda declarado en el tipo sin usar — nada lo popula hoy — por si
+algún día se decide conectar un flujo real de linking; no es código muerto por descuido, es
+a propósito.
+
 - **Store**: `usePjnStore().actuacionesSinCargar` (mock: `ACTUACIONES_PJN_SIN_CARGAR_MOCK`,
   3 causas fantasma en `pjnNovedades.mock.ts`). Acciones `descartarAlerta(id, usuarioId)` y
-  `resolverAlerta(id, expedienteId)` — esta última queda lista para cuando se conecte el
-  flujo de "dar de alta el expediente desde la alerta", que **todavía no existe** (por ahora
-  la alerta solo se ve y se descarta).
+  `resolverAlerta(id, usuarioId)`.
 - **UI**: bloque "Actuaciones en PJN sin cargar en SIAJ (N)" en
   `NovedadesPJN.page.tsx`, separado de los grupos de novedades normales — una card simple por
-  alerta (número de causa, carátula si hay, juzgado/fuero, fecha de detección) con acción
-  Descartar. El conteo se suma al badge del Sidebar junto a las novedades pendientes.
+  alerta (número de causa, carátula si hay, juzgado/fuero, fecha de detección) con dos
+  acciones, Descartar y Marcar como resuelta. El conteo se suma al badge del Sidebar junto a
+  las novedades pendientes (solo cuenta `estado === 'pendiente'`, así que tanto descartar
+  como resolver la sacan del contador).
 - **Visibilidad — `filtrarAlertasActuacionesPorRol(alertas, usuario)`**
   (`src/utils/pjnVisibilidad.ts`): **regla provisoria**, con un `// TODO: confirmar regla de
   visibilidad` bien visible en el código. No se puede inferir área/letrado dueño de una causa
@@ -285,9 +299,9 @@ nada externo).
 - **Visibilidad de la alerta "causa en PJN sin cargar"** (`filtrarAlertasActuacionesPorRol`):
   pendiente de definición de negocio (reunión 2026-09-01) sobre a quién le llega — ver
   detalle en la sección de arriba.
-- **Flujo de alta de expediente desde una alerta**: `resolverAlerta(id, expedienteId)` ya
-  existe en el store pero no está conectada a ninguna UI todavía — falta el flujo real de
-  "dar de alta el expediente a partir de esta causa fantasma y linkearlo a la alerta".
+- **NO** hay flujo de alta de expediente conectado a la alerta, y no es un pendiente:
+  decisión de negocio explícita (ver "Causa en PJN sin cargar en SIAJ" arriba). Mesa carga
+  el expediente por el Alta de Expediente normal, sin relación con la alerta.
 - **Nivel 2** (fuera de alcance de esta etapa, decisión de negocio pendiente): clasificar
   automáticamente los movimientos crudos (equivalente al viejo `TipoCambioPJN`), priorizar
   los sustantivos sobre el ruido de estado interno (`EN DESPACHO`/`EN LETRA`/`EVENTO`/`PASE`),
