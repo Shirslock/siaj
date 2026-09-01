@@ -4,6 +4,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { TablaExpedientes } from '../../components/expedientes/TablaExpedientes'
 import { formatFecha } from '../../utils/format'
+import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import type { Actividad, Area, Documento, VinculoExpediente } from '../../types'
 import Icon from '../../components/ui/Icon'
@@ -166,7 +167,7 @@ export default function CausaDetallePage() {
         </div>
 
         <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57] mb-1 ml-10">
-          {numeroCausa}
+          {formatNumeroCausaPjn(expsDeCausa[0])}
         </h1>
 
         <p className="text-sm text-[#4a6a84] ml-10 mb-6">

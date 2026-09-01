@@ -13,6 +13,7 @@ import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { formatFecha } from '../../utils/format'
+import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { RUTAS } from '../../utils/routing'
 import { getAlertaExpediente, getAlertaTimer, type EstadoAlerta } from '../../utils/alertas'
 import type { Area, Expediente, TipoGestion } from '../../types'
@@ -437,7 +438,7 @@ export default function BandejaAbogadoPage() {
         <td className="py-3 px-3 max-w-xs">
           <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
           {exp.numero_causa && (
-            <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{exp.numero_causa}</p>
+            <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{formatNumeroCausaPjn(exp)}</p>
           )}
         </td>
         {/* Área */}
@@ -697,7 +698,7 @@ export default function BandejaAbogadoPage() {
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-1.5">
                               <Icon name="folder" size={14} className="text-[#1b3a57]" />
-                              <span className="font-mono text-xs font-bold text-[#1b3a57]">{numeroCausa}</span>
+                              <span className="font-mono text-xs font-bold text-[#1b3a57]">{formatNumeroCausaPjn(principal)}</span>
                             </div>
                             <p className="text-[10px] text-[#4a6a84] mt-0.5">
                               {exps.length} actuación{exps.length !== 1 ? 'es' : ''} agrupada{exps.length !== 1 ? 's' : ''}
@@ -867,7 +868,7 @@ export default function BandejaAbogadoPage() {
             {expADesagrupar?.numero_causa && (
               <p className="text-[11px] text-[#7a9ab4] flex items-center gap-1 mt-1">
                 <Icon name="folder" size={12} />
-                Causa: {expADesagrupar.numero_causa}
+                Causa: {formatNumeroCausaPjn(expADesagrupar)}
               </p>
             )}
           </div>
