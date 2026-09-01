@@ -1,4 +1,4 @@
-import type { Expediente, NovedadPJN } from '../types'
+import type { ActuacionPjnSinCargar, Expediente, NovedadPJN } from '../types'
 
 // Mock de movimientos detectados por la sincronización con el Portal PJN — Nivel 1:
 // datos crudos, sin clasificar, agrupados por corrida (`corrida_id`). El letrado decide
@@ -139,6 +139,41 @@ const MOVS_MANUAL_MOCK: Array<Pick<NovedadPJN, 'tipo' | 'detalle' | 'oficina' | 
   { tipo: 'FIRMA DESPACHO', detalle: 'PROVEASE COMO SE PIDE. NOTIFIQUESE.', oficina: 'ISJ', foja: '315/315' },
   { tipo: 'CEDULA ELECTRONICA PARTE', detalle: 'CEDULA N° 26000121987650 - NOTIFICADO EL 31/08/2026 08:40', oficina: 'ISJ' },
   { tipo: 'MOVIMIENTO', detalle: 'EN LETRA', oficina: 'ISJ' },
+]
+
+// Mock de causas que el PJN expone (ej. como favoritas de un letrado) pero que no
+// tienen ninguna actuación cargada en SIAJ todavía — "causas fantasma". No matchean
+// ningún expediente, por eso son una entidad aparte de NovedadPJN.
+export const ACTUACIONES_PJN_SIN_CARGAR_MOCK: ActuacionPjnSinCargar[] = [
+  {
+    id: 'PJN_SC_001',
+    numero_causa: 'CIV 88.317/2026',
+    caratula_pjn: 'PEREZ LUCIANA C/ SOFSA SA S/ DAÑOS Y PERJUICIOS',
+    fuero: 'CIV',
+    juzgado: 'JUZGADO CIVIL 42',
+    fecha_deteccion: '2026-08-20',
+    favorito_de: 'UR_004',
+    estado: 'pendiente',
+  },
+  {
+    id: 'PJN_SC_002',
+    numero_causa: 'CNT 15.902/2026',
+    caratula_pjn: 'GOMEZ WALTER C/ SOFSE S/ DESPIDO',
+    fuero: 'CNT',
+    juzgado: 'JUZGADO DEL TRABAJO 9',
+    fecha_deteccion: '2026-08-25',
+    favorito_de: 'UR_006',
+    estado: 'pendiente',
+  },
+  {
+    id: 'PJN_SC_003',
+    numero_causa: 'CCC 4.410/2026',
+    caratula_pjn: 'N.N. S/ DAÑOS EN VÍA FÉRREA',
+    fuero: 'CCC',
+    juzgado: 'JUZGADO NAC. CRIM. Y CORR. 18',
+    fecha_deteccion: '2026-08-11',
+    estado: 'pendiente',
+  },
 ]
 
 // Simula la consulta on-demand del Portal PJN para una causa puntual, ingresando

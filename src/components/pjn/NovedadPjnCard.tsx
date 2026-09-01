@@ -6,6 +6,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
+import { esNovedadVencida, diasDesdeDeteccion } from '../../utils/pjnVencimiento'
 import { Button } from '../ui/Button'
 import Icon from '../ui/Icon'
 import type { NovedadPJN } from '../../types'
@@ -26,6 +27,7 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
   const [texto, setTexto] = useState(novedad.detalle)
 
   const pendiente = novedad.estado === 'pendiente'
+  const vencida = esNovedadVencida(novedad)
 
   const metadata = [
     novedad.oficina ? `Oficina: ${novedad.oficina}` : null,
@@ -77,6 +79,11 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false }: Props) {
               : 'bg-[#e5e5e5] text-[#4a6a84] border border-[rgba(0,0,0,0.08)]'
           }`}>
             {novedad.estado === 'aplicada' ? 'Aplicada' : 'Descartada'}
+          </span>
+        )}
+        {vencida && (
+          <span className="flex-shrink-0 text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#fdecea] text-[#b91c1c] border border-[#f5c2c0]">
+            Vencida hace {diasDesdeDeteccion(novedad)} días
           </span>
         )}
       </div>
