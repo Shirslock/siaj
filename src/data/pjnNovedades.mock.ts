@@ -12,12 +12,24 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     fecha_deteccion: '2025-06-19', fecha_movimiento: '2025-06-18', row_index: 1,
     oficina: 'ISJ', tipo: 'CEDULA ELECTRONICA PARTE',
     detalle: 'CEDULA N° 25000094250380 - NOTIFICADO EL 18/06/2025 09:58',
-    estado: 'pendiente' },
+    estado: 'pendiente',
+    // Ejemplo con rol/tipo_documento que matchean 1 a 1 contra los catálogos SIAJ
+    // (ACTOR / DNI) — el modal de alta preselecciona ambos combos.
+    intervinientes_pjn: [
+      { nombre: 'RODRIGUEZ MARIO OSCAR', rol: 'ACTOR', tipo_documento: 'DNI',
+        numero_documento: '23.456.789', domicilio: 'Av. Rivadavia 4521, CABA' },
+    ] },
   { id: 'PJN_002', expediente_id: 'C-0100/2026', corrida_id: 'RUN_C0100_20250619',
     fecha_deteccion: '2025-06-19', fecha_movimiento: '2025-06-18', row_index: 2,
     oficina: 'ISJ', tipo: 'CEDULA ELECTRONICA PARTE',
     detalle: 'CEDULA N° 25000094250379 - NOTIFICADO EL 18/06/2025 09:58',
-    estado: 'pendiente' },
+    estado: 'pendiente',
+    // Ejemplo con rol que NO matchea ningún label de ROLES_INTERVINIENTE (el PJN no usa
+    // los mismos términos que el catálogo SIAJ) — el modal cae al default (ACTOR).
+    intervinientes_pjn: [
+      { nombre: 'FERREYRA JULIAN', rol: 'LETRADO APODERADO', tipo_documento: 'CUIT',
+        numero_documento: '20-30123456-7', representado_por: 'SOFSA S.A.' },
+    ] },
   { id: 'PJN_003', expediente_id: 'C-0100/2026', corrida_id: 'RUN_C0100_20250619',
     fecha_deteccion: '2025-06-19', fecha_movimiento: '2025-06-18', row_index: 3,
     oficina: 'ISJ', tipo: 'MOVIMIENTO', detalle: 'EN LETRA',
@@ -104,7 +116,11 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     detalle: 'CEDULA N° 26000112233440 - NOTIFICADO EL 31/08/2026 10:15',
     tiene_documento: true,
     documento_url: '/scw/viewer.seam?id=Qz9pLwFa3KTbb2mVxrwn&tipoDoc=cedula',
-    estado: 'pendiente' },
+    estado: 'pendiente',
+    intervinientes_pjn: [
+      { nombre: 'GOMEZ PABLO ALEJANDRO', rol: 'ACTOR', tipo_documento: 'DNI',
+        numero_documento: '27.890.123', domicilio: 'Calle Falsa 123, Morón' },
+    ] },
   { id: 'PJN_020', expediente_id: 'L-0100/2026', corrida_id: 'RUN_L0100_20260821',
     fecha_deteccion: '2026-09-01', fecha_movimiento: '2026-08-31', row_index: 5,
     oficina: 'SEC30', tipo: 'MOVIMIENTO', detalle: 'EN LETRA', estado: 'pendiente' },

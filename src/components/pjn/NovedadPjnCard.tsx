@@ -7,9 +7,11 @@ import { useUIStore } from '../../store/ui.store'
 import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { esNovedadVencida, diasDesdeDeteccion } from '../../utils/pjnVencimiento'
+import { ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE } from '../../data/catalogos'
+import { AgregarIntervinienteModal } from '../expedientes/AgregarIntervinienteModal'
 import { Button } from '../ui/Button'
 import Icon from '../ui/Icon'
-import type { NovedadPJN } from '../../types'
+import type { CatalogoItem, Interviniente, IntervinientePjnCrudo, NovedadPJN } from '../../types'
 
 interface Props {
   novedad: NovedadPJN
@@ -22,12 +24,34 @@ interface Props {
 // placeholder — reemplazar por el dominio real del PJN cuando se defina
 const PJN_BASE_URL = 'https://scw.pjn.gov.ar'
 
+// Matchea texto crudo del PJN (case-insensitive) contra el label de un catálogo SIAJ —
+// solo para pre-seleccionar en el modal de alta; si no hay match, el modal cae al default.
+function matchCatalogId(items: CatalogoItem[], textoCrudo?: string): string | undefined {
+  if (!textoCrudo) return undefined
+  const norm = textoCrudo.trim().toUpperCase()
+  return items.find(i => i.label.toUpperCase() === norm)?.id
+}
+
+function valoresDesdeIntervinientePjn(p: IntervinientePjnCrudo): Partial<Omit<Interviniente, 'id'>> {
+  const rol = matchCatalogId(ROLES_INTERVINIENTE, p.rol)
+  const tipoDoc = matchCatalogId(TIPOS_DOC_INTERVINIENTE, p.tipo_documento)
+  return {
+    nombre: p.nombre,
+    ...(rol ? { rol_procesal: rol } : {}),
+    ...(tipoDoc ? { tipo_documento: tipoDoc } : {}),
+    numero_documento: p.numero_documento ?? '',
+    contacto_domicilio: p.domicilio,
+    representado_por: p.representado_por,
+  }
+}
+
 export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = false, selected = false, onToggleSelect }: Props) {
   const navigate = useNavigate()
   const { usuarioActivo } = useUIStore()
   const { aplicarNovedad, descartarNovedad } = usePjnStore()
   const exp = useExpedientesStore(s => s.expedientes.find(e => e.id === novedad.expediente_id))
   const [texto, setTexto] = useState(novedad.detalle)
+  const [intervinienteAAgregar, setIntervinienteAAgregar] = useState<IntervinientePjnCrudo | null>(null)
 
   const pendiente = novedad.estado === 'pendiente'
   const vencida = esNovedadVencida(novedad)
@@ -117,6 +141,28 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
         </a>
       )}
 
+      {novedad.intervinientes_pjn && novedad.intervinientes_pjn.length > 0 && (
+        <div className="mb-3 pt-2 border-t border-[rgba(0,0,0,0.06)] space-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[#7a9ab4]">
+            Intervinientes notificados (PJN)
+          </p>
+          {novedad.intervinientes_pjn.map((p, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 bg-[#f5f5f5] rounded-lg px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[#1b3a57] truncate">{p.nombre}</p>
+                <p className="text-[11px] text-[#7a9ab4] truncate">
+                  {[p.rol, p.tipo_documento && p.numero_documento ? `${p.tipo_documento} ${p.numero_documento}` : p.tipo_documento]
+                    .filter(Boolean).join(' · ')}
+                </p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => setIntervinienteAAgregar(p)}>
+                Agregar a Intervinientes
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {pendiente ? (
         <>
           <textarea
@@ -138,6 +184,15 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
         <p className="text-[11px] text-[#7a9ab4]">
           {novedad.estado === 'aplicada' ? 'Aplicada' : 'Descartada'} el {formatFecha(novedad.fecha_aplicacion!)}
         </p>
+      )}
+
+      {exp && intervinienteAAgregar && (
+        <AgregarIntervinienteModal
+          expedienteId={exp.id}
+          open={!!intervinienteAAgregar}
+          onClose={() => setIntervinienteAAgregar(null)}
+          valoresIniciales={valoresDesdeIntervinientePjn(intervinienteAAgregar)}
+        />
       )}
     </div>
   )
