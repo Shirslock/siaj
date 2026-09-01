@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import { TIPOS_GESTION } from '../data/catalogos'
 import { getNombreCompleto, getUsuarioById } from '../data/usuarios'
 import type { Expediente } from '../types'
+import { formatNumeroCausaPjn } from './numeroCausa'
 
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
@@ -27,7 +28,7 @@ function filaDesdeExpediente(exp: Expediente, incluidoPor: FilaBandejaExport['in
   const letrado = exp.abogado_id ? getUsuarioById(exp.abogado_id) : undefined
   return {
     numeroExpediente: exp.id,
-    numeroCausa: exp.numero_causa ?? '',
+    numeroCausa: formatNumeroCausaPjn(exp),
     caratula: exp.caratula,
     area: exp.area,
     tipo: TIPO_LABEL[exp.tipo] ?? exp.tipo,

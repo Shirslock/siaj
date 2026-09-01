@@ -1,20 +1,24 @@
 import { create } from 'zustand'
-import { PJN_NOVEDADES_MOCK, simularConsultaManualPjn } from '../data/pjnNovedades.mock'
+import { ACTUACIONES_PJN_SIN_CARGAR_MOCK, PJN_NOVEDADES_MOCK, simularConsultaManualPjn } from '../data/pjnNovedades.mock'
 import { useExpedientesStore } from './expedientes.store'
-import type { Expediente, NovedadPJN } from '../types'
+import type { ActuacionPjnSinCargar, Expediente, NovedadPJN } from '../types'
 
 interface PjnState {
   novedades: NovedadPJN[]
+  actuacionesSinCargar: ActuacionPjnSinCargar[]
   aplicarNovedad: (id: string, usuarioId: string, textoFinal?: string) => void
   descartarNovedad: (id: string, usuarioId: string) => void
   consultarNovedadIndividual: (
     expediente: Expediente,
     credenciales: { usuario: string; contrasena: string }
   ) => Promise<string>
+  descartarAlerta: (id: string, usuarioId: string) => void
+  resolverAlerta: (id: string, expedienteId: string) => void
 }
 
 export const usePjnStore = create<PjnState>((set, get) => ({
   novedades: PJN_NOVEDADES_MOCK,
+  actuacionesSinCargar: ACTUACIONES_PJN_SIN_CARGAR_MOCK,
 
   aplicarNovedad: (id, usuarioId, textoFinal) => {
     const nov = get().novedades.find(n => n.id === id)
@@ -80,5 +84,28 @@ export const usePjnStore = create<PjnState>((set, get) => ({
       set(s => ({ novedades: [...s.novedades, ...resultado.novedades] }))
     }
     return resultado.corridaId
+  },
+
+  descartarAlerta: (id, usuarioId) => {
+    const HOY = new Date().toISOString().split('T')[0]
+    set(s => ({
+      actuacionesSinCargar: s.actuacionesSinCargar.map(a =>
+        a.id === id
+          ? { ...a, estado: 'descartada' as const, descartada_por: usuarioId, fecha_resolucion: HOY }
+          : a
+      ),
+    }))
+  },
+
+  // Para cuando, a futuro, se dé de alta el expediente desde la alerta y se linkee acá.
+  resolverAlerta: (id, expedienteId) => {
+    const HOY = new Date().toISOString().split('T')[0]
+    set(s => ({
+      actuacionesSinCargar: s.actuacionesSinCargar.map(a =>
+        a.id === id
+          ? { ...a, estado: 'resuelta' as const, expediente_vinculado_id: expedienteId, fecha_resolucion: HOY }
+          : a
+      ),
+    }))
   },
 }))

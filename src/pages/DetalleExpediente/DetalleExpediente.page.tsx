@@ -27,6 +27,7 @@ import Icon from '../../components/ui/Icon'
 import saulAvatar from '../../assets/saul-avatar.jpg'
 import { toast } from 'react-toastify'
 import { formatFecha } from '../../utils/format'
+import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
 
@@ -695,7 +696,7 @@ export default function DetalleExpedientePage() {
               </button>
               {exp.numero_causa && (
                 <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-2 py-0.5 rounded-full font-mono">
-                  {exp.numero_causa}
+                  {formatNumeroCausaPjn(exp)}
                 </span>
               )}
               {exp.es_querella_iniciada && exp.id_querella_derivada && (
@@ -1135,7 +1136,7 @@ export default function DetalleExpedientePage() {
       >
         <p className="text-sm text-[#1b3a57]">
           Se desvinculará la actuación <span className="font-mono font-bold">{exp.id}</span> de la causa{' '}
-          <span className="font-mono font-bold">{exp.numero_causa}</span>.
+          <span className="font-mono font-bold">{formatNumeroCausaPjn(exp)}</span>.
         </p>
         <p className="text-xs text-[#4a6a84] mt-2">Esta acción no elimina los datos de la actuación.</p>
       </Modal>

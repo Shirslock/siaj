@@ -284,6 +284,25 @@ export interface NovedadPJN {
   origen?: 'automatica' | 'manual'  // opcional — sin valor = 'automatica' (mock original)
 }
 
+export type EstadoAlertaActuacionPjn = 'pendiente' | 'descartada' | 'resuelta'
+
+// Representa una causa que el PJN expone (ej. vía favoritos del letrado) pero que
+// todavía no tiene ninguna actuación cargada en SIAJ — por eso NO es un NovedadPJN
+// (que siempre requiere expediente_id matcheado a un expediente existente).
+export interface ActuacionPjnSinCargar {
+  id: string
+  numero_causa: string       // tal cual lo expone PJN, con sigla de fuero si se puede resolver (ej. "CIV 61.204/2026")
+  caratula_pjn?: string
+  fuero?: string             // sigla de 3 letras si el scraper la expone
+  juzgado?: string
+  fecha_deteccion: string
+  favorito_de?: string       // id de usuario dueño del favorito en PJN, si se conoce (para visibilidad futura)
+  estado: EstadoAlertaActuacionPjn
+  descartada_por?: string
+  fecha_resolucion?: string
+  expediente_vinculado_id?: string  // si más adelante se da de alta el expediente y se linkea a esta alerta
+}
+
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'
 
 export interface AgendaEvent {

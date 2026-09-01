@@ -57,7 +57,7 @@ npm run build      # build de producción
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global (`busquedaGlobal`). |
 | `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
-| `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. Ver `claude-docs/NOVEDADES_PJN_CLAUDE.md`. |
+| `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. También `actuacionesSinCargar` — alertas de causas que el PJN expone sin actuación cargada en SIAJ — descartar/resolver. Ver `claude-docs/NOVEDADES_PJN_CLAUDE.md`. |
 | `src/store/notificaciones.store.ts` | Notificaciones reales del Topbar (ASIGNACION/REASIGNACION/ALERTA_VENCIMIENTO). La campana también mezcla novedades PJN pendientes como entradas virtuales — no persisten en este store. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
@@ -73,7 +73,9 @@ npm run build      # build de producción
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
 | `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
-| `src/utils/pjnVisibilidad.ts` | `filtrarNovedadesPorRol(novedades, expedientes, usuario)` — visibilidad de novedades PJN por rol, compartida entre bandeja central, Sidebar, BandejaAbogado y Topbar. |
+| `src/utils/pjnVisibilidad.ts` | `filtrarNovedadesPorRol(novedades, expedientes, usuario)` — visibilidad de novedades PJN por rol, compartida entre bandeja central, Sidebar, BandejaAbogado y Topbar. También `filtrarAlertasActuacionesPorRol(alertas, usuario)` — visibilidad de las alertas de "causa PJN sin cargar", regla provisoria (ver Sección 15). |
+| `src/utils/pjnVencimiento.ts` | `esNovedadVencida(novedad, hoy?)` / `diasDesdeDeteccion(novedad, hoy?)` — flag derivado: una novedad pendiente "vence" a los 7 días sin aplicar/descartar. No toca `EstadoNovedadPJN` (sigue siendo `pendiente`/`aplicada`/`descartada`); solo cambia el filtro por defecto de la bandeja de Novedades PJN. |
+| `src/utils/numeroCausa.ts` | `formatNumeroCausaPjn(exp)` — antepone la sigla de fuero PJN al `numero_causa` mostrado (ej. "CIV 61.204/2026"). Solo para display: no toca el `numero_causa` crudo, que sigue siendo la clave de agrupamiento/comparación. |
 | `src/utils/busquedaGlobal.ts` | `buscarGlobal(query, expedientes, usuarios)` — índice cross-entidad del buscador del Topbar (Actuaciones/Intervinientes/Documentos/Usuarios). Ver Sección 19. |
 | `src/hooks/useDebounce.ts` | Hook genérico `useDebounce<T>(value, delayMs)`. Usado por el buscador del Topbar (300ms). |
 | `src/index.css` | @theme con tokens de color, fuentes, clases .field-input/.field-label. |
@@ -469,6 +471,7 @@ Funciones en `src/utils/exportTimeline.ts`:
 - Si el tab "Procesales" en el timeline de causa se muestra siempre o solo cuando hay actuaciones penales.
 - Si al hacer click en una entrada del feed de causa navega al detalle de la actuación de origen.
 - Distinción exacta entre rol `asistente_jurídico` y `abogado` (actualmente idénticos en el sistema).
+- Visibilidad de la alerta "actuación en PJN sin cargar en SIAJ" (`filtrarAlertasActuacionesPorRol`, `src/utils/pjnVisibilidad.ts`) — a quién le llega (¿letrado dueño del favorito PJN? ¿coordinador? ¿mesa/administrativo? ¿referente? podría ser más de uno). Pendiente de reunión de negocio 2026-09-01. Default actual (conservador, sin inferencia de área posible porque la causa no está en SIAJ): REFERENTE y COORDINADOR ven todas, ABOGADO no ve ninguna.
 
 ---
 

@@ -37,28 +37,38 @@ para esta etapa. `TipoCambioPJN` ya no existe en el código.
 
 ```
 src/types/index.ts          NovedadPJN (incl. origen?), EstadoNovedadPJN, Actividad.origen_pjn
+                             ActuacionPjnSinCargar, EstadoAlertaActuacionPjn — ver "Causa en PJN sin cargar" abajo
 src/data/pjnNovedades.mock.ts   mock de 25 movimientos + simularConsultaManualPjn (consulta on-demand)
+                                 + ACTUACIONES_PJN_SIN_CARGAR_MOCK (3 alertas de causa fantasma)
 src/store/pjn.store.ts          usePjnStore — aplicarNovedad / descartarNovedad / consultarNovedadIndividual
+                                 + actuacionesSinCargar / descartarAlerta / resolverAlerta
 src/utils/pjnVisibilidad.ts     filtrarNovedadesPorRol — visibilidad por rol, compartida
+                                 filtrarAlertasActuacionesPorRol — visibilidad de alertas, ver abajo (regla provisoria)
+src/utils/pjnVencimiento.ts     esNovedadVencida / diasDesdeDeteccion — flag de vencimiento derivado, ver abajo
 src/components/pjn/NovedadPjnCard.tsx   card reutilizable (bandeja central + banner + modal manual)
 src/components/pjn/ConsultarNovedadPjnModal.tsx   modal de consulta manual (ver "Consulta manual" abajo)
-src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-pjn)
+src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-pjn) — novedades + alertas
 ```
 
 Puntos de acceso a las novedades:
 - **Bandeja central** (`/novedades-pjn`) — todas las novedades visibles para el usuario,
   agrupadas por `expediente_id + corrida_id` (varias actuaciones conviven ahí), con filtro
-  Pendientes/Todas. Cada grupo muestra un header "N movimientos detectados el
-  {fecha_deteccion}" antes de sus cards, ordenado por `row_index` ascendente; los grupos se
-  ordenan por `fecha_deteccion` descendente.
+  Pendientes/Vencidas/Todas (ver "Vencimiento" abajo). Cada grupo muestra un header "N
+  movimientos detectados el {fecha_deteccion}" antes de sus cards, ordenado por `row_index`
+  ascendente; los grupos se ordenan por `fecha_deteccion` descendente. Arriba de los grupos,
+  un bloque aparte lista las alertas de "causa en PJN sin cargar" (ver esa sección abajo).
 - **Banner en `DetalleExpediente.page.tsx`** — si la actuación abierta tiene novedades
   pendientes, aparece arriba del contenido (visible en cualquier tab) con un toggle
   "Revisar/Ocultar" que despliega las cards inline (`mostrarActuacion={false}`), agrupadas
-  por `corrida_id` (una sola actuación, no hace falta `expediente_id` en la key).
+  por `corrida_id` (una sola actuación, no hace falta `expediente_id` en la key). Sigue
+  contando pendientes vencidas igual que las no vencidas — para el letrado sigue siendo una
+  acción pendiente.
 - **Badge "PJN" en `BandejaAbogado.page.tsx`** — junto a los badges de Urgente/Por vencer, si
-  la fila tiene novedades pendientes.
-- **Sidebar** — entrada "Novedades PJN" con badge de contador de pendientes (número junto al
-  label expandido, burbuja sobre el ícono cuando el sidebar está colapsado).
+  la fila tiene novedades pendientes (vencidas incluidas).
+- **Sidebar** — entrada "Novedades PJN" con badge de contador (número junto al label
+  expandido, burbuja sobre el ícono cuando el sidebar está colapsado). El contador suma
+  novedades pendientes **más** alertas de "causa sin cargar" pendientes, ambas filtradas por
+  rol.
 - **Campana del Topbar** — ver "Integración con notificaciones" abajo.
 
 ## `aplicarNovedad` — una sola rama, sin clasificación
@@ -102,6 +112,80 @@ regla en cada lugar:
 - **ADMINISTRATIVO**: no accede al módulo (Mesa SACO no gestiona novedades procesales) — no
   está en `ROL_ACCESOS.ADMINISTRATIVO.nav`.
 
+## Causa en PJN sin cargar en SIAJ (`ActuacionPjnSinCargar`)
+
+Caso que `NovedadPJN` no puede representar: `NovedadPJN.expediente_id` es obligatorio y
+`filtrarNovedadesPorRol` descarta silenciosamente cualquier novedad cuyo `expediente_id` no
+matchee un expediente existente (`pjnVisibilidad.ts`) — no hay forma de decir "el PJN tiene
+una causa que en SIAJ todavía no existe" con ese modelo. Por eso `ActuacionPjnSinCargar`
+(`src/types/index.ts`) es una **entidad separada**, no una variante de `NovedadPJN`:
+
+```ts
+export type EstadoAlertaActuacionPjn = 'pendiente' | 'descartada' | 'resuelta'
+
+export interface ActuacionPjnSinCargar {
+  id: string
+  numero_causa: string       // tal cual lo expone PJN, con sigla de fuero si se puede resolver
+  caratula_pjn?: string
+  fuero?: string
+  juzgado?: string
+  fecha_deteccion: string
+  favorito_de?: string       // id de usuario dueño del favorito en PJN, si se conoce
+  estado: EstadoAlertaActuacionPjn
+  descartada_por?: string
+  fecha_resolucion?: string
+  expediente_vinculado_id?: string  // si más adelante se da de alta el expediente y se linkea
+}
+```
+
+- **Store**: `usePjnStore().actuacionesSinCargar` (mock: `ACTUACIONES_PJN_SIN_CARGAR_MOCK`,
+  3 causas fantasma en `pjnNovedades.mock.ts`). Acciones `descartarAlerta(id, usuarioId)` y
+  `resolverAlerta(id, expedienteId)` — esta última queda lista para cuando se conecte el
+  flujo de "dar de alta el expediente desde la alerta", que **todavía no existe** (por ahora
+  la alerta solo se ve y se descarta).
+- **UI**: bloque "Actuaciones en PJN sin cargar en SIAJ (N)" en
+  `NovedadesPJN.page.tsx`, separado de los grupos de novedades normales — una card simple por
+  alerta (número de causa, carátula si hay, juzgado/fuero, fecha de detección) con acción
+  Descartar. El conteo se suma al badge del Sidebar junto a las novedades pendientes.
+- **Visibilidad — `filtrarAlertasActuacionesPorRol(alertas, usuario)`**
+  (`src/utils/pjnVisibilidad.ts`): **regla provisoria**, con un `// TODO: confirmar regla de
+  visibilidad` bien visible en el código. No se puede inferir área/letrado dueño de una causa
+  que no está en SIAJ, así que hoy es conservadora: REFERENTE y COORDINADOR ven todas,
+  ABOGADO no ve ninguna. **Pendiente de definición de negocio** (reunión 2026-09-01) —
+  cuando salga la regla real, tocar solo el body de esa función. Ver también Sección 15 de
+  `CLAUDE_root.md`.
+
+## Vencimiento de novedades pendientes (7 días)
+
+Definición de negocio: las novedades **nunca se borran**. Pasados 7 días sin que el letrado
+las aplique o descarte, se consideran "vencidas" — salen de la vista Pendientes por defecto
+de la bandeja central, pero siguen 100% disponibles y accionables (Aplicar/Descartar siguen
+funcionando igual).
+
+Implementado como **flag derivado**, no como un cuarto valor de `EstadoNovedadPJN` — a
+propósito, para no tener que tocar cada `estado === 'pendiente'` existente ni arriesgar el
+flujo de aplicar/descartar:
+
+```ts
+// src/utils/pjnVencimiento.ts
+const DIAS_VENCIMIENTO_NOVEDAD_PJN = 7
+export function esNovedadVencida(novedad: NovedadPJN, hoy = new Date()): boolean
+export function diasDesdeDeteccion(novedad: NovedadPJN, hoy = new Date()): number
+```
+
+`esNovedadVencida` solo puede dar `true` si `estado === 'pendiente'` (una novedad ya
+aplicada o descartada nunca "vence"); compara `fecha_deteccion` contra `hoy` truncando a
+medianoche local, sin depender de ninguna lib de fechas (el repo no tiene `date-fns` ni
+similar instalada).
+
+- **`NovedadesPJN.page.tsx`**: el filtro pasó de Pendientes/Todas a **tres** tabs —
+  Pendientes (`pendiente && !vencida`), Vencidas (`pendiente && vencida`, nuevo), Todas (sin
+  filtrar, sin cambios). `NovedadPjnCard` muestra un badge "Vencida hace N días" cuando
+  corresponde.
+- Banner de `DetalleExpediente.page.tsx` y badge "PJN" de `BandejaAbogado.page.tsx`: **no se
+  tocaron** — ya filtran por `estado === 'pendiente'`, que sigue incluyendo las vencidas (el
+  único cambio de comportamiento es el filtro por defecto de la bandeja central).
+
 ## Integración con notificaciones (Topbar)
 
 El panel de la campana (`Topbar.tsx`) **ya tenía datos reales** antes de este módulo
@@ -123,10 +207,10 @@ calculadas en cada render con `filtrarNovedadesPorRol` y mapeadas a la forma de
 
 | Actuación | Área | Letrado | Corrida | Movimientos |
 |---|---|---|---|---|
-| C-0100/2026 | CIVIL | UR_004 (Casano) | `RUN_C0100_20250619` (detectada 19/06/2025) | PJN_001–PJN_005 |
-| C-0100/2026 | CIVIL | UR_004 (Casano) | `RUN_C0100_20260718` (detectada 18/07/2026, "ruidosa" — 10 movimientos, un solo hito sustantivo) | PJN_006–PJN_015 |
-| L-0100/2026 | LABORAL | UR_012 (Pires) | `RUN_L0100_20260821` (ilustrativa) | PJN_016–PJN_020 |
-| P-0100/2026 | PENAL | UR_019 (Desideri) | `RUN_P0100_20260823` (ilustrativa) | PJN_021–PJN_025 |
+| C-0100/2026 | CIVIL | UR_004 (Casano) | `RUN_C0100_20250619` (detectada 19/06/2025 — vieja a propósito) | PJN_001–PJN_005 |
+| C-0100/2026 | CIVIL | UR_004 (Casano) | `RUN_C0100_20260718` (detectada 28/08/2026, "ruidosa" — 10 movimientos, un solo hito sustantivo) | PJN_006–PJN_015 |
+| L-0100/2026 | LABORAL | UR_012 (Pires) | `RUN_L0100_20260821` (detectada 01/09/2026 — hoy, ilustrativa) | PJN_016–PJN_020 |
+| P-0100/2026 | PENAL | UR_019 (Desideri) | `RUN_P0100_20260823` (detectada 30/08/2026, ilustrativa) | PJN_021–PJN_025 |
 
 La primera corrida de C-0100 (`RUN_C0100_20250619`) reproduce casi literal una secuencia real
 de expediente: pedido de alegatos (fs. 253, `ESCRITO AGREGADO` con `documento_url`) → autos
@@ -137,9 +221,19 @@ ruidosa: mucho movimiento de estado interno (`MOVIMIENTO` EN DESPACHO/EN LETRA, 
 sustantivo (traslado de un recurso de inconstitucionalidad) — pensada para mostrar en demo
 por qué un futuro Nivel 2 (clasificación/priorización automática) va a importar.
 
-Mezcla de estados en el mock: la mayoría queda `pendiente`, pero `PJN_003` (EN LETRA) está
-`descartada` y `PJN_004` (autos para alegar) está `aplicada` — para que la bandeja central no
-arranque con todo en un único estado.
+**Nota sobre fechas y vencimiento:** los `corrida_id` conservan sus nombres originales
+(`..._20250619`, `..._20260718`, etc.) aunque ya no coincidan con la `fecha_deteccion` real de
+tres de las cuatro corridas — son solo identificadores. Solo `RUN_C0100_20250619`
+(`PJN_001`/`PJN_002`, 2 movimientos) quedó con fecha vieja real (2025-06-19) a propósito, como
+único ejemplo de novedad **vencida** (7+ días sin resolver). Las otras tres corridas se
+reacomodaron a fechas recientes (28/08 al 01/09/2026, con `RUN_L0100_20260821` cayendo
+literalmente hoy) para que la bandeja también muestre casos "del día", no todo viejo.
+
+Mezcla de estados en el mock: la mayoría queda `pendiente`, pero dentro de
+`RUN_C0100_20250619` — `PJN_003` (EN LETRA) está `descartada` y `PJN_004`/`PJN_005` (autos
+para alegar / pedido de alegatos) están `aplicada` — para que la bandeja central no arranque
+con todo en un único estado, y para que esa corrida vieja quede con solo 2 pendientes
+(`PJN_001`/`PJN_002`, las 2 cédulas) — las que efectivamente vencieron.
 
 Escenarios de rol para probar:
 - **Casano** (ABOGADO, CIVIL) → ve solo las 2 corridas de C-0100.
@@ -184,9 +278,16 @@ nada externo).
 
 ## Pendiente / próximas etapas
 
-- Sin integración real con el Portal PJN — todo el flujo de detección es mock.
-- Sin persistencia — las novedades y su estado (aplicada/descartada) viven solo en memoria
-  del store (`usePjnStore`), se pierden al recargar.
+- Sin integración real con el Portal PJN — todo el flujo de detección es mock (novedades y
+  alertas de "causa sin cargar" por igual).
+- Sin persistencia — las novedades, las alertas y sus estados (aplicada/descartada/resuelta)
+  viven solo en memoria del store (`usePjnStore`), se pierden al recargar.
+- **Visibilidad de la alerta "causa en PJN sin cargar"** (`filtrarAlertasActuacionesPorRol`):
+  pendiente de definición de negocio (reunión 2026-09-01) sobre a quién le llega — ver
+  detalle en la sección de arriba.
+- **Flujo de alta de expediente desde una alerta**: `resolverAlerta(id, expedienteId)` ya
+  existe en el store pero no está conectada a ninguna UI todavía — falta el flujo real de
+  "dar de alta el expediente a partir de esta causa fantasma y linkearlo a la alerta".
 - **Nivel 2** (fuera de alcance de esta etapa, decisión de negocio pendiente): clasificar
   automáticamente los movimientos crudos (equivalente al viejo `TipoCambioPJN`), priorizar
   los sustantivos sobre el ruido de estado interno (`EN DESPACHO`/`EN LETRA`/`EVENTO`/`PASE`),
