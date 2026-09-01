@@ -300,7 +300,10 @@ export interface ActuacionPjnSinCargar {
   estado: EstadoAlertaActuacionPjn
   descartada_por?: string
   fecha_resolucion?: string
-  expediente_vinculado_id?: string  // si más adelante se da de alta el expediente y se linkea a esta alerta
+  // Decisión de negocio: cargar la actuación que generó la alerta es 100% desacoplado del
+  // flujo normal de Alta de Expediente — no hay linking automático, `resolverAlerta` no lo
+  // popula. Queda declarado sin usar por si algún día se conecta un flujo real.
+  expediente_vinculado_id?: string
 }
 
 export type EstadoEscritoActividad = 'GENERADO' | 'APROBADO_CARGADO'
