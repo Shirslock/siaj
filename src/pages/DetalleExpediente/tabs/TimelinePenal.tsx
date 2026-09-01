@@ -893,6 +893,12 @@ export function TimelinePenal({ exp }: Props) {
                     Sin completar
                   </span>
                 )}
+                {entrada.act.origen_pjn && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e6f1fb] text-[#185fa5]">
+                    <Icon name="refresh" size={9} />
+                    PJN
+                  </span>
+                )}
               </div>
               {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
               {entrada.doc_gde && (

@@ -103,6 +103,22 @@ en el `<textarea>` de `NovedadPjnCard` antes de confirmar.
 defina. `documento_url` en el mock ya viene con el patrón real del scraper
 (`/scw/viewer.seam?id=...&tipoDoc=...`).
 
+**Badge "PJN" en el timeline**: la actividad creada por `aplicarNovedad` se distingue
+visualmente en el historial de la actuación — `act.origen_pjn === true` renderiza un badge
+`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e6f1fb]
+text-[#185fa5]` con ícono `refresh` (mismo celeste que usa `NovedadPjnCard.tsx` para el
+ícono de la novedad, y mismo ícono que el Sidebar/header de la bandeja/spinner del modal
+manual — asociación visual consistente en todo el módulo; **no** reutiliza el celeste de
+"Sistema", `bg-[#C4DFE8] text-[#1b3a57]`, son conceptos distintos). Mismo patrón que los
+badges "SOLICITUD"/"RESPUESTA" ya existentes, junto al título de la actividad:
+- **Civil/Laboral**: `TimelineTab.tsx`, junto a los badges de solicitud/respuesta.
+- **Penal**: `TimelinePenal.tsx`, dentro de `kind === 'generica'` (las actividades PJN,
+  `tipo: 'MOVIMIENTO'` con título crudo del PJN, no matchean `kind === 'sistema'` porque esa
+  rama exige título que empiece con "Cambio de estado"/"Retroceso de estado").
+
+No se tocó el ícono circular (el dot a la izquierda de cada actividad) — con el badge de
+texto alcanza, para no over-diseñar.
+
 ## Visibilidad por rol (`filtrarNovedadesPorRol`)
 
 Centralizada en `src/utils/pjnVisibilidad.ts`, usada por la bandeja central, el Sidebar

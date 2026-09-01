@@ -532,6 +532,12 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                   SOLICITUD
                 </span>
               )}
+              {act.origen_pjn && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e6f1fb] text-[#185fa5]">
+                  <Icon name="refresh" size={9} />
+                  PJN
+                </span>
+              )}
               {act.escrito_estado === 'GENERADO' && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
                   Pendiente de aprobación externa
