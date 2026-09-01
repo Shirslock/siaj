@@ -28,12 +28,12 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     detalle: 'AUTOS PARA ALEGAR (EXPEDIENTE DIGITAL)', foja: '254/254',
     estado: 'aplicada', aplicada_por: 'UR_004', fecha_aplicacion: '2025-06-19' },
   { id: 'PJN_005', expediente_id: 'C-0100/2026', corrida_id: 'RUN_C0100_20250619',
-    fecha_deteccion: '2026-08-31', fecha_movimiento: '2026-08-30', row_index: 5,
+    fecha_deteccion: '2025-06-19', fecha_movimiento: '2025-06-18', row_index: 5,
     oficina: 'ISJ', tipo: 'ESCRITO AGREGADO',
     detalle: 'SE PONGAN PARA ALEGAR [Presentado 11/06/2025 12:01]', foja: '253/253',
     tiene_documento: true,
     documento_url: '/scw/viewer.seam?id=JkUVdAfAlXNl9uDJ8eOK%2BwQlKVyIjkHxjnnI&tipoDoc=escrito',
-    estado: 'pendiente' },
+    estado: 'aplicada', aplicada_por: 'UR_004', fecha_aplicacion: '2025-06-19' },
 
   // ── C-0100/2026 (CIVIL) — corrida 2026-08-28, detecta movimientos del 27/08/2026 ──
   // Corrida "ruidosa": mucho movimiento de estado interno (EN DESPACHO/EN LETRA,
