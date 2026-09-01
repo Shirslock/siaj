@@ -42,6 +42,8 @@ src/data/pjnNovedades.mock.ts   mock de 25 movimientos + simularConsultaManualPj
                                  + ACTUACIONES_PJN_SIN_CARGAR_MOCK (3 alertas de causa fantasma)
 src/store/pjn.store.ts          usePjnStore — aplicarNovedad / descartarNovedad / consultarNovedadIndividual
                                  + actuacionesSinCargar / descartarAlerta / resolverAlerta
+                                 + aplicarNovedades / descartarNovedades (batch) — ver "Selección masiva" abajo
+                                 + consultasManualesPorUsuario / consultasRestantesHoy / MAX_CONSULTAS_DIARIAS — ver "Límite de consultas manuales" abajo
 src/utils/pjnVisibilidad.ts     filtrarNovedadesPorRol — visibilidad por rol, compartida
                                  filtrarAlertasActuacionesPorRol — visibilidad de alertas, ver abajo (regla provisoria)
 src/utils/pjnVencimiento.ts     esNovedadVencida / diasDesdeDeteccion — flag de vencimiento derivado, ver abajo
@@ -57,6 +59,7 @@ Puntos de acceso a las novedades:
   movimientos detectados el {fecha_deteccion}" antes de sus cards, ordenado por `row_index`
   ascendente; los grupos se ordenan por `fecha_deteccion` descendente. Arriba de los grupos,
   un bloque aparte lista las alertas de "causa en PJN sin cargar" (ver esa sección abajo).
+  Toggle "Modo selección" para aplicar/descartar en masa — ver "Selección masiva" abajo.
 - **Banner en `DetalleExpediente.page.tsx`** — si la actuación abierta tiene novedades
   pendientes, aparece arriba del contenido (visible en cualquier tab) con un toggle
   "Revisar/Ocultar" que despliega las cards inline (`mostrarActuacion={false}`), agrupadas
@@ -200,6 +203,62 @@ similar instalada).
   tocaron** — ya filtran por `estado === 'pendiente'`, que sigue incluyendo las vencidas (el
   único cambio de comportamiento es el filtro por defecto de la bandeja central).
 
+## Selección masiva — aplicar/descartar en lote
+
+Selección **libre en toda la bandeja** — cruza expedientes y corridas, no se limita al
+filtro o grupo que se esté viendo. En modo masivo **no hay edición de texto por ítem**: se
+aplica `novedad.detalle` tal cual, mismo fallback que ya usa `aplicarNovedad` cuando no le
+pasás `textoFinal`.
+
+- **Store**: `aplicarNovedades(ids, usuarioId)` / `descartarNovedades(ids, usuarioId)`
+  (`pjn.store.ts`) — batch actions que reusan `aplicarNovedad`/`descartarNovedad` por id
+  internamente (no duplican la lógica de creación de actividad ni de metadata), filtrando a
+  los ids que sigan `estado === 'pendiente'` en el momento de ejecutar (por si algo cambió
+  entre que se tildó y se confirmó — otra pestaña, otro usuario del mock, etc.).
+- **`NovedadPjnCard.tsx`**: props opcionales `selMode?`, `selected?`, `onToggleSelect?`.
+  Cuando `selMode && pendiente` renderiza un checkbox; el flujo individual existente
+  (`<textarea>` + Aplicar/Descartar por ítem) sigue funcionando igual y convive con la
+  selección — no se tocó nada de esa lógica. La instancia de esta card dentro de
+  `ConsultarNovedadPjnModal.tsx` (resultados de consulta manual) **no** tiene selección —
+  fuera de alcance de esta iteración.
+- **`NovedadesPJN.page.tsx`**: toggle "Modo selección" en la barra de filtros; al activarlo
+  aparece el checkbox en las cards `pendiente` (respetando el filtro Pendientes/Vencidas/
+  Todas actual, pero el `Set<string>` de seleccionados no se limpia al cambiar de filtro).
+  Con `seleccionados.size > 0` aparece una barra de acción "N seleccionadas" con "Aplicar
+  seleccionadas" / "Descartar seleccionadas" / "Cancelar selección".
+  - **Aplicar seleccionadas**: abre un modal de confirmación con la cantidad de novedades y
+    de expedientes distintos que va a impactar, más la advertencia de que se aplica el texto
+    tal cual (sin edición individual). Al confirmar llama a `aplicarNovedades`, limpia la
+    selección y muestra un toast resumen.
+  - **Descartar seleccionadas**: mismo patrón con `descartarNovedades`, confirmación más
+    liviana (sin la advertencia de texto, no aplica).
+
+## Límite de consultas manuales diarias
+
+Decisión de negocio: **3 consultas manuales exitosas por letrado por día**
+(`MAX_CONSULTAS_DIARIAS`, `pjn.store.ts`), sumando **todas** las causas que consulte — el
+límite es por usuario, no por causa. Solo cuentan los intentos **exitosos** (con o sin
+novedades encontradas); un error de credenciales no consume cupo y se puede reintentar
+libremente.
+
+- **Store**: `consultasManualesPorUsuario: Record<usuarioId, { fecha: string; cantidad:
+  number }>` — un contador por usuario que se resetea solo (si la `fecha` guardada no es
+  hoy, cuenta como 0 usadas; no hay job de reseteo, es lazy). `consultasRestantesHoy(usuarioId)`
+  devuelve `MAX_CONSULTAS_DIARIAS - usadasHoy`.
+- **`consultarNovedadIndividual(expediente, credenciales, usuarioId)`** ahora recibe
+  `usuarioId` (mismo patrón que `aplicarNovedad`/`descartarNovedad`/`descartarAlerta`):
+  - Si no queda cupo, rechaza de entrada (`throw`) **sin llamar** a
+    `simularConsultaManualPjn` — no gasta la simulación de latencia por nada.
+  - Si `simularConsultaManualPjn` resuelve (éxito, incluso `novedades: []`), incrementa el
+    contador del usuario/hoy.
+  - Si rechaza (credenciales inválidas), **no** incrementa — se puede reintentar sin costo.
+- **`ConsultarNovedadPjnModal.tsx`**: ahora importa `useUIStore` para leer
+  `usuarioActivo.id` (antes no lo necesitaba). En la etapa `form` muestra "Te quedan X de 3
+  consultas hoy."; si `X <= 0`, en vez del formulario de usuario/contraseña muestra
+  directamente el mensaje de límite alcanzado + botón Cerrar — no hace falta que el letrado
+  escriba credenciales para enterarse de que no le quedan intentos (el guard del store
+  también está, por las dudas, pero la UI ya evita el intento antes).
+
 ## Integración con notificaciones (Topbar)
 
 El panel de la campana (`Topbar.tsx`) **ya tenía datos reales** antes de este módulo
@@ -276,17 +335,18 @@ nada externo).
   - Éxito vacío (`novedades: []`).
   - Error (`Promise` rechazada) si `credenciales.contrasena` (trim + lowercase) es `'error'`
     — sentinel para poder mostrar el caso de falla en demo a pedido.
-- **`usePjnStore.consultarNovedadIndividual(expediente, credenciales)`**: llama al mock,
-  agrega las novedades resultantes a `novedades` en el state (mismo array que alimenta la
-  bandeja central, el banner y los badges — por eso una consulta manual exitosa se refleja
-  ahí también sin lógica extra) y devuelve el `corridaId`. No captura errores — los propaga
-  para que el modal los maneje.
+- **`usePjnStore.consultarNovedadIndividual(expediente, credenciales, usuarioId)`**: primero
+  chequea el cupo diario (ver "Límite de consultas manuales diarias" abajo), luego llama al
+  mock, agrega las novedades resultantes a `novedades` en el state (mismo array que alimenta
+  la bandeja central, el banner y los badges — por eso una consulta manual exitosa se refleja
+  ahí también sin lógica extra) y devuelve el `corridaId`. Los errores (sin cupo o
+  credenciales inválidas) no se capturan acá — se propagan para que el modal los maneje.
 - **`ConsultarNovedadPjnModal.tsx`**: 4 estados internos (`form` → `cargando` → `resultados`
   | `error`). En `resultados` filtra `usePjnStore().novedades` por el `corridaId` devuelto y
-  renderiza una `NovedadPjnCard` por cada una (mismo componente, `mostrarActuacion={false}`)
-  — Aplicar/Descartar funciona igual que en el resto del módulo. Usuario y contraseña viven
-  solo en `useState` local del modal y se descartan al cerrar o reintentar; nunca se
-  persisten (ni state global ni localStorage).
+  renderiza una `NovedadPjnCard` por cada una (mismo componente, `mostrarActuacion={false}`,
+  sin selección — ver "Selección masiva" arriba) — Aplicar/Descartar funciona igual que en el
+  resto del módulo. Usuario y contraseña viven solo en `useState` local del modal y se
+  descartan al cerrar o reintentar; nunca se persisten (ni state global ni localStorage).
 - **Fuera de alcance** (igual que el resto del módulo): integración real con el Portal PJN,
   persistencia de novedades o credenciales, clasificación automática (Nivel 2).
 
@@ -294,8 +354,10 @@ nada externo).
 
 - Sin integración real con el Portal PJN — todo el flujo de detección es mock (novedades y
   alertas de "causa sin cargar" por igual).
-- Sin persistencia — las novedades, las alertas y sus estados (aplicada/descartada/resuelta)
-  viven solo en memoria del store (`usePjnStore`), se pierden al recargar.
+- Sin persistencia — las novedades, las alertas, sus estados (aplicada/descartada/resuelta)
+  y el contador de consultas manuales diarias viven solo en memoria del store
+  (`usePjnStore`), se pierden al recargar (el cupo diario "se resetea gratis" al recargar,
+  en el mock — no es un problema real hasta que haya backend).
 - **Visibilidad de la alerta "causa en PJN sin cargar"** (`filtrarAlertasActuacionesPorRol`):
   pendiente de definición de negocio (reunión 2026-09-01) sobre a quién le llega — ver
   detalle en la sección de arriba.
