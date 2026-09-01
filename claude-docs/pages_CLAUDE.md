@@ -40,7 +40,7 @@ src/pages/NombrePagina/
 |-----|---------|--------|
 | Datos | DatosTab.tsx | ✓ edición completa |
 | Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
-| Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo — agregar, editar (modal reutilizable), eliminar; columna Letrado |
+| Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo — agregar (modal extraído a `AgregarIntervinienteModal.tsx`, reusado también desde una novedad PJN), editar (modal propio de la tab), eliminar; columna Letrado |
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop con @dnd-kit para reordenar |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
