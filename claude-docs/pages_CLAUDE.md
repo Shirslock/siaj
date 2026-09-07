@@ -42,7 +42,7 @@ src/pages/NombrePagina/
 | Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
 | Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo — agregar (modal extraído a `AgregarIntervinienteModal.tsx`, reusado también desde una novedad PJN), editar (modal propio de la tab), eliminar; columna Letrado |
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop con @dnd-kit para reordenar |
-| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
+| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Asistente IA | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `ASISTENTE_IA_CLAUDE.md` |
 

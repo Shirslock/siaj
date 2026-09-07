@@ -288,9 +288,76 @@ export interface CampoSolicitudPenal {
   `DatosTab` apenas tiene valor (`disabled` + estilo gris, chequeado por `campo.id ===
   'mesa_tipo_lanzamiento'`, no por un flag genérico de formulario).
 
+## formularios.ts — Tipo de moneda en los campos `money`
+
+Un campo `type: 'money'` guarda solo el número: no alcanza para saber si el importe está en pesos
+o en dólares. Por eso **cada campo `money` va acompañado de un `select` de moneda**, ubicado
+inmediatamente después en el mismo array:
+
+```ts
+{ id:'mesa_monto',        label:'Monto de la demanda', type:'money' },
+{ id:'mesa_monto_moneda', label:'Tipo de moneda',      type:'select',
+  options:[{ value:'ARS', label:'ARS — Pesos argentinos' },
+           { value:'USD', label:'USD — Dólares' },
+           { value:'EUR', label:'EUR — Euros' }] },
+```
+
+- **Convención de id:** id del monto + sufijo `_moneda`.
+- **Valores:** `'ARS'` | `'USD'` | `'EUR'` (ISO 4217); el label visible antepone el código —
+  "ARS — Pesos argentinos" / "USD — Dólares" / "EUR — Euros". Para sumar una moneda nueva alcanza
+  con agregar la opción y su prefijo en `formatMonto`: la lógica de negocio pregunta por ARS, no
+  por cada moneda extranjera.
+- **Default ARS, campo opcional:** los expedientes cargados antes del cambio no tienen el campo;
+  toda lectura debe interpretar la ausencia de valor como `'ARS'`. No hubo backfill de mocks.
+- **Uno por monto, no uno por formulario:** los tipos con varios montos (COBRO_CANON, MEDIACION,
+  DEMANDA_CIVIL, DEMANDA_LABORAL) llevan un selector por cada uno, para poder tener, por ejemplo,
+  un reclamo en USD y un acuerdo en ARS.
+- No hizo falta tipo nuevo en `types/index.ts`: se reusa `select`, ya soportado por
+  `FormularioDinamico.tsx` y `DatosTab.tsx`.
+
+Los 15 campos afectados, en 12 tipos de actuación:
+
+| Tipo | Etapa | Campo monto | Campo moneda |
+|---|---|---|---|
+| CARTA_DOC | abogado | `abg_monto_reclam` | `abg_monto_reclam_moneda` |
+| MEDIACION | abogado | `monto_acuerdo` | `monto_acuerdo_moneda` |
+| MEDIACION | abogado | `abg_monto_reclamado` | `abg_monto_reclamado_moneda` |
+| SECLO | abogado | `abg_monto_reclamado` | `abg_monto_reclamado_moneda` |
+| COBRO_CANON | abogado | `monto_informado` | `monto_informado_moneda` |
+| COBRO_CANON | abogado | `monto_actualizado` | `monto_actualizado_moneda` |
+| RECLAMO_CONTRAT | abogado | `monto_reclamar` | `monto_reclamar_moneda` |
+| RECUPERO | abogado | `abg_monto_reclamar` | `abg_monto_reclamar_moneda` |
+| CONSIGNACION | abogado | `abg_monto` | `abg_monto_moneda` |
+| EJECUCION_GAR | abogado | `abg_monto_ejecutar` | `abg_monto_ejecutar_moneda` |
+| DEFENSA_CIVIL | mesa | `monto_reclamado` | `monto_reclamado_moneda` |
+| DEMANDA_CIVIL | mesa | `mesa_monto` | `mesa_monto_moneda` |
+| DEMANDA_CIVIL | abogado | `monto_acuerdo` | `monto_acuerdo_moneda` |
+| DEMANDA_LABORAL | mesa | `mesa_monto` | `mesa_monto_moneda` |
+| DEMANDA_LABORAL | abogado | `monto_acuerdo` | `monto_acuerdo_moneda` |
+
+**Fuera de alcance:** los campos de dinero del circuito penal (`solicitudesPenales.ts` — campo
+`montos` de Conciliación / Reparación Integral / Probation — y la constante `MONTO` de
+`etapasPenales.ts`) siguen sin moneda.
+
+**Impactos fuera de `formularios.ts`:**
+- `utils/format.ts` — mapa `SIMBOLO_MONEDA` (`$` ARS, `US$` USD, `€` EUR), del que salen el type
+  `Moneda` y los helpers exportados: `formatMonto(valor, moneda = 'ARS')`,
+  `normalizarMoneda(val)` (valor ausente o desconocido → `'ARS'`) y `aplicaIndiceInflacion(moneda)`.
+  Agregar una moneda nueva = agregar una entrada al mapa.
+- `DatosTab.tsx` — resuelve la moneda leyendo `` `${campo.id}_moneda` `` del mismo registro.
+- `DetalleExpediente.page.tsx` — el modal "Iniciar Juicio" carga `monto_moneda` y lo mapea a
+  `mesa_monto_moneda`.
+- `Dashboard.page.tsx` — el KPI "Monto expuesto" suma solo los montos en ARS.
+- `PrevisionTab.tsx` — el índice de inflación se aplica solo si la moneda es ARS; para cualquier
+  otra moneda se muestra el monto base con un aviso.
+
+---
+
 ## Reglas de formularios
 
 - IDs campo mesa: prefijo `mesa_`
 - IDs campo abogado: prefijo `abg_`
 - OFICIO en área PENAL → usar `form.variante_penal`
 - Campos con `dependsOn`: ocultos por defecto
+- Todo campo `money` lleva a continuación su select `<id>_moneda` (ARS/USD/EUR) — ver sección
+  "Tipo de moneda en los campos `money`"

@@ -49,7 +49,7 @@ npm run build      # build de producción
 |-------------------|----------------|
 | `src/types/index.ts` | TODOS los tipos del dominio. Fuente de verdad de contratos. |
 | `src/data/catalogos.ts` | TIPOS_GESTION, JUZGADOS, LINEAS y todos los catálogos de dropdowns. |
-| `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). |
+| `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). Todo campo `money` va seguido de su select `<id>_moneda` (ARS/USD/EUR) — ver `claude-docs/data_CLAUDE.md`. |
 | `src/data/usuarios.ts` | 32 usuarios reales UR_001–UR_032, roles y asignaciones. |
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
 | `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión. 13 ciclos definidos (ver Sección 13). |
@@ -68,7 +68,7 @@ npm run build      # build de producción
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
-| `src/utils/format.ts` | formatFecha, formatMonto, numerador. |
+| `src/utils/format.ts` | formatFecha, formatMonto(valor, moneda), numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
@@ -286,7 +286,7 @@ El timeline del expediente tiene DOS capas:
 | Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
 | Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo (agregar vía `AgregarIntervinienteModal.tsx`, editar inline, eliminar) |
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
-| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ |
+| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Saúl (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
@@ -536,7 +536,7 @@ el modal de nuevo/editar muestra un campo extra "Días" numérico.
 `src/pages/Dashboard/Dashboard.page.tsx` renderiza una de **3 vistas según `usuarioActivo.rolSistema`**.
 Detalle completo en `src/pages/Dashboard/Dashboard_CLAUDE.md`.
 
-- **REFERENTE:** KPIs globales (activas, Civil, Laboral, Monto expuesto) + donut por área + barras por letrado + semáforo global + tabla "Próximos vencimientos".
+- **REFERENTE:** KPIs globales (activas, Civil, Laboral, Monto expuesto — solo montos en ARS) + donut por área + barras por letrado + semáforo global + tabla "Próximos vencimientos".
 - **COORDINADOR:** todo filtrado a `usuarioActivo.areas[0]` + barras "Estado procesal del área" + tabla "Sin movimiento (+30 días)".
 - **LETRADO** (fallback: no REFERENTE ni COORDINADOR): KPIs personales + donut de sub-estados + "Tareas hoy" + lista de vencimientos + tabla "Mis actuaciones".
 

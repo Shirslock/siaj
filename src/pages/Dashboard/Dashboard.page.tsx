@@ -10,6 +10,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
+import { normalizarMoneda } from '../../utils/format'
 import type { Expediente, Area, Usuario } from '../../types'
 import Icon from '../../components/ui/Icon'
 
@@ -661,7 +662,10 @@ function PanelGerencia({
   const urgentesPorArea = (area: Area) => urgentes.filter(e => e.area === area)
   const expPorArea = (area: Area) => expedientes.filter(e => e.area === area)
 
+  // Solo se suman los montos en pesos: los de otras monedas no son comparables y no se
+  // convierten. Sin moneda guardada se asume ARS, así que los expedientes viejos entran.
   const montoTotal = useMemo(() => expedientes.reduce((sum, e) => {
+    if (normalizarMoneda(e.campos_mesa?.mesa_monto_moneda) !== 'ARS') return sum
     const m = Number(e.campos_mesa?.mesa_monto ?? 0)
     return sum + (isNaN(m) ? 0 : m)
   }, 0), [expedientes])
@@ -691,8 +695,8 @@ function PanelGerencia({
           onClick={() => setPanelActivo({ titulo: 'Causas vinculadas', expedientes: expedientes.filter(e => e.vinculos.length > 0) })}
         />
         <KpiCard
-          label="Monto expuesto" value={`$${(montoTotal / 1000000).toFixed(1)}M`} badgeColor="gris"
-          onClick={() => setPanelActivo({ titulo: 'Monto expuesto', expedientes })}
+          label="Monto expuesto (ARS)" value={`$${(montoTotal / 1000000).toFixed(1)}M`} badgeColor="gris"
+          onClick={() => setPanelActivo({ titulo: 'Monto expuesto (ARS)', expedientes })}
         />
       </div>
 
