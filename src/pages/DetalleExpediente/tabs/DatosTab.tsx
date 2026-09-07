@@ -5,7 +5,7 @@ import { getCamposFormulario } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../../data/juzgadosPJN'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
-import { formatFecha, formatMonto } from '../../../utils/format'
+import { formatFecha, formatMonto, normalizarMoneda } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
 
@@ -23,16 +23,26 @@ function getLineaLabel(id: string): string {
   return LINEAS_FERROVIARIAS.find(l => l.id === id)?.label ?? id
 }
 
-function valorDisplay(campo: CampoFormulario, val: unknown): React.ReactNode {
+function valorDisplay(
+  campo: CampoFormulario,
+  val: unknown,
+  registro?: Record<string, unknown>,
+): React.ReactNode {
   if (val === null || val === undefined || val === '') return '—'
   if (campo.type === 'date')    return formatFecha(String(val))
-  if (campo.type === 'money')   return formatMonto(Number(val))
+  if (campo.type === 'money')   return formatMonto(Number(val), normalizarMoneda(registro?.[`${campo.id}_moneda`]))
   if (campo.type === 'boolean') return Boolean(val) ? 'Sí' : 'No'
   if (campo.type === 'juzgado') return getJuzgadoLabel(String(val))
   if (campo.type === 'linea')   return getLineaLabel(String(val))
   if (campo.type === 'multiselect') {
     if (!Array.isArray(val) || val.length === 0) return '—'
     return (val as string[]).join(', ')
+  }
+  // Selects con options {value,label} (ej. Tipo de moneda): se muestra el label, no el código.
+  if (campo.type === 'select' && Array.isArray(campo.options)) {
+    const opt = (campo.options as Array<string | { value: string; label: string }>)
+      .find(o => typeof o !== 'string' && o.value === val)
+    if (opt && typeof opt !== 'string') return opt.label
   }
   return String(val)
 }
@@ -429,7 +439,7 @@ export function DatosTab({ exp }: Props) {
                 key={campo.id}
                 label={campo.label}
                 edit={edit}
-                value={valorDisplay(campo, exp.campos_mesa[campo.id])}
+                value={valorDisplay(campo, exp.campos_mesa[campo.id], exp.campos_mesa)}
                 input={renderCampoInput(campo, draftMesa, setDraftMesa, camposMesa)}
               />
             ))}
@@ -463,7 +473,7 @@ export function DatosTab({ exp }: Props) {
                 key={campo.id}
                 label={campo.label}
                 edit={edit}
-                value={valorDisplay(campo, exp.campos_abogado[campo.id])}
+                value={valorDisplay(campo, exp.campos_abogado[campo.id], exp.campos_abogado)}
                 input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
               />
             ))}
