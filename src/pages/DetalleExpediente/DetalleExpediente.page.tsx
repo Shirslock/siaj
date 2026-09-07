@@ -161,6 +161,7 @@ export default function DetalleExpedientePage() {
     fecha_inicio: HOY,
     tipo_juicio: '',
     monto: '',
+    monto_moneda: 'ARS',
     ubicacion: '',
     linea: '',
     tipo_lanzamiento: '',
@@ -517,6 +518,7 @@ export default function DetalleExpedientePage() {
         mesa_fecha_inicio:  formJuicio.fecha_inicio,
         mesa_juicio:        formJuicio.tipo_juicio,
         mesa_monto:         formJuicio.monto,
+        mesa_monto_moneda:  formJuicio.monto_moneda,
         mesa_oficio_judicial: formJuicio.oficio_judicial,
         mesa_tipo_intervencion: formJuicio.tipo_intervencion,
         mesa_ubicacion:     formJuicio.ubicacion,
@@ -1355,6 +1357,18 @@ export default function DetalleExpedientePage() {
                 <input type="number" className="field-input w-full" placeholder="$ 0"
                   value={formJuicio.monto}
                   onChange={e => setFormJuicio(p => ({ ...p, monto: e.target.value }))} />
+              </div>
+            )}
+            {exp.tipo !== 'LANZAMIENTO' && (
+              <div>
+                <label className="field-label">Tipo de moneda</label>
+                <select className="field-input w-full"
+                  value={formJuicio.monto_moneda}
+                  onChange={e => setFormJuicio(p => ({ ...p, monto_moneda: e.target.value }))}>
+                  <option value="ARS">ARS — Pesos argentinos</option>
+                  <option value="USD">USD — Dólares</option>
+                  <option value="EUR">EUR — Euros</option>
+                </select>
               </div>
             )}
             {exp.tipo !== 'LANZAMIENTO' && (

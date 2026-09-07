@@ -46,7 +46,10 @@ Todo se deriva con `useMemo`. Las alertas de vencimiento usan
 Vista única para ambos roles — no branchea internamente por sub-rol (los datos de la fila 1 de
 KPIs son fijos/mock, no filtrados por `usuarioActivo`). Estructura de arriba a abajo:
 1. Fila de 6 KPIs (`Causas activas`, `Causas urgentes`, `Huérfanas sin asignar`, `Sin impulsorio +60d`,
-   `Causas vinculadas`, `Monto expuesto`).
+   `Causas vinculadas`, `Monto expuesto`). El KPI `Monto expuesto` suma únicamente los
+   `mesa_monto` cuya moneda (`mesa_monto_moneda`) es ARS — los montos en moneda extranjera quedan
+   fuera y
+   el label lo aclara.
 2. Fila de 6 KPIs por área (urgentes y sin impulsorio ×3 áreas).
 3. `Ingresadas vs. cerradas` — `BarChart` agrupado, últimos 6 meses.
 4. **`Funnel de estados`** — `<FunnelChart>` SVG custom (ver abajo), no usa `recharts`.
