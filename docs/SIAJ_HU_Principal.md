@@ -12,7 +12,7 @@ Etapa 1 | Septiembre 2026 | Sprint: *A definir*
 |---|---|
 | **Rol** | Abogado / Asistente Jurídico |
 | **Necesidad** | Como abogado, necesito una pantalla de inicio con un resumen de mi carga de trabajo (causas, actuaciones, vencimientos, rol procesal) apenas ingreso al sistema, para poder priorizar mi día sin tener que recorrer manualmente toda la Bandeja de Actuaciones. |
-| **Objetivo** | Que al ingresar al sistema, el abogado vea de un vistazo cuántas causas y actuaciones tiene activas, qué se le vence, qué le asignaron nuevo, cómo se reparten sus causas entre parte Actora / Demandada / Sin intervención / Penal y por tipo de gestión, y pueda saltar directo a la lista ya filtrada con un solo clic. |
+| **Objetivo** | Que al ingresar al sistema, el abogado vea de un vistazo cuántas causas y cuántos documentos tiene activos, qué se le vence, qué audiencias tiene próximas, qué le asignaron nuevo, cómo se reparte su carga por tipo de intervención (Actora / Demandada / Denunciante / Sin intervención) y por estado procesal, y pueda saltar directo a la lista ya filtrada con un solo clic. |
 | **Estado previo** | No existía una pantalla de inicio propia para el abogado. Al ingresar, todos los roles caían en el mismo Dashboard analítico ("Panel de Control"), pensado para Gerencia/Coordinación, sin ningún dato personalizado de la carga de trabajo del abogado. |
 
 ---
@@ -94,7 +94,7 @@ Al pie de la columna, un bloque con **Actuaciones cerradas** (total de actuacion
 
 ## Capturas de pantalla
 
-*(completar acá con las capturas de la pantalla "Principal": vista general, fila de indicadores, listado de Vencimientos y tareas con las pestañas, y los bloques de distribución)*
+*(completar acá con las capturas de la pantalla "Principal": vista general, fila de indicadores, listado de Vencimientos y tareas con las pestañas, bloque de Próximas audiencias, y los bloques de distribución)*
 
 ---
 
