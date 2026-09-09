@@ -137,6 +137,49 @@ export function WidgetCerradas({ valor, onClick }: { valor: number; onClick?: ()
   )
 }
 
+// ── Próximas audiencias ─────────────────────────────────────────────────────────
+
+export interface ItemAudiencia {
+  exp: Expediente
+  titulo: string
+  fecha: string
+}
+
+export function WidgetAudiencias({ items }: { items: ItemAudiencia[] }) {
+  const navigate = useNavigate()
+
+  return (
+    <WidgetCard
+      titulo="Próximas audiencias"
+      sub={
+        items.length === 0
+          ? 'Sin audiencias agendadas.'
+          : `${items.length} audiencia${items.length !== 1 ? 's' : ''} agendada${items.length !== 1 ? 's' : ''}.`
+      }
+    >
+      {items.length > 0 && (
+        <div className="space-y-0.5">
+          {items.map((a, i) => (
+            <div
+              key={`${a.exp.id}-${i}`}
+              onClick={() => navigate(RUTAS.EXPEDIENTE(a.exp.id))}
+              className="flex items-start gap-2.5 px-2 py-2 -mx-2 rounded-lg cursor-pointer hover:bg-[#f7fafc] transition-colors"
+            >
+              <Icon name="calendar" size={14} className="text-[#2a78d6] mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[12.5px] font-semibold text-[#1b3a57] truncate">{a.titulo}</p>
+                <p className="text-[11px] text-[#7a9ab4] truncate">
+                  {formatFecha(a.fecha)} · {a.exp.id}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </WidgetCard>
+  )
+}
+
 // ── Vencimientos y tareas ───────────────────────────────────────────────────────
 
 export interface ItemVencimiento {
@@ -352,16 +395,19 @@ export function useHomeData() {
     misActivos.filter(e => e.estado === 'ASIGNADO').length,
     [misActivos])
 
+  // Las 4 filas de "Por rol" salen del mismo campo (`mesa_tipo_intervencion`). 'Denunciante' es
+  // un valor del ciclo Penal, así que solo se puebla para letrados con actuaciones penales.
+  // 'Actuación de Oficio' (el otro valor penal) queda deliberadamente fuera de la distribución.
   const intervencion = useMemo(() => {
-    let actora = 0, demandada = 0, sinIntervencion = 0
+    let actora = 0, demandada = 0, denunciante = 0, sinIntervencion = 0
     misActivos.forEach(e => {
       const valor = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '')
       if (valor === 'Actora') actora++
       else if (valor === 'Demandada') demandada++
+      else if (valor === 'Denunciante') denunciante++
       else if (valor === 'Sin Intervención' || valor === '') sinIntervencion++
     })
-    const penal = misActivos.filter(e => e.area === 'PENAL').length
-    return { actora, demandada, sinIntervencion, penal }
+    return { actora, demandada, denunciante, sinIntervencion }
   }, [misActivos])
 
   const porVencerCount = useMemo(() =>
@@ -388,6 +434,26 @@ export function useHomeData() {
       .sort((a, b) => b.count - a.count)
   }, [misActivos])
 
+  // Audiencias: se cargan como actividad genérica de `tipo: 'AUDIENCIA'` en el timeline, no como
+  // entidad propia. La fecha de la audiencia es `fecha_vencimiento` cuando está cargada (así la
+  // modela el mock, con `fecha` = alta de la actividad) y si no, `fecha`. Solo las de hoy en
+  // adelante — una audiencia que ya pasó no sirve para organizar el día.
+  const audiencias = useMemo(() => {
+    const hoy = new Date().toISOString().split('T')[0]
+    return misActivos
+      .flatMap(exp =>
+        (exp.timeline ?? [])
+          .filter(act => act.tipo === 'AUDIENCIA' && act.activo !== false && !act.eliminado)
+          .map(act => ({
+            exp,
+            titulo: act.titulo,
+            fecha: act.fecha_vencimiento ?? act.fecha,
+          }))
+      )
+      .filter(a => a.fecha >= hoy)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+  }, [misActivos])
+
   const cerradasCount = useMemo(() =>
     misExpedientes.filter(e => ESTADOS_CERRADO.includes(e.estado)).length,
     [misExpedientes])
@@ -405,6 +471,7 @@ export function useHomeData() {
     porVencerCount,
     urgentesCount,
     estadosActivos,
+    audiencias,
     cerradasCount,
   }
 }

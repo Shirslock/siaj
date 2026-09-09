@@ -1,7 +1,7 @@
 import { RUTAS } from '../../utils/routing'
 import {
-  KpiCard, WidgetCard, WidgetVencimientos, WidgetCerradas, BarrasDistribucion,
-  useHomeData, type FilaBarra,
+  KpiCard, WidgetCard, WidgetVencimientos, WidgetCerradas, WidgetAudiencias,
+  BarrasDistribucion, useHomeData, type FilaBarra,
 } from './homeShared'
 
 // Pantalla Principal del rol ABOGADO (Etapa 1).
@@ -13,7 +13,7 @@ export default function HomePage() {
   const {
     usuarioActivo, navigate, misActivos, vencimientos,
     causasActivasCount, documentosActivosCount, asignadoCount, intervencion,
-    urgentesCount, estadosActivos, cerradasCount,
+    urgentesCount, estadosActivos, audiencias, cerradasCount,
   } = useHomeData()
 
   const filasPorRol: FilaBarra[] = [
@@ -26,12 +26,12 @@ export default function HomePage() {
       onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=Demandada`),
     },
     {
-      label: 'Sin intervención', valor: intervencion.sinIntervencion, color: '#85B7EB',
-      onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`),
+      label: 'Denunciante', valor: intervencion.denunciante, color: '#7F77DD',
+      onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=Denunciante`),
     },
     {
-      label: 'Penal', valor: intervencion.penal, color: '#7F77DD',
-      onClick: () => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`),
+      label: 'Sin intervención', valor: intervencion.sinIntervencion, color: '#85B7EB',
+      onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`),
     },
   ]
 
@@ -81,8 +81,10 @@ export default function HomePage() {
         {/* Izquierda: vencimientos y tareas */}
         <WidgetVencimientos items={vencimientos} />
 
-        {/* Derecha: distribuciones + cerradas */}
+        {/* Derecha: audiencias, distribuciones y cerradas */}
         <div className="space-y-5">
+          <WidgetAudiencias items={audiencias} />
+
           <WidgetCard titulo="Por rol" sub="Distribución de causas activas.">
             <BarrasDistribucion filas={filasPorRol} />
           </WidgetCard>

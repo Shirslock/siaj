@@ -80,6 +80,19 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
         es_movimiento_impulsorio: true,
       },
       {
+        id: 'C0100_AUD_01',
+        expediente_id: 'C-0100/2026',
+        tipo: 'AUDIENCIA' as TipoActividad,
+        titulo: 'Audiencia preliminar (art. 360 CPCCN)',
+        descripcion: 'El juzgado fijó audiencia preliminar. Sin fecha_aviso: alimenta "Próximas audiencias" sin generar alerta de vencimiento.',
+        fecha: addDays(-3),
+        activo: true,
+        subitems: [],
+        estadoExpediente: 'EN TRAMITACIÓN',
+        creado_por: 'UR_004',
+        fecha_vencimiento: addDays(25),
+      },
+      {
         id: 'C0100_NOT_01',
         expediente_id: 'C-0100/2026',
         tipo: 'NOTIFICACION' as TipoActividad,
@@ -341,6 +354,9 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     timeline: [
       { id: 'C0507_REC_01', expediente_id: 'C-0507/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-60), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' },
       { id: 'C0507_TAR_01', expediente_id: 'C-0507/2026', tipo: 'PERICIA' as TipoActividad, titulo: 'Impugnar pericia médica', descripcion: 'Vencido el plazo para impugnar la pericia.', fecha: addDays(-60), activo: true, subitems: [], estadoExpediente: 'EN_PRUEBA', fecha_vencimiento: addDays(-10) },
+      // Audiencia futura sin fecha_aviso: alimenta "Próximas audiencias" del Principal y NO
+      // genera alerta de vencimiento (ver getAlertaExpediente en utils/alertas.ts).
+      { id: 'C0507_AUD_01', expediente_id: 'C-0507/2026', tipo: 'AUDIENCIA' as TipoActividad, titulo: 'Audiencia de explicaciones al perito', descripcion: 'Audiencia fijada para que el perito médico brinde explicaciones.', fecha: addDays(-12), activo: true, subitems: [], estadoExpediente: 'EN_PRUEBA', fecha_vencimiento: addDays(6) },
     ],
     intervinientes: [], documentos: [], vinculos: [],
   },
@@ -366,6 +382,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     timeline: [
       { id: 'C0509_REC_01', expediente_id: 'C-0509/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-90), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' },
       { id: 'C0509_TAR_01', expediente_id: 'C-0509/2026', tipo: 'PRESENTACION' as TipoActividad, titulo: 'Presentar alegato', descripcion: 'Plazo por vencer para presentar alegato.', fecha: addDays(-90), activo: true, subitems: [], estadoExpediente: 'ALEGATO', fecha_aviso: addDays(-3), fecha_vencimiento: addDays(20) },
+      { id: 'C0509_AUD_01', expediente_id: 'C-0509/2026', tipo: 'AUDIENCIA' as TipoActividad, titulo: 'Audiencia de vista de causa', descripcion: 'Vista de causa fijada por el juzgado.', fecha: addDays(-20), activo: true, subitems: [], estadoExpediente: 'ALEGATO', fecha_vencimiento: addDays(18) },
     ],
     intervinientes: [], documentos: [], vinculos: [],
   },
@@ -377,7 +394,13 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     abogado_id: 'UR_004', fecha_recepcion: addDays(-120), es_principal: false, es_urgente: false,
     campos_mesa: { mesa_tipo_intervencion: 'Demandada', mesa_parte_actora: 'NUÑEZ, Estela', mesa_parte_dem: 'SOFSA S.A.' },
     campos_abogado: {},
-    timeline: [{ id: 'C0510_REC_01', expediente_id: 'C-0510/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-120), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' }],
+    timeline: [
+      { id: 'C0510_REC_01', expediente_id: 'C-0510/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-120), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' },
+      // Audiencia YA REALIZADA: queda en el historial y no debe aparecer en "Próximas
+      // audiencias". Se modela solo con `fecha` (sin fecha_vencimiento) — es un hecho pasado,
+      // no un plazo pendiente.
+      { id: 'C0510_AUD_01', expediente_id: 'C-0510/2026', tipo: 'AUDIENCIA' as TipoActividad, titulo: 'Audiencia testimonial', descripcion: 'Se celebró la audiencia testimonial con los testigos ofrecidos.', fecha: addDays(-12), activo: true, subitems: [], estadoExpediente: 'APELACION' },
+    ],
     intervinientes: [], documentos: [], vinculos: [],
   },
   {
@@ -414,6 +437,80 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     campos_mesa: { mesa_tipo_intervencion: 'Demandada', mesa_parte_actora: 'EL ARBOL S.R.L.', mesa_parte_dem: 'SOFSA S.A.' },
     campos_abogado: {},
     timeline: [{ id: 'C0513_REC_01', expediente_id: 'C-0513/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-70), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+
+  // ── CASANO (UR_004) — carga DOCUMENTAL ───────────────────────────────────
+  // Tipos de `TIPOS_DOCUMENTALES` (catalogos.ts): alimentan el indicador
+  // "Documentos activos" de la pantalla Principal. Varios traen `numero_causa`
+  // a propósito: un oficio referencia la causa ajena y aun así es un documento,
+  // no una causa propia del letrado — por eso la clasificación es por tipo.
+  // Sus ciclos usan ESTADOS_GENERICOS (INICIO / EN_TRAMITE / CERRADO).
+  {
+    id: 'C-0520/2026', area: 'CIVIL' as Area, tipo: 'OFICIO' as TipoGestion,
+    estado: 'INICIO', estadoProcesal: 'INICIO',
+    caratula: 'OFICIO JUDICIAL — Juzgado Civil N° 12 — Informe sobre siniestro en Estación Liniers',
+    numero_ee_gde: 'EX-2026-01201-APN-DGJYA', numero_causa: '45.881/2026',
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-2), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Sin Intervención', mesa_organismo: 'Juzgado Nacional en lo Civil N° 12', mesa_oficio_judicial: 'OJ-2026-4471' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0520_REC_01', expediente_id: 'C-0520/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Oficio recibido y asignado', descripcion: 'Oficio judicial recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-2), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    id: 'C-0521/2026', area: 'CIVIL' as Area, tipo: 'OFICIO' as TipoGestion,
+    estado: 'EN_TRAMITE', estadoProcesal: 'EN_TRAMITE',
+    caratula: 'OFICIO JUDICIAL — Juzgado Civil N° 4 — Remisión de legajo de mantenimiento de vías',
+    numero_ee_gde: 'EX-2026-01202-APN-DGJYA', numero_causa: '12.409/2025',
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-25), es_principal: false, es_urgente: true,
+    campos_mesa: { mesa_tipo_intervencion: 'Sin Intervención', mesa_organismo: 'Juzgado Nacional en lo Civil N° 4', mesa_oficio_judicial: 'OJ-2026-4102' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0521_REC_01', expediente_id: 'C-0521/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Oficio recibido y asignado', descripcion: 'Oficio judicial recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-25), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    id: 'C-0522/2026', area: 'CIVIL' as Area, tipo: 'OFICIO' as TipoGestion,
+    estado: 'EN_TRAMITE', estadoProcesal: 'EN_TRAMITE',
+    caratula: 'OFICIO — Defensoría del Pueblo — Pedido de informe sobre accesibilidad en andenes',
+    numero_ee_gde: 'EX-2026-01203-APN-DGJYA', numero_causa: null,
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-12), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Sin Intervención', mesa_organismo: 'Defensoría del Pueblo de la Nación' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0522_REC_01', expediente_id: 'C-0522/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Oficio recibido y asignado', descripcion: 'Oficio recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-12), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    id: 'C-0523/2026', area: 'CIVIL' as Area, tipo: 'CARTA_DOC' as TipoGestion,
+    estado: 'EN_TRAMITE', estadoProcesal: 'EN_TRAMITE',
+    caratula: 'CARTA DOCUMENTO — SUAREZ, Marta c/ SOFSA S.A. — Intimación por daños en cruce ferroviario',
+    numero_ee_gde: 'EX-2026-01204-APN-DGJYA', numero_causa: null,
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-8), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Demandada', mesa_parte_actora: 'SUAREZ, Marta', mesa_parte_dem: 'SOFSA S.A.' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0523_REC_01', expediente_id: 'C-0523/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Carta documento recibida y asignada', descripcion: 'Carta documento recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-8), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    id: 'C-0524/2026', area: 'CIVIL' as Area, tipo: 'PEDIDO_CAUSA_PENAL' as TipoGestion,
+    estado: 'INICIO', estadoProcesal: 'INICIO',
+    caratula: 'PEDIDO DE CAUSA PENAL — Antecedentes por descarrilamiento en Km 32 — Línea Sarmiento',
+    numero_ee_gde: 'EX-2026-01205-APN-DGJYA', numero_causa: 'IPP 8.441/2026',
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-5), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Sin Intervención', mesa_organismo: 'Fiscalía Nacional en lo Criminal y Correccional N° 7' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0524_REC_01', expediente_id: 'C-0524/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Pedido recibido y asignado', descripcion: 'Pedido de causa penal recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-5), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    // CERRADO: no cuenta como activo — alimenta el bloque "Actuaciones cerradas".
+    id: 'C-0525/2026', area: 'CIVIL' as Area, tipo: 'OFICIO' as TipoGestion,
+    estado: 'CERRADO', estadoProcesal: 'CERRADO',
+    caratula: 'OFICIO JUDICIAL — Juzgado Civil N° 9 — Informe de dominio de inmueble lindero',
+    numero_ee_gde: 'EX-2026-01206-APN-DGJYA', numero_causa: null,
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-60), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Sin Intervención', mesa_organismo: 'Juzgado Nacional en lo Civil N° 9' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0525_REC_01', expediente_id: 'C-0525/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Oficio recibido y asignado', descripcion: 'Oficio judicial recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-60), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
     intervinientes: [], documentos: [], vinculos: [],
   },
 

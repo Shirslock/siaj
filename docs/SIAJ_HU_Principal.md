@@ -52,19 +52,26 @@ El total general de actuaciones activas no se repite como indicador — ya está
 - Cada fila lleva **directo al detalle de esa actuación** (no a la Bandeja).
 - Un enlace al pie lleva a la Bandeja de Actuaciones filtrada por alertas de vencimiento.
 
-### 4. Distribuciones (columna derecha)
+### 4. Próximas audiencias (columna derecha)
+
+- Bloque con las **audiencias agendadas de hoy en adelante**, ordenadas de la más próxima a la más lejana, con la cantidad total a la vista.
+- Cada audiencia muestra su título, la fecha y el número de actuación, y lleva **directo al detalle de esa actuación**.
+- Las audiencias ya realizadas quedan en el historial de la actuación y **no** aparecen acá.
+- Las audiencias se cargan como una actividad del tipo "Audiencia" dentro de la actuación; no requieren un alta especial ni un módulo aparte.
+
+### 5. Distribuciones (columna derecha)
 
 Dos bloques con barras comparativas. Cada fila, al hacer clic, filtra la Bandeja de Actuaciones:
 
-- **Por rol** — cómo se reparten las causas activas según el rol procesal cargado en cada actuación: **Actora**, **Demandada**, **Sin intervención** y **Penal**. Se muestran las cuatro categorías siempre, incluso las que están en cero.
+- **Por rol** — cómo se reparten las actuaciones activas según el tipo de intervención cargado: **Actora**, **Demandada**, **Denunciante** y **Sin intervención**. Se muestran las cuatro categorías siempre, incluso las que están en cero (Denunciante corresponde al fuero Penal, así que queda en cero para un abogado de Civil o Laboral).
 - **Por estado procesal** — en qué etapa del trámite está cada actuación activa (Asignado, Inicio, Traba de Litis, En Prueba, Alegatos, Apelación, Ejecución de Sentencia, etc.), ordenado de mayor a menor. Solo aparecen los estados que el abogado efectivamente tiene. Para la gestión diaria interesa la etapa procesal, no el objeto del juicio.
 
 Al pie de la columna, un bloque con **Actuaciones cerradas** (total de actuaciones finalizadas del abogado), que lleva a la Bandeja en su pestaña de archivados.
 
-### 5. Navegación — "ir a la Bandeja ya filtrada"
+### 6. Navegación — "ir a la Bandeja ya filtrada"
 
 - Cualquier indicador o fila de distribución de esta pantalla, al hacer clic, **no abre una pantalla nueva**: navega a la Bandeja de Actuaciones existente, con el filtro correspondiente ya aplicado.
-- La única excepción es el listado de Vencimientos y tareas (punto 3), donde cada fila individual lleva directo al detalle de esa actuación puntual.
+- Las excepciones son el listado de Vencimientos y tareas (punto 3) y el de Próximas audiencias (punto 4), donde cada fila individual lleva directo al detalle de esa actuación puntual.
 - El número que muestra cada indicador y la cantidad de resultados que trae la Bandeja al hacer clic deben coincidir siempre.
 
 ---
@@ -75,7 +82,8 @@ Al pie de la columna, un bloque con **Actuaciones cerradas** (total de actuacion
 - **Módulo Solicitudes** — no está integrado a esta pantalla en esta etapa.
 - **Novedades PJN** (integración con el Portal del Poder Judicial) — no aparece en esta pantalla.
 - **Asistente IA** — no aparece en esta pantalla.
-- **Audiencias** no tienen un bloque propio: se cargan como actividad genérica con fecha de vencimiento y aparecen en el listado de Vencimientos y tareas como cualquier otro plazo, mostrando el detalle de la actividad (por ejemplo *"C-0505/2026 · Audiencia testimonial"*). Con eso queda cubierto el seguimiento de audiencias.
+- **Alta de audiencias como entidad propia**: se siguen cargando como una actividad del tipo "Audiencia" dentro de la actuación. Esta pantalla solo las lee y las agrupa.
+- **"Actuación de Oficio"** (el otro tipo de intervención del fuero Penal) no se muestra como categoría en "Por rol".
 - Distribución por **objeto del juicio / tipo de gestión** — se reemplazó por la distribución por estado procesal, que es la que sirve para la gestión del abogado.
 - Un indicador separado para actuaciones **vencidas**: las vencidas se ven en detalle dentro del listado de Vencimientos y tareas (con su total en el encabezado del grupo), no se duplican como indicador en la fila superior.
 - Distinguir entre "vencidas" y "por vencer" al filtrar desde el enlace hacia la Bandeja — ahí se muestran juntas (la distinción está resuelta dentro de la pantalla, con las pestañas).
