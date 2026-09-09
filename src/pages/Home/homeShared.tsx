@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { TIPO_LABEL } from '../BandejaAbogado/BandejaAbogado.page'
@@ -9,43 +9,13 @@ import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import type { Expediente } from '../../types'
 
-// Código compartido por las 3 variantes de layout del Home (ver Home.page.tsx,
-// Home2.page.tsx, Home3.page.tsx) — probadas en paralelo para que el equipo
-// elija el layout definitivo. Cero diferencias de lógica/cálculos entre ellas,
-// solo cambia cómo se acomoda todo esto en la página.
+// Lógica/cálculos y widgets compartidos del Home de ABOGADO (ver Home.page.tsx).
 
 // 'ARCHIVO' es el código de estado terminal real del ciclo Penal (etapasPenales.ts) —
 // distinto de 'ARCHIVADO'/'ARCHIVADA' que usan los demás tipos (mismo criterio que BandejaAbogado).
 export const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA']
 
 export const COLORES_DONUT = ['#2a78d6', '#1baf7a', '#7F77DD', '#eda100', '#e34948', '#8aa0b3', '#85B7EB', '#0b3d66']
-
-// ── Selector de diseño (comparación de las 3 variantes) ─────────────────────────
-
-export function HomeDesignSwitcher({ activo }: { activo: 1 | 2 | 3 }) {
-  const opciones: { n: 1 | 2 | 3; label: string; ruta: string }[] = [
-    { n: 1, label: 'Diseño 1', ruta: RUTAS.HOME },
-    { n: 2, label: 'Diseño 2', ruta: RUTAS.HOME2 },
-    { n: 3, label: 'Diseño 3', ruta: RUTAS.HOME3 },
-  ]
-  return (
-    <div className="inline-flex gap-1 bg-[#f5f5f5] rounded-xl p-1">
-      {opciones.map(o => (
-        <Link
-          key={o.n}
-          to={o.ruta}
-          className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
-            activo === o.n
-              ? 'bg-white text-[#1b3a57] shadow-sm'
-              : 'text-[#4a6a84] hover:text-[#1b3a57]'
-          }`}
-        >
-          {o.label}
-        </Link>
-      ))}
-    </div>
-  )
-}
 
 // ── Widgets genéricos (mismo estilo visual que Dashboard.page.tsx) ─────────────
 

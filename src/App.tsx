@@ -4,8 +4,6 @@ import { useUIStore } from './store/ui.store'
 import { RUTAS } from './utils/routing'
 import DashboardPage from './pages/Dashboard/Dashboard.page'
 import HomePage from './pages/Home/Home.page'
-import Home2Page from './pages/Home/Home2.page'
-import Home3Page from './pages/Home/Home3.page'
 import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
 import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
 import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
@@ -32,10 +30,6 @@ export default function App() {
         <Routes>
           <Route path="/"                  element={<RaizPorRol />} />
           <Route path="/home"              element={<HomePage />} />
-          {/* /home2 y /home3: variantes de layout en comparación — acceso solo vía
-              HomeDesignSwitcher dentro de las 3 páginas, no están en ROL_ACCESOS/Sidebar. */}
-          <Route path="/home2"             element={<Home2Page />} />
-          <Route path="/home3"             element={<Home3Page />} />
           <Route path="/dashboard"         element={<DashboardPage />} />
           <Route path="/mesa"              element={<MesaSacoPage />} />
           <Route path="/mesa/alta"         element={<AltaExpedientePage />} />

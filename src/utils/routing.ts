@@ -1,7 +1,5 @@
 export const RUTAS = {
   HOME:            '/home',
-  HOME2:           '/home2',
-  HOME3:           '/home3',
   DASHBOARD:       '/dashboard',
   MESA:            '/mesa',
   MESA_ALTA:       '/mesa/alta',

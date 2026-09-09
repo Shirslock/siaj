@@ -6,8 +6,6 @@ import { Topbar } from './Topbar'
 
 const PAGE_TITLES: Record<string, string> = {
   '/home':            'Inicio',
-  '/home2':           'Inicio (Diseño 2)',
-  '/home3':           'Inicio (Diseño 3)',
   '/dashboard':       'Panel de Control',
   '/mesa':            'Mesa SACO',
   '/mesa/alta':       'Alta de Expediente',
@@ -21,8 +19,6 @@ const PAGE_TITLES: Record<string, string> = {
 
 const PAGE_ACTIVE: Record<string, string> = {
   '/home':            'home',
-  '/home2':           'home',
-  '/home3':           'home',
   '/dashboard':       'dashboard',
   '/mesa':            'mesa',
   '/mesa/alta':       'mesa',
