@@ -5,7 +5,7 @@ import { useUIStore } from '../../store/ui.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import { construirFilasBandejaExport, exportarBandejaExcel } from '../../utils/exportBandeja'
-import { TIPOS_GESTION } from '../../data/catalogos'
+import { TIPOS_GESTION, esTipoDocumental } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
@@ -50,7 +50,7 @@ function construirItems(exps: Expediente[]): ItemBandeja[] {
   return items
 }
 
-export const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
+const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
 const filterInputCls =
   'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
@@ -85,7 +85,8 @@ export default function BandejaAbogadoPage() {
     fechaHasta: '',
     soloUrgentes: searchParams.get('urgente') === '1',
     soloAlerta:   searchParams.get('alerta') === '1',
-    parte:        searchParams.get('parte') ?? '', // deep-link desde Home (ABOGADO): valor exacto de campos_mesa.mesa_tipo_intervencion ('Actora' | 'Demandada' | 'Denunciante' | 'Actuación de Oficio' | 'Sin Intervención')
+    parte:        searchParams.get('parte') ?? '', // deep-link desde Principal: valor exacto de campos_mesa.mesa_tipo_intervencion ('Actora' | 'Demandada' | 'Denunciante' | 'Actuación de Oficio' | 'Sin Intervención')
+    clase:        searchParams.get('clase') ?? '', // deep-link desde Principal: 'causa' | 'documento' (ver TIPOS_DOCUMENTALES en catalogos.ts)
   }), [usuarioActivo?.id, esCoordi, esAbogado, buscarInicial, searchParams])
 
   const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>(
@@ -141,7 +142,10 @@ export default function BandejaAbogadoPage() {
       if (filtros.letrado   && e.abogado_id !== filtros.letrado)   return false
       if (filtros.area      && e.area !== filtros.area)             return false
       if (filtros.tipo      && e.tipo !== filtros.tipo)             return false
-      if (filtros.estado    && e.estado !== filtros.estado)         return false
+      // El select de la tabla filtra por `estado`; el deep-link "Por estado procesal" de la
+      // pantalla Principal usa `estadoProcesal`. Se acepta cualquiera de los dos para que el
+      // contador de la Principal y el resultado de la Bandeja no se contradigan.
+      if (filtros.estado && e.estado !== filtros.estado && (e.estadoProcesal ?? e.estado) !== filtros.estado) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
@@ -153,6 +157,9 @@ export default function BandejaAbogadoPage() {
         const tipoInterv = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') || 'Sin Intervención'
         if (tipoInterv !== filtros.parte) return false
       }
+      // Causa vs. documento: por TIPO de gestión (TIPOS_DOCUMENTALES), no por n° de causa.
+      if (filtros.clase === 'documento' && !esTipoDocumental(e.tipo)) return false
+      if (filtros.clase === 'causa'     &&  esTipoDocumental(e.tipo)) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         const campos = [

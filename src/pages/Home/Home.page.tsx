@@ -12,8 +12,8 @@ import {
 export default function HomePage() {
   const {
     usuarioActivo, navigate, misActivos, vencimientos,
-    causasActivasCount, asignadoCount, intervencion,
-    urgentesCount, tiposActivos, cerradasCount,
+    causasActivasCount, documentosActivosCount, asignadoCount, intervencion,
+    urgentesCount, estadosActivos, cerradasCount,
   } = useHomeData()
 
   const filasPorRol: FilaBarra[] = [
@@ -35,11 +35,11 @@ export default function HomePage() {
     },
   ]
 
-  const filasPorTipo: FilaBarra[] = tiposActivos.map(t => ({
-    label: t.label,
-    valor: t.count,
+  const filasPorEstado: FilaBarra[] = estadosActivos.map(e => ({
+    label: e.label,
+    valor: e.count,
     color: '#2a78d6',
-    onClick: () => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`),
+    onClick: () => navigate(`${RUTAS.ACTUACIONES}?estado=${encodeURIComponent(e.code)}`),
   }))
 
   return (
@@ -58,12 +58,12 @@ export default function HomePage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
-          icono="description" label="Causas activas" valor={causasActivasCount} tono="azul"
-          onClick={() => navigate(RUTAS.ACTUACIONES)}
+          icono="folder" label="Causas activas" valor={causasActivasCount} tono="azul"
+          onClick={() => navigate(`${RUTAS.ACTUACIONES}?clase=causa`)}
         />
         <KpiCard
-          icono="checklist" label="Actuaciones activas" valor={misActivos.length} tono="teal"
-          onClick={() => navigate(RUTAS.ACTUACIONES)}
+          icono="description" label="Documentos activos" valor={documentosActivosCount} tono="teal"
+          onClick={() => navigate(`${RUTAS.ACTUACIONES}?clase=documento`)}
         />
         <KpiCard
           icono="person_add" label="Nuevas asignadas" valor={asignadoCount} tono="azul"
@@ -87,11 +87,11 @@ export default function HomePage() {
             <BarrasDistribucion filas={filasPorRol} />
           </WidgetCard>
 
-          <WidgetCard titulo="Por tipo de gestión" sub="Distribución de actuaciones activas.">
-            {filasPorTipo.length === 0 ? (
+          <WidgetCard titulo="Por estado procesal" sub="Distribución de actuaciones activas.">
+            {filasPorEstado.length === 0 ? (
               <p className="text-[12px] text-[#7a9ab4] text-center py-4">Sin actuaciones activas.</p>
             ) : (
-              <BarrasDistribucion filas={filasPorTipo} />
+              <BarrasDistribucion filas={filasPorEstado} />
             )}
           </WidgetCard>
 

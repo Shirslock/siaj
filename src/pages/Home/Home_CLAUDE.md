@@ -17,19 +17,19 @@ params — no hay listas nuevas ni edición desde acá.
 Diseño en 3 zonas (rediseño sobre maqueta del cliente — `docs/principal.jpeg`):
 
 1. **Fila de 4 KPIs** a lo ancho (`grid grid-cols-2 xl:grid-cols-4 gap-4`): Causas activas,
-   Actuaciones activas, Nuevas asignadas, Urgentes.
-2. **Izquierda del cuerpo**: `<WidgetVencimientos>` — el protagonista de la pantalla, con tabs,
-   buscador y agrupación Vencidas/Próximas.
-3. **Derecha del cuerpo** (`340px` fijo): `<WidgetCard>` "Por rol" + `<WidgetCard>` "Por tipo de
-   gestión" (ambos con `<BarrasDistribucion>`) y abajo `<WidgetCerradas>`.
+   Documentos activos, Nuevas asignadas, Urgentes.
+2. **Izquierda del cuerpo**: `<WidgetVencimientos>` — el protagonista de la pantalla, con tabs
+   y agrupación Vencidas/Próximas.
+3. **Derecha del cuerpo** (`340px` fijo): `<WidgetCard>` "Por rol" + `<WidgetCard>` "Por estado
+   procesal" (ambos con `<BarrasDistribucion>`) y abajo `<WidgetCerradas>`.
 
 El cuerpo es `grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px]` — en pantallas menores a `xl`
 las dos columnas se apilan. Todo el cálculo vive en `homeShared.tsx` (`useHomeData()`); la página
 solo arma el JSX y define los destinos de navegación.
 
-**No hay** gráfico de sub-estado: el donut `WidgetPorSubEstado` del diseño anterior se eliminó
-(no está en la maqueta). El deep-link `?estado=<code>` sigue existiendo en la Bandeja, pero desde
-esta pantalla solo se usa `?estado=ASIGNADO` (KPI "Nuevas asignadas").
+**No hay** KPI de total de actuaciones: el total ya está en el saludo del encabezado
+("Gestionando N actuaciones activas"), y `causasActivasCount + documentosActivosCount` da
+exactamente `misActivos.length`.
 
 ---
 
@@ -37,10 +37,26 @@ esta pantalla solo se usa `?estado=ASIGNADO` (KPI "Nuevas asignadas").
 
 | KPI | Definición | Destino del click |
 |-----|-----------|-------------------|
-| **Causas activas** | `numero_causa` **distintos** entre `misActivos`, excluyendo `null`/vacío/`'SS'` — no cuenta actuaciones sueltas (mismo criterio de agrupación que `construirItems` en `BandejaAbogado.page.tsx`). Por eso es ≤ "Actuaciones activas". | `/actuaciones` |
-| **Actuaciones activas** | `misActivos.length`. | `/actuaciones` |
+| **Causas activas** | `misActivos` cuyo `tipo` **no** está en `TIPOS_DOCUMENTALES`. | `?clase=causa` |
+| **Documentos activos** | `misActivos` cuyo `tipo` **sí** está en `TIPOS_DOCUMENTALES`. | `?clase=documento` |
 | **Nuevas asignadas** | `misActivos.filter(e => e.estado === 'ASIGNADO').length`. | `?estado=ASIGNADO` |
 | **Urgentes** | `misActivos.filter(e => e.es_urgente).length`. | `?urgente=1` |
+
+### Causa vs. documento — la clasificación es por TIPO, no por n° de causa
+
+`TIPOS_DOCUMENTALES` / `esTipoDocumental()` viven en `src/data/catalogos.ts`, al lado de
+`TIPOS_GESTION`: **Oficios, Carta Documento, Pedido de Causa Penal, Carta Suceso (SAE) y Otras
+presentaciones** son documentos; el resto (Demandas, Lanzamientos, Querellas, Defensas,
+Mediaciones, SECLO, Cobro de cánones, Recuperos, Ejecución de pólizas…) son causas.
+
+Se descartó clasificar por "tiene o no `numero_causa`": un **oficio judicial normalmente
+referencia el n° de causa ajeno** (el formulario de `OFICIO` tiene el campo `mesa_num_causa`), así
+que el letrado que solo lleva oficios habría seguido viendo "Documentos 0". El pedido del cliente
+fue justamente ese: hay letrados que llevan solo documentos y con un único total su pantalla
+quedaba vacía o distorsionada.
+
+Si se agrega un `TipoGestion` nuevo al catálogo, hay que decidir de qué lado cae — si no se toca
+`TIPOS_DOCUMENTALES`, cuenta como causa por defecto.
 
 Tonos de la cajita del ícono: `TONOS_KPI` (`azul` / `teal` / `rojo`) — clases **literales**, no
 armadas dinámicamente (Tailwind v4 no resuelve `text-[${var}]`). Los colores de las barras sí van
@@ -81,7 +97,7 @@ punto de 5px cuando el valor es 0.
 | Card | Filas | Destino del click |
 |------|-------|-------------------|
 | **Por rol** ("Distribución de causas activas.") | Actora, Demandada, Sin intervención (por `campos_mesa['mesa_tipo_intervencion']`; vacío cuenta como Sin Intervención) y Penal (por `e.area === 'PENAL'`). Orden fijo, incluye los ceros. | `?parte=Actora` / `?parte=Demandada` / `?parte=Sin%20Intervenci%C3%B3n` / `?area=PENAL` |
-| **Por tipo de gestión** ("Distribución de actuaciones activas.") | Una fila por cada `tipo` presente en `misActivos` (no todo el catálogo), ordenadas por cantidad desc. Usa `TIPO_LABEL` (exportado desde `BandejaAbogado.page.tsx`, no duplicado). | `?tipo=<code>` |
+| **Por estado procesal** ("Distribución de actuaciones activas.") | Una fila por cada estado presente en `misActivos` — agrupa por `estadoProcesal ?? estado` y ordena por cantidad desc. El label legible ("Traba de Litis", "En Prueba"…) sale de `getEstadoProcesal(e.tipo, code)?.label` (`estadosProcesales.ts`), porque el ciclo de estados depende del tipo; si no lo encuentra, cae al código crudo. | `?estado=<code>` |
 
 **`<WidgetCerradas>`**: bloque aparte al pie de la columna derecha —
 `misExpedientes` **completo** (no `misActivos`) filtrado por `ESTADOS_CERRADO`. → `?tab=archivados`.
@@ -99,9 +115,9 @@ Oficio | Sin Intervención`.
 ## `useHomeData()` — todo el cálculo en un solo hook
 
 Devuelve `usuarioActivo`, `navigate`, `misExpedientes`, `misActivos`, `vencimientos`,
-`causasActivasCount`, `asignadoCount`, `intervencion` (`{ actora, demandada, sinIntervencion,
-penal }`), `porVencerCount`, `urgentesCount`, `tiposActivos` (`{ code, count, label }[]`,
-ordenado por `count` desc) y `cerradasCount`.
+`causasActivasCount`, `documentosActivosCount`, `asignadoCount`, `intervencion` (`{ actora,
+demandada, sinIntervencion, penal }`), `porVencerCount`, `urgentesCount`, `estadosActivos`
+(`{ code, count, label }[]`, ordenado por `count` desc) y `cerradasCount`.
 
 `porVencerCount` hoy no lo consume la página (el diseño nuevo muestra ese dato como el contador
 del grupo "Próximas (N)"), pero se sigue exportando por ser barato y útil.
@@ -123,7 +139,15 @@ del grupo "Próximas (N)"), pero se sigue exportando por ser barato y útil.
   3 urgentes y varios sub-estados). El usuario activo por defecto es LOPEZ (`UR_018`, REFERENTE),
   que redirige a `/dashboard` — si se entra a `/home` sin cambiar de usuario **no** se ve esta
   pantalla, y eso es lo esperado.
+- **`estado` matchea contra los dos campos.** El select de la tabla de la Bandeja filtra por
+  `e.estado`, pero "Por estado procesal" deep-linkea con `estadoProcesal`. El filtro acepta
+  cualquiera de los dos (`e.estado === filtro || (e.estadoProcesal ?? e.estado) === filtro`) para
+  que el número de la barra y el resultado de la Bandeja coincidan aunque un expediente tenga los
+  dos campos distintos. Hoy el mock los mantiene iguales, pero el modelo lo permite.
 - `BandejaAbogado.page.tsx` hidrata `filtroInicial`/`tabEstado` desde estos mismos query params
-  (`estado`, `fechaDesde`, `alerta`, `parte`, `area`, `tipo`, `urgente`, `tab`) — son deep-links
-  invisibles en la tabla, no agregan UI de filtro nueva ahí.
+  (`estado`, `fechaDesde`, `alerta`, `parte`, `clase`, `area`, `tipo`, `urgente`, `tab`) — son
+  deep-links invisibles en la tabla, no agregan UI de filtro nueva ahí.
+- **Audiencias**: no necesitan tratamiento propio. Se cargan como actividad genérica con
+  vencimiento y aparecen en `<WidgetVencimientos>` como cualquier otro plazo, mostrando el
+  detalle de la actividad (`C-0505/2026 · Audiencia testimonial`).
 - La maqueta de referencia del rediseño está en `docs/principal.jpeg`.

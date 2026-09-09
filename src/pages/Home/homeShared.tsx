@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
-import { TIPO_LABEL } from '../BandejaAbogado/BandejaAbogado.page'
+import { esTipoDocumental } from '../../data/catalogos'
+import { getEstadoProcesal } from '../../data/estadosProcesales'
 import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
@@ -93,13 +94,16 @@ export function BarrasDistribucion({ filas }: { filas: FilaBarra[] }) {
           onClick={f.onClick}
           className={`flex items-center gap-3 ${f.onClick ? 'cursor-pointer group' : ''}`}
         >
-          <span className="text-[13px] text-[#1b3a57] flex-1 min-w-0 truncate group-hover:underline">
+          <span
+            title={f.label}
+            className="text-[13px] text-[#1b3a57] flex-1 min-w-0 truncate group-hover:underline"
+          >
             {f.label}
           </span>
           <span className="text-[13px] font-bold text-[#1b3a57] w-6 text-right flex-shrink-0">
             {f.valor}
           </span>
-          <span className="h-2 w-[46%] rounded-full bg-[#dfe9f2] flex-shrink-0 overflow-hidden">
+          <span className="h-2 w-[38%] rounded-full bg-[#dfe9f2] flex-shrink-0 overflow-hidden">
             <span
               className="block h-full rounded-full transition-all"
               style={{
@@ -332,16 +336,17 @@ export function useHomeData() {
     construirVencimientos(misActivos, tareasMap),
     [misActivos, tareasMap])
 
-  // Causas judiciales distintas entre mis activas — no cuenta actuaciones sueltas
-  // (mismo criterio de agrupación que BandejaAbogado.page.tsx / construirItems).
-  const causasActivasCount = useMemo(() => {
-    const causas = new Set<string>()
-    misActivos.forEach(e => {
-      const nc = (e.numero_causa ?? '').trim()
-      if (nc && nc.toUpperCase() !== 'SS') causas.add(nc)
-    })
-    return causas.size
-  }, [misActivos])
+  // Causas vs. documentos: la separación es por TIPO de gestión (`TIPOS_DOCUMENTALES` en
+  // catalogos.ts), no por si la actuación trae n° de causa cargado — un oficio judicial
+  // normalmente referencia una causa ajena y aun así es un documento. Los dos contadores
+  // suman exactamente `misActivos.length`.
+  const causasActivasCount = useMemo(() =>
+    misActivos.filter(e => !esTipoDocumental(e.tipo)).length,
+    [misActivos])
+
+  const documentosActivosCount = useMemo(() =>
+    misActivos.filter(e => esTipoDocumental(e.tipo)).length,
+    [misActivos])
 
   const asignadoCount = useMemo(() =>
     misActivos.filter(e => e.estado === 'ASIGNADO').length,
@@ -367,11 +372,19 @@ export function useHomeData() {
     misActivos.filter(e => e.es_urgente).length,
     [misActivos])
 
-  const tiposActivos = useMemo(() => {
-    const conteo: Record<string, number> = {}
-    misActivos.forEach(e => { conteo[e.tipo] = (conteo[e.tipo] ?? 0) + 1 })
+  // Distribución por estado procesal (en qué etapa está cada actuación), no por objeto
+  // del juicio. El label sale de `getEstadoProcesal(tipo, codigo)` — el ciclo de estados
+  // depende del tipo, así que se resuelve por expediente y se agrupa por código.
+  const estadosActivos = useMemo(() => {
+    const conteo: Record<string, { count: number; label: string }> = {}
+    misActivos.forEach(e => {
+      const code = e.estadoProcesal ?? e.estado
+      const label = getEstadoProcesal(e.tipo, code)?.label ?? code
+      if (conteo[code]) conteo[code].count++
+      else conteo[code] = { count: 1, label }
+    })
     return Object.entries(conteo)
-      .map(([code, count]) => ({ code, count, label: TIPO_LABEL[code] ?? code }))
+      .map(([code, { count, label }]) => ({ code, count, label }))
       .sort((a, b) => b.count - a.count)
   }, [misActivos])
 
@@ -386,11 +399,12 @@ export function useHomeData() {
     misActivos,
     vencimientos,
     causasActivasCount,
+    documentosActivosCount,
     asignadoCount,
     intervencion,
     porVencerCount,
     urgentesCount,
-    tiposActivos,
+    estadosActivos,
     cerradasCount,
   }
 }

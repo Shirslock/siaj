@@ -32,10 +32,16 @@ Cuatro indicadores destacados, cada uno con su ícono. Al hacer clic, cada uno l
 
 | Indicador | Qué muestra |
 |---|---|
-| **Causas activas** | Cantidad de causas judiciales distintas entre las actuaciones activas del abogado (varias actuaciones pueden compartir una misma causa, por eso este número es menor o igual al siguiente). |
-| **Actuaciones activas** | Cantidad total de actuaciones activas a cargo del abogado, tengan o no una causa judicial asociada. |
+| **Causas activas** | Actuaciones activas del abogado que son una causa judicial propia: Demandas, Lanzamientos, Querellas, Defensas, Mediaciones, SECLO, Cobro de cánones, Recuperos, Ejecución de pólizas, etc. |
+| **Documentos activos** | Actuaciones activas que el abogado lleva como documento: Oficios, Carta Documento, Pedido de Causa Penal, Carta Suceso (SAE) y Otras presentaciones. |
 | **Nuevas asignadas** | Actuaciones recién asignadas al abogado, que todavía no iniciaron su trámite. |
 | **Urgentes** | Actuaciones marcadas como urgentes. |
+
+**Por qué se separan causas de documentos:** hay abogados que llevan ambas cosas y otros que llevan solo documentos (típicamente oficios). Con un único total, estos últimos veían la pantalla casi vacía o distorsionada.
+
+La clasificación es **por tipo de gestión, no por si la actuación tiene número de causa cargado**: un oficio judicial normalmente referencia el número de causa del expediente ajeno y aun así es un documento, no una causa propia del abogado.
+
+El total general de actuaciones activas no se repite como indicador — ya está en el saludo del encabezado, y equivale a la suma de "Causas activas" + "Documentos activos".
 
 ### 3. Vencimientos y tareas (bloque principal)
 
@@ -51,7 +57,7 @@ Cuatro indicadores destacados, cada uno con su ícono. Al hacer clic, cada uno l
 Dos bloques con barras comparativas. Cada fila, al hacer clic, filtra la Bandeja de Actuaciones:
 
 - **Por rol** — cómo se reparten las causas activas según el rol procesal cargado en cada actuación: **Actora**, **Demandada**, **Sin intervención** y **Penal**. Se muestran las cuatro categorías siempre, incluso las que están en cero.
-- **Por tipo de gestión** — cómo se reparten las actuaciones activas por tipo (Demanda Civil, Lanzamientos, Oficios, etc.), ordenadas de mayor a menor. Solo aparecen los tipos que el abogado efectivamente tiene.
+- **Por estado procesal** — en qué etapa del trámite está cada actuación activa (Asignado, Inicio, Traba de Litis, En Prueba, Alegatos, Apelación, Ejecución de Sentencia, etc.), ordenado de mayor a menor. Solo aparecen los estados que el abogado efectivamente tiene. Para la gestión diaria interesa la etapa procesal, no el objeto del juicio.
 
 Al pie de la columna, un bloque con **Actuaciones cerradas** (total de actuaciones finalizadas del abogado), que lleva a la Bandeja en su pestaña de archivados.
 
@@ -69,7 +75,8 @@ Al pie de la columna, un bloque con **Actuaciones cerradas** (total de actuacion
 - **Módulo Solicitudes** — no está integrado a esta pantalla en esta etapa.
 - **Novedades PJN** (integración con el Portal del Poder Judicial) — no aparece en esta pantalla.
 - **Asistente IA** — no aparece en esta pantalla.
-- Distribución por **sub-estado procesal** — se evaluó y quedó fuera del diseño final.
+- **Audiencias** no tienen un bloque propio: se cargan como actividad genérica con fecha de vencimiento y aparecen en el listado de Vencimientos y tareas como cualquier otro plazo, mostrando el detalle de la actividad (por ejemplo *"C-0505/2026 · Audiencia testimonial"*). Con eso queda cubierto el seguimiento de audiencias.
+- Distribución por **objeto del juicio / tipo de gestión** — se reemplazó por la distribución por estado procesal, que es la que sirve para la gestión del abogado.
 - Un indicador separado para actuaciones **vencidas**: las vencidas se ven en detalle dentro del listado de Vencimientos y tareas (con su total en el encabezado del grupo), no se duplican como indicador en la fila superior.
 - Distinguir entre "vencidas" y "por vencer" al filtrar desde el enlace hacia la Bandeja — ahí se muestran juntas (la distinción está resuelta dentro de la pantalla, con las pestañas).
 - Roles Gerente, Coordinador y Mesa SACO: no tienen esta pantalla en esta etapa, siguen con sus pantallas actuales sin cambios.

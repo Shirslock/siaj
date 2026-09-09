@@ -1,4 +1,4 @@
-import type { TipoGestionItem, CatalogoItem, CatalogoItemExtended, Area } from '../types'
+import type { TipoGestionItem, CatalogoItem, CatalogoItemExtended, Area, TipoGestion } from '../types'
 
 export const LINEAS_FERROVIARIAS: CatalogoItem[] = [
   { id:'LIN_001', label:'ROCA' },
@@ -38,6 +38,27 @@ export const TIPOS_GESTION: TipoGestionItem[] = [
 
 export function getTiposGestionPorArea(area: Area): TipoGestionItem[] {
   return TIPOS_GESTION.filter(t => t.areas.includes(area))
+}
+
+/**
+ * Tipos de gestión "documentales": trámites que el letrado lleva como documento suelto
+ * (típicamente oficios), en contraposición a los que son una causa judicial propia.
+ * Un documento puede referenciar un n° de causa ajeno (el formulario de OFICIO tiene el
+ * campo) — la clasificación es por TIPO, no por si trae número de causa cargado.
+ *
+ * Lo usa la pantalla Principal para separar "Causas activas" de "Documentos activos":
+ * hay letrados que llevan solo documentos, y con un único total su pantalla quedaba vacía.
+ */
+export const TIPOS_DOCUMENTALES = new Set<TipoGestion>([
+  'OFICIO',
+  'CARTA_DOC',
+  'PEDIDO_CAUSA_PENAL',
+  'CARTA_SUCESO',
+  'OTRAS',
+])
+
+export function esTipoDocumental(tipo: string): boolean {
+  return TIPOS_DOCUMENTALES.has(tipo as TipoGestion)
 }
 
 export const JUZGADOS: CatalogoItemExtended[] = [
