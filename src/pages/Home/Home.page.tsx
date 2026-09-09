@@ -28,7 +28,7 @@ function WidgetCard({
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
+      className={`p-5 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
         onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
       }`}
     >
@@ -56,7 +56,7 @@ function Tag({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-[rgba(0,0,0,0.08)] bg-white transition-all ${
+      className={`flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-[rgba(0,0,0,0.08)] bg-white transition-all ${
         onClick ? 'cursor-pointer hover:border-[#1b3a57] hover:shadow-sm' : ''
       }`}
     >
@@ -70,7 +70,7 @@ function Tag({
 }
 
 function SeparadorTags() {
-  return <div className="h-px bg-[rgba(0,0,0,0.07)] my-2" />
+  return <div className="h-px bg-[rgba(0,0,0,0.07)] my-3" />
 }
 
 // ── Vencimientos + tareas (fusionados) ─────────────────────────────────────────
@@ -129,7 +129,7 @@ function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
             <div
               key={exp.id}
               onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
-              className="flex items-center justify-between gap-3 py-2.5 cursor-pointer hover:bg-[#f5f5f5] transition-colors rounded-lg px-1.5 -mx-1.5"
+              className="flex items-center justify-between gap-3 py-3 cursor-pointer hover:bg-[#f5f5f5] transition-colors rounded-lg px-2 -mx-2"
             >
               <div className="min-w-0">
                 <p className="text-[12px] text-[#1b3a57] font-medium truncate">{exp.caratula}</p>
@@ -337,19 +337,19 @@ export default function HomePage() {
     [misExpedientes])
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-8 space-y-6">
       <div>
         <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Inicio</h1>
-        <p className="text-sm text-[#4a6a84] mt-1">
+        <p className="text-sm text-[#4a6a84] mt-1.5">
           Hola, <span className="font-semibold text-[#1b3a57]">{usuarioActivo?.nombre} {usuarioActivo?.apellido}</span>.
           Gestionando <span className="font-semibold text-[#1b3a57]">{misActivos.length}</span> actuación
           {misActivos.length !== 1 ? 'es' : ''} activa{misActivos.length !== 1 ? 's' : ''}.
         </p>
       </div>
 
-      <div className="flex gap-4 items-start">
+      <div className="flex gap-8 items-start">
         {/* Columna izquierda: tags/contadores, todos con deep-link a Actuaciones */}
-        <div className="w-64 flex-shrink-0 space-y-1.5">
+        <div className="w-64 flex-shrink-0 space-y-2.5">
           <Tag
             label="Total de Causas Activas" valor={causasActivasCount}
             onClick={() => navigate(RUTAS.ACTUACIONES)}
@@ -417,10 +417,10 @@ export default function HomePage() {
         </div>
 
         {/* Columna derecha: vencimientos y donuts */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex-1 min-w-0 space-y-6">
           <WidgetVencimientos items={vencimientos} />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <WidgetPorSubEstado expedientes={misActivos} />
             <WidgetTipoIntervencion expedientes={misActivos} />
           </div>
