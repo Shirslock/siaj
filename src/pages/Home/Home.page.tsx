@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import { TIPO_LABEL } from '../BandejaAbogado/BandejaAbogado.page'
 import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
@@ -13,12 +14,6 @@ import type { Expediente } from '../../types'
 const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA']
 
 const COLORES_DONUT = ['#2a78d6', '#1baf7a', '#7F77DD', '#eda100', '#e34948', '#8aa0b3', '#85B7EB', '#0b3d66']
-
-const DIAS_NUEVAS = 7
-
-function haceNDias(n: number): string {
-  return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10)
-}
 
 // ── Widgets genéricos (mismo estilo visual que Dashboard.page.tsx) ─────────────
 
@@ -48,29 +43,34 @@ function WidgetCard({
   )
 }
 
-function KpiCard({
+// ── Tag / chip de la columna izquierda ──────────────────────────────────────────
+
+function Tag({
   label, valor, color, onClick,
 }: {
   label: string
   valor: number
-  color: 'red' | 'amber' | 'blue'
+  color?: string
   onClick?: () => void
 }) {
-  const dot = { red: '#e34948', amber: '#eda100', blue: '#2a78d6' }[color]
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#1b3a57] hover:ring-offset-1' : ''
+      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-[rgba(0,0,0,0.08)] bg-white transition-all ${
+        onClick ? 'cursor-pointer hover:border-[#1b3a57] hover:shadow-sm' : ''
       }`}
     >
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dot }} />
-        <p className="text-[11px] text-[#7a9ab4] uppercase tracking-wide">{label}</p>
+      <div className="flex items-center gap-2 min-w-0">
+        {color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />}
+        <span className="text-[12px] text-[#4a6a84] font-medium truncate">{label}</span>
       </div>
-      <p className="text-[28px] font-semibold text-[#1b3a57] leading-none">{valor}</p>
+      <span className="text-[13px] font-bold text-[#1b3a57] flex-shrink-0">{valor}</span>
     </div>
   )
+}
+
+function SeparadorTags() {
+  return <div className="h-px bg-[rgba(0,0,0,0.07)] my-2" />
 }
 
 // ── Vencimientos + tareas (fusionados) ─────────────────────────────────────────
@@ -289,15 +289,52 @@ export default function HomePage() {
     construirVencimientos(misActivos, tareasMap),
     [misActivos, tareasMap])
 
-  const fechaDesdeNuevas = useMemo(() => haceNDias(DIAS_NUEVAS), [])
+  // Causas judiciales distintas entre mis activas — no cuenta actuaciones sueltas
+  // (mismo criterio de agrupación que BandejaAbogado.page.tsx / construirItems).
+  const causasActivasCount = useMemo(() => {
+    const causas = new Set<string>()
+    misActivos.forEach(e => {
+      const nc = (e.numero_causa ?? '').trim()
+      if (nc && nc.toUpperCase() !== 'SS') causas.add(nc)
+    })
+    return causas.size
+  }, [misActivos])
 
-  const nuevasCount = useMemo(() =>
-    misActivos.filter(e => e.fecha_recepcion >= fechaDesdeNuevas).length,
-    [misActivos, fechaDesdeNuevas])
-
-  const actoraCount = useMemo(() =>
-    misActivos.filter(e => String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') === 'Actora').length,
+  const asignadoCount = useMemo(() =>
+    misActivos.filter(e => e.estado === 'ASIGNADO').length,
     [misActivos])
+
+  const intervencion = useMemo(() => {
+    let actora = 0, demandada = 0, sinIntervencion = 0
+    misActivos.forEach(e => {
+      const valor = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '')
+      if (valor === 'Actora') actora++
+      else if (valor === 'Demandada') demandada++
+      else if (valor === 'Sin Intervención' || valor === '') sinIntervencion++
+    })
+    const penal = misActivos.filter(e => e.area === 'PENAL').length
+    return { actora, demandada, sinIntervencion, penal }
+  }, [misActivos])
+
+  const porVencerCount = useMemo(() =>
+    vencimientos.filter(i => i.estado === 'por_vencer').length,
+    [vencimientos])
+
+  const urgentesCount = useMemo(() =>
+    misActivos.filter(e => e.es_urgente).length,
+    [misActivos])
+
+  const tiposActivos = useMemo(() => {
+    const conteo: Record<string, number> = {}
+    misActivos.forEach(e => { conteo[e.tipo] = (conteo[e.tipo] ?? 0) + 1 })
+    return Object.entries(conteo)
+      .map(([code, count]) => ({ code, count, label: TIPO_LABEL[code] ?? code }))
+      .sort((a, b) => b.count - a.count)
+  }, [misActivos])
+
+  const cerradasCount = useMemo(() =>
+    misExpedientes.filter(e => ESTADOS_CERRADO.includes(e.estado)).length,
+    [misExpedientes])
 
   return (
     <div className="p-6 space-y-4">
@@ -310,23 +347,84 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* KPIs con deep-link a Actuaciones */}
-      <div className="grid grid-cols-2 gap-4">
-        <KpiCard
-          label="Por parte Actora" valor={actoraCount} color="blue"
-          onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
-        />
-        <KpiCard
-          label={`Actuaciones nuevas (${DIAS_NUEVAS}d)`} valor={nuevasCount} color="blue"
-          onClick={() => navigate(`${RUTAS.ACTUACIONES}?fechaDesde=${fechaDesdeNuevas}`)}
-        />
-      </div>
+      <div className="flex gap-4 items-start">
+        {/* Columna izquierda: tags/contadores, todos con deep-link a Actuaciones */}
+        <div className="w-64 flex-shrink-0 space-y-1.5">
+          <Tag
+            label="Total de Causas Activas" valor={causasActivasCount}
+            onClick={() => navigate(RUTAS.ACTUACIONES)}
+          />
+          <Tag
+            label="Total de actuaciones activas" valor={misActivos.length}
+            onClick={() => navigate(RUTAS.ACTUACIONES)}
+          />
+          <Tag
+            label="Nuevas actuaciones (Asignado)" valor={asignadoCount}
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?estado=ASIGNADO`)}
+          />
 
-      <WidgetVencimientos items={vencimientos} />
+          <SeparadorTags />
 
-      <div className="grid grid-cols-2 gap-4">
-        <WidgetPorSubEstado expedientes={misActivos} />
-        <WidgetTipoIntervencion expedientes={misActivos} />
+          <Tag
+            label="Actora" valor={intervencion.actora} color="#2a78d6"
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
+          />
+          <Tag
+            label="Demandada" valor={intervencion.demandada} color="#eda100"
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Demandada`)}
+          />
+          <Tag
+            label="Sin Intervención" valor={intervencion.sinIntervencion} color="#8aa0b3"
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`)}
+          />
+          <Tag
+            label="Penal" valor={intervencion.penal} color="#7F77DD"
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`)}
+          />
+
+          <SeparadorTags />
+
+          <Tag
+            label="Tareas por vencer" valor={porVencerCount} color="#d97706"
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
+          />
+          <Tag
+            label="Urgentes" valor={urgentesCount} color="#e34948"
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?urgente=1`)}
+          />
+
+          {tiposActivos.length > 0 && (
+            <>
+              <SeparadorTags />
+              <p className="text-[10px] font-black text-[#7a9ab4] uppercase tracking-widest px-1 mb-1">
+                Por tipo de gestión
+              </p>
+              {tiposActivos.map(t => (
+                <Tag
+                  key={t.code} label={t.label} valor={t.count}
+                  onClick={() => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`)}
+                />
+              ))}
+            </>
+          )}
+
+          <SeparadorTags />
+
+          <Tag
+            label="Actuaciones cerradas" valor={cerradasCount}
+            onClick={() => navigate(`${RUTAS.ACTUACIONES}?tab=archivados`)}
+          />
+        </div>
+
+        {/* Columna derecha: vencimientos y donuts */}
+        <div className="flex-1 min-w-0 space-y-4">
+          <WidgetVencimientos items={vencimientos} />
+
+          <div className="grid grid-cols-2 gap-4">
+            <WidgetPorSubEstado expedientes={misActivos} />
+            <WidgetTipoIntervencion expedientes={misActivos} />
+          </div>
+        </div>
       </div>
     </div>
   )

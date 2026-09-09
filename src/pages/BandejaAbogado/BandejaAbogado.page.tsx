@@ -50,7 +50,7 @@ function construirItems(exps: Expediente[]): ItemBandeja[] {
   return items
 }
 
-const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
+export const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
 const filterInputCls =
   'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
@@ -77,18 +77,20 @@ export default function BandejaAbogadoPage() {
 
   const filtroInicial = useMemo(() => ({
     buscar:     buscarInicial,
-    area:       esCoordi ? (usuarioActivo?.areas[0] ?? '') : '',
-    tipo:       '',
+    area:       esCoordi ? (usuarioActivo?.areas[0] ?? '') : (searchParams.get('area') ?? ''),
+    tipo:       searchParams.get('tipo') ?? '',
     estado:     searchParams.get('estado') ?? '',
     letrado:    esAbogado ? (usuarioActivo?.id ?? '') : '',
     fechaDesde: searchParams.get('fechaDesde') ?? '',
     fechaHasta: '',
-    soloUrgentes: false,
+    soloUrgentes: searchParams.get('urgente') === '1',
     soloAlerta:   searchParams.get('alerta') === '1',
     parte:        searchParams.get('parte') ?? '', // deep-link desde Home (ABOGADO): valor exacto de campos_mesa.mesa_tipo_intervencion ('Actora' | 'Demandada' | 'Denunciante' | 'Actuación de Oficio' | 'Sin Intervención')
   }), [usuarioActivo?.id, esCoordi, esAbogado, buscarInicial, searchParams])
 
-  const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>('activos')
+  const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>(
+    searchParams.get('tab') === 'archivados' ? 'archivados' : 'activos'
+  )
   const [filtros,        setFiltros]        = useState(filtroInicial)
   const [menuAbierto,    setMenuAbierto]    = useState<string | null>(null)
   const [menuPos,        setMenuPos]        = useState({ top: 0, right: 0 })
