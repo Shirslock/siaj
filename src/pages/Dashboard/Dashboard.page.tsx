@@ -5,13 +5,13 @@ import {
   CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, LineChart, Line,
 } from 'recharts'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
 import { normalizarMoneda } from '../../utils/format'
-import type { Expediente, Area, Usuario } from '../../types'
+import type { Expediente, Area } from '../../types'
 import Icon from '../../components/ui/Icon'
 
 const COLOR_AREA: Record<Area, string> = {
@@ -55,37 +55,6 @@ function WidgetCard({
       )}
       {sub && <p className="text-[11px] text-[#7a9ab4] mb-3">{sub}</p>}
       {children}
-    </div>
-  )
-}
-
-function TarjetaVencimiento({
-  label, valor, color, onClick,
-}: {
-  label: string
-  valor: number
-  color: 'red' | 'amber' | 'amberClaro' | 'green'
-  onClick?: () => void
-}) {
-  const styles = {
-    red:        { bg: 'bg-[#fcebeb]', text: 'text-[#a32d2d]', dot: '#e34948' },
-    amber:      { bg: 'bg-[#faeeda]', text: 'text-[#854f0b]', dot: '#eda100' },
-    amberClaro: { bg: 'bg-[#fdf3e2]', text: 'text-[#9a6a1a]', dot: '#FAC775' },
-    green:      { bg: 'bg-[#eaf3de]', text: 'text-[#3b6d11]', dot: '#97C459' },
-  }
-  const s = styles[color]
-  return (
-    <div
-      onClick={onClick}
-      className={`p-4 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#1b3a57] hover:ring-offset-1' : ''
-      }`}
-    >
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.dot }} />
-        <p className="text-[11px] text-[#7a9ab4] uppercase tracking-wide">{label}</p>
-      </div>
-      <p className="text-[28px] font-semibold text-[#1b3a57] leading-none">{valor}</p>
     </div>
   )
 }
@@ -191,184 +160,6 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
             </div>
           ))
         )}
-      </div>
-    </div>
-  )
-}
-
-// ── PANEL LETRADO ────────────────────────────────────────────
-
-const DATA_ESTADO_LETRADO = [
-  { name: 'Asignado',              value: 1 },
-  { name: 'En análisis',           value: 3 },
-  { name: 'Instrucción',           value: 2 },
-  { name: 'Apelación',             value: 1 },
-  { name: 'Ejecución sentencia',   value: 1 },
-]
-
-const DATA_ACTUACIONES_ESTADO = [
-  { name: 'EN ANÁLISIS',            value: 5 },
-  { name: 'ASIGNADO',                value: 3 },
-  { name: 'INSTRUCCION',             value: 2 },
-  { name: 'ACUERDO EXTRAJUDICIAL',   value: 1 },
-]
-
-const DATA_VINCULOS_AREA = [
-  { name: 'Civil',   value: 3, color: COLOR_AREA.CIVIL },
-  { name: 'Laboral', value: 2, color: COLOR_AREA.LABORAL },
-  { name: 'Penal',   value: 4, color: COLOR_AREA.PENAL },
-]
-
-const CAUSAS_SIN_MOVIMIENTO_LETRADO = [
-  { id: 'EXP-2024-00312', caratula: 'Pérez c/ Ferrosur s/ despido', dias: 68 },
-  { id: 'EXP-2024-00187', caratula: 'Fiscal c/ NN s/ hurto agravado', dias: 74 },
-]
-
-function PanelLetrado({
-  misExpedientes, setPanelActivo, usuarioActivo,
-}: {
-  misExpedientes: Expediente[]
-  setPanelActivo: SetPanel
-  usuarioActivo: Usuario | null
-}) {
-  const misExpsPorEstado = (estado: string) =>
-    misExpedientes.filter(e => (e.estadoProcesal ?? e.estado) === estado)
-
-  return (
-    <div className="space-y-4">
-      {/* Fila 1: vencimientos */}
-      <div className="grid grid-cols-4 gap-4">
-        <TarjetaVencimiento
-          label="Vencidos" valor={2} color="red"
-          onClick={() => setPanelActivo({ titulo: 'Vencidos', expedientes: misExpedientes.slice(0, 2), color: '#e34948' })}
-        />
-        <TarjetaVencimiento
-          label="Esta semana" valor={3} color="amber"
-          onClick={() => setPanelActivo({ titulo: 'Esta semana', expedientes: misExpedientes.slice(0, 3), color: '#eda100' })}
-        />
-        <TarjetaVencimiento
-          label="Próxima semana" valor={5} color="amberClaro"
-          onClick={() => setPanelActivo({ titulo: 'Próxima semana', expedientes: misExpedientes.slice(0, 5), color: '#FAC775' })}
-        />
-        <TarjetaVencimiento
-          label="Próximos 30 días" valor={8} color="green"
-          onClick={() => setPanelActivo({ titulo: 'Próximos 30 días', expedientes: misExpedientes, color: '#97C459' })}
-        />
-      </div>
-
-      {/* Fila 2: causas por estado */}
-      <WidgetCard titulo="Causas por estado" sub="Distribución de mis actuaciones penales">
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart
-            data={DATA_ESTADO_LETRADO}
-            layout="vertical"
-            margin={{ left: 10, right: 20 }}
-            onClick={(state) => {
-              const label = state?.activeLabel
-              setPanelActivo({
-                titulo: label ? `Causas por estado — ${label}` : 'Causas por estado',
-                expedientes: misExpedientes.filter(e => e.abogado_id === usuarioActivo?.id),
-              })
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.06)" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#4a6a84' }} axisLine={false} tickLine={false} width={110} />
-            <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-            <Bar dataKey="value" fill="#2a78d6" radius={[0, 4, 4, 0]} barSize={14} cursor="pointer" />
-          </BarChart>
-        </ResponsiveContainer>
-      </WidgetCard>
-
-      {/* Fila 3: tarjetas tipo penal */}
-      <div className="grid grid-cols-3 gap-4">
-        <KpiCard
-          label="Oficios en trámite" value={4} badgeColor="red"
-          onClick={() => setPanelActivo({ titulo: 'Oficios en trámite', expedientes: misExpsPorEstado('En análisis') })}
-        />
-        <KpiCard
-          label="Oficios cumplidos" value={12} badgeColor="blue"
-          onClick={() => setPanelActivo({ titulo: 'Oficios cumplidos', expedientes: misExpedientes })}
-        />
-        <KpiCard
-          label="Querellas activas" value={2}
-          onClick={() => setPanelActivo({ titulo: 'Querellas activas', expedientes: misExpedientes.slice(0, 2) })}
-        />
-        <KpiCard
-          label="Defensas penales activas" value={1}
-          onClick={() => setPanelActivo({ titulo: 'Defensas penales activas', expedientes: misExpedientes.slice(0, 1) })}
-        />
-        <KpiCard
-          label="Solicitudes asignadas" value={3}
-          onClick={() => setPanelActivo({ titulo: 'Solicitudes asignadas', expedientes: misExpedientes.slice(0, 3) })}
-        />
-        <KpiCard
-          label="Causas sin impulsorio +60d" value={2} badgeColor="amber"
-          onClick={() => setPanelActivo({ titulo: 'Causas sin impulsorio +60d', expedientes: misExpedientes.slice(0, 2) })}
-        />
-      </div>
-
-      {/* Fila 4: sin movimiento +60d */}
-      <WidgetCard titulo="Causas sin movimiento (+60 días)">
-        <div className="space-y-2">
-          {CAUSAS_SIN_MOVIMIENTO_LETRADO.map(c => (
-            <div
-              key={c.id}
-              onClick={() => setPanelActivo({ titulo: 'Sin movimiento (+60 días)', expedientes: misExpedientes })}
-              className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-[#faeeda] cursor-pointer hover:bg-[#f5e3c8] transition-colors"
-            >
-              <div className="min-w-0">
-                <p className="text-[12px] text-[#854f0b] font-medium truncate">{c.caratula}</p>
-                <p className="text-[11px] text-[#ba7517]">{c.id}</p>
-              </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#faeeda] text-[#854f0b] flex-shrink-0 border border-[#eda100]">
-                {c.dias} días
-              </span>
-            </div>
-          ))}
-        </div>
-      </WidgetCard>
-
-      <div className="grid grid-cols-2 gap-4">
-        {/* Fila 5: vinculadas por área */}
-        <WidgetCard titulo="Causas vinculadas por área">
-          <div className="flex items-center gap-4">
-            <ResponsiveContainer width={120} height={120}>
-              <PieChart>
-                <Pie data={DATA_VINCULOS_AREA} cx="50%" cy="50%" innerRadius={35} outerRadius={52} dataKey="value" strokeWidth={2} stroke="#fff">
-                  {DATA_VINCULOS_AREA.map(d => <Cell key={d.name} fill={d.color} />)}
-                </Pie>
-                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-1.5">
-              {DATA_VINCULOS_AREA.map(d => (
-                <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
-                  <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                  <span className="text-[#4a6a84]">{d.name}</span>
-                  <span className="font-semibold text-[#1b3a57] ml-auto pl-3">{d.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </WidgetCard>
-
-        {/* Fila 6: actuaciones por estado */}
-        <WidgetCard titulo="Actuaciones por estado">
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart
-              data={DATA_ACTUACIONES_ESTADO}
-              margin={{ left: 0, right: 10, bottom: 0 }}
-              onClick={() => setPanelActivo({ titulo: 'Actuaciones por estado', expedientes: misExpedientes })}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#7a9ab4' }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
-              <YAxis tick={{ fontSize: 11, fill: '#7a9ab4' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="value" fill="#7F77DD" radius={[4, 4, 0, 0]} barSize={26} cursor="pointer" />
-            </BarChart>
-          </ResponsiveContainer>
-        </WidgetCard>
       </div>
     </div>
   )
@@ -865,9 +656,11 @@ export default function DashboardPage() {
   const esReferente   = usuarioActivo?.rolSistema === 'REFERENTE'
   const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'
 
-  const misExpedientes = useMemo(() =>
-    expedientes.filter(e => e.abogado_id === usuarioActivo?.id),
-    [expedientes, usuarioActivo])
+  // Dashboard (Panel Gerencial) quedó exclusivo de REFERENTE/COORDINADOR — el rol
+  // ABOGADO tiene su propio Home (ver src/pages/Home/Home.page.tsx).
+  if (!esReferente && !esCoordinador) {
+    return <Navigate to={RUTAS.HOME} replace />
+  }
 
   return (
     <div className="flex flex-col h-full p-6">
@@ -882,15 +675,7 @@ export default function DashboardPage() {
 
       <div className="flex gap-4 flex-1 min-h-0">
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-          {esReferente || esCoordinador ? (
-            <PanelGerencia expedientes={expedientes} setPanelActivo={setPanelActivo} />
-          ) : (
-            <PanelLetrado
-              misExpedientes={misExpedientes}
-              setPanelActivo={setPanelActivo}
-              usuarioActivo={usuarioActivo}
-            />
-          )}
+          <PanelGerencia expedientes={expedientes} setPanelActivo={setPanelActivo} />
         </div>
 
         <div className="w-80 flex-shrink-0 bg-white rounded-xl border border-[rgba(0,0,0,0.07)] overflow-hidden flex flex-col">

@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+import { useUIStore } from './store/ui.store'
+import { RUTAS } from './utils/routing'
 import DashboardPage from './pages/Dashboard/Dashboard.page'
+import HomePage from './pages/Home/Home.page'
 import MesaSacoPage from './pages/MesaSaco/MesaSaco.page'
 import AltaExpedientePage from './pages/AltaExpediente/AltaExpediente.page'
 import ActuacionesPage from './pages/Actuaciones/Actuaciones.page'
@@ -12,12 +15,21 @@ import TareasPage from './pages/Tareas/tareas.page'
 import LicenciasPage from './pages/Licencias/LicenciasPage'
 import NovedadesPJNPage from './pages/NovedadesPJN/NovedadesPJN.page'
 
+// El "/" resuelve por rol: ABOGADO va a su Home personal, el resto mantiene
+// el destino histórico (/dashboard). Etapa 1 — no afecta a otros roles.
+function RaizPorRol() {
+  const { usuarioActivo } = useUIStore()
+  const destino = usuarioActivo?.rolSistema === 'ABOGADO' ? RUTAS.HOME : RUTAS.DASHBOARD
+  return <Navigate to={destino} replace />
+}
+
 export default function App() {
   return (
     <>
       <AppLayout>
         <Routes>
-          <Route path="/"                  element={<Navigate to="/dashboard" replace />} />
+          <Route path="/"                  element={<RaizPorRol />} />
+          <Route path="/home"              element={<HomePage />} />
           <Route path="/dashboard"         element={<DashboardPage />} />
           <Route path="/mesa"              element={<MesaSacoPage />} />
           <Route path="/mesa/alta"         element={<AltaExpedientePage />} />

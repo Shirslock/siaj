@@ -18,7 +18,8 @@ src/pages/NombrePagina/
 
 | Carpeta | Ruta | Roles | Estado |
 |---------|------|-------|--------|
-| `Dashboard/` | /dashboard | REFERENTE, COORDINADOR, ABOGADO | ✓ 3 vistas por rol (Power BI) — ver `Dashboard/Dashboard_CLAUDE.md` |
+| `Dashboard/` | /dashboard | REFERENTE, COORDINADOR | ✓ panel gerencial (Power BI) — ABOGADO redirige a `/home`; ver `Dashboard/Dashboard_CLAUDE.md` |
+| `Home/` | /home ("Principal") | ABOGADO únicamente | ✓ Etapa 1 — KPIs personales, vencimientos y donuts, todo con deep-link a `/actuaciones`; ver `Home/Home_CLAUDE.md` |
 | `MesaSaco/` | /mesa | ADMINISTRATIVO | ✓ filtros embebidos |
 | `AltaExpediente/` | /mesa/alta | ADMINISTRATIVO | ✓ modal confirmación |
 | `Actuaciones/` | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | ✓ router por rol |
