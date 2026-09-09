@@ -215,29 +215,28 @@ function WidgetPorSubEstado({ expedientes }: { expedientes: Expediente[] }) {
   )
 }
 
-// ── Por parte actora vs. demandada (Civil/Laboral — Penal no aplica) ────────────
+// ── Por tipo de intervención (mesa_tipo_intervencion — Civil/Laboral: Actora/Demandada; Penal: Denunciante/Actuación de Oficio) ──
 
-function WidgetParte({ expedientes }: { expedientes: Expediente[] }) {
+function WidgetTipoIntervencion({ expedientes }: { expedientes: Expediente[] }) {
   const navigate = useNavigate()
 
-  const { actora, demandada } = useMemo(() => {
-    const civilLaboral = expedientes.filter(e => e.area !== 'PENAL')
-    return {
-      actora:    civilLaboral.filter(e => e.tipo.endsWith('_ACTORA')).length,
-      demandada: civilLaboral.filter(e => !e.tipo.endsWith('_ACTORA')).length,
-    }
+  const data = useMemo(() => {
+    const conteo: Record<string, number> = {}
+    expedientes.forEach(e => {
+      const valor = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') || 'Sin Intervención'
+      conteo[valor] = (conteo[valor] ?? 0) + 1
+    })
+    return Object.entries(conteo)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
   }, [expedientes])
 
-  const data = [
-    { name: 'Actora',    value: actora,    color: '#2a78d6', parte: 'actora' },
-    { name: 'Demandada', value: demandada, color: '#eda100', parte: 'demandada' },
-  ]
-  const total = actora + demandada
+  const total = data.reduce((sum, d) => sum + d.value, 0)
 
   return (
-    <WidgetCard titulo="Por parte actora vs. demandada" sub="Actuaciones activas Civil / Laboral">
+    <WidgetCard titulo="Por tipo de intervención" sub="Actora / Demandada / Denunciante / Oficio, según el área de cada actuación">
       {total === 0 ? (
-        <p className="text-[12px] text-[#7a9ab4] text-center py-6">Sin actuaciones Civil/Laboral activas.</p>
+        <p className="text-[12px] text-[#7a9ab4] text-center py-6">Sin actuaciones activas.</p>
       ) : (
         <div className="flex items-center gap-4">
           <ResponsiveContainer width={140} height={140}>
@@ -245,22 +244,22 @@ function WidgetParte({ expedientes }: { expedientes: Expediente[] }) {
               <Pie
                 data={data} cx="50%" cy="50%" innerRadius={38} outerRadius={58}
                 dataKey="value" strokeWidth={2} stroke="#fff" cursor="pointer"
-                onClick={(d: any) => navigate(`${RUTAS.ACTUACIONES}?parte=${d.parte}`)}
+                onClick={(d: any) => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent(d.name)}`)}
               >
-                {data.map(d => <Cell key={d.parte} fill={d.color} />)}
+                {data.map((d, i) => <Cell key={d.name} fill={COLORES_DONUT[i % COLORES_DONUT.length]} />)}
               </Pie>
               <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="space-y-1.5">
-            {data.map(d => (
+          <div className="space-y-1.5 min-w-0">
+            {data.map((d, i) => (
               <div
-                key={d.parte}
-                onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${d.parte}`)}
+                key={d.name}
+                onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent(d.name)}`)}
                 className="flex items-center gap-1.5 text-[11px] cursor-pointer hover:opacity-70 transition-opacity"
               >
-                <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                <span className="text-[#4a6a84]">{d.name}</span>
+                <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: COLORES_DONUT[i % COLORES_DONUT.length] }} />
+                <span className="text-[#4a6a84] truncate">{d.name}</span>
                 <span className="font-semibold text-[#1b3a57] ml-auto pl-3">{d.value}</span>
               </div>
             ))}
@@ -296,9 +295,9 @@ export default function HomePage() {
     misActivos.filter(e => e.fecha_recepcion >= fechaDesdeNuevas).length,
     [misActivos, fechaDesdeNuevas])
 
-  const vencidosCount = useMemo(() =>
-    vencimientos.filter(i => i.estado === 'vencido').length,
-    [vencimientos])
+  const actoraCount = useMemo(() =>
+    misActivos.filter(e => String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') === 'Actora').length,
+    [misActivos])
 
   return (
     <div className="p-6 space-y-4">
@@ -314,8 +313,8 @@ export default function HomePage() {
       {/* KPIs con deep-link a Actuaciones */}
       <div className="grid grid-cols-2 gap-4">
         <KpiCard
-          label="Vencidos" valor={vencidosCount} color="red"
-          onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
+          label="Por parte Actora" valor={actoraCount} color="blue"
+          onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
         />
         <KpiCard
           label={`Actuaciones nuevas (${DIAS_NUEVAS}d)`} valor={nuevasCount} color="blue"
@@ -327,7 +326,7 @@ export default function HomePage() {
 
       <div className="grid grid-cols-2 gap-4">
         <WidgetPorSubEstado expedientes={misActivos} />
-        <WidgetParte expedientes={misActivos} />
+        <WidgetTipoIntervencion expedientes={misActivos} />
       </div>
     </div>
   )

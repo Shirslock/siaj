@@ -85,7 +85,7 @@ export default function BandejaAbogadoPage() {
     fechaHasta: '',
     soloUrgentes: false,
     soloAlerta:   searchParams.get('alerta') === '1',
-    parte:        searchParams.get('parte') ?? '', // deep-link desde Home (ABOGADO): 'actora' | 'demandada'
+    parte:        searchParams.get('parte') ?? '', // deep-link desde Home (ABOGADO): valor exacto de campos_mesa.mesa_tipo_intervencion ('Actora' | 'Demandada' | 'Denunciante' | 'Actuación de Oficio' | 'Sin Intervención')
   }), [usuarioActivo?.id, esCoordi, esAbogado, buscarInicial, searchParams])
 
   const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>('activos')
@@ -144,8 +144,7 @@ export default function BandejaAbogadoPage() {
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
       if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap, e.timeline).activa && !getAlertaTimer(e).activa) return false
-      if (filtros.parte === 'actora'    && !e.tipo.endsWith('_ACTORA')) return false
-      if (filtros.parte === 'demandada' && (e.tipo.endsWith('_ACTORA') || e.area === 'PENAL')) return false
+      if (filtros.parte && String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') !== filtros.parte) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         const campos = [
