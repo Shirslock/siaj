@@ -1,22 +1,51 @@
 import { RUTAS } from '../../utils/routing'
 import {
-  Tag, SeparadorTags, WidgetVencimientos, WidgetPorSubEstado, WidgetTipoIntervencion,
-  useHomeData,
+  KpiCard, WidgetCard, WidgetVencimientos, WidgetCerradas, BarrasDistribucion,
+  useHomeData, type FilaBarra,
 } from './homeShared'
 
-// Home de ABOGADO — layout consolidado (ex "Diseño 3" del experimento de
-// comparación): columna izquierda angosta (w-56) con tags de a 2 por fila por
-// grupo, columna derecha con Vencimientos arriba y los 2 donuts en fila abajo.
-// Ver homeShared.tsx para la lógica/cálculos compartidos.
+// Pantalla Principal del rol ABOGADO (Etapa 1).
+// Fila de 4 KPIs + "Vencimientos y tareas" (tabs Todas/Vencidas/Por vencer +
+// buscador, agrupado en Vencidas/Próximas) a la izquierda; distribuciones por rol
+// y por tipo de gestión + actuaciones cerradas a la derecha.
+// Ver homeShared.tsx para la lógica/cálculos y los componentes.
 export default function HomePage() {
   const {
     usuarioActivo, navigate, misActivos, vencimientos,
-    causasActivasCount, asignadoCount, intervencion, porVencerCount,
+    causasActivasCount, asignadoCount, intervencion,
     urgentesCount, tiposActivos, cerradasCount,
   } = useHomeData()
 
+  const filasPorRol: FilaBarra[] = [
+    {
+      label: 'Actora', valor: intervencion.actora, color: '#2a78d6',
+      onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`),
+    },
+    {
+      label: 'Demandada', valor: intervencion.demandada, color: '#eda100',
+      onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=Demandada`),
+    },
+    {
+      label: 'Sin intervención', valor: intervencion.sinIntervencion, color: '#85B7EB',
+      onClick: () => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`),
+    },
+    {
+      label: 'Penal', valor: intervencion.penal, color: '#7F77DD',
+      onClick: () => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`),
+    },
+  ]
+
+  const filasPorTipo: FilaBarra[] = tiposActivos.map(t => ({
+    label: t.label,
+    valor: t.count,
+    color: '#2a78d6',
+    onClick: () => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`),
+  }))
+
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-8 space-y-5">
+
+      {/* ENCABEZADO */}
       <div>
         <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Principal</h1>
         <p className="text-sm text-[#4a6a84] mt-1.5">
@@ -26,90 +55,50 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="flex gap-8 items-start">
-        {/* Columna izquierda, más angosta: tags/contadores de a 2 por fila */}
-        <div className="w-56 flex-shrink-0 space-y-2.5">
-          <Tag
-            label="Tareas por vencer" valor={porVencerCount} color="#d97706"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
-          />
+      {/* KPIs */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard
+          icono="description" label="Causas activas" valor={causasActivasCount} tono="azul"
+          onClick={() => navigate(RUTAS.ACTUACIONES)}
+        />
+        <KpiCard
+          icono="checklist" label="Actuaciones activas" valor={misActivos.length} tono="teal"
+          onClick={() => navigate(RUTAS.ACTUACIONES)}
+        />
+        <KpiCard
+          icono="person_add" label="Nuevas asignadas" valor={asignadoCount} tono="azul"
+          onClick={() => navigate(`${RUTAS.ACTUACIONES}?estado=ASIGNADO`)}
+        />
+        <KpiCard
+          icono="error" label="Urgentes" valor={urgentesCount} tono="rojo"
+          onClick={() => navigate(`${RUTAS.ACTUACIONES}?urgente=1`)}
+        />
+      </div>
 
-          <SeparadorTags />
+      {/* CUERPO */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
 
-          <Tag
-            label="Total de Causas Activas" valor={causasActivasCount}
-            onClick={() => navigate(RUTAS.ACTUACIONES)}
-          />
-          <Tag
-            label="Total de actuaciones activas" valor={misActivos.length}
-            onClick={() => navigate(RUTAS.ACTUACIONES)}
-          />
-          <Tag
-            label="Nuevas actuaciones (Asignado)" valor={asignadoCount}
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?estado=ASIGNADO`)}
-          />
+        {/* Izquierda: vencimientos y tareas */}
+        <WidgetVencimientos items={vencimientos} />
 
-          <SeparadorTags />
+        {/* Derecha: distribuciones + cerradas */}
+        <div className="space-y-5">
+          <WidgetCard titulo="Por rol" sub="Distribución de causas activas.">
+            <BarrasDistribucion filas={filasPorRol} />
+          </WidgetCard>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Tag
-              label="Actora" valor={intervencion.actora} color="#2a78d6"
-              onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
-            />
-            <Tag
-              label="Demandada" valor={intervencion.demandada} color="#eda100"
-              onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Demandada`)}
-            />
-            <Tag
-              label="Sin Intervención" valor={intervencion.sinIntervencion} color="#8aa0b3"
-              onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`)}
-            />
-            <Tag
-              label="Penal" valor={intervencion.penal} color="#7F77DD"
-              onClick={() => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`)}
-            />
-          </div>
+          <WidgetCard titulo="Por tipo de gestión" sub="Distribución de actuaciones activas.">
+            {filasPorTipo.length === 0 ? (
+              <p className="text-[12px] text-[#7a9ab4] text-center py-4">Sin actuaciones activas.</p>
+            ) : (
+              <BarrasDistribucion filas={filasPorTipo} />
+            )}
+          </WidgetCard>
 
-          <SeparadorTags />
-
-          <Tag
-            label="Urgentes" valor={urgentesCount} color="#e34948"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?urgente=1`)}
-          />
-
-          {tiposActivos.length > 0 && (
-            <>
-              <SeparadorTags />
-              <p className="text-[10px] font-black text-[#7a9ab4] uppercase tracking-widest px-1 mb-1">
-                Por tipo de gestión
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {tiposActivos.map(t => (
-                  <Tag
-                    key={t.code} label={t.label} valor={t.count}
-                    onClick={() => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          <SeparadorTags />
-
-          <Tag
-            label="Actuaciones cerradas" valor={cerradasCount}
+          <WidgetCerradas
+            valor={cerradasCount}
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?tab=archivados`)}
           />
-        </div>
-
-        {/* Columna derecha: vencimientos arriba, donuts abajo en fila */}
-        <div className="flex-1 min-w-0 space-y-6">
-          <WidgetVencimientos items={vencimientos} />
-
-          <div className="grid grid-cols-2 gap-6">
-            <WidgetPorSubEstado expedientes={misActivos} />
-            <WidgetTipoIntervencion expedientes={misActivos} />
-          </div>
         </div>
       </div>
     </div>

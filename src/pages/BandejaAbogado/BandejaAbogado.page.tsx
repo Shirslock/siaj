@@ -146,7 +146,13 @@ export default function BandejaAbogadoPage() {
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
       if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap, e.timeline).activa && !getAlertaTimer(e).activa) return false
-      if (filtros.parte && String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') !== filtros.parte) return false
+      // Una actuación sin tipo de intervención cargado cuenta como 'Sin Intervención' —
+      // mismo criterio que usa el contador de la pantalla Principal (useHomeData), para que
+      // el número del contador y el resultado del deep-link no se contradigan.
+      if (filtros.parte) {
+        const tipoInterv = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') || 'Sin Intervención'
+        if (tipoInterv !== filtros.parte) return false
+      }
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         const campos = [

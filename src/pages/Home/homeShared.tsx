@@ -1,5 +1,4 @@
-import { useMemo } from 'react'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
@@ -7,75 +6,134 @@ import { TIPO_LABEL } from '../BandejaAbogado/BandejaAbogado.page'
 import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
-import type { Expediente } from '../../types'
+import Icon from '../../components/ui/Icon'
+import type { Expediente, Tarea } from '../../types'
 
-// Lógica/cálculos y widgets compartidos del Home de ABOGADO (ver Home.page.tsx).
+// Lógica/cálculos y componentes de la pantalla Principal (ver Home.page.tsx).
 
 // 'ARCHIVO' es el código de estado terminal real del ciclo Penal (etapasPenales.ts) —
 // distinto de 'ARCHIVADO'/'ARCHIVADA' que usan los demás tipos (mismo criterio que BandejaAbogado).
 export const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA']
 
-export const COLORES_DONUT = ['#2a78d6', '#1baf7a', '#7F77DD', '#eda100', '#e34948', '#8aa0b3', '#85B7EB', '#0b3d66']
-
-// ── Widgets genéricos (mismo estilo visual que Dashboard.page.tsx) ─────────────
+// ── Card base de widget ─────────────────────────────────────────────────────────
 
 export function WidgetCard({
-  titulo, sub, children, onClick,
+  titulo, sub, children,
 }: {
   titulo?: string
   sub?: string
   children: React.ReactNode
-  onClick?: () => void
 }) {
   return (
-    <div
-      onClick={onClick}
-      className={`p-5 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
-      }`}
-    >
+    <div className="p-5 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white">
       {titulo && (
-        <p className="text-[11px] font-semibold text-[#4a6a84] uppercase tracking-wide mb-0.5">
-          {titulo}
-        </p>
+        <h2 className="font-headline text-[17px] font-bold text-[#1b3a57] leading-tight">{titulo}</h2>
       )}
-      {sub && <p className="text-[11px] text-[#7a9ab4] mb-3">{sub}</p>}
+      {sub && <p className="text-[12px] text-[#7a9ab4] mt-0.5 mb-4">{sub}</p>}
       {children}
     </div>
   )
 }
 
-// ── Tag / chip de contador ───────────────────────────────────────────────────────
+// ── KPI de la fila superior ─────────────────────────────────────────────────────
 
-export function Tag({
-  label, valor, color, onClick,
+// Clases literales (Tailwind no resuelve clases armadas dinámicamente).
+const TONOS_KPI = {
+  azul: { caja: 'bg-[#dbeafe]', icono: 'text-[#2a78d6]' },
+  teal: { caja: 'bg-[#d3efe8]', icono: 'text-[#129a86]' },
+  rojo: { caja: 'bg-[#fde4e4]', icono: 'text-[#e34948]' },
+} as const
+
+export function KpiCard({
+  icono, label, valor, tono, onClick,
 }: {
+  icono: string
   label: string
   valor: number
-  color?: string
+  tono: keyof typeof TONOS_KPI
   onClick?: () => void
 }) {
+  const t = TONOS_KPI[tono]
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-[rgba(0,0,0,0.08)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:border-[#1b3a57] hover:shadow-sm' : ''
+      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
       }`}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        {color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />}
-        <span className="text-[12px] text-[#4a6a84] font-medium truncate">{label}</span>
+      <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${t.caja}`}>
+        <Icon name={icono} size={22} className={t.icono} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[13px] text-[#4a6a84] truncate">{label}</p>
+        <p className="text-[28px] font-bold text-[#1b3a57] leading-tight">{valor}</p>
       </div>
-      <span className="text-[13px] font-bold text-[#1b3a57] flex-shrink-0">{valor}</span>
     </div>
   )
 }
 
-export function SeparadorTags() {
-  return <div className="h-px bg-[rgba(0,0,0,0.07)] my-3" />
+// ── Barras de distribución (reemplazan a los donuts) ────────────────────────────
+
+export interface FilaBarra {
+  label: string
+  valor: number
+  color: string
+  onClick?: () => void
 }
 
-// ── Vencimientos + tareas (fusionados) ─────────────────────────────────────────
+export function BarrasDistribucion({ filas }: { filas: FilaBarra[] }) {
+  // Proporcional al mayor valor de la serie: la barra más larga llena la pista.
+  const max = Math.max(...filas.map(f => f.valor), 1)
+
+  return (
+    <div className="space-y-3">
+      {filas.map(f => (
+        <div
+          key={f.label}
+          onClick={f.onClick}
+          className={`flex items-center gap-3 ${f.onClick ? 'cursor-pointer group' : ''}`}
+        >
+          <span className="text-[13px] text-[#1b3a57] flex-1 min-w-0 truncate group-hover:underline">
+            {f.label}
+          </span>
+          <span className="text-[13px] font-bold text-[#1b3a57] w-6 text-right flex-shrink-0">
+            {f.valor}
+          </span>
+          <span className="h-2 w-[46%] rounded-full bg-[#dfe9f2] flex-shrink-0 overflow-hidden">
+            <span
+              className="block h-full rounded-full transition-all"
+              style={{
+                width: f.valor > 0 ? `${Math.max((f.valor / max) * 100, 6)}%` : '5px',
+                background: f.valor > 0 ? f.color : '#b9cddd',
+              }}
+            />
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Bloque "Actuaciones cerradas" ───────────────────────────────────────────────
+
+export function WidgetCerradas({ valor, onClick }: { valor: number; onClick?: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className={`flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
+      }`}
+    >
+      <div className="min-w-0">
+        <p className="text-[14px] font-semibold text-[#4a6a84]">Actuaciones cerradas</p>
+        <p className="text-[11.5px] text-[#7a9ab4] mt-0.5">Total de actuaciones finalizadas.</p>
+      </div>
+      <span className="text-[26px] font-bold text-[#1b3a57] leading-none flex-shrink-0">{valor}</span>
+    </div>
+  )
+}
+
+// ── Vencimientos y tareas ───────────────────────────────────────────────────────
 
 export interface ItemVencimiento {
   exp: Expediente
@@ -86,7 +144,7 @@ export interface ItemVencimiento {
 
 export function construirVencimientos(
   expedientes: Expediente[],
-  tareasMap: Record<string, import('../../types').Tarea[]>,
+  tareasMap: Record<string, Tarea[]>,
 ): ItemVencimiento[] {
   const items: ItemVencimiento[] = []
   expedientes.forEach(exp => {
@@ -110,169 +168,179 @@ export function construirVencimientos(
       })
     }
   })
-  // Vencido primero, y dentro de cada grupo el más antiguo primero — mismo criterio que usa PanelLetrado.
+  // Vencido primero, y dentro de cada grupo el más antiguo primero.
   return items.sort((a, b) => {
     if (a.estado !== b.estado) return a.estado === 'vencido' ? -1 : 1
     return (a.fecha ?? '').localeCompare(b.fecha ?? '')
   })
 }
 
-export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
+const TABS_VENC = [
+  { id: 'todas',      label: 'Todas' },
+  { id: 'vencidas',   label: 'Vencidas' },
+  { id: 'por_vencer', label: 'Por vencer' },
+] as const
+
+type TabVenc = typeof TABS_VENC[number]['id']
+
+function FilaVencimiento({ item }: { item: ItemVencimiento }) {
   const navigate = useNavigate()
-  const visibles = items.slice(0, 8)
+  const { exp, estado, fecha, nombre } = item
+  const esVencido = estado === 'vencido'
 
   return (
-    <WidgetCard titulo="Vencimientos y tareas" sub="Plazos y tareas activas, ordenados por urgencia">
-      {visibles.length === 0 ? (
-        <p className="text-[12px] text-[#7a9ab4] text-center py-6">Sin vencimientos activos.</p>
+    <div
+      onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
+      className="grid grid-cols-[minmax(0,1fr)_130px_112px] items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#f7fafc] transition-colors"
+    >
+      <div className="min-w-0">
+        <p className="text-[13px] font-semibold text-[#1b3a57] truncate">{exp.caratula}</p>
+        <p className="text-[11.5px] text-[#7a9ab4] mt-0.5 truncate">
+          {exp.id}{nombre ? ` · ${nombre}` : ''}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5 text-[12px] text-[#4a6a84] whitespace-nowrap">
+        <Icon name="calendar" size={14} className={esVencido ? 'text-[#e34948]' : 'text-[#d97706]'} />
+        {fecha ? formatFecha(fecha) : '—'}
+      </div>
+      <div className="flex justify-end">
+        <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap ${
+          esVencido
+            ? 'bg-[#fdeef0] text-[#b3372f]'
+            : 'bg-[#fff4e0] text-[#b26a00]'
+        }`}>
+          {esVencido ? 'Vencido' : 'Por vencer'}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function GrupoVencimientos({
+  titulo, icono, items, tono,
+}: {
+  titulo: string
+  icono: string
+  items: ItemVencimiento[]
+  tono: 'rojo' | 'ambar'
+}) {
+  if (items.length === 0) return null
+  const cls = tono === 'rojo'
+    ? { fondo: 'bg-[#fdeef0]', icono: 'text-[#c0392b]', texto: 'text-[#b3372f]' }
+    : { fondo: 'bg-[#fff7e6]', icono: 'text-[#d97706]', texto: 'text-[#b26a00]' }
+
+  return (
+    <div>
+      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${cls.fondo}`}>
+        <Icon name={icono} size={16} className={cls.icono} />
+        <span className={`text-[13px] font-bold ${cls.texto}`}>
+          {titulo} ({items.length})
+        </span>
+      </div>
+      <div className="mt-1">
+        {items.map(item => <FilaVencimiento key={item.exp.id} item={item} />)}
+      </div>
+    </div>
+  )
+}
+
+export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
+  const navigate = useNavigate()
+  const [tab, setTab] = useState<TabVenc>('todas')
+  const [busqueda, setBusqueda] = useState('')
+
+  const filtrados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    if (!q) return items
+    return items.filter(({ exp, nombre }) =>
+      exp.caratula.toLowerCase().includes(q) ||
+      exp.id.toLowerCase().includes(q) ||
+      (nombre ?? '').toLowerCase().includes(q)
+    )
+  }, [items, busqueda])
+
+  const vencidas = filtrados.filter(i => i.estado === 'vencido')
+  const proximas = filtrados.filter(i => i.estado === 'por_vencer')
+  const sinResultados =
+    (tab === 'todas' && filtrados.length === 0) ||
+    (tab === 'vencidas' && vencidas.length === 0) ||
+    (tab === 'por_vencer' && proximas.length === 0)
+
+  return (
+    <div className="p-5 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white">
+      {/* Encabezado: título + tabs + buscador */}
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+        <div>
+          <h2 className="font-headline text-[19px] font-bold text-[#1b3a57] leading-tight">
+            Vencimientos y tareas
+          </h2>
+          <p className="text-[12px] text-[#7a9ab4] mt-0.5">
+            Plazos y tareas activas, ordenados por urgencia.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
+            {TABS_VENC.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
+                  tab === t.id
+                    ? 'bg-[#2a78d6] text-white shadow-sm'
+                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative">
+            <Icon
+              name="search" size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a9ab4] pointer-events-none"
+            />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              placeholder="Buscar actuaciones..."
+              className="w-56 pl-9 pr-3 py-2 text-[12px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#2a78d6]"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Grupos */}
+      {sinResultados ? (
+        <p className="text-[12px] text-[#7a9ab4] text-center py-10">
+          {busqueda.trim()
+            ? 'Sin resultados para la búsqueda.'
+            : 'Sin vencimientos activos.'}
+        </p>
       ) : (
-        <div className="divide-y divide-[rgba(0,0,0,0.05)]">
-          {visibles.map(({ exp, estado, fecha, nombre }) => (
-            <div
-              key={exp.id}
-              onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
-              className="flex items-center justify-between gap-3 py-3 cursor-pointer hover:bg-[#f5f5f5] transition-colors rounded-lg px-2 -mx-2"
-            >
-              <div className="min-w-0">
-                <p className="text-[12px] text-[#1b3a57] font-medium truncate">{exp.caratula}</p>
-                <p className="text-[11px] text-[#7a9ab4]">
-                  {exp.id}{nombre ? ` · ${nombre}` : ''}{fecha ? ` · ${formatFecha(fecha)}` : ''}
-                </p>
-              </div>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0 ${
-                estado === 'vencido'
-                  ? 'bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]'
-                  : 'bg-[#fef3c7] text-[#d97706] border border-[#fde68a]'
-              }`}>
-                {estado === 'vencido' ? 'Vencido' : 'Por vencer'}
-              </span>
-            </div>
-          ))}
+        <div className="space-y-5">
+          {tab !== 'por_vencer' && (
+            <GrupoVencimientos titulo="Vencidas" icono="error" items={vencidas} tono="rojo" />
+          )}
+          {tab !== 'vencidas' && (
+            <GrupoVencimientos titulo="Próximas" icono="schedule" items={proximas} tono="ambar" />
+          )}
         </div>
       )}
+
       <button
         onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
-        className="mt-3 text-[11px] font-bold text-[#1b3a57] hover:underline"
+        className="mt-5 text-[12px] font-bold text-[#1b3a57] hover:underline cursor-pointer"
       >
         Ver todas las actuaciones con alerta →
       </button>
-    </WidgetCard>
+    </div>
   )
 }
 
-// ── Mis actuaciones por sub-estado ──────────────────────────────────────────────
-
-export function WidgetPorSubEstado({ expedientes }: { expedientes: Expediente[] }) {
-  const navigate = useNavigate()
-
-  const data = useMemo(() => {
-    const conteo: Record<string, number> = {}
-    expedientes.forEach(e => {
-      const code = e.estadoProcesal ?? e.estado
-      conteo[code] = (conteo[code] ?? 0) + 1
-    })
-    return Object.entries(conteo)
-      .map(([code, value]) => ({ code, name: code, value }))
-      .sort((a, b) => b.value - a.value)
-  }, [expedientes])
-
-  if (data.length === 0) {
-    return (
-      <WidgetCard titulo="Mis actuaciones por sub-estado">
-        <p className="text-[12px] text-[#7a9ab4] text-center py-6">Sin actuaciones activas.</p>
-      </WidgetCard>
-    )
-  }
-
-  return (
-    <WidgetCard titulo="Mis actuaciones por sub-estado" sub="Click en un sector para filtrar en Actuaciones">
-      <div className="flex items-center gap-4">
-        <ResponsiveContainer width={140} height={140}>
-          <PieChart>
-            <Pie
-              data={data} cx="50%" cy="50%" innerRadius={38} outerRadius={58}
-              dataKey="value" strokeWidth={2} stroke="#fff" cursor="pointer"
-              onClick={(d: any) => navigate(`${RUTAS.ACTUACIONES}?estado=${encodeURIComponent(d.code)}`)}
-            >
-              {data.map((d, i) => <Cell key={d.code} fill={COLORES_DONUT[i % COLORES_DONUT.length]} />)}
-            </Pie>
-            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="space-y-1.5 min-w-0">
-          {data.map((d, i) => (
-            <div
-              key={d.code}
-              onClick={() => navigate(`${RUTAS.ACTUACIONES}?estado=${encodeURIComponent(d.code)}`)}
-              className="flex items-center gap-1.5 text-[11px] cursor-pointer hover:opacity-70 transition-opacity"
-            >
-              <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: COLORES_DONUT[i % COLORES_DONUT.length] }} />
-              <span className="text-[#4a6a84] truncate">{d.name}</span>
-              <span className="font-semibold text-[#1b3a57] ml-auto pl-3">{d.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </WidgetCard>
-  )
-}
-
-// ── Por tipo de intervención (mesa_tipo_intervencion — Civil/Laboral: Actora/Demandada; Penal: Denunciante/Actuación de Oficio) ──
-
-export function WidgetTipoIntervencion({ expedientes }: { expedientes: Expediente[] }) {
-  const navigate = useNavigate()
-
-  const data = useMemo(() => {
-    const conteo: Record<string, number> = {}
-    expedientes.forEach(e => {
-      const valor = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '') || 'Sin Intervención'
-      conteo[valor] = (conteo[valor] ?? 0) + 1
-    })
-    return Object.entries(conteo)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-  }, [expedientes])
-
-  const total = data.reduce((sum, d) => sum + d.value, 0)
-
-  return (
-    <WidgetCard titulo="Por tipo de intervención" sub="Actora / Demandada / Denunciante / Oficio, según el área de cada actuación">
-      {total === 0 ? (
-        <p className="text-[12px] text-[#7a9ab4] text-center py-6">Sin actuaciones activas.</p>
-      ) : (
-        <div className="flex items-center gap-4">
-          <ResponsiveContainer width={140} height={140}>
-            <PieChart>
-              <Pie
-                data={data} cx="50%" cy="50%" innerRadius={38} outerRadius={58}
-                dataKey="value" strokeWidth={2} stroke="#fff" cursor="pointer"
-                onClick={(d: any) => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent(d.name)}`)}
-              >
-                {data.map((d, i) => <Cell key={d.name} fill={COLORES_DONUT[i % COLORES_DONUT.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 min-w-0">
-            {data.map((d, i) => (
-              <div
-                key={d.name}
-                onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent(d.name)}`)}
-                className="flex items-center gap-1.5 text-[11px] cursor-pointer hover:opacity-70 transition-opacity"
-              >
-                <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: COLORES_DONUT[i % COLORES_DONUT.length] }} />
-                <span className="text-[#4a6a84] truncate">{d.name}</span>
-                <span className="font-semibold text-[#1b3a57] ml-auto pl-3">{d.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </WidgetCard>
-  )
-}
-
-// ── Datos compartidos por las 3 variantes ────────────────────────────────────────
+// ── Datos de la pantalla ────────────────────────────────────────────────────────
 
 export function useHomeData() {
   const { expedientes, tareasMap } = useExpedientesStore()
