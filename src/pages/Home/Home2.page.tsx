@@ -4,10 +4,10 @@ import {
   HomeDesignSwitcher, useHomeData,
 } from './homeShared'
 
-// Diseño 1: layout original — columna izquierda de tags, columna derecha con
-// Vencimientos arriba y los 2 donuts en fila abajo. Ver homeShared.tsx para la
-// lógica/cálculos compartidos con Home2.page.tsx y Home3.page.tsx.
-export default function HomePage() {
+// Diseño 2: los contadores suben arriba de todo en filas horizontales agrupadas
+// (flex-wrap, ancho completo), y abajo Vencimientos (más angosto) al lado de
+// los 2 donuts. Ver homeShared.tsx para la lógica/cálculos compartidos.
+export default function Home2Page() {
   const {
     usuarioActivo, navigate, misActivos, vencimientos,
     causasActivasCount, asignadoCount, intervencion, porVencerCount,
@@ -25,11 +25,11 @@ export default function HomePage() {
         </p>
       </div>
 
-      <HomeDesignSwitcher activo={1} />
+      <HomeDesignSwitcher activo={2} />
 
-      <div className="flex gap-8 items-start">
-        {/* Columna izquierda: tags/contadores, todos con deep-link a Actuaciones */}
-        <div className="w-64 flex-shrink-0 space-y-2.5">
+      {/* Contadores: filas horizontales agrupadas, ancho completo */}
+      <div>
+        <div className="flex flex-wrap gap-2">
           <Tag
             label="Total de Causas Activas" valor={causasActivasCount}
             onClick={() => navigate(RUTAS.ACTUACIONES)}
@@ -42,9 +42,11 @@ export default function HomePage() {
             label="Nuevas actuaciones (Asignado)" valor={asignadoCount}
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?estado=ASIGNADO`)}
           />
+        </div>
 
-          <SeparadorTags />
+        <SeparadorTags />
 
+        <div className="flex flex-wrap gap-2">
           <Tag
             label="Actora" valor={intervencion.actora} color="#2a78d6"
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
@@ -61,9 +63,11 @@ export default function HomePage() {
             label="Penal" valor={intervencion.penal} color="#7F77DD"
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`)}
           />
+        </div>
 
-          <SeparadorTags />
+        <SeparadorTags />
 
+        <div className="flex flex-wrap gap-2">
           <Tag
             label="Tareas por vencer" valor={porVencerCount} color="#d97706"
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
@@ -72,38 +76,42 @@ export default function HomePage() {
             label="Urgentes" valor={urgentesCount} color="#e34948"
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?urgente=1`)}
           />
+        </div>
 
-          {tiposActivos.length > 0 && (
-            <>
-              <SeparadorTags />
-              <p className="text-[10px] font-black text-[#7a9ab4] uppercase tracking-widest px-1 mb-1">
-                Por tipo de gestión
-              </p>
+        {tiposActivos.length > 0 && (
+          <>
+            <SeparadorTags />
+            <p className="text-[10px] font-black text-[#7a9ab4] uppercase tracking-widest px-1 mb-1.5">
+              Por tipo de gestión
+            </p>
+            <div className="flex flex-wrap gap-2">
               {tiposActivos.map(t => (
                 <Tag
                   key={t.code} label={t.label} valor={t.count}
                   onClick={() => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`)}
                 />
               ))}
-            </>
-          )}
+            </div>
+          </>
+        )}
 
-          <SeparadorTags />
+        <SeparadorTags />
 
+        <div className="flex flex-wrap gap-2">
           <Tag
             label="Actuaciones cerradas" valor={cerradasCount}
             onClick={() => navigate(`${RUTAS.ACTUACIONES}?tab=archivados`)}
           />
         </div>
+      </div>
 
-        {/* Columna derecha: vencimientos y donuts */}
-        <div className="flex-1 min-w-0 space-y-6">
-          <WidgetVencimientos items={vencimientos} />
+      {/* Vencimientos (angosto) + donuts */}
+      <div className="grid grid-cols-[2fr_3fr] gap-6 items-start">
+        <WidgetVencimientos items={vencimientos} />
 
-          <div className="grid grid-cols-2 gap-6">
-            <WidgetPorSubEstado expedientes={misActivos} />
-            <WidgetTipoIntervencion expedientes={misActivos} />
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          <WidgetPorSubEstado expedientes={misActivos} />
+          <WidgetTipoIntervencion expedientes={misActivos} />
         </div>
       </div>
     </div>

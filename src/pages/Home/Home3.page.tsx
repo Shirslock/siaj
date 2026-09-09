@@ -4,10 +4,10 @@ import {
   HomeDesignSwitcher, useHomeData,
 } from './homeShared'
 
-// Diseño 1: layout original — columna izquierda de tags, columna derecha con
-// Vencimientos arriba y los 2 donuts en fila abajo. Ver homeShared.tsx para la
-// lógica/cálculos compartidos con Home2.page.tsx y Home3.page.tsx.
-export default function HomePage() {
+// Diseño 3: mismo esquema izquierda/derecha del Diseño 1, pero la columna
+// izquierda es más angosta (w-56) y los grupos de tags se acomodan de a 2 por
+// fila en vez de apilados. Ver homeShared.tsx para la lógica/cálculos compartidos.
+export default function Home3Page() {
   const {
     usuarioActivo, navigate, misActivos, vencimientos,
     causasActivasCount, asignadoCount, intervencion, porVencerCount,
@@ -25,11 +25,11 @@ export default function HomePage() {
         </p>
       </div>
 
-      <HomeDesignSwitcher activo={1} />
+      <HomeDesignSwitcher activo={3} />
 
       <div className="flex gap-8 items-start">
-        {/* Columna izquierda: tags/contadores, todos con deep-link a Actuaciones */}
-        <div className="w-64 flex-shrink-0 space-y-2.5">
+        {/* Columna izquierda, más angosta: tags/contadores de a 2 por fila */}
+        <div className="w-56 flex-shrink-0 space-y-2.5">
           <Tag
             label="Total de Causas Activas" valor={causasActivasCount}
             onClick={() => navigate(RUTAS.ACTUACIONES)}
@@ -45,33 +45,37 @@ export default function HomePage() {
 
           <SeparadorTags />
 
-          <Tag
-            label="Actora" valor={intervencion.actora} color="#2a78d6"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
-          />
-          <Tag
-            label="Demandada" valor={intervencion.demandada} color="#eda100"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Demandada`)}
-          />
-          <Tag
-            label="Sin Intervención" valor={intervencion.sinIntervencion} color="#8aa0b3"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`)}
-          />
-          <Tag
-            label="Penal" valor={intervencion.penal} color="#7F77DD"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`)}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <Tag
+              label="Actora" valor={intervencion.actora} color="#2a78d6"
+              onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
+            />
+            <Tag
+              label="Demandada" valor={intervencion.demandada} color="#eda100"
+              onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Demandada`)}
+            />
+            <Tag
+              label="Sin Intervención" valor={intervencion.sinIntervencion} color="#8aa0b3"
+              onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=${encodeURIComponent('Sin Intervención')}`)}
+            />
+            <Tag
+              label="Penal" valor={intervencion.penal} color="#7F77DD"
+              onClick={() => navigate(`${RUTAS.ACTUACIONES}?area=PENAL`)}
+            />
+          </div>
 
           <SeparadorTags />
 
-          <Tag
-            label="Tareas por vencer" valor={porVencerCount} color="#d97706"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
-          />
-          <Tag
-            label="Urgentes" valor={urgentesCount} color="#e34948"
-            onClick={() => navigate(`${RUTAS.ACTUACIONES}?urgente=1`)}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <Tag
+              label="Tareas por vencer" valor={porVencerCount} color="#d97706"
+              onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
+            />
+            <Tag
+              label="Urgentes" valor={urgentesCount} color="#e34948"
+              onClick={() => navigate(`${RUTAS.ACTUACIONES}?urgente=1`)}
+            />
+          </div>
 
           {tiposActivos.length > 0 && (
             <>
@@ -79,12 +83,14 @@ export default function HomePage() {
               <p className="text-[10px] font-black text-[#7a9ab4] uppercase tracking-widest px-1 mb-1">
                 Por tipo de gestión
               </p>
-              {tiposActivos.map(t => (
-                <Tag
-                  key={t.code} label={t.label} valor={t.count}
-                  onClick={() => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`)}
-                />
-              ))}
+              <div className="grid grid-cols-2 gap-2">
+                {tiposActivos.map(t => (
+                  <Tag
+                    key={t.code} label={t.label} valor={t.count}
+                    onClick={() => navigate(`${RUTAS.ACTUACIONES}?tipo=${encodeURIComponent(t.code)}`)}
+                  />
+                ))}
+              </div>
             </>
           )}
 
@@ -96,7 +102,7 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Columna derecha: vencimientos y donuts */}
+        {/* Columna derecha: sin cambios — vencimientos arriba, donuts abajo en fila */}
         <div className="flex-1 min-w-0 space-y-6">
           <WidgetVencimientos items={vencimientos} />
 
