@@ -1,4 +1,5 @@
 export const RUTAS = {
+  HOME:            '/home',
   DASHBOARD:       '/dashboard',
   MESA:            '/mesa',
   MESA_ALTA:       '/mesa/alta',

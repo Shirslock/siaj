@@ -10,6 +10,7 @@ import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
+  { key: 'home',           icon: 'dashboard',    label: 'Home',                   ruta: '/home' },
   { key: 'dashboard',      icon: 'dashboard',    label: 'Panel de Control',       ruta: '/dashboard' },
   { key: 'mesa',           icon: 'inbox',        label: 'Mesa SACO',              ruta: '/mesa' },
   { key: 'actuaciones',    icon: 'work',         label: 'Actuaciones',            ruta: '/actuaciones' },

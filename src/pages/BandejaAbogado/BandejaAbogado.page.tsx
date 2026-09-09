@@ -79,13 +79,14 @@ export default function BandejaAbogadoPage() {
     buscar:     buscarInicial,
     area:       esCoordi ? (usuarioActivo?.areas[0] ?? '') : '',
     tipo:       '',
-    estado:     '',
+    estado:     searchParams.get('estado') ?? '',
     letrado:    esAbogado ? (usuarioActivo?.id ?? '') : '',
-    fechaDesde: '',
+    fechaDesde: searchParams.get('fechaDesde') ?? '',
     fechaHasta: '',
     soloUrgentes: false,
-    soloAlerta:   false,
-  }), [usuarioActivo?.id, esCoordi, esAbogado, buscarInicial])
+    soloAlerta:   searchParams.get('alerta') === '1',
+    parte:        searchParams.get('parte') ?? '', // deep-link desde Home (ABOGADO): 'actora' | 'demandada'
+  }), [usuarioActivo?.id, esCoordi, esAbogado, buscarInicial, searchParams])
 
   const [tabEstado,      setTabEstado]      = useState<'activos' | 'archivados'>('activos')
   const [filtros,        setFiltros]        = useState(filtroInicial)
@@ -143,6 +144,8 @@ export default function BandejaAbogadoPage() {
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
       if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap, e.timeline).activa && !getAlertaTimer(e).activa) return false
+      if (filtros.parte === 'actora'    && !e.tipo.endsWith('_ACTORA')) return false
+      if (filtros.parte === 'demandada' && (e.tipo.endsWith('_ACTORA') || e.area === 'PENAL')) return false
       if (filtros.buscar) {
         const q = filtros.buscar.toLowerCase()
         const campos = [
