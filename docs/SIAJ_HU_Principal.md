@@ -43,7 +43,6 @@ Cuatro indicadores destacados, cada uno con su ícono. Al hacer clic, cada uno l
 - El listado se presenta **agrupado**, con el total de cada grupo a la vista: **"Vencidas (N)"** y **"Próximas (N)"**.
 - Cada fila muestra la carátula, el número de actuación, la tarea o plazo pendiente, la fecha de vencimiento y una etiqueta de estado (**VENCIDO** / **POR VENCER**).
 - **Filtro por pestañas**: *Todas* | *Vencidas* | *Por vencer*, para enfocarse solo en un grupo.
-- **Buscador**: permite filtrar el listado por carátula, número de actuación o nombre de la tarea. Los totales de cada grupo se actualizan según la búsqueda.
 - Cada fila lleva **directo al detalle de esa actuación** (no a la Bandeja).
 - Un enlace al pie lleva a la Bandeja de Actuaciones filtrada por alertas de vencimiento.
 
@@ -81,3 +80,9 @@ Al pie de la columna, un bloque con **Actuaciones cerradas** (total de actuacion
 ## Capturas de pantalla
 
 *(completar acá con las capturas de la pantalla "Principal": vista general, fila de indicadores, listado de Vencimientos y tareas con las pestañas, y los bloques de distribución)*
+
+---
+
+## Nota de diseño
+
+La búsqueda dentro del listado de Vencimientos y tareas se descartó: el Topbar ya tiene un buscador global de actuaciones, y las pestañas resuelven el filtrado que esta pantalla necesita.

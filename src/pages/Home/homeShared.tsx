@@ -247,24 +247,17 @@ function GrupoVencimientos({
 export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState<TabVenc>('todas')
-  const [busqueda, setBusqueda] = useState('')
 
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    if (!q) return items
-    return items.filter(({ exp, nombre }) =>
-      exp.caratula.toLowerCase().includes(q) ||
-      exp.id.toLowerCase().includes(q) ||
-      (nombre ?? '').toLowerCase().includes(q)
-    )
-  }, [items, busqueda])
-
-  const vencidas = filtrados.filter(i => i.estado === 'vencido')
-  const proximas = filtrados.filter(i => i.estado === 'por_vencer')
+  const vencidas = items.filter(i => i.estado === 'vencido')
+  const proximas = items.filter(i => i.estado === 'por_vencer')
   const sinResultados =
-    (tab === 'todas' && filtrados.length === 0) ||
+    (tab === 'todas' && items.length === 0) ||
     (tab === 'vencidas' && vencidas.length === 0) ||
     (tab === 'por_vencer' && proximas.length === 0)
+  const mensajeVacio =
+    tab === 'vencidas'   ? 'Sin actuaciones vencidas.'
+    : tab === 'por_vencer' ? 'Sin actuaciones por vencer.'
+    : 'Sin vencimientos activos.'
 
   return (
     <div className="p-5 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white">
@@ -279,46 +272,26 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
-            {TABS_VENC.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
-                  tab === t.id
-                    ? 'bg-[#2a78d6] text-white shadow-sm'
-                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative">
-            <Icon
-              name="search" size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7a9ab4] pointer-events-none"
-            />
-            <input
-              type="text"
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-              placeholder="Buscar actuaciones..."
-              className="w-56 pl-9 pr-3 py-2 text-[12px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#2a78d6]"
-            />
-          </div>
+        <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
+          {TABS_VENC.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
+                tab === t.id
+                  ? 'bg-[#2a78d6] text-white shadow-sm'
+                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Grupos */}
       {sinResultados ? (
-        <p className="text-[12px] text-[#7a9ab4] text-center py-10">
-          {busqueda.trim()
-            ? 'Sin resultados para la búsqueda.'
-            : 'Sin vencimientos activos.'}
-        </p>
+        <p className="text-[12px] text-[#7a9ab4] text-center py-10">{mensajeVacio}</p>
       ) : (
         <div className="space-y-5">
           {tab !== 'por_vencer' && (

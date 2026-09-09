@@ -54,9 +54,9 @@ por `style` inline porque dependen de los datos.
   (`utils/alertas.ts`) y arma un `ItemVencimiento[]` ordenado **vencido primero** y, dentro de
   cada grupo, el más antiguo primero.
 - **Tabs** (estado local, `TABS_VENC`): `Todas` | `Vencidas` | `Por vencer` — filtran qué grupos
-  se muestran, no re-consultan nada.
-- **Buscador** (estado local): filtra por carátula, `exp.id` y nombre de la tarea/plazo. Los
-  contadores de cada grupo reflejan la búsqueda activa.
+  se muestran, no re-consultan nada. El mensaje de vacío (`mensajeVacio`) cambia según el tab
+  activo. La maqueta original traía además un buscador acá; se sacó por redundante con la
+  búsqueda global del Topbar y con los propios tabs.
 - **Grupos**: `<GrupoVencimientos>` "Vencidas (N)" (tono rojo, ícono `error`) y "Próximas (N)"
   (tono ámbar, ícono `schedule`). Un grupo vacío no se renderiza.
 - **Filas** (`<FilaVencimiento>`): carátula + `id · tarea` a la izquierda, fecha con ícono
@@ -67,7 +67,7 @@ por `style` inline porque dependen de los datos.
   distingue vencido de por-vencer, muestra ambos).
 
 A diferencia del diseño anterior, la lista **no** está truncada a 8 ítems: se muestran todos los
-que haya, y el filtrado queda en manos de los tabs y el buscador.
+que haya, y el filtrado queda en manos de los tabs.
 
 ---
 
