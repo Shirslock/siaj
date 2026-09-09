@@ -18,7 +18,7 @@ export default function HomePage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Inicio</h1>
+        <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Principal</h1>
         <p className="text-sm text-[#4a6a84] mt-1.5">
           Hola, <span className="font-semibold text-[#1b3a57]">{usuarioActivo?.nombre} {usuarioActivo?.apellido}</span>.
           Gestionando <span className="font-semibold text-[#1b3a57]">{misActivos.length}</span> actuación

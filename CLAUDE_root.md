@@ -68,6 +68,8 @@ npm run build      # build de producción
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
+| `src/pages/Home/Home.page.tsx` | "Principal" (`/home`) — Home exclusivo de ABOGADO, Etapa 1. Tags/contadores con deep-link a `/actuaciones` + Vencimientos/Tareas + donuts. Ver `src/pages/Home/Home_CLAUDE.md`. |
+| `src/pages/Home/homeShared.tsx` | Lógica y widgets compartidos del Home (`useHomeData()`, `Tag`, `WidgetVencimientos`, `WidgetPorSubEstado`, `WidgetTipoIntervencion`). |
 | `src/utils/format.ts` | formatFecha, formatMonto(valor, moneda), numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
@@ -133,8 +135,8 @@ Agregar el import de Heroicons y la entrada en ICON_MAP. Ver `src/components/ui/
 |-----------|-------------|----------|-------------|
 | `gerente` | REFERENTE | Todo: dashboard, todas las áreas, panel configuración. | /dashboard |
 | `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar desde bandeja y botón + del detalle | /actuaciones |
-| `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /actuaciones |
-| `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente de definición con cliente) | /actuaciones |
+| `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /home ("Principal", Etapa 1) |
+| `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente de definición con cliente) | /home ("Principal", Etapa 1) |
 | `adm_mesa` | ADMINISTRATIVO | Mesa SIAJ solamente. Solo lectura en todos los tabs del detalle. Sin botón Editar ni botón +. | /mesa |
 
 **Multi-rol:** UR_032 BUÑIRIGO tiene `roles: ['adm_mesa', 'asistente_jurídico']`.
@@ -531,21 +533,27 @@ el modal de nuevo/editar muestra un campo extra "Días" numérico.
 
 ---
 
-## 18. Dashboard analytics (estilo Power BI)
+## 18. Dashboard analytics (estilo Power BI) — y Home de ABOGADO (Etapa 1)
 
-`src/pages/Dashboard/Dashboard.page.tsx` renderiza una de **3 vistas según `usuarioActivo.rolSistema`**.
-Detalle completo en `src/pages/Dashboard/Dashboard_CLAUDE.md`.
+`src/pages/Dashboard/Dashboard.page.tsx` es **exclusivo de REFERENTE/COORDINADOR**
+(`<PanelGerencia>`, vista única). Detalle completo en `src/pages/Dashboard/Dashboard_CLAUDE.md`.
 
-- **REFERENTE:** KPIs globales (activas, Civil, Laboral, Monto expuesto — solo montos en ARS) + donut por área + barras por letrado + semáforo global + tabla "Próximos vencimientos".
-- **COORDINADOR:** todo filtrado a `usuarioActivo.areas[0]` + barras "Estado procesal del área" + tabla "Sin movimiento (+30 días)".
-- **LETRADO** (fallback: no REFERENTE ni COORDINADOR): KPIs personales + donut de sub-estados + "Tareas hoy" + lista de vencimientos + tabla "Mis actuaciones".
+- **REFERENTE/COORDINADOR:** KPIs globales + por área, funnel de estados, distribución por
+  sub-estado y área, índice de urgencia, complejidad por letrado, top lugares de hechos,
+  estacionalidad, organismos requirentes, ganadas/perdidas por juzgado.
 
-**Gráficos con `recharts`** (import inline, self-contained). Todo se calcula en tiempo real desde
-`useExpedientesStore` (expedientes + tareasMap) con `useMemo`; las alertas usan
-`getAlertaExpediente()` de `utils/alertas.ts`. El botón "Exportar" del header es visual (sin acción).
+**ABOGADO ya no pasa por acá:** `DashboardPage` redirige a `/home` ("Principal") para cualquier
+usuario que no sea REFERENTE ni COORDINADOR. Ese Home (Etapa 1) tiene su propio doc —
+`src/pages/Home/Home_CLAUDE.md` — con tags/contadores personales (deep-link a `/actuaciones`),
+vencimientos/tareas fusionados y 2 donuts (sub-estado, tipo de intervención).
 
-**Nota de tipos:** `RolSistema` no incluye `'ASISTENTE'` — los asistentes caen en la vista LETRADO
-por ser el fallback (`!esReferente && !esCoordinador`).
+**Gráficos con `recharts`** (import inline, self-contained) en ambas páginas. Todo se calcula en
+tiempo real desde `useExpedientesStore` (expedientes + tareasMap) con `useMemo`; las alertas usan
+`getAlertaExpediente()` de `utils/alertas.ts`. El botón "Exportar" del header de Dashboard es
+visual (sin acción).
+
+**Nota de tipos:** `RolSistema` no incluye `'ASISTENTE'` — los asistentes (`asistente_jurídico`)
+caen en el mismo destino que ABOGADO (`/home`).
 
 ## 19. Buscador global (Topbar)
 

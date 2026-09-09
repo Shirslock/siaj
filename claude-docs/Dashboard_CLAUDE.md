@@ -1,9 +1,13 @@
 # src/pages/Dashboard/ — Dashboard analytics (estilo Power BI)
 
-`Dashboard.page.tsx` es un panel de métricas con **2 vistas mutuamente excluyentes** según el rol
-del usuario activo: `<PanelGerencia>` (REFERENTE + COORDINADOR combinados) y `<PanelLetrado>`
-(fallback). Se apoya en `recharts` para los gráficos y calcula todo en tiempo real desde el
-store (sin backend).
+`Dashboard.page.tsx` es un panel de métricas **exclusivo de REFERENTE/COORDINADOR**
+(`<PanelGerencia>`). Se apoya en `recharts` para los gráficos y calcula todo en tiempo real desde
+el store (sin backend).
+
+Desde la Etapa 1 del Home de ABOGADO (ver `src/pages/Home/Home_CLAUDE.md`), el rol ABOGADO ya no
+pasa por acá: `DashboardPage` redirige a `/home` (`Principal`) para cualquier usuario que no sea
+REFERENTE o COORDINADOR. La vieja rama `<PanelLetrado>` (fallback para ABOGADO) fue extraída a ese
+Home y eliminada de este archivo.
 
 ---
 
@@ -13,11 +17,10 @@ store (sin backend).
 const esReferente   = usuarioActivo?.rolSistema === 'REFERENTE'
 const esCoordinador = usuarioActivo?.rolSistema === 'COORDINADOR'
 // esReferente || esCoordinador → <PanelGerencia>
-// LETRADO = fallback: !esReferente && !esCoordinador → <PanelLetrado>
-//   → cubre ABOGADO y asistentes (RolSistema no tiene 'ASISTENTE')
+// cualquier otro rol (ABOGADO incluido) → <Navigate to="/home" replace />
 ```
 
-`ADMINISTRATIVO` no llega al dashboard (no tiene el ítem en el sidebar; inicio en `/mesa`).
+`ADMINISTRATIVO` tampoco llega al dashboard (no tiene el ítem en el sidebar; inicio en `/mesa`).
 
 ---
 
@@ -40,9 +43,9 @@ Todo se deriva con `useMemo`. Las alertas de vencimiento usan
 
 ---
 
-## Vistas por rol
+## Vista (única — REFERENTE/COORDINADOR)
 
-### PanelGerencia (REFERENTE + COORDINADOR)
+### PanelGerencia
 Vista única para ambos roles — no branchea internamente por sub-rol (los datos de la fila 1 de
 KPIs son fijos/mock, no filtrados por `usuarioActivo`). Estructura de arriba a abajo:
 1. Fila de 6 KPIs (`Causas activas`, `Causas urgentes`, `Huérfanas sin asignar`, `Sin impulsorio +60d`,
@@ -62,15 +65,6 @@ KPIs son fijos/mock, no filtrados por `usuarioActivo`). Estructura de arriba a a
 
 Cada widget que acepta click llama `setPanelActivo({ titulo, expedientes })` para abrir el panel
 lateral derecho con el listado filtrado correspondiente.
-
-### PanelLetrado (fallback — ABOGADO/asistentes)
-- `misExpedientes = expedientes.filter(e => e.abogado_id === usuarioActivo.id)`.
-- KPIs personales, donut **"Mis actuaciones por sub-estado"** (`dataEstadosLetrado`) + panel
-  **"Tareas hoy"** (`tareasHoy`: tareas del `tareasMap` de mis expedientes con
-  `fechaVencimiento === HOY` o `fecha_aviso === HOY`).
-- Lista **"Vencimientos próximos"** (`vencimientosLetrado`): mis expedientes con alerta ≠ ninguna,
-  vencido primero. Cada ítem navega a `RUTAS.EXPEDIENTE(id)`.
-- Tabla "Mis actuaciones".
 
 ---
 
@@ -113,7 +107,6 @@ const FUNNEL_ESTADOS = [
 | `BarLetrados` | Barra horizontal top 6 letrados; nombre vía `getUsuarioById().apellido` |
 | `FunnelChart` | Funnel SVG custom estilo Power BI (bloques decrecientes + conectores trapezoidales) |
 | `HeaderPowerBI` | Header con badge "Power BI" + botón "Exportar" (visual, sin acción) |
-| `VencimientoItem` | Fila clickeable de la lista de vencimientos del letrado |
 
 Constantes: `COLOR_AREA` (CIVIL `#2a78d6`, LABORAL `#1baf7a`, PENAL `#7F77DD`),
 `COLORES_ESTADOS` (paleta de 6 para donuts de sub-estado), `HOY` (fecha ISO a nivel de módulo).
@@ -124,5 +117,6 @@ Constantes: `COLOR_AREA` (CIVIL `#2a78d6`, LABORAL `#1baf7a`, PENAL `#7F77DD`),
 
 - `recharts` se importa inline; todo es self-contained (sin config externa).
 - El botón "Exportar" es decorativo — no hay export implementado todavía.
-- Para probar la vista LETRADO hay que cambiar el usuario activo (por defecto es LOPEZ UR_018, referente) a un abogado con actuaciones asignadas, p.ej. CASANO UR_004.
+- Para probar `PanelGerencia` hay que cambiar el usuario activo a un REFERENTE o COORDINADOR
+  (p.ej. LOPEZ UR_018). Para probar la vista de un ABOGADO usar `Home_CLAUDE.md` (CASANO UR_004).
 - Si se agregan estados terminales nuevos, sumarlos a `ESTADOS_CERRADOS` para que no cuenten como "activas".
