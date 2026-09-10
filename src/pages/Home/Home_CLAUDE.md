@@ -45,8 +45,10 @@ exactamente `misActivos.length`.
 | **Actuaciones parte actora** | `intervencion.actora` — `misActivos` con `campos_mesa['mesa_tipo_intervencion'] === 'Actora'`. Es el mismo número que la barra "Actora" de "Por rol" (incluye causas y documentos). | `?parte=Actora` |
 | **Urgentes** | `misActivos.filter(e => e.es_urgente).length`. | `?urgente=1` |
 
-El label del KPI **no** se trunca (`leading-snug`, puede ocupar dos líneas): con 5 columnas y
-labels largos como "Causas judiciales activas" el `truncate` anterior los cortaba.
+Formato de tarjeta **vertical y casi cuadrado** (a pedido del cliente): ícono arriba (caja de
+56px), número grande (`38px`) y label debajo, con `min-h-[172px]`. El label **no** se trunca
+(`leading-snug`, puede ocupar dos líneas): con 5 columnas y labels largos como "Causas
+judiciales activas" un `truncate` los cortaba.
 
 ### Causa vs. documento — la clasificación es por TIPO, no por n° de causa
 

@@ -72,16 +72,16 @@ export function KpiCard({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all ${t.tarjeta} ${
+      className={`flex flex-col justify-between gap-4 min-h-[172px] p-5 rounded-2xl border transition-all ${t.tarjeta} ${
         onClick ? 'cursor-pointer hover:shadow-md' : ''
       }`}
     >
-      <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${t.caja}`}>
-        <Icon name={icono} size={22} className={t.icono} />
+      <span className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${t.caja}`}>
+        <Icon name={icono} size={26} className={t.icono} />
       </span>
       <div className="min-w-0">
-        <p className={`text-[13px] leading-snug ${t.label}`}>{label}</p>
-        <p className={`text-[28px] font-bold leading-tight ${t.valor}`}>{valor}</p>
+        <p className={`text-[38px] font-bold leading-none ${t.valor}`}>{valor}</p>
+        <p className={`text-[14px] leading-snug mt-2 ${t.label}`}>{label}</p>
       </div>
     </div>
   )
