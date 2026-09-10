@@ -5,7 +5,7 @@ import {
 } from './homeShared'
 
 // Pantalla Principal del rol ABOGADO (Etapa 1).
-// Fila de 4 KPIs + "Vencimientos y tareas" (tabs Todas/Vencidas/Por vencer +
+// Fila de 5 KPIs + "Vencimientos y tareas" (tabs Todas/Vencidas/Por vencer +
 // buscador, agrupado en Vencidas/Próximas) a la izquierda; distribuciones por rol
 // y por tipo de gestión + actuaciones cerradas a la derecha.
 // Ver homeShared.tsx para la lógica/cálculos y los componentes.
@@ -56,9 +56,9 @@ export default function HomePage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         <KpiCard
-          icono="folder" label="Causas activas" valor={causasActivasCount} tono="azul"
+          icono="folder" label="Causas judiciales activas" valor={causasActivasCount} tono="azul"
           onClick={() => navigate(`${RUTAS.ACTUACIONES}?clase=causa`)}
         />
         <KpiCard
@@ -68,6 +68,10 @@ export default function HomePage() {
         <KpiCard
           icono="person_add" label="Nuevas asignadas" valor={asignadoCount} tono="azul"
           onClick={() => navigate(`${RUTAS.ACTUACIONES}?estado=ASIGNADO`)}
+        />
+        <KpiCard
+          icono="gavel" label="Actuaciones parte actora" valor={intervencion.actora} tono="destacado"
+          onClick={() => navigate(`${RUTAS.ACTUACIONES}?parte=Actora`)}
         />
         <KpiCard
           icono="error" label="Urgentes" valor={urgentesCount} tono="rojo"
