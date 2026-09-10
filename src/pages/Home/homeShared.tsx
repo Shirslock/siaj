@@ -39,10 +39,24 @@ export function WidgetCard({
 // ── KPI de la fila superior ─────────────────────────────────────────────────────
 
 // Clases literales (Tailwind no resuelve clases armadas dinámicamente).
+// Los tonos claros solo cambian la cajita del ícono; `destacado` pinta la tarjeta entera
+// (fondo navy de la marca) para que resalte del resto de la fila.
+const TARJETA_CLARA = {
+  tarjeta: 'bg-white border-[rgba(0,0,0,0.07)] hover:border-[#1b3a57]',
+  label: 'text-[#4a6a84]',
+  valor: 'text-[#1b3a57]',
+}
 const TONOS_KPI = {
-  azul: { caja: 'bg-[#dbeafe]', icono: 'text-[#2a78d6]' },
-  teal: { caja: 'bg-[#d3efe8]', icono: 'text-[#129a86]' },
-  rojo: { caja: 'bg-[#fde4e4]', icono: 'text-[#e34948]' },
+  azul: { ...TARJETA_CLARA, caja: 'bg-[#dbeafe]', icono: 'text-[#2a78d6]' },
+  teal: { ...TARJETA_CLARA, caja: 'bg-[#d3efe8]', icono: 'text-[#129a86]' },
+  rojo: { ...TARJETA_CLARA, caja: 'bg-[#fde4e4]', icono: 'text-[#e34948]' },
+  destacado: {
+    tarjeta: 'bg-linear-to-br from-[#1b3a57] to-[#2a5a85] border-[#1b3a57] hover:border-[#2a78d6]',
+    label: 'text-[#cfe0f0]',
+    valor: 'text-white',
+    caja: 'bg-white/15',
+    icono: 'text-white',
+  },
 } as const
 
 export function KpiCard({
@@ -58,16 +72,16 @@ export function KpiCard({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
+      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all ${t.tarjeta} ${
+        onClick ? 'cursor-pointer hover:shadow-md' : ''
       }`}
     >
       <span className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${t.caja}`}>
         <Icon name={icono} size={22} className={t.icono} />
       </span>
       <div className="min-w-0">
-        <p className="text-[13px] text-[#4a6a84] truncate">{label}</p>
-        <p className="text-[28px] font-bold text-[#1b3a57] leading-tight">{valor}</p>
+        <p className={`text-[13px] leading-snug ${t.label}`}>{label}</p>
+        <p className={`text-[28px] font-bold leading-tight ${t.valor}`}>{valor}</p>
       </div>
     </div>
   )

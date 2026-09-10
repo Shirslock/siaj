@@ -16,8 +16,9 @@ params — no hay listas nuevas ni edición desde acá.
 
 Diseño en 3 zonas (rediseño sobre maqueta del cliente — `docs/principal.jpeg`):
 
-1. **Fila de 4 KPIs** a lo ancho (`grid grid-cols-2 xl:grid-cols-4 gap-4`): Causas activas,
-   Documentos activos, Nuevas asignadas, Urgentes.
+1. **Fila de 5 KPIs** a lo ancho (`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4`):
+   Causas judiciales activas, Documentos activos, Nuevas asignadas, Actuaciones parte actora,
+   Urgentes.
 2. **Izquierda del cuerpo**: `<WidgetVencimientos>` — el protagonista de la pantalla, con tabs
    y agrupación Vencidas/Próximas.
 3. **Derecha del cuerpo** (`340px` fijo): `<WidgetAudiencias>` arriba (lo más accionable),
@@ -38,10 +39,14 @@ exactamente `misActivos.length`.
 
 | KPI | Definición | Destino del click |
 |-----|-----------|-------------------|
-| **Causas activas** | `misActivos` cuyo `tipo` **no** está en `TIPOS_DOCUMENTALES`. | `?clase=causa` |
+| **Causas judiciales activas** | `misActivos` cuyo `tipo` **no** está en `TIPOS_DOCUMENTALES`. | `?clase=causa` |
 | **Documentos activos** | `misActivos` cuyo `tipo` **sí** está en `TIPOS_DOCUMENTALES`. | `?clase=documento` |
 | **Nuevas asignadas** | `misActivos.filter(e => e.estado === 'ASIGNADO').length`. | `?estado=ASIGNADO` |
+| **Actuaciones parte actora** | `intervencion.actora` — `misActivos` con `campos_mesa['mesa_tipo_intervencion'] === 'Actora'`. Es el mismo número que la barra "Actora" de "Por rol" (incluye causas y documentos). | `?parte=Actora` |
 | **Urgentes** | `misActivos.filter(e => e.es_urgente).length`. | `?urgente=1` |
+
+El label del KPI **no** se trunca (`leading-snug`, puede ocupar dos líneas): con 5 columnas y
+labels largos como "Causas judiciales activas" el `truncate` anterior los cortaba.
 
 ### Causa vs. documento — la clasificación es por TIPO, no por n° de causa
 
@@ -59,7 +64,9 @@ quedaba vacía o distorsionada.
 Si se agrega un `TipoGestion` nuevo al catálogo, hay que decidir de qué lado cae — si no se toca
 `TIPOS_DOCUMENTALES`, cuenta como causa por defecto.
 
-Tonos de la cajita del ícono: `TONOS_KPI` (`azul` / `teal` / `rojo`) — clases **literales**, no
+Tonos: `TONOS_KPI` (`azul` / `teal` / `rojo` cambian solo la cajita del ícono sobre tarjeta
+blanca; `destacado` pinta la tarjeta entera con degradé navy y texto blanco — lo usa
+**Actuaciones parte actora**, a pedido del cliente, para que se distinga del resto) — clases **literales**, no
 armadas dinámicamente (Tailwind v4 no resuelve `text-[${var}]`). Los colores de las barras sí van
 por `style` inline porque dependen de los datos.
 
@@ -154,6 +161,10 @@ Devuelve `usuarioActivo`, `navigate`, `misExpedientes`, `misActivos`, `vencimien
 demandada, denunciante, sinIntervencion }`), `porVencerCount`, `urgentesCount`, `estadosActivos`
 (`{ code, count, label }[]`, ordenado por `count` desc), `audiencias` (`{ exp, titulo, fecha }[]`,
 solo futuras y ordenadas asc) y `cerradasCount`.
+
+`intervencion.actora` se consume **dos veces**: en el KPI "Actuaciones parte actora" y en la
+barra "Actora" de "Por rol". Si se cambia el criterio de conteo, cambian los dos a la vez (a
+propósito — deben coincidir).
 
 `porVencerCount` hoy no lo consume la página (el diseño nuevo muestra ese dato como el contador
 del grupo "Próximas (N)"), pero se sigue exportando por ser barato y útil.
