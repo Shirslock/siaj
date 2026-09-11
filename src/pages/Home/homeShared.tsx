@@ -8,7 +8,7 @@ import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import Icon from '../../components/ui/Icon'
-import type { Expediente, Tarea } from '../../types'
+import type { Area, Expediente, Tarea } from '../../types'
 
 // Lógica/cálculos y componentes de la pantalla Principal (ver Home.page.tsx).
 
@@ -374,16 +374,27 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
   )
 }
 
+// ── Alcance (scope) ─────────────────────────────────────────────────────────────
+
+// COORDINADOR y REFERENTE (Gerente) entran a Principal con alcance ampliado además
+// del Dashboard; ABOGADO mantiene el comportamiento original con scope fijo 'MIAS'.
+export type Scope = 'MIAS' | 'AREA' | 'TODO'
+
 // ── Datos de la pantalla ────────────────────────────────────────────────────────
 
-export function useHomeData() {
+export function useHomeData(scope: Scope = 'MIAS') {
   const { expedientes, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const navigate = useNavigate()
 
-  const misExpedientes = useMemo(() =>
-    expedientes.filter(e => e.abogado_id === usuarioActivo?.id),
-    [expedientes, usuarioActivo])
+  const misExpedientes = useMemo(() => {
+    if (scope === 'TODO') return expedientes
+    if (scope === 'AREA') {
+      const misAreas = usuarioActivo?.areas ?? []
+      return expedientes.filter(e => misAreas.includes(e.area as Area))
+    }
+    return expedientes.filter(e => e.abogado_id === usuarioActivo?.id)
+  }, [expedientes, usuarioActivo, scope])
 
   const misActivos = useMemo(() =>
     misExpedientes.filter(e => !ESTADOS_CERRADO.includes(e.estado)),
@@ -475,6 +486,7 @@ export function useHomeData() {
   return {
     usuarioActivo,
     navigate,
+    scope,
     misExpedientes,
     misActivos,
     vencimientos,
