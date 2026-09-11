@@ -6,6 +6,7 @@ import type { TablaConfig } from './tablas.config'
 import { CatalogoPanel } from './CatalogoPanel'
 import { UsuariosPanel } from './UsuariosPanel'
 import Icon from '../../components/ui/Icon'
+import { IntegracionPanel } from './IntegracionPanel'
 
 export default function ConfiguracionPage() {
   const { usuarioActivo } = useUIStore()
@@ -88,7 +89,9 @@ export default function ConfiguracionPage() {
       <main className="flex-1 overflow-y-auto bg-[#f5f5f5] p-6">
         {tablaActiva.tipo === 'usuario'
           ? <UsuariosPanel />
-          : <CatalogoPanel tabla={tablaActiva} />
+          : tablaActiva.tipo === 'integracion'
+            ? <IntegracionPanel />
+            : <CatalogoPanel tabla={tablaActiva} />
         }
       </main>
     </div>

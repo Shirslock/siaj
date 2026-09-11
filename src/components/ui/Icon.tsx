@@ -16,7 +16,7 @@ import {
   HomeIcon,
   ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserIcon, UserPlusIcon,
   UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
-  SparklesIcon, PaperAirplaneIcon,
+  SparklesIcon, PaperAirplaneIcon, KeyIcon, EyeSlashIcon,
 } from '@heroicons/react/24/outline'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -126,6 +126,14 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
 
   // Licencias
   clock:                 ClockIcon,
+
+  // Novedades PJN
+  pjn:                   ArrowPathIcon,
+
+  // Configuración
+  key:                   KeyIcon,
+  visibility_off:       EyeSlashIcon,
+  update:               ArrowPathIcon,
 
   // Asistente IA
   smart_toy:             SparklesIcon,

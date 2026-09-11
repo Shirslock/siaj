@@ -3,6 +3,7 @@ export type TipoTablaConfig =
   | 'extended'
   | 'tipoGestion'
   | 'usuario'
+  | 'integracion'
 
 export interface TablaConfig {
   id:           string
@@ -89,6 +90,14 @@ export const GRUPOS_CONFIG: GrupoConfig[] = [
     tablas: [
       { id: 'rolesInterviniente',    label: 'Rol Procesal',      storeKey: 'rolesInterviniente',    tipo: 'simple' },
       { id: 'tiposDocInterviniente', label: 'Tipo de Documento', storeKey: 'tiposDocInterviniente', tipo: 'simple' },
+    ],
+  },
+  {
+    id: 'integracion',
+    label: 'Integración',
+    icono: 'pjn',
+    tablas: [
+      { id: 'credenciales_pjn', label: 'Credenciales PJN / MEV', storeKey: 'credenciales', tipo: 'integracion' },
     ],
   },
 ]

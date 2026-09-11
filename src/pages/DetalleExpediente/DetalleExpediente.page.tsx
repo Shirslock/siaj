@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { usePjnStore } from '../../store/pjn.store'
-import { NovedadPjnCard } from '../../components/pjn/NovedadPjnCard'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import type { Expediente } from '../../types'
 import { useUIStore } from '../../store/ui.store'
@@ -30,8 +29,9 @@ import { formatFecha } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
+import { NovedadesPjnTab }  from './tabs/NovedadesPjnTab'
 
-type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente'
+type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente' | 'novedades_pjn'
 type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_juicio' | 'nueva_querella' | 'consultar_pjn'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
@@ -109,13 +109,14 @@ function getRamificaciones(codigoEstado: string, tipoExpediente: string): string
 }
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'datos',          label: 'Datos',          icon: 'info' },
+  { key: 'datos',          label: 'Datos',           icon: 'info' },
   { key: 'timeline',       label: 'Línea de Tiempo', icon: 'timeline' },
-  { key: 'intervinientes', label: 'Intervinientes', icon: 'people' },
-  { key: 'docs',           label: 'Documentos',     icon: 'folder' },
-  { key: 'prevision',      label: 'Previsión',      icon: 'trending_up' },
-  { key: 'vinculos',       label: 'Vinculados',     icon: 'account_tree' },
-  { key: 'asistente',      label: 'Saúl',           icon: 'smart_toy' },
+  { key: 'intervinientes', label: 'Intervinientes',  icon: 'people' },
+  { key: 'docs',           label: 'Documentos',      icon: 'folder' },
+  { key: 'prevision',      label: 'Previsión',       icon: 'trending_up' },
+  { key: 'vinculos',       label: 'Vinculados',      icon: 'account_tree' },
+  { key: 'novedades_pjn',  label: 'Novedades PJN',   icon: 'pjn' },
+  { key: 'asistente',      label: 'Saúl',            icon: 'smart_toy' },
 ]
 
 export default function DetalleExpedientePage() {
@@ -128,15 +129,15 @@ export default function DetalleExpedientePage() {
   const [searchParams] = useSearchParams()
   const { novedades: novedadesPjn } = usePjnStore()
 
-  const tabValida = (v: string | null): v is Tab =>
+    const tabValida = (v: string | null): v is Tab =>
     v === 'datos' || v === 'vinculos' || v === 'intervinientes' ||
-    v === 'timeline' || v === 'docs' || v === 'prevision' || v === 'asistente'
+    v === 'timeline' || v === 'docs' || v === 'prevision' ||
+    v === 'asistente' || v === 'novedades_pjn'
   const tabInicial: Tab = tabValida(searchParams.get('tab'))
     ? searchParams.get('tab') as Tab
     : 'datos'
 
   const [tab, setTab] = useState<Tab>(tabInicial)
-  const [mostrarPanelPjn, setMostrarPanelPjn] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accion, setAccion] = useState<AccionMenu | null>(null)
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -210,15 +211,6 @@ export default function DetalleExpedientePage() {
   }
 
   const novedadesDeEstaActuacion = novedadesPjn.filter(n => n.expediente_id === exp.id && n.estado === 'pendiente')
-
-  const gruposPjnDeEstaActuacion = Object.values(
-    novedadesDeEstaActuacion.reduce<Record<string, typeof novedadesDeEstaActuacion>>((acc, n) => {
-      (acc[n.corrida_id] ??= []).push(n)
-      return acc
-    }, {})
-  )
-    .map(items => items.slice().sort((a, b) => a.row_index - b.row_index))
-    .sort((a, b) => new Date(b[0].fecha_deteccion).getTime() - new Date(a[0].fecha_deteccion).getTime())
 
   const tipoLabel    = TIPOS_GESTION.find(t => t.code === exp.tipo)?.label ?? exp.tipo
   const juzgadoLabel = exp.juzgado ? (ALL_JUZGADOS.find(j => j.id === exp.juzgado)?.label ?? exp.juzgado) : null
@@ -638,6 +630,7 @@ export default function DetalleExpedientePage() {
     intervinientes: exp.intervinientes.length,
     timeline:       exp.timeline.length,
     docs:           exp.documentos.length,
+    novedades_pjn: novedadesDeEstaActuacion.length,
   }
 
   return (
@@ -785,38 +778,23 @@ export default function DetalleExpedientePage() {
         ))}
       </div>
 
-      {/* Banner: novedades PJN pendientes */}
-      {novedadesDeEstaActuacion.length > 0 && (
+      {/* Banner: novedades PJN pendientes — solo aviso, contenido en pestaña */}
+      {novedadesDeEstaActuacion.length > 0 && tab !== 'novedades_pjn' && (
         <div className="mt-4 p-3 rounded-xl bg-[#e6f1fb] border border-[#B5D4F4] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon name="refresh" size={16} className="text-[#185fa5]" />
+            <Icon name="pjn" size={16} className="text-[#185fa5]" />
             <span className="text-[13px] text-[#185fa5] font-medium">
               {novedadesDeEstaActuacion.length}
               {novedadesDeEstaActuacion.length === 1 ? ' novedad detectada por PJN' : ' novedades detectadas por PJN'}
             </span>
           </div>
           <button
-            onClick={() => setMostrarPanelPjn(v => !v)}
-            className="text-[13px] font-semibold text-[#185fa5] hover:underline"
+            onClick={() => setTab('novedades_pjn')}
+            className="text-[13px] font-semibold text-[#185fa5] hover:underline flex items-center gap-1"
           >
-            {mostrarPanelPjn ? 'Ocultar' : 'Revisar'}
+            Revisar
+            <Icon name="arrow_forward" size={14} />
           </button>
-        </div>
-      )}
-      {mostrarPanelPjn && novedadesDeEstaActuacion.length > 0 && (
-        <div className="mt-3 space-y-6">
-          {gruposPjnDeEstaActuacion.map(items => (
-            <div key={items[0].corrida_id}>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#7a9ab4] mb-2">
-                {items.length} {items.length === 1 ? 'movimiento detectado' : 'movimientos detectados'} el {formatFecha(items[0].fecha_deteccion)}
-              </p>
-              <div className="space-y-3">
-                {items.map(n => (
-                  <NovedadPjnCard key={n.id} novedad={n} mostrarActuacion={false} />
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       )}
 
@@ -827,6 +805,7 @@ export default function DetalleExpedientePage() {
       {tab === 'timeline'       && <TimelineTab        exp={exp} />}
       {tab === 'docs'           && <DocumentosTab      exp={exp} />}
       {tab === 'prevision'      && <PrevisionTab       exp={exp} />}
+      {tab === 'novedades_pjn'  && <NovedadesPjnTab exp={exp} />}
       {tab === 'asistente'      && <AsistenteTab       exp={exp} />}
 
       {/* Modal: Consultar Novedad PJN (manual) */}
