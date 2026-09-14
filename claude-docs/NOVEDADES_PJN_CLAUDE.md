@@ -345,6 +345,39 @@ calculadas en cada render con `filtrarNovedadesPorRol` y mapeadas a la forma de
   aplica — no vive en ese store); se considera "resuelta" cuando se aplica o descarta desde
   el módulo, momento en el que deja de listarse por no estar `pendiente`.
 
+## Pestaña "Novedades PJN" en Detalle de Expediente (`NovedadesPjnTab.tsx`)
+
+Agregado en `feat/integracion` (mergeada a `develop` el 2026-09-11, fuera del flujo Dev habitual
+de esta sesión). Antes, `DetalleExpediente.page.tsx` mostraba las novedades pendientes de la
+actuación inline, debajo de un banner colapsable (`mostrarPanelPjn`). Ahora es una pestaña más
+(`novedades_pjn`, ícono `pjn`, ubicada entre "Vinculados" y "Saúl"):
+
+- El banner de aviso arriba del contenido se mantiene (mismo conteo
+  `novedadesDeEstaActuacion.length`), pero ahora solo se muestra cuando la pestaña activa **no**
+  es "Novedades PJN", y su botón "Revisar" navega a la pestaña (`setTab('novedades_pjn')`) en vez
+  de expandir contenido inline.
+- `NovedadesPjnTab.tsx` reproduce la misma lógica de agrupamiento por `corrida_id` que tenía el
+  banner expandido (grupos ordenados por `fecha_deteccion` desc, items internos por
+  `row_index`), renderizando `NovedadPjnCard` con `mostrarActuacion={false}` — mismo componente
+  que usa la bandeja central y el modal de consulta manual.
+- El badge numérico de la pestaña usa el mismo `novedadesDeEstaActuacion.length`.
+
+## Panel de credenciales PJN / MEV (Configuración → Integración)
+
+También agregado en `feat/integracion`: `src/pages/Configuracion/IntegracionPanel.tsx`, con un
+grupo nuevo "Integración" en `tablas.config.ts` (tipo de tabla `integracion`, fuera del patrón
+genérico `CatalogoPanel` — ver `CLAUDE_root.md` sección 17).
+
+- Gestiona 2 credenciales mock (usuario automático PJN y usuario automático MEV) con política de
+  vencimiento fija por sistema (PJN 200 días, MEV 90 días desde `fecha_actualizacion`), barra de
+  progreso y alerta cuando quedan ≤15 días o ya venció.
+- "Actualizar credencial" abre un modal para cambiar usuario/contraseña/descripción; al guardar
+  reinicia el contador de vencimiento a la política del sistema.
+- **100% mock**: estado en `useState` local del componente (no en un store), sin persistencia
+  entre recargas y **sin conexión real** con el Portal PJN/MEV ni con el mecanismo de scraping
+  automático que describe el resto de este documento — ni siquiera está cableado al mock de
+  `pjn.store.ts`. Es un panel de administración visual, nada más.
+
 ## Datos del mock
 
 25 movimientos crudos sobre 3 actuaciones con `numero_causa` real, agrupados en 4 corridas
@@ -426,6 +459,8 @@ nada externo).
 
 - Sin integración real con el Portal PJN — todo el flujo de detección es mock (novedades y
   alertas de "causa sin cargar" por igual).
+- **Credenciales PJN/MEV** (Configuración → Integración, `IntegracionPanel.tsx`): panel 100%
+  mock, sin backend ni conexión real con el Portal PJN/MEV — ver sección arriba.
 - Sin persistencia — las novedades, las alertas, sus estados (aplicada/descartada/resuelta)
   y el contador de consultas manuales diarias viven solo en memoria del store
   (`usePjnStore`), se pierden al recargar (el cupo diario "se resetea gratis" al recargar,

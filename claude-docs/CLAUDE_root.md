@@ -274,7 +274,7 @@ El timeline del expediente tiene DOS capas:
 | Actuaciones/ | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | Router por rol — ver Sección 6 |
 | BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer; tabs Activos/Archivados |
 | BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes; filtro por área preseleccionado |
-| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 7 tabs — ver Sección 10a |
+| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 8 tabs — ver Sección 10a |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
@@ -290,10 +290,12 @@ El timeline del expediente tiene DOS capas:
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
+| Novedades PJN | NovedadesPjnTab.tsx | ✓ agrupado por corrida, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 | Saúl (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
-muestra un banner arriba del contenido (cualquier tab) con acceso a revisarlas inline.
+muestra un banner arriba del contenido en cualquier tab salvo "Novedades PJN"; su botón "Revisar"
+navega a esa pestaña (ya no las expande inline debajo del banner).
 
 ---
 
@@ -474,6 +476,7 @@ Funciones en `src/utils/exportTimeline.ts`:
 - Si al hacer click en una entrada del feed de causa navega al detalle de la actuación de origen.
 - Distinción exacta entre rol `asistente_jurídico` y `abogado` (actualmente idénticos en el sistema).
 - Visibilidad de la alerta "actuación en PJN sin cargar en SIAJ" (`filtrarAlertasActuacionesPorRol`, `src/utils/pjnVisibilidad.ts`) — a quién le llega (¿letrado dueño del favorito PJN? ¿coordinador? ¿mesa/administrativo? ¿referente? podría ser más de uno). Pendiente de reunión de negocio 2026-09-01. Default actual (conservador, sin inferencia de área posible porque la causa no está en SIAJ): REFERENTE y COORDINADOR ven todas, ABOGADO no ve ninguna.
+- Persistencia real de credenciales PJN/MEV (Configuración → Integración, `IntegracionPanel.tsx`): hoy es mock local sin backend ni conexión con la integración automática real.
 
 ---
 
@@ -500,9 +503,10 @@ Cualquier otro rol es redirigido a `/actuaciones`.
 | Archivo | Responsabilidad |
 |---------|----------------|
 | `src/pages/Configuracion/Configuracion.page.tsx` | Layout dos columnas: sidebar de grupos + contenido |
-| `src/pages/Configuracion/tablas.config.ts` | Definición de 5 grupos y 28 tablas editables |
+| `src/pages/Configuracion/tablas.config.ts` | Definición de 7 grupos y 29 tablas editables (incluye grupo "Integración") |
 | `src/pages/Configuracion/CatalogoPanel.tsx` | CRUD genérico para tipos simple/extended/tipoGestion |
 | `src/pages/Configuracion/UsuariosPanel.tsx` | Tabla y edición de usuarios del sistema |
+| `src/pages/Configuracion/IntegracionPanel.tsx` | Credenciales PJN/MEV — vencimiento y renovación (mock, ver nota abajo) |
 | `src/store/configuracion.store.ts` | Estado Zustand con catálogos + acciones agregarItem/editarItem/desactivarItem |
 
 ### Tipos de tabla
@@ -513,6 +517,7 @@ Cualquier otro rol es redirigido a `/actuaciones`.
 | `extended` | Nombre / Tipo / Provincia / Localidad / Estado / Acciones | Para juzgados, tribunales, fiscalías, UFIs, comisarías |
 | `tipoGestion` | Código / Label / Áreas / Canal / Estado | Solo lectura visual (sin edición inline por complejidad) |
 | `usuario` | Nombre / Rol / Área/s / Estado / Acciones | `UsuariosPanel` — lógica especial con FIFO y líneas ferroviarias |
+| `integracion` | Cards por credencial (sistema, usuario, vencimiento) | `IntegracionPanel.tsx` — no usa `CatalogoPanel`; estado local propio, no `configuracion.store.ts`. **100% mock**, sin persistencia ni conexión real con PJN/MEV — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 
 ### Tablas solo lectura
 
