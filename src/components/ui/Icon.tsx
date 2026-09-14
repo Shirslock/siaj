@@ -13,9 +13,10 @@ import {
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
+  HomeIcon,
   ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserIcon, UserPlusIcon,
   UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
-  SparklesIcon, PaperAirplaneIcon,
+  SparklesIcon, PaperAirplaneIcon, KeyIcon, EyeSlashIcon,
 } from '@heroicons/react/24/outline'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -109,6 +110,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   construction:          WrenchScrewdriverIcon,
   settings:              Cog6ToothIcon,
   dashboard:             Squares2X2Icon,
+  home:                  HomeIcon,
   gavel:                 ScaleIcon,
   local_police:          ShieldCheckIcon,
   subdirectory_arrow_right: ArrowTurnDownRightIcon,
@@ -124,6 +126,14 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
 
   // Licencias
   clock:                 ClockIcon,
+
+  // Novedades PJN
+  pjn:                   ArrowPathIcon,
+
+  // Configuración
+  key:                   KeyIcon,
+  visibility_off:       EyeSlashIcon,
+  update:               ArrowPathIcon,
 
   // Asistente IA
   smart_toy:             SparklesIcon,

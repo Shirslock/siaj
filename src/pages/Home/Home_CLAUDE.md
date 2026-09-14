@@ -1,10 +1,24 @@
-# src/pages/Home/ — Principal (Home de ABOGADO, Etapa 1)
+# src/pages/Home/ — Principal (Etapa 1 + alcance por rol)
 
-`Home.page.tsx` es la página de inicio **exclusiva de `rolSistema === 'ABOGADO'`** (mostrada como
-"Principal" en Sidebar/Topbar; ruta y archivo siguen llamándose `/home`/`Home.page.tsx`, solo
-cambió el texto de cara al usuario). Ningún otro rol pasa por acá — REFERENTE/COORDINADOR siguen
-yendo a `/dashboard` (`<PanelGerencia>`, ver `Dashboard_CLAUDE.md`), y `"/"` resuelve el destino
-por rol en `App.tsx` (`<RaizPorRol>`).
+`Home.page.tsx` es la página "Principal" (ruta y archivo siguen llamándose `/home`/`Home.page.tsx`,
+solo cambió el texto de cara al usuario). Es el landing de `ABOGADO`; COORDINADOR y REFERENTE
+(Gerente) **también** pueden entrar (tienen `'home'` en `ROL_ACCESOS[...].nav`, ver
+`data/usuarios.ts`), pero su landing sigue siendo `/dashboard` — Principal **no reemplaza** el
+Dashboard, conviven como dos ítems del Sidebar. `"/"` resuelve el destino por rol en `App.tsx`
+(`<RaizPorRol>`), sin cambios.
+
+**Alcance (`scope: 'MIAS' | 'AREA' | 'TODO'`, ver `homeShared.tsx`):** todos los cálculos de
+`useHomeData(scope)` cuelgan de un único set base que varía según el scope, en vez de estar
+hardcodeados a `abogado_id === usuarioActivo.id`:
+- `ABOGADO` → sin toggle, scope fijo `'MIAS'` (comportamiento original, cero cambios).
+- `COORDINADOR` → toggle "Mías" / "Mi área", default `'AREA'`.
+- `REFERENTE` (Gerente) → toggle "Mías" / "Todo", default `'TODO'`.
+
+El toggle vive en `Home.page.tsx` (mismo patrón visual que los tabs de `<WidgetVencimientos>`) y
+solo se renderiza para COORDINADOR/REFERENTE. Cada deep-link a la Bandeja agrega, además de su
+filtro propio, el filtro de alcance (`?letrado=` para MIAS, `?area=` para AREA — vacío si el
+coordinador tiene más de un área, con el pool ya acotado a sus áreas del lado de la Bandeja — nada
+para TODO). Ver `BandejaAbogado.page.tsx` (`filtroInicial`) para cómo se hidrata.
 
 Es **Etapa 1**: no toca Agenda, Solicitudes (`/tareas`), Novedades PJN ni el Asistente IA. Todos
 los widgets son de solo lectura y navegan a `/actuaciones` (`BandejaAbogado.page.tsx`) con query
@@ -158,7 +172,7 @@ Oficio | Sin Intervención`.
 
 ## `useHomeData()` — todo el cálculo en un solo hook
 
-Devuelve `usuarioActivo`, `navigate`, `misExpedientes`, `misActivos`, `vencimientos`,
+Recibe `scope` (default `'MIAS'`) y devuelve `usuarioActivo`, `navigate`, `scope`, `misExpedientes`, `misActivos`, `vencimientos`,
 `causasActivasCount`, `documentosActivosCount`, `asignadoCount`, `intervencion` (`{ actora,
 demandada, denunciante, sinIntervencion }`), `porVencerCount`, `urgentesCount`, `estadosActivos`
 (`{ code, count, label }[]`, ordenado por `count` desc), `audiencias` (`{ exp, titulo, fecha }[]`,
@@ -187,8 +201,9 @@ del grupo "Próximas (N)"), pero se sigue exportando por ser barato y útil.
   activas** (15 causas + 5 documentos), 4 vencidas y 3 por vencer, 4 en ASIGNADO, 4 urgentes,
   9 estados procesales distintos, 4 audiencias próximas (+ 1 ya realizada que **no** debe
   aparecer) y 1 actuación cerrada. El usuario activo por defecto es LOPEZ (`UR_018`, REFERENTE),
-  que redirige a `/dashboard` — si se entra a `/home` sin cambiar de usuario **no** se ve esta
-  pantalla, y eso es lo esperado.
+  que **landea** en `/dashboard` (`<RaizPorRol>` no cambió) — para ver Principal como ABOGADO hay
+  que cambiar de usuario y entrar a `/home` explícitamente; LOPEZ también puede entrar a `/home`
+  desde el Sidebar y ver el scope `'TODO'` por default.
 - **"Nuevas asignadas" no aplica a los documentales.** Cuenta `estado === 'ASIGNADO'`, y los tipos
   documentales usan `ESTADOS_GENERICOS` (INICIO / EN_TRAMITE / CERRADO), que no tiene ese estado.
   Un letrado que lleve solo oficios va a ver 0 ahí. Si molesta, la definición alternativa es

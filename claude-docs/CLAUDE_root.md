@@ -68,7 +68,7 @@ npm run build      # build de producción
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
-| `src/pages/Home/Home.page.tsx` | "Principal" (`/home`) — Home exclusivo de ABOGADO, Etapa 1. Tags/contadores con deep-link a `/actuaciones` + Vencimientos/Tareas + donuts. Ver `src/pages/Home/Home_CLAUDE.md`. |
+| `src/pages/Home/Home.page.tsx` | "Principal" (`/home`) — Etapa 1. Landing de ABOGADO; COORDINADOR y REFERENTE también entran (conviven con `/dashboard`) con alcance ampliado vía toggle "Mías"/"Mi área"/"Todo". KPIs/contadores con deep-link a `/actuaciones` + Vencimientos/Tareas + distribuciones. Ver `src/pages/Home/Home_CLAUDE.md`. |
 | `src/pages/Home/homeShared.tsx` | Lógica y widgets compartidos del Home (`useHomeData()`, `Tag`, `WidgetVencimientos`, `WidgetPorSubEstado`, `WidgetTipoIntervencion`). |
 | `src/utils/format.ts` | formatFecha, formatMonto(valor, moneda), numerador. |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
@@ -133,8 +133,8 @@ Agregar el import de Heroicons y la entrada en ICON_MAP. Ver `src/components/ui/
 
 | Rol en BD | Rol sistema | Permisos | Ruta inicio |
 |-----------|-------------|----------|-------------|
-| `gerente` | REFERENTE | Todo: dashboard, todas las áreas, panel configuración. | /dashboard |
-| `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar desde bandeja y botón + del detalle | /actuaciones |
+| `gerente` | REFERENTE | Todo: dashboard, todas las áreas, panel configuración. También accede a "Principal" (`/home`) con alcance "Mías"/"Todo". | /dashboard |
+| `abogado_coordinador` | COORDINADOR | Su área + bandeja + puede reasignar desde bandeja y botón + del detalle. También accede a "Principal" (`/home`) con alcance "Mías"/"Mi área". | /actuaciones |
 | `abogado` / `abogada` | ABOGADO | Bandeja propia + su área | /home ("Principal", Etapa 1) |
 | `asistente_jurídico` | ABOGADO | Igual que abogado (diferencia pendiente de definición con cliente) | /home ("Principal", Etapa 1) |
 | `adm_mesa` | ADMINISTRATIVO | Mesa SIAJ solamente. Solo lectura en todos los tabs del detalle. Sin botón Editar ni botón +. | /mesa |
@@ -274,7 +274,7 @@ El timeline del expediente tiene DOS capas:
 | Actuaciones/ | /actuaciones | ABOGADO, COORDINADOR, REFERENTE | Router por rol — ver Sección 6 |
 | BandejaAbogado/ | /bandeja/abogado (alias) | ABOGADO, COORDINADOR, REFERENTE | Agrupación por causa; filtros Urgentes + Por vencer; tabs Activos/Archivados |
 | BandejaArea/ | /bandeja/area (alias) | COORDINADOR, REFERENTE | Árbol causa↔expedientes; filtro por área preseleccionado |
-| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 7 tabs — ver Sección 10a |
+| DetalleExpediente/ | /expediente/:id | ABOGADO, COORDINADOR, REFERENTE | 8 tabs — ver Sección 10a |
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
@@ -290,10 +290,12 @@ El timeline del expediente tiene DOS capas:
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
+| Novedades PJN | NovedadesPjnTab.tsx | ✓ agrupado por corrida, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 | Saúl (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
-muestra un banner arriba del contenido (cualquier tab) con acceso a revisarlas inline.
+muestra un banner arriba del contenido en cualquier tab salvo "Novedades PJN"; su botón "Revisar"
+navega a esa pestaña (ya no las expande inline debajo del banner).
 
 ---
 
@@ -474,6 +476,7 @@ Funciones en `src/utils/exportTimeline.ts`:
 - Si al hacer click en una entrada del feed de causa navega al detalle de la actuación de origen.
 - Distinción exacta entre rol `asistente_jurídico` y `abogado` (actualmente idénticos en el sistema).
 - Visibilidad de la alerta "actuación en PJN sin cargar en SIAJ" (`filtrarAlertasActuacionesPorRol`, `src/utils/pjnVisibilidad.ts`) — a quién le llega (¿letrado dueño del favorito PJN? ¿coordinador? ¿mesa/administrativo? ¿referente? podría ser más de uno). Pendiente de reunión de negocio 2026-09-01. Default actual (conservador, sin inferencia de área posible porque la causa no está en SIAJ): REFERENTE y COORDINADOR ven todas, ABOGADO no ve ninguna.
+- Persistencia real de credenciales PJN/MEV (Configuración → Integración, `IntegracionPanel.tsx`): hoy es mock local sin backend ni conexión con la integración automática real.
 
 ---
 
@@ -500,9 +503,10 @@ Cualquier otro rol es redirigido a `/actuaciones`.
 | Archivo | Responsabilidad |
 |---------|----------------|
 | `src/pages/Configuracion/Configuracion.page.tsx` | Layout dos columnas: sidebar de grupos + contenido |
-| `src/pages/Configuracion/tablas.config.ts` | Definición de 5 grupos y 28 tablas editables |
+| `src/pages/Configuracion/tablas.config.ts` | Definición de 7 grupos y 29 tablas editables (incluye grupo "Integración") |
 | `src/pages/Configuracion/CatalogoPanel.tsx` | CRUD genérico para tipos simple/extended/tipoGestion |
 | `src/pages/Configuracion/UsuariosPanel.tsx` | Tabla y edición de usuarios del sistema |
+| `src/pages/Configuracion/IntegracionPanel.tsx` | Credenciales PJN/MEV — vencimiento y renovación (mock, ver nota abajo) |
 | `src/store/configuracion.store.ts` | Estado Zustand con catálogos + acciones agregarItem/editarItem/desactivarItem |
 
 ### Tipos de tabla
@@ -513,6 +517,7 @@ Cualquier otro rol es redirigido a `/actuaciones`.
 | `extended` | Nombre / Tipo / Provincia / Localidad / Estado / Acciones | Para juzgados, tribunales, fiscalías, UFIs, comisarías |
 | `tipoGestion` | Código / Label / Áreas / Canal / Estado | Solo lectura visual (sin edición inline por complejidad) |
 | `usuario` | Nombre / Rol / Área/s / Estado / Acciones | `UsuariosPanel` — lógica especial con FIFO y líneas ferroviarias |
+| `integracion` | Cards por credencial (sistema, usuario, vencimiento) | `IntegracionPanel.tsx` — no usa `CatalogoPanel`; estado local propio, no `configuracion.store.ts`. **100% mock**, sin persistencia ni conexión real con PJN/MEV — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 
 ### Tablas solo lectura
 
@@ -543,9 +548,11 @@ el modal de nuevo/editar muestra un campo extra "Días" numérico.
   estacionalidad, organismos requirentes, ganadas/perdidas por juzgado.
 
 **ABOGADO ya no pasa por acá:** `DashboardPage` redirige a `/home` ("Principal") para cualquier
-usuario que no sea REFERENTE ni COORDINADOR. Ese Home (Etapa 1) tiene su propio doc —
-`src/pages/Home/Home_CLAUDE.md` — con tags/contadores personales (deep-link a `/actuaciones`),
-vencimientos/tareas fusionados y 2 donuts (sub-estado, tipo de intervención).
+usuario que no sea REFERENTE ni COORDINADOR. REFERENTE y COORDINADOR también pueden entrar a
+`/home` desde el Sidebar (los dos ítems conviven, ninguno reemplaza al otro ni cambia el landing).
+Ese Home (Etapa 1) tiene su propio doc — `src/pages/Home/Home_CLAUDE.md` — con KPIs/contadores
+con deep-link a `/actuaciones`, vencimientos/tareas y distribuciones, con alcance
+("Mías"/"Mi área"/"Todo" según rol).
 
 **Gráficos con `recharts`** (import inline, self-contained) en ambas páginas. Todo se calcula en
 tiempo real desde `useExpedientesStore` (expedientes + tareasMap) con `useMemo`; las alertas usan

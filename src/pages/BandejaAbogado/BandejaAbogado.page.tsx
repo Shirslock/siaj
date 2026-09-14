@@ -77,10 +77,14 @@ export default function BandejaAbogadoPage() {
 
   const filtroInicial = useMemo(() => ({
     buscar:     buscarInicial,
-    area:       esCoordi ? (usuarioActivo?.areas[0] ?? '') : (searchParams.get('area') ?? ''),
+    // Deep-link desde Principal (`?area=`, string vacío incluido = "todas mis áreas"): tiene
+    // prioridad sobre el default de COORDINADOR (su primera área). El `poolBase` ya restringe
+    // COORDINADOR a sus áreas y REFERENTE a todo, así que un `?area=` vacío no amplía el pool.
+    area:       esCoordi ? (searchParams.get('area') ?? usuarioActivo?.areas[0] ?? '') : (searchParams.get('area') ?? ''),
     tipo:       searchParams.get('tipo') ?? '',
     estado:     searchParams.get('estado') ?? '',
-    letrado:    esAbogado ? (usuarioActivo?.id ?? '') : '',
+    // Deep-link desde Principal (`?letrado=`), con el default actual de ABOGADO si no viene.
+    letrado:    searchParams.get('letrado') ?? (esAbogado ? (usuarioActivo?.id ?? '') : ''),
     fechaDesde: searchParams.get('fechaDesde') ?? '',
     fechaHasta: '',
     soloUrgentes: searchParams.get('urgente') === '1',
