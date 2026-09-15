@@ -10,15 +10,15 @@ import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
-  { key: 'home',           icon: 'home',         label: 'Principal',              ruta: '/home' },
-  { key: 'dashboard',      icon: 'dashboard',    label: 'Panel de Control',       ruta: '/dashboard' },
-  { key: 'mesa',           icon: 'inbox',        label: 'Mesa SACO',              ruta: '/mesa' },
-  { key: 'actuaciones',    icon: 'work',         label: 'Actuaciones',            ruta: '/actuaciones' },
-  { key: 'novedades_pjn',  icon: 'refresh',      label: 'Novedades PJN',          ruta: '/novedades-pjn' },
-  { key: 'agenda',         icon: 'calendar',     label: 'Agenda',                 ruta: '/agenda' },
-  { key: 'tareas',         icon: 'task',         label: 'Solicitudes',            ruta: '/tareas' },
-  { key: 'licencias',      icon: 'clock',        label: 'Licencias',              ruta: '/licencias' },
-  { key: 'configuracion',  icon: 'settings',     label: 'Configuración',          ruta: '/configuracion' },
+  { key: 'home',           icon: 'nav_home',        label: 'Principal',              ruta: '/home' },
+  { key: 'dashboard',      icon: 'nav_dashboard',   label: 'Panel de Control',       ruta: '/dashboard' },
+  { key: 'mesa',           icon: 'nav_mesa',        label: 'Mesa SACO',              ruta: '/mesa' },
+  { key: 'actuaciones',    icon: 'nav_actuaciones', label: 'Actuaciones',            ruta: '/actuaciones' },
+  { key: 'novedades_pjn',  icon: 'refresh',         label: 'Novedades PJN',          ruta: '/novedades-pjn' },
+  { key: 'agenda',         icon: 'nav_agenda',      label: 'Agenda',                 ruta: '/agenda' },
+  { key: 'tareas',         icon: 'nav_solicitudes', label: 'Solicitudes',            ruta: '/tareas' },
+  { key: 'licencias',      icon: 'clock',           label: 'Licencias',              ruta: '/licencias' },
+  { key: 'configuracion',  icon: 'settings',        label: 'Configuración',          ruta: '/configuracion' },
 ]
 
 const AVATAR_COLORS: Record<RolSistema, string> = {

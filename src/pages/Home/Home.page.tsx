@@ -123,15 +123,15 @@ export default function HomePage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         <KpiCard
-          icono="folder" label="Causas judiciales activas" valor={causasActivasCount} tono="azul"
+          icono="kpi_causas" label="Causas judiciales activas" valor={causasActivasCount} tono="azul"
           onClick={() => irABandeja('clase=causa')}
         />
         <KpiCard
-          icono="description" label="Documentos activos" valor={documentosActivosCount} tono="teal"
+          icono="kpi_documentos" label="Documentos activos" valor={documentosActivosCount} tono="teal"
           onClick={() => irABandeja('clase=documento')}
         />
         <KpiCard
-          icono="person_add" label="Nuevas asignadas" valor={asignadoCount} tono="azul"
+          icono="kpi_nuevas" label="Nuevas asignadas" valor={asignadoCount} tono="azul"
           onClick={() => irABandeja('estado=ASIGNADO')}
         />
         <KpiCard
@@ -139,7 +139,7 @@ export default function HomePage() {
           onClick={() => irABandeja('parte=Actora')}
         />
         <KpiCard
-          icono="error" label="Urgentes" valor={urgentesCount} tono="rojo"
+          icono="kpi_urgente" label="Urgentes" valor={urgentesCount} tono="rojo"
           onClick={() => irABandeja('urgente=1')}
         />
       </div>
