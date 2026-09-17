@@ -5,7 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import Icon from '../../../components/ui/Icon'
-import saulAvatar from '../../../assets/saul-avatar.jpg'
+import bogaAvatar from '../../../assets/boga-avatar.jpg'
 import type { Expediente } from '../../../types'
 
 interface Props { exp: Expediente }
@@ -14,6 +14,13 @@ const PAUSA_CHISTE_1_MS = 1200
 const PAUSA_CHISTE_2_MS = 600
 const CHISTE_1 = 'Eso no lo sé, por favor preguntale a Nicolás 😅'
 const CHISTE_2 = 'Mentira, ahí te doy la respuesta:'
+
+const PREGUNTAS_SUGERIDAS = [
+  '¿Cuál es el estado actual de esta actuación?',
+  'Resumime el historial de esta actuación',
+  '¿Cuáles son los próximos pasos a seguir?',
+  '¿Hay novedades del PJN pendientes de revisión?',
+]
 
 // Estilos manuales para las respuestas en Markdown del asistente — sin plugin
 // de @tailwindcss/typography (no estaba instalado), aplicados directo con las
@@ -89,7 +96,7 @@ export function AsistenteTab({ exp }: Props) {
         role: 'assistant',
         parts: [{
           type: 'text',
-          text: `¡Hola! Soy Saúl, el asistente de esta actuación (${exp.id}). ¿En qué te puedo ayudar?`,
+          text: `¡Hola! Soy Boga, el asistente de esta actuación (${exp.id}). ¿En qué te puedo ayudar?`,
         }],
       },
     ] as UIMessage[],
@@ -103,9 +110,7 @@ export function AsistenteTab({ exp }: Props) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, chisteEnCurso])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const texto = input.trim()
+  async function enviarPregunta(texto: string) {
     if (!texto || isLoading || chisteActivo) return
     setInput('')
 
@@ -121,16 +126,21 @@ export function AsistenteTab({ exp }: Props) {
     sendMessage({ text: texto }, { body: { expedienteContext: contexto } })
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    await enviarPregunta(input.trim())
+  }
+
   return (
     <div className="h-[600px] flex flex-col rounded-2xl border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white">
       <div className="px-4 py-3 border-b border-[rgba(0,0,0,0.08)] bg-[#f5f5f5] flex items-center gap-2 flex-shrink-0">
         <img
-          src={saulAvatar}
-          alt="Saúl"
+          src={bogaAvatar}
+          alt="Boga"
           className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-[rgba(0,0,0,0.08)]"
         />
         <span className="text-[13px] font-semibold text-[#1b3a57]">
-          Saúl — {exp.id}
+          Boga — {exp.id}
         </span>
       </div>
 
@@ -153,7 +163,7 @@ export function AsistenteTab({ exp }: Props) {
               >
                 {m.role === 'assistant' && (
                   <img
-                    src={saulAvatar}
+                    src={bogaAvatar}
                     alt=""
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                   />
@@ -186,14 +196,14 @@ export function AsistenteTab({ exp }: Props) {
                   </div>
                 </div>
                 <div className="flex items-end gap-2 justify-start">
-                  <img src={saulAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                  <img src={bogaAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                   <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap bg-[#f0f4f7] text-[#1b3a57]">
                     {CHISTE_1}
                   </div>
                 </div>
                 {chisteEnCurso.fase === 2 && (
                   <div className="flex items-end gap-2 justify-start">
-                    <img src={saulAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    <img src={bogaAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                     <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap bg-[#f0f4f7] text-[#1b3a57]">
                       {CHISTE_2}
                     </div>
@@ -205,7 +215,7 @@ export function AsistenteTab({ exp }: Props) {
             {isLoading && (
               <div className="flex items-end gap-2 justify-start">
                 <img
-                  src={saulAvatar}
+                  src={bogaAvatar}
                   alt=""
                   className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                 />
@@ -223,9 +233,25 @@ export function AsistenteTab({ exp }: Props) {
             )}
           </div>
 
+          {esPrimeraPregunta && !chisteActivo && (
+            <div className="flex flex-wrap gap-1.5 px-3 pt-2 border-t border-[rgba(0,0,0,0.08)] flex-shrink-0">
+              {PREGUNTAS_SUGERIDAS.map(pregunta => (
+                <button
+                  key={pregunta}
+                  type="button"
+                  onClick={() => enviarPregunta(pregunta)}
+                  disabled={isLoading}
+                  className="px-2.5 py-1 rounded-full border border-[#B5D4F4] bg-[#e6f1fb] text-[11px] text-[#185fa5] hover:bg-[#d6e9fa] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {pregunta}
+                </button>
+              ))}
+            </div>
+          )}
+
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-2 px-3 py-3 border-t border-[rgba(0,0,0,0.08)] flex-shrink-0"
+            className={`flex items-center gap-2 px-3 py-3 flex-shrink-0 ${esPrimeraPregunta && !chisteActivo ? '' : 'border-t border-[rgba(0,0,0,0.08)]'}`}
           >
             <input
               type="text"

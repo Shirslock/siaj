@@ -683,7 +683,7 @@ Mismo patrón (mismo `TIPOS` con `'PRESENTACION'`), pero como se indicó, el cat
 
 - **Etapa 1 (esta spec):** selección 100% manual de firmante/matrícula/carácter; datos judiciales pre-cargados desde `Expediente` (ya guardado, no requiere backend); destinatario/DNI de cédula pre-cargados desde `Intervinientes`.
 - **Etapa 2:** autocompletar Personería completa (tomo/folio/CUIL) desde el perfil del abogado en Configuración → Personal, sin selección manual.
-- **Etapa 3:** IA (Gemini) sugiere o completa variables de nivel "Asistida por criterio" (MT-27/28) y resume hechos para MT-26, usando el módulo RAG ya en plan (`Saúl Goodman`).
+- **Etapa 3:** IA (Gemini) sugiere o completa variables de nivel "Asistida por criterio" (MT-27/28) y resume hechos para MT-26, usando el módulo RAG ya en plan (`Boga`).
 
 ---
 

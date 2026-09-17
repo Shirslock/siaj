@@ -291,7 +291,7 @@ El timeline del expediente tiene DOS capas:
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Novedades PJN | NovedadesPjnTab.tsx | ✓ agrupado por corrida, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
-| Saúl (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| Boga (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
 muestra un banner arriba del contenido en cualquier tab salvo "Novedades PJN"; su botón "Revisar"

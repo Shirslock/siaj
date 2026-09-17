@@ -23,7 +23,7 @@ import { DocumentosTab }     from './tabs/DocumentosTab'
 import { PrevisionTab }      from './tabs/PrevisionTab'
 import { AsistenteTab }      from './tabs/AsistenteTab'
 import Icon from '../../components/ui/Icon'
-import saulAvatar from '../../assets/saul-avatar.jpg'
+import bogaAvatar from '../../assets/boga-avatar.jpg'
 import { toast } from 'react-toastify'
 import { formatFecha } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
@@ -116,7 +116,7 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'prevision',      label: 'Previsión',       icon: 'trending_up' },
   { key: 'vinculos',       label: 'Vinculados',      icon: 'account_tree' },
   { key: 'novedades_pjn',  label: 'Novedades PJN',   icon: 'pjn' },
-  { key: 'asistente',      label: 'Saúl',            icon: 'smart_toy' },
+  { key: 'asistente',      label: 'Boga',            icon: 'smart_toy' },
 ]
 
 export default function DetalleExpedientePage() {
@@ -765,7 +765,7 @@ export default function DetalleExpedientePage() {
             }`}
           >
             {t.key === 'asistente'
-              ? <img src={saulAvatar} alt="Saúl" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+              ? <img src={bogaAvatar} alt="Boga" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
               : <Icon name={t.icon} size={16} />
             }
             {t.label}

@@ -1,6 +1,6 @@
 # Asistente IA — probar en local
 
-El Asistente IA (tab "Saúl" en el detalle de una actuación) corre contra Groq a través de
+El Asistente IA (tab "Boga" en el detalle de una actuación) corre contra Groq a través de
 una función serverless de Vercel (`api/chat.ts`).
 
 ## Pasos
@@ -26,7 +26,7 @@ npm run dev
 
 5. Abrir la URL que muestra la **Terminal 2** (normalmente `http://localhost:5173`) — **no**
    el puerto 3001, ese es solo el backend.
-6. Ir a cualquier actuación → tab "Saúl". Las llamadas del chat a `/api/chat` salen desde el
+6. Ir a cualquier actuación → tab "Boga". Las llamadas del chat a `/api/chat` salen desde el
    navegador hacia el puerto de Vite, y el proxy configurado en `vite.config.ts`
    (`server.proxy['/api']`) las redirige por atrás al puerto 3001.
 
