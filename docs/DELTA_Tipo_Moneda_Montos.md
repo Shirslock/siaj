@@ -8,8 +8,10 @@
 > - **Sistema:** SIAJ — Sistema Integral de Asuntos Jurídicos (SOFSE)
 > - **Branch de implementación:** `feat/tipo-moneda-montos`
 > - **Fecha de definición:** 2026-09-07
-> - **Estado:** implementado en la branch `feat/tipo-moneda-montos` (compila; pendiente de prueba
->   funcional y revisión del usuario)
+> - **Estado:** implementado y mergeado a `develop` y a `main` (compila; pendiente de prueba
+>   funcional en la app y de revisión del usuario)
+> - **Trazabilidad:** commit `1da24d2` (implementación + documentación) → merge `710c891` a
+>   `develop` → merge `249aaf6` a `main`
 
 ---
 
@@ -149,6 +151,9 @@ tipo `Moneda` deriva del mapa de símbolos, así que sumar una moneda nueva es a
   moneda hereda esa duplicación. No genera conflicto porque cada formulario es independiente.
 - **Reportes externos (Power BI / SIGEJ):** cualquier consumo externo de los montos debería incluir
   el campo de moneda para no repetir la ambigüedad aguas abajo.
+- **Panel del KPI "Monto expuesto (ARS)":** al hacer click, el panel lateral sigue listando todas
+  las actuaciones, no solo las que suman al total. Es comportamiento anterior a este cambio, pero
+  con el label acotado a ARS queda inconsistente; pendiente de definir si se filtra.
 
 ## 9. Criterios de aceptación
 
@@ -158,11 +163,13 @@ tipo `Moneda` deriva del mapa de símbolos, así que sumar una moneda nueva es a
 3. En la solapa Datos, un monto en pesos se muestra con `$`, uno en dólares con `US$` y uno en
    euros con `€`.
 4. Una actuación cargada antes del cambio se sigue mostrando en pesos y no produce errores.
-5. El KPI "Monto expuesto" del Dashboard no incluye actuaciones con monto en dólares, y su label lo
-   indica.
+5. El KPI "Monto expuesto" del Dashboard suma solo las actuaciones con monto en pesos (las de
+   moneda extranjera quedan fuera), y su label lo indica.
 6. En una actuación con monto en moneda extranjera (USD o EUR), la solapa Previsión no muestra
    monto actualizado ni pronóstico, y explica por qué.
-7. El proyecto compila sin errores (`npm run build`).
+7. El proyecto compila sin errores (`npm run build`). **Verificado.**
+
+Los criterios 1 a 6 son de prueba funcional en la app y todavía **no fueron verificados**.
 
 ## 10. Documentación actualizada por este cambio
 
