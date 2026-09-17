@@ -59,6 +59,7 @@ npm run build      # build de producción
 | `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
 | `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. También `actuacionesSinCargar` — alertas de causas que el PJN expone sin actuación cargada en SIAJ — descartar/resolver. Ver `claude-docs/NOVEDADES_PJN_CLAUDE.md`. |
 | `src/store/notificaciones.store.ts` | Notificaciones reales del Topbar (ASIGNACION/REASIGNACION/ALERTA_VENCIMIENTO). La campana también mezcla novedades PJN pendientes como entradas virtuales — no persisten en este store. |
+| `src/store/bogaHistorial.store.ts` | Historial de conversaciones con Boga, persistido en `localStorage` (sin backend). Conversaciones agrupadas por `scope` (`'global'` o `exp.id` de una actuación). Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
 | `src/components/ui/Modal.tsx` | Modal Headless UI. Props: open, onClose, titulo, size, footer. |
@@ -66,7 +67,8 @@ npm run build      # build de producción
 | `src/components/ui/FormField.tsx` | Wrapper label + hint + error para inputs. |
 | `src/components/layout/` | AppLayout, Sidebar, Topbar (con buscador global persistente — ver Sección 19), UserSwitcher. |
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
-| `src/components/boga/` | `BogaChat.tsx` — chat compartido del Asistente IA. `BogaFab.tsx` — botón flotante global (fuera del detalle de actuación), montado en `AppLayout.tsx`. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
+| `src/components/boga/` | `BogaChat.tsx` — chat compartido del Asistente IA (soporta retomar una conversación guardada vía `mensajesIniciales`/`onMensajesChange`). `BogaFab.tsx` — botón flotante global (fuera del detalle de actuación), montado en `AppLayout.tsx`, sin historial (charla efímera). Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
+| `src/pages/Boga/Boga.page.tsx` | Módulo "Chat con Boga" (`/boga`) — historial de conversaciones a la izquierda (estilo ventana de chat de Claude/ChatGPT) + chat activo a la derecha. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
 | `src/pages/Home/Home.page.tsx` | "Principal" (`/home`) — Etapa 1. Landing de ABOGADO; COORDINADOR y REFERENTE también entran (conviven con `/dashboard`) con alcance ampliado vía toggle "Mías"/"Mi área"/"Todo". KPIs/contadores con deep-link a `/actuaciones` + Vencimientos/Tareas + distribuciones. Ver `src/pages/Home/Home_CLAUDE.md`. |
@@ -292,7 +294,7 @@ El timeline del expediente tiene DOS capas:
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Novedades PJN | NovedadesPjnTab.tsx | ✓ agrupado por corrida, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
-| Boga (Asistente IA) | AsistenteTab.tsx (tab) + BogaFab.tsx (flotante global) | ✓ chat con contexto de la actuación en la tab; contexto general del sistema en el flotante — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| Boga (Asistente IA) | AsistenteTab.tsx (tab) + BogaFab.tsx (flotante global) + Boga.page.tsx (`/boga`) | ✓ chat con contexto de la actuación en la tab (con historial ligado a `exp.id`); contexto general del sistema en el flotante (sin historial) y en el módulo `/boga` (historial global) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
 muestra un banner arriba del contenido en cualquier tab salvo "Novedades PJN"; su botón "Revisar"

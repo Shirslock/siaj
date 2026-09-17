@@ -15,6 +15,7 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'mesa',           icon: 'nav_mesa',        label: 'Mesa SACO',              ruta: '/mesa' },
   { key: 'actuaciones',    icon: 'nav_actuaciones', label: 'Actuaciones',            ruta: '/actuaciones' },
   { key: 'novedades_pjn',  icon: 'refresh',         label: 'Novedades PJN',          ruta: '/novedades-pjn' },
+  { key: 'boga',           icon: 'smart_toy',       label: 'Chat con Boga',          ruta: '/boga' },
   { key: 'agenda',         icon: 'nav_agenda',      label: 'Agenda',                 ruta: '/agenda' },
   { key: 'tareas',         icon: 'nav_solicitudes', label: 'Solicitudes',            ruta: '/tareas' },
   { key: 'licencias',      icon: 'clock',           label: 'Licencias',              ruta: '/licencias' },

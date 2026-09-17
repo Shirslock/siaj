@@ -12,4 +12,5 @@ export const RUTAS = {
   AGENDA:          '/agenda',
   NUEVA_ACTUACION_PENAL: '/actuaciones/nueva-penal',
   LICENCIAS:       '/licencias',
+  BOGA:            '/boga',
 } as const

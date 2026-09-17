@@ -13,6 +13,10 @@ interface Props {
   preguntasSugeridas: string[]
   /** Chiste de "preguntale a Nicolás" en la primera pregunta. Por defecto activo (comportamiento histórico del asistente por actuación). */
   incluirChiste?: boolean
+  /** Mensajes de una conversación guardada a retomar. Si no se pasa (o viene vacío), arranca de cero con el saludo inicial. */
+  mensajesIniciales?: UIMessage[]
+  /** Se dispara cada vez que cambian los mensajes, para que el padre los persista (historial). */
+  onMensajesChange?: (mensajes: UIMessage[]) => void
 }
 
 const PAUSA_CHISTE_1_MS = 1200
@@ -45,24 +49,28 @@ const MARKDOWN_COMPONENTS: Components = {
   td:         ({ children }) => <td className="border border-[rgba(0,0,0,0.12)] px-2 py-1">{children}</td>,
 }
 
-export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, incluirChiste = true }: Props) {
+export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, incluirChiste = true, mensajesIniciales, onMensajesChange }: Props) {
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Chiste solo en la primera pregunta real de esta sesión de chat (se
-  // resetea al salir/volver a entrar, ya que vive en useState).
-  const [esPrimeraPregunta, setEsPrimeraPregunta] = useState(true)
+  const retomaConversacion = (mensajesIniciales?.length ?? 0) > 0
+
+  // Chiste y preguntas sugeridas solo en una conversación nueva/vacía. Al
+  // retomar una conversación guardada ya hay una pregunta real hecha.
+  const [esPrimeraPregunta, setEsPrimeraPregunta] = useState(!retomaConversacion)
   const [chisteEnCurso, setChisteEnCurso] = useState<{ pregunta: string; fase: 1 | 2 } | null>(null)
 
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: '/api/chat' }),
-    messages: [
-      {
-        id: 'saludo-inicial',
-        role: 'assistant',
-        parts: [{ type: 'text', text: saludoInicial }],
-      },
-    ] as UIMessage[],
+    messages: retomaConversacion
+      ? mensajesIniciales!
+      : ([
+          {
+            id: 'saludo-inicial',
+            role: 'assistant',
+            parts: [{ type: 'text', text: saludoInicial }],
+          },
+        ] as UIMessage[]),
   })
 
   const agentDisabled = error?.message?.includes('agent_disabled') ?? false
@@ -72,6 +80,20 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, chisteEnCurso])
+
+  // Notifica al padre para persistir el historial, salvo cuando todavía es
+  // solo el saludo inicial de una conversación nueva (no vale la pena guardarla).
+  // Se guarda en un ref porque el padre no memoiza este callback — si estuviera
+  // en las dependencias del efecto, cada re-render del padre (incluido el que
+  // dispara la propia persistencia) volvería a disparar el efecto en loop.
+  const onMensajesChangeRef = useRef(onMensajesChange)
+  onMensajesChangeRef.current = onMensajesChange
+
+  useEffect(() => {
+    const esSoloSaludo = messages.length === 1 && messages[0].id === 'saludo-inicial'
+    if (esSoloSaludo) return
+    onMensajesChangeRef.current?.(messages)
+  }, [messages])
 
   async function enviarPregunta(texto: string) {
     if (!texto || isLoading || chisteActivo) return

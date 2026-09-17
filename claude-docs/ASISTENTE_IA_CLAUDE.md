@@ -1,20 +1,29 @@
 # Asistente IA — Boga
 
 > Rama original: `feat/asistente-ia-chat` (desde `develop`). Renombrado de "Saúl" a "Boga" y
-> extendido con un botón flotante global en `feat/agente-boga`.
+> extendido con un botón flotante global en `feat/agente-boga`, y con historial de conversaciones
+> persistido en `localStorage` en `feat/boga-historial-chat`.
 
 ## Qué es
 
-El asistente de IA del sistema, llamado **Boga**, tiene dos puntos de entrada que comparten el
+El asistente de IA del sistema, llamado **Boga**, tiene tres puntos de entrada que comparten el
 mismo componente de chat (`src/components/boga/BogaChat.tsx`):
 
-1. **Tab "Boga" en `DetalleExpediente`** (`src/pages/DetalleExpediente/tabs/AsistenteTab.tsx`):
+1. **Módulo "Chat con Boga"** (`/boga`, `src/pages/Boga/Boga.page.tsx`): página dedicada estilo
+   ventana de chat de Claude/ChatGPT — panel lateral con el historial de conversaciones (título +
+   fecha, click para retomar una, botón "Nueva conversación", borrar) y el chat activo a la
+   derecha. Mismo contexto general del sistema que el flotante. Historial con `scope: 'global'`.
+2. **Tab "Boga" en `DetalleExpediente`** (`src/pages/DetalleExpediente/tabs/AsistenteTab.tsx`):
    chat con contexto de la actuación abierta, para que el abogado pregunte cosas como carátula,
-   estado o historial sin salir del expediente.
-2. **Botón flotante global** (`src/components/boga/BogaFab.tsx`, montado en `AppLayout.tsx`):
-   visible en cualquier pantalla que **no** sea el detalle de una actuación (ahí ya está la tab
-   dedicada), con contexto general del sistema (resumen de todas las actuaciones + secciones de
-   navegación) para ayudar a moverse por SIAJ sin necesitar una actuación abierta.
+   estado o historial sin salir del expediente. Tiene un historial simple (dropdown propio, sin
+   sidebar completo) con las conversaciones de **esa** actuación — `scope: exp.id`, no se mezclan
+   entre actuaciones.
+3. **Botón flotante global** (`src/components/boga/BogaFab.tsx`, montado en `AppLayout.tsx`):
+   visible en cualquier pantalla que **no** sea el detalle de una actuación ni el módulo `/boga`
+   (ahí ya hay una entrada dedicada), con contexto general del sistema (resumen de todas las
+   actuaciones + secciones de navegación). Se dejó **sin historial** — sigue siendo una charla
+   efímera, ya que no era el foco del pedido y el módulo `/boga` cubre el caso de uso de retomar
+   conversaciones.
 
 Corre contra **Groq** (modelo `openai/gpt-oss-120b`) a través de una función serverless de
 Vercel — la API key nunca se expone al frontend.
@@ -57,6 +66,35 @@ BogaFab.tsx ───────┘        │  POST /api/chat  { messages, exp
 - El avatar (`src/assets/boga-avatar.jpg`) se importa vía Vite (no queda en `public/`), igual
   que el resto de los assets del proyecto — así tiene hash de caché automático.
 
+## Historial de conversaciones
+
+Persistido 100% **client-side**, sin backend ni base de datos — `src/store/bogaHistorial.store.ts`
+es un store de Zustand que lee/escribe `localStorage` a mano (mismo patrón manual que
+`src/store/ui.store.ts` con `sessionStorage`, pero acá con `localStorage` para que sobreviva
+entre sesiones/cierres del navegador, no solo dentro de una pestaña).
+
+- **Limitación conocida y aceptada:** el historial **no se sincroniza entre dispositivos ni
+  navegadores** — vive únicamente en el `localStorage` del navegador donde se generó.
+- Cada `BogaConversacion` tiene `id`, `scope` (`'global'` para el módulo `/boga`, o `exp.id` para
+  una actuación), `titulo` (se autogenera con la primera pregunta del usuario, truncada a 48
+  caracteres), `fechaCreacion`, `fechaActualizacion` y `mensajes` (formato propio
+  `{ id, role, text }`, no el `UIMessage` completo del SDK — se convierte con
+  `aMensajesGuardados`/`aUIMessages`).
+- `BogaChat.tsx` no sabe nada de `localStorage` ni de Zustand: recibe `mensajesIniciales` (para
+  retomar una conversación guardada) y `onMensajesChange` (para avisar cambios hacia arriba). Cada
+  consumidor (`Boga.page.tsx`, `AsistenteTab.tsx`) es quien lee/escribe el store y **remonta**
+  `BogaChat` con una `key` distinta por conversación (`key={conversacionActivaId ?? 'nueva'}`),
+  porque `useChat` solo toma sus mensajes iniciales una vez, al montar.
+- El chiste inicial y las preguntas sugeridas solo aparecen en una conversación nueva/vacía —
+  `BogaChat` calcula `retomaConversacion = mensajesIniciales.length > 0` y arranca
+  `esPrimeraPregunta` en `false` cuando la hay.
+- No se persiste una conversación que todavía es solo el saludo inicial (evita ensuciar el
+  historial con conversaciones vacías que el usuario abrió pero no usó) — recién se crea la
+  entrada en el store cuando llega el primer mensaje real.
+- La tab "Boga" de la actuación usa una lista/dropdown simple (sin sidebar) porque no hace falta
+  más para el volumen de conversaciones por actuación; el módulo `/boga` sí tiene el panel lateral
+  completo, al ser el punto de entrada equivalente a la ventana de chat de Claude/ChatGPT.
+
 ## Decisión: sin assistant-ui
 
 El prompt original sugería `@assistant-ui/react` + `@assistant-ui/react-ai-sdk`. Al verificar
@@ -91,7 +129,7 @@ en la doc pública):
 
 | name | Heroicon |
 |------|----------|
-| `smart_toy` | `SparklesIcon` |
+| `smart_toy` | `SparklesIcon` (también usado como ícono del nav "Chat con Boga" en el Sidebar) |
 | `send` | `PaperAirplaneIcon` |
 
 ## Variables de entorno (Vercel — no en el repo)
@@ -113,5 +151,11 @@ a la función.
 
 ## Pendiente / próximas etapas
 
-- Sin persistencia de conversación — el historial del chat vive solo en el estado de React de
-  cada instancia de `BogaChat` (se pierde al cambiar de tab/cerrar el flotante o refrescar).
+- El botón flotante (`BogaFab.tsx`) sigue sin historial — charla efímera, se pierde al cerrarlo.
+  Se dejó así a propósito (ver "Qué es" arriba); si en algún momento se pide sumárselo, el
+  approach sería el mismo que en `Boga.page.tsx`/`AsistenteTab.tsx` (store + `mensajesIniciales`/
+  `onMensajesChange`), con `scope: 'global'` (compartiendo historial con el módulo `/boga`) o un
+  scope propio, a definir.
+- El historial no se sincroniza entre dispositivos/navegadores (limitación conocida y aceptada,
+  ver sección "Historial de conversaciones" arriba) — para eso haría falta backend propio, que
+  hoy el proyecto no tiene.

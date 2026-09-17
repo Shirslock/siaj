@@ -14,6 +14,7 @@ import AgendaPage from './pages/Agenda/Agenda.page'
 import TareasPage from './pages/Tareas/tareas.page'
 import LicenciasPage from './pages/Licencias/LicenciasPage'
 import NovedadesPJNPage from './pages/NovedadesPJN/NovedadesPJN.page'
+import BogaPage from './pages/Boga/Boga.page'
 
 // El "/" resuelve por rol: ABOGADO va a su Home personal, el resto mantiene
 // el destino histórico (/dashboard). Etapa 1 — no afecta a otros roles.
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/tareas"            element={<TareasPage />} />
           <Route path="/licencias"         element={<LicenciasPage />} />
           <Route path="/novedades-pjn"     element={<NovedadesPJNPage />} />
+          <Route path="/boga"              element={<BogaPage />} />
           <Route path="/configuracion"     element={<ConfiguracionPage />} />
         </Routes>
       </AppLayout>
