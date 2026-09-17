@@ -22,7 +22,7 @@
 | React Toastify | react-toastify | Toasts/notificaciones |
 | @dnd-kit/core + sortable + utilities | — | Drag-and-drop (DocumentosTab) |
 | Recharts | recharts | Gráficos del Dashboard (donut por área, barras por letrado/sub-estado) |
-| Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`) | `ai@7` | Chat del Asistente IA (`AsistenteTab.tsx`) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`) | `ai@7` | Chat del Asistente IA "Boga" (`BogaChat.tsx`, usado por `AsistenteTab.tsx` y `BogaFab.tsx`) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 **Sin** tailwind.config.ts — la config vive en `src/index.css` con `@theme { }`.
 **Sin** postcss.config.js — Tailwind v4 usa el plugin de Vite directamente.
@@ -66,6 +66,7 @@ npm run build      # build de producción
 | `src/components/ui/FormField.tsx` | Wrapper label + hint + error para inputs. |
 | `src/components/layout/` | AppLayout, Sidebar, Topbar (con buscador global persistente — ver Sección 19), UserSwitcher. |
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
+| `src/components/boga/` | `BogaChat.tsx` — chat compartido del Asistente IA. `BogaFab.tsx` — botón flotante global (fuera del detalle de actuación), montado en `AppLayout.tsx`. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
 | `src/pages/Home/Home.page.tsx` | "Principal" (`/home`) — Etapa 1. Landing de ABOGADO; COORDINADOR y REFERENTE también entran (conviven con `/dashboard`) con alcance ampliado vía toggle "Mías"/"Mi área"/"Todo". KPIs/contadores con deep-link a `/actuaciones` + Vencimientos/Tareas + distribuciones. Ver `src/pages/Home/Home_CLAUDE.md`. |
@@ -291,7 +292,7 @@ El timeline del expediente tiene DOS capas:
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Novedades PJN | NovedadesPjnTab.tsx | ✓ agrupado por corrida, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
-| Boga (Asistente IA) | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| Boga (Asistente IA) | AsistenteTab.tsx (tab) + BogaFab.tsx (flotante global) | ✓ chat con contexto de la actuación en la tab; contexto general del sistema en el flotante — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
 muestra un banner arriba del contenido en cualquier tab salvo "Novedades PJN"; su botón "Revisar"

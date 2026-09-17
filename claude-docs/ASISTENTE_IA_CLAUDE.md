@@ -1,25 +1,35 @@
-# Asistente IA — DetalleExpediente
+# Asistente IA — Boga
 
-> Rama: `feat/asistente-ia-chat` (desde `develop`). Etapa 3 del feature.
+> Rama original: `feat/asistente-ia-chat` (desde `develop`). Renombrado de "Saúl" a "Boga" y
+> extendido con un botón flotante global en `feat/agente-boga`.
 
 ## Qué es
 
-Tab "Asistente IA" en `DetalleExpediente` (`src/pages/DetalleExpediente/tabs/AsistenteTab.tsx`):
-chat con contexto de la actuación abierta, para que el abogado pregunte cosas como carátula,
-estado o historial sin salir del expediente. Corre contra **Groq** (modelo
-`llama-3.3-70b-versatile`) a través de una función serverless de Vercel — la API key nunca
-se expone al frontend.
+El asistente de IA del sistema, llamado **Boga**, tiene dos puntos de entrada que comparten el
+mismo componente de chat (`src/components/boga/BogaChat.tsx`):
+
+1. **Tab "Boga" en `DetalleExpediente`** (`src/pages/DetalleExpediente/tabs/AsistenteTab.tsx`):
+   chat con contexto de la actuación abierta, para que el abogado pregunte cosas como carátula,
+   estado o historial sin salir del expediente.
+2. **Botón flotante global** (`src/components/boga/BogaFab.tsx`, montado en `AppLayout.tsx`):
+   visible en cualquier pantalla que **no** sea el detalle de una actuación (ahí ya está la tab
+   dedicada), con contexto general del sistema (resumen de todas las actuaciones + secciones de
+   navegación) para ayudar a moverse por SIAJ sin necesitar una actuación abierta.
+
+Corre contra **Groq** (modelo `openai/gpt-oss-120b`) a través de una función serverless de
+Vercel — la API key nunca se expone al frontend.
 
 ## Arquitectura
 
 ```
-AsistenteTab.tsx (useChat de @ai-sdk/react)
-        │  POST /api/chat  { messages, expedienteContext }
-        ▼
-api/chat.ts  (Vercel Edge Function)
-        │  streamText({ model: groq(...), system, messages })
-        ▼
-Groq API (llama-3.3-70b-versatile)
+AsistenteTab.tsx ──┐
+                    ├─► BogaChat.tsx (useChat de @ai-sdk/react)
+BogaFab.tsx ───────┘        │  POST /api/chat  { messages, expedienteContext }
+                             ▼
+                     api/chat.ts  (Vercel Edge Function)
+                             │  streamText({ model: groq(...), system, messages })
+                             ▼
+                     Groq API (openai/gpt-oss-120b)
 ```
 
 - **`api/chat.ts`** vive en la raíz del repo, fuera de `src/` — Vercel lo detecta solo como
@@ -27,14 +37,25 @@ Groq API (llama-3.3-70b-versatile)
   config = { runtime: 'edge' }`. No está incluido en `tsconfig.app.json` ni `tsconfig.node.json`
   (`npx tsc -b` no lo tipa); se verificó manualmente con `npx tsc --noEmit --types node
   api/chat.ts` y Vercel lo type-checkea en su propio build al deployar.
-- **`GROQ_API_KEY`** solo existe como variable de entorno server-side en Vercel. Si falta, o si
-  `AGENT_ENABLED === 'false'`, el endpoint devuelve `503` con `{ error: 'agent_disabled',
-  message }` — el frontend lo muestra como estado vacío ("El asistente IA está desactivado
-  temporalmente"), sin pantalla blanca ni error genérico.
-- **`AsistenteTab.tsx`** arma `expedienteContext` (JSON con id, área, tipo, carátula, estado,
-  abogado, campos_mesa/abogado y los últimos 15 ítems del timeline) y lo manda en el `body` de
-  cada mensaje vía `sendMessage(msg, { body: { expedienteContext } })`. Sin UI de terceros —
-  chat armado a mano con Tailwind, igual que el resto de SIAJ (ver decisión abajo).
+- **`GROQ_API_KEY`** solo existe como variable de entorno server-side en Vercel (o en
+  `.env.local` para levantar `vercel dev` en local). Si falta, o si `AGENT_ENABLED === 'false'`,
+  el endpoint devuelve `503` con `{ error: 'agent_disabled', message }` — el frontend lo muestra
+  como estado vacío ("El asistente IA está desactivado temporalmente"), sin pantalla blanca ni
+  error genérico.
+- **`BogaChat.tsx`** es el componente de chat compartido (mensajes, chiste inicial opcional,
+  preguntas sugeridas, input) — recibe `titulo`, `saludoInicial`, `contexto` (JSON string) y
+  `preguntasSugeridas` como props, y arma el `body` de cada mensaje vía
+  `sendMessage(msg, { body: { expedienteContext: contexto } })`. Sin UI de terceros — chat
+  armado a mano con Tailwind, igual que el resto de SIAJ (ver decisión abajo).
+  - `AsistenteTab.tsx` arma el contexto con la actuación actual (id, área, tipo, carátula,
+    estado, abogado, campos_mesa/abogado, últimos 15 ítems del timeline) + un resumen de las
+    demás actuaciones. Chiste inicial activo (`incluirChiste` por defecto `true`).
+  - `BogaFab.tsx` arma un contexto general (`modo: 'asistente_general_del_sistema'`, secciones
+    de navegación, resumen de todas las actuaciones). Chiste inicial desactivado
+    (`incluirChiste={false}`), porque es una interacción de ayuda general, no ligada a una
+    actuación puntual.
+- El avatar (`src/assets/boga-avatar.jpg`) se importa vía Vite (no queda en `public/`), igual
+  que el resto de los assets del proyecto — así tiene hash de caché automático.
 
 ## Decisión: sin assistant-ui
 
@@ -92,5 +113,5 @@ a la función.
 
 ## Pendiente / próximas etapas
 
-- Sin persistencia de conversación — el historial del chat vive solo en el estado de React del
-  tab (se pierde al cambiar de tab o refrescar).
+- Sin persistencia de conversación — el historial del chat vive solo en el estado de React de
+  cada instancia de `BogaChat` (se pierde al cambiar de tab/cerrar el flotante o refrescar).
