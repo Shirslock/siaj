@@ -358,43 +358,43 @@ export default function BandejaAreaPage() {
             }
           </p>
         </div>
+        <div className="flex items-center gap-3 flex-wrap justify-end self-start">
+          <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
+            <Icon name="unfold_more" size={14} />
+            Expandir todo
+          </button>
+          <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+          <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+            <Icon name="unfold_less" size={14} />
+            Colapsar
+          </button>
+          <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+          <button
+            onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
+            className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+              filtros.soloUrgentes
+                ? 'text-[#b91c1c]'
+                : 'text-[#4a6a84] hover:text-[#1b3a57]'
+            }`}
+          >
+            <Icon name="warning" size={14} />
+            {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
+          </button>
+          <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+          <button onClick={limpiarFiltros} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+            <Icon name="filter_alt_off" size={14} />
+            Limpiar filtros
+          </button>
+        </div>
       </div>
 
       {/* TABLA */}
       <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
         {/* Sub-header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
+        <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
           <span className="text-xs text-[#4a6a84] font-medium">
             {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
           </span>
-          <div className="flex items-center gap-3">
-            <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
-              <Icon name="unfold_more" size={14} />
-              Expandir todo
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
-              <Icon name="unfold_less" size={14} />
-              Colapsar
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button
-              onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
-              className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
-                filtros.soloUrgentes
-                  ? 'text-[#b91c1c]'
-                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
-              }`}
-            >
-              <Icon name="warning" size={14} />
-              {filtros.soloUrgentes ? 'Solo urgentes' : 'Urgentes'}
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={limpiarFiltros} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
-              <Icon name="filter_alt_off" size={14} />
-              Limpiar filtros
-            </button>
-          </div>
         </div>
 
         <div className="overflow-x-auto">

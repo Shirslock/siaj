@@ -513,7 +513,67 @@ export default function BandejaAbogadoPage() {
             actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
           </p>
         </div>
-        <div className="flex items-center gap-3 self-start">
+        <div className="flex items-center gap-3 flex-wrap justify-end self-start">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
+              <Icon name="unfold_more" size={14} />
+              Expandir todo
+            </button>
+            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+            <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
+              <Icon name="unfold_less" size={14} />
+              Colapsar
+            </button>
+            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+            <button
+              onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
+              className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
+                filtros.soloUrgentes
+                  ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
+                  : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}
+            >
+              <Icon name="warning" size={14} className={filtros.soloUrgentes ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
+              Urgentes
+            </button>
+            <button
+              onClick={() => setFiltros(p => ({ ...p, soloAlerta: !p.soloAlerta }))}
+              className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
+                filtros.soloAlerta
+                  ? 'bg-[#fef3c7] border-[#fde68a] text-[#d97706]'
+                  : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
+              }`}
+            >
+              <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#4a6a84]'} />
+              Por vencer
+              {contadorAlerta > 0 && (
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                  filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#e8e8e8] text-[#4a6a84]'
+                }`}>
+                  {contadorAlerta}
+                </span>
+              )}
+            </button>
+            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+            <button
+              onClick={limpiarFiltros}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+            >
+              <Icon name="filter_alt_off" size={14} />
+              Limpiar filtros
+            </button>
+            <button
+              onClick={handleExportarExcel}
+              disabled={items.length === 0}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <Icon name="download" size={14} />
+              Exportar Excel
+            </button>
+          </div>
+
+          <div className="h-5 w-px bg-[rgba(0,0,0,0.12)]" />
+
           <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1">
             {(['activos', 'archivados'] as const).map(val => (
               <button
@@ -549,70 +609,10 @@ export default function BandejaAbogadoPage() {
         </div>
       ) : (
         <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
+          <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
             <span className="text-xs text-[#4a6a84] font-medium">
               {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
             </span>
-
-            <div className="flex items-center gap-4">
-              <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
-                <Icon name="unfold_more" size={14} />
-                Expandir todo
-              </button>
-              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
-                <Icon name="unfold_less" size={14} />
-                Colapsar
-              </button>
-              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button
-                onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
-                className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
-                  filtros.soloUrgentes
-                    ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
-                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
-                }`}
-              >
-                <Icon name="warning" size={14} className={filtros.soloUrgentes ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
-                Urgentes
-              </button>
-              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button
-                onClick={() => setFiltros(p => ({ ...p, soloAlerta: !p.soloAlerta }))}
-                className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
-                  filtros.soloAlerta
-                    ? 'bg-[#fef3c7] border-[#fde68a] text-[#d97706]'
-                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
-                }`}
-              >
-                <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#4a6a84]'} />
-                Alertas
-                {contadorAlerta > 0 && (
-                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                    filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#e8e8e8] text-[#4a6a84]'
-                  }`}>
-                    {contadorAlerta}
-                  </span>
-                )}
-              </button>
-              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button
-                onClick={limpiarFiltros}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-              >
-                <Icon name="filter_alt_off" size={14} />
-                Limpiar filtros
-              </button>
-              <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-              <button
-                onClick={handleExportarExcel}
-                disabled={items.length === 0}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors disabled:opacity-40 disabled:pointer-events-none"
-              >
-                <Icon name="download" size={14} />
-                Exportar Excel
-              </button>
-            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[780px]">

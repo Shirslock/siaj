@@ -18,6 +18,16 @@ import {
   UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
   SparklesIcon, PaperAirplaneIcon, KeyIcon, EyeSlashIcon,
 } from '@heroicons/react/24/outline'
+import PrincipalSvg from '../../assets/icons/principal.svg?react'
+import PanelControlSvg from '../../assets/icons/panel-de-control.svg?react'
+import MesaSacoSvg from '../../assets/icons/mesa-saco-bandeja.svg?react'
+import ActuacionesSvg from '../../assets/icons/actuaciones.svg?react'
+import AgendaSvg from '../../assets/icons/agenda.svg?react'
+import SolicitudesSvg from '../../assets/icons/solicitudes.svg?react'
+import CausasActivasSvg from '../../assets/icons/causas-judiciales-activas.svg?react'
+import DocumentosActivosSvg from '../../assets/icons/documentos-activos.svg?react'
+import NuevasAsignadasSvg from '../../assets/icons/nuevas-asignadas.svg?react'
+import UrgenteSvg from '../../assets/icons/urgente.svg?react'
 
 function RadioButtonUncheckedIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -138,6 +148,20 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   // Asistente IA
   smart_toy:             SparklesIcon,
   send:                  PaperAirplaneIcon,
+
+  // Navegación (sidebar) — íconos custom del prototipo
+  nav_home:              PrincipalSvg,
+  nav_dashboard:         PanelControlSvg,
+  nav_mesa:              MesaSacoSvg,
+  nav_actuaciones:       ActuacionesSvg,
+  nav_agenda:            AgendaSvg,
+  nav_solicitudes:       SolicitudesSvg,
+
+  // KPIs de Principal — íconos custom del prototipo
+  kpi_causas:            CausasActivasSvg,
+  kpi_documentos:        DocumentosActivosSvg,
+  kpi_nuevas:            NuevasAsignadasSvg,
+  kpi_urgente:           UrgenteSvg,
 }
 
 interface IconProps {
