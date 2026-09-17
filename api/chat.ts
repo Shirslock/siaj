@@ -32,15 +32,26 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const { messages, expedienteContext }: { messages: UIMessage[]; expedienteContext?: string } =
-      await req.json()
+    const {
+      messages,
+      expedienteContext,
+      documentoAdjunto,
+    }: {
+      messages: UIMessage[]
+      expedienteContext?: string
+      documentoAdjunto?: { nombre: string; texto: string }
+    } = await req.json()
+
+    const seccionDocumentoAdjunto = documentoAdjunto
+      ? `\n\nEl usuario adjuntó un documento a esta consulta puntual (no se guarda, solo vale para esta respuesta): "${documentoAdjunto.nombre}".\nContenido extraído del documento:\n${documentoAdjunto.texto}`
+      : ''
 
     const systemPrompt = `Sos el asistente de IA del sistema SIAJ (Sistema Integral de Asuntos Jurídicos) de SOFSA / Trenes Argentinos.
 
 Tenés acceso al detalle completo de la actuación que el usuario tiene abierta (actuacion_actual) y a un listado resumido de TODAS las demás actuaciones del sistema (otras_actuaciones_del_sistema) — con eso podés responder preguntas sobre otras causas, cruzar información entre actuaciones, o confirmar si existe una actuación con determinado número de causa o carátula.
 
 Datos disponibles:
-${expedienteContext ?? '(sin contexto disponible)'}
+${expedienteContext ?? '(sin contexto disponible)'}${seccionDocumentoAdjunto}
 
 Respondé en español rioplatense, de forma clara y profesional. Si te preguntan algo que no está en los datos provistos, aclará que no tenés esa información cargada en el sistema.
 

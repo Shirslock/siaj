@@ -23,6 +23,7 @@
 | @dnd-kit/core + sortable + utilities | — | Drag-and-drop (DocumentosTab) |
 | Recharts | recharts | Gráficos del Dashboard (donut por área, barras por letrado/sub-estado) |
 | Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`) | `ai@7` | Chat del Asistente IA "Boga" (`BogaChat.tsx`, usado por `AsistenteTab.tsx` y `BogaFab.tsx`) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| `pdfjs-dist` + `mammoth` | `pdfjs-dist@6`, `mammoth@1` | Extracción de texto client-side de archivos adjuntos (PDF/Word) en el chat de Boga — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 **Sin** tailwind.config.ts — la config vive en `src/index.css` con `@theme { }`.
 **Sin** postcss.config.js — Tailwind v4 usa el plugin de Vite directamente.

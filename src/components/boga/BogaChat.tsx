@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Icon from '../ui/Icon'
 import bogaAvatar from '../../assets/boga-avatar.jpg'
+import { extraerTextoArchivo, ErrorExtraccionArchivo } from '../../utils/extraerTextoArchivo'
 
 interface Props {
   titulo: string
@@ -52,6 +53,14 @@ const MARKDOWN_COMPONENTS: Components = {
 export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, incluirChiste = true, mensajesIniciales, onMensajesChange }: Props) {
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Documento adjunto: solo vale para la consulta que se está por enviar — el texto
+  // extraído se manda al modelo pero nunca se persiste junto con el historial de la
+  // conversación (ver src/store/bogaHistorial.store.ts).
+  const [archivoAdjunto, setArchivoAdjunto] = useState<{ nombre: string; texto: string } | null>(null)
+  const [leyendoArchivo, setLeyendoArchivo] = useState(false)
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null)
 
   const retomaConversacion = (mensajesIniciales?.length ?? 0) > 0
 
@@ -96,7 +105,7 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
   }, [messages])
 
   async function enviarPregunta(texto: string) {
-    if (!texto || isLoading || chisteActivo) return
+    if (!texto || isLoading || chisteActivo || leyendoArchivo) return
     setInput('')
 
     if (incluirChiste && esPrimeraPregunta) {
@@ -110,12 +119,42 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
       setEsPrimeraPregunta(false)
     }
 
-    sendMessage({ text: texto }, { body: { expedienteContext: contexto } })
+    sendMessage(
+      { text: texto },
+      { body: { expedienteContext: contexto, documentoAdjunto: archivoAdjunto ?? undefined } }
+    )
+    setArchivoAdjunto(null)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     await enviarPregunta(input.trim())
+  }
+
+  async function handleSeleccionarArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!archivo) return
+
+    setErrorArchivo(null)
+    setArchivoAdjunto(null)
+    setLeyendoArchivo(true)
+    try {
+      const texto = await extraerTextoArchivo(archivo)
+      setArchivoAdjunto({ nombre: archivo.name, texto })
+    } catch (err) {
+      const mensaje = err instanceof ErrorExtraccionArchivo
+        ? err.message
+        : 'No pude leer el archivo. ¿Podés pegar el texto directo en el chat?'
+      setErrorArchivo(mensaje)
+    } finally {
+      setLeyendoArchivo(false)
+    }
+  }
+
+  function quitarArchivoAdjunto() {
+    setArchivoAdjunto(null)
+    setErrorArchivo(null)
   }
 
   return (
@@ -236,10 +275,54 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
             </div>
           )}
 
+          {(archivoAdjunto || leyendoArchivo || errorArchivo) && (
+            <div className="px-3 pt-2 flex-shrink-0">
+              {leyendoArchivo && (
+                <div className="flex items-center gap-1.5 text-xs text-[#7a9ab4]">
+                  <Icon name="refresh" size={13} className="animate-spin" />
+                  Leyendo archivo…
+                </div>
+              )}
+              {archivoAdjunto && !leyendoArchivo && (
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border border-[#B5D4F4] bg-[#e6f1fb] text-[11px] text-[#185fa5] max-w-full">
+                  <Icon name="attach_file" size={13} className="flex-shrink-0" />
+                  <span className="truncate">{archivoAdjunto.nombre}</span>
+                  <button
+                    type="button"
+                    onClick={quitarArchivoAdjunto}
+                    title="Quitar archivo"
+                    className="flex-shrink-0 hover:text-[#b91c1c]"
+                  >
+                    <Icon name="close" size={13} />
+                  </button>
+                </div>
+              )}
+              {errorArchivo && (
+                <p className="text-xs text-[#b91c1c] mt-1">{errorArchivo}</p>
+              )}
+            </div>
+          )}
+
           <form
             onSubmit={handleSubmit}
             className={`flex items-center gap-2 px-3 py-3 flex-shrink-0 ${esPrimeraPregunta && !chisteActivo && preguntasSugeridas.length > 0 ? '' : 'border-t border-[rgba(0,0,0,0.08)]'}`}
           >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx"
+              onChange={handleSeleccionarArchivo}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || chisteActivo || leyendoArchivo}
+              title="Adjuntar archivo (PDF o Word)"
+              className="p-2 rounded-lg border border-[rgba(0,0,0,0.08)] text-[#1b3a57] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f5f5f5] transition-colors flex-shrink-0"
+            >
+              <Icon name="attach_file" size={16} />
+            </button>
             <input
               type="text"
               className="field-input flex-1 text-sm"
@@ -250,7 +333,7 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
             />
             <button
               type="submit"
-              disabled={isLoading || chisteActivo || !input.trim()}
+              disabled={isLoading || chisteActivo || leyendoArchivo || !input.trim()}
               className="p-2 rounded-lg bg-[#1b3a57] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#234a6e] transition-colors flex-shrink-0"
               title="Enviar"
             >

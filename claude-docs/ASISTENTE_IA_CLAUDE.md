@@ -1,8 +1,8 @@
 # Asistente IA — Boga
 
 > Rama original: `feat/asistente-ia-chat` (desde `develop`). Renombrado de "Saúl" a "Boga" y
-> extendido con un botón flotante global en `feat/agente-boga`, y con historial de conversaciones
-> persistido en `localStorage` en `feat/boga-historial-chat`.
+> extendido con un botón flotante global en `feat/agente-boga`, con historial de conversaciones
+> persistido en `localStorage` y con adjuntar archivos (PDF/Word) en `feat/boga-historial-chat`.
 
 ## Qué es
 
@@ -95,6 +95,41 @@ entre sesiones/cierres del navegador, no solo dentro de una pestaña).
   más para el volumen de conversaciones por actuación; el módulo `/boga` sí tiene el panel lateral
   completo, al ser el punto de entrada equivalente a la ventana de chat de Claude/ChatGPT.
 
+## Adjuntar archivos (PDF/Word)
+
+Los tres puntos de entrada (comparten `BogaChat.tsx`) permiten adjuntar un PDF o Word (.docx) a
+una consulta puntual, para que Boga responda preguntas sobre su contenido (ej. "resumime este
+escrito").
+
+- **100% client-side, sin backend:** el archivo nunca se sube a ningún lado. La extracción de
+  texto corre en el navegador con `pdfjs-dist` (PDF) y `mammoth` (.docx) — helper centralizado en
+  `src/utils/extraerTextoArchivo.ts`.
+- **`.doc` legado NO soportado** — solo PDF y `.docx`. `mammoth.extractRawText` no maneja bien el
+  formato binario `.doc` viejo; se descartó por no ser bloqueante (decisión confirmada con Cristian).
+- **Sin persistencia:** el texto extraído se manda a `/api/chat` para esa consulta puntual (campo
+  `documentoAdjunto: { nombre, texto }` en el body, junto a `expedienteContext`) pero **no** se
+  guarda en `localStorage` — al reabrir una conversación guardada más adelante, solo quedan los
+  mensajes de texto (pregunta + respuesta), igual que hoy. Es a propósito, para no comerse el
+  espacio limitado de `localStorage` con contenido de documentos.
+- **Límite de tamaño:** 8MB (`TAMANO_MAXIMO_ARCHIVO_BYTES` en `extraerTextoArchivo.ts`). Si se
+  supera, o si la extracción falla (PDF escaneado sin texto, archivo corrupto, extensión no
+  soportada), se lanza `ErrorExtraccionArchivo` con un mensaje apto para mostrar al usuario
+  directo — nunca rompe el chat.
+- **UI en `BogaChat.tsx`:** botón de clip (`Icon name="attach_file"`, ya existía en `ICON_MAP`)
+  al lado del input. Al seleccionar un archivo se extrae el texto de inmediato (no recién al
+  enviar) mostrando "Leyendo archivo…" y deshabilitando el envío mientras tanto; si sale bien
+  queda un chip con el nombre del archivo y una X para quitarlo antes de enviar. El estado del
+  archivo adjunto (`archivoAdjunto`/`leyendoArchivo`/`errorArchivo`) es local a `BogaChat`, se
+  resetea después de cada envío y no se expone a los consumidores (`AsistenteTab.tsx`,
+  `BogaFab.tsx`, `Boga.page.tsx`).
+- **`api/chat.ts`** arma una sección extra en el `systemPrompt` cuando llega `documentoAdjunto`,
+  aclarando que es "de esta consulta puntual" (no persistente) para que el modelo no asuma que va
+  a seguir disponible en próximos mensajes de la misma conversación.
+- **`pdfjs-dist`:** el worker se referencia con el patrón estándar de Vite
+  (`import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'` +
+  `GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl`) — Vite lo emite como asset propio con hash,
+  sin tocar `public/`.
+
 ## Decisión: sin assistant-ui
 
 El prompt original sugería `@assistant-ui/react` + `@assistant-ui/react-ai-sdk`. Al verificar
@@ -110,7 +145,9 @@ SIAJ no usa librerías de UI de terceros (todo es Tailwind + componentes propios
 ```json
 "ai": "^7.0.77",
 "@ai-sdk/react": "^4.0.80",
-"@ai-sdk/groq": "^4.0.30"
+"@ai-sdk/groq": "^4.0.30",
+"pdfjs-dist": "^6.3.289",
+"mammoth": "^1.12.3"
 ```
 
 APIs relevantes de `ai@7` (verificadas contra los `.d.ts`, distinto de ejemplos desactualizados
