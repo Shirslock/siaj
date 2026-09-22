@@ -314,7 +314,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     campos_abogado: {},
     timeline: [
       { id: 'C0504_REC_01', expediente_id: 'C-0504/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-6), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' },
-      { id: 'C0504_TAR_01', expediente_id: 'C-0504/2026', tipo: 'PRESENTACION' as TipoActividad, titulo: 'Presentar escrito de inicio', descripcion: 'Vencido el plazo para presentar escrito de inicio de demanda.', fecha: addDays(-6), activo: true, subitems: [], estadoExpediente: 'INICIO', fecha_vencimiento: addDays(-1) },
+      { id: 'C0504_TAR_01', expediente_id: 'C-0504/2026', tipo: 'PRESENTACION' as TipoActividad, titulo: 'Presentar escrito de inicio', descripcion: 'Plazo por vencer para presentar escrito de inicio de demanda.', fecha: addDays(-6), activo: true, subitems: [], estadoExpediente: 'INICIO', fecha_aviso: addDays(-1), fecha_vencimiento: addDays(3) },
     ],
     intervinientes: [], documentos: [], vinculos: [],
   },
@@ -353,7 +353,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     campos_abogado: {},
     timeline: [
       { id: 'C0507_REC_01', expediente_id: 'C-0507/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-60), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' },
-      { id: 'C0507_TAR_01', expediente_id: 'C-0507/2026', tipo: 'PERICIA' as TipoActividad, titulo: 'Impugnar pericia médica', descripcion: 'Vencido el plazo para impugnar la pericia.', fecha: addDays(-60), activo: true, subitems: [], estadoExpediente: 'EN_PRUEBA', fecha_vencimiento: addDays(-10) },
+      { id: 'C0507_TAR_01', expediente_id: 'C-0507/2026', tipo: 'PERICIA' as TipoActividad, titulo: 'Impugnar pericia médica', descripcion: 'Plazo por vencer para impugnar la pericia.', fecha: addDays(-60), activo: true, subitems: [], estadoExpediente: 'EN_PRUEBA', fecha_aviso: addDays(-1), fecha_vencimiento: addDays(7) },
       // Audiencia futura sin fecha_aviso: alimenta "Próximas audiencias" del Principal y NO
       // genera alerta de vencimiento (ver getAlertaExpediente en utils/alertas.ts).
       { id: 'C0507_AUD_01', expediente_id: 'C-0507/2026', tipo: 'AUDIENCIA' as TipoActividad, titulo: 'Audiencia de explicaciones al perito', descripcion: 'Audiencia fijada para que el perito médico brinde explicaciones.', fecha: addDays(-12), activo: true, subitems: [], estadoExpediente: 'EN_PRUEBA', fecha_vencimiento: addDays(6) },
@@ -413,7 +413,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     campos_abogado: {},
     timeline: [
       { id: 'C0511_REC_01', expediente_id: 'C-0511/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Expediente recibido y asignado', descripcion: 'Actuación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-200), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' },
-      { id: 'C0511_TAR_01', expediente_id: 'C-0511/2026', tipo: 'DILIGENCIAMIENTO' as TipoActividad, titulo: 'Diligenciar mandamiento de embargo', descripcion: 'Vencido el plazo para diligenciar el mandamiento.', fecha: addDays(-200), activo: true, subitems: [], estadoExpediente: 'EJECUCION_SENTENCIA', fecha_vencimiento: addDays(-5) },
+      { id: 'C0511_TAR_01', expediente_id: 'C-0511/2026', tipo: 'DILIGENCIAMIENTO' as TipoActividad, titulo: 'Diligenciar mandamiento de embargo', descripcion: 'Plazo por vencer para diligenciar el mandamiento.', fecha: addDays(-200), activo: true, subitems: [], estadoExpediente: 'EJECUCION_SENTENCIA', fecha_aviso: addDays(-1), fecha_vencimiento: addDays(5) },
     ],
     intervinientes: [], documentos: [], vinculos: [],
   },
