@@ -61,12 +61,11 @@ npm run build        # build producción
    { id: 'mesa_nuevo', label: 'Label', type: 'text', full: true }
    ```
 4. FormularioDinamico.tsx lo renderiza automáticamente
-5. Si el campo es `type: 'money'`, agregar además su select de moneda justo después:
+5. Si el campo es un monto, usar `type: 'money_multi'` en vez de `'text'`/`'money'` — es un único
+   campo que admite N pares moneda+monto (fila repetible con "Agregar monto"), sin necesidad de un
+   campo hermano `_moneda` aparte:
    ```ts
-   { id: 'mesa_nuevo_moneda', label: 'Tipo de moneda', type: 'select',
-     options: [{ value: 'ARS', label: 'ARS — Pesos argentinos' },
-               { value: 'USD', label: 'USD — Dólares' },
-               { value: 'EUR', label: 'EUR — Euros' }] }
+   { id: 'mesa_nuevo', label: 'Label', type: 'money_multi' }
    ```
 
 ---

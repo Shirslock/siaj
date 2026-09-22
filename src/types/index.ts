@@ -426,6 +426,7 @@ export type TipoCampo =
   | 'text'
   | 'date'
   | 'money'
+  | 'money_multi'
   | 'textarea'
   | 'boolean'
   | 'causa'

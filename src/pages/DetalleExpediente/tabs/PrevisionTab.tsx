@@ -1,5 +1,5 @@
 import type { Expediente } from '../../../types'
-import { formatMonto, normalizarMoneda, aplicaIndiceInflacion } from '../../../utils/format'
+import { formatMonto, normalizarMontos, aplicaIndiceInflacion } from '../../../utils/format'
 import Icon from '../../../components/ui/Icon'
 
 interface Props { exp: Expediente }
@@ -13,14 +13,14 @@ const HISTORICO_MOCK = [
 ]
 
 export function PrevisionTab({ exp }: Props) {
-  // El monto base sale de Mesa y, si no está cargado, del acuerdo del letrado:
-  // la moneda tiene que seguir al mismo origen que el monto.
-  const montoMesa = exp.campos_mesa['monto_reclamado']
-  const usaMontoMesa = montoMesa !== undefined && montoMesa !== null
-  const montoBase = Number((usaMontoMesa ? montoMesa : exp.campos_abogado['monto_acuerdo']) ?? 0)
-  const moneda = usaMontoMesa
-    ? normalizarMoneda(exp.campos_mesa['monto_reclamado_moneda'])
-    : normalizarMoneda(exp.campos_abogado['monto_acuerdo_moneda'])
+  // El monto base sale de Mesa y, si no está cargado, del acuerdo del letrado. Ambos son
+  // campos money_multi (N pares moneda+monto) — la previsión, todavía a relevar con el
+  // negocio, solo proyecta el primer par cargado.
+  const paresMesa = normalizarMontos(exp.campos_mesa['monto_reclamado'], exp.campos_mesa['monto_reclamado_moneda'])
+  const paresAbogado = normalizarMontos(exp.campos_abogado['monto_acuerdo'], exp.campos_abogado['monto_acuerdo_moneda'])
+  const parBase = paresMesa.length > 0 ? paresMesa[0] : paresAbogado[0]
+  const montoBase = parBase?.monto ?? 0
+  const moneda = parBase?.moneda ?? 'ARS'
   const aplicaActualizacion = aplicaIndiceInflacion(moneda)
   const montoActualizado = montoBase * 1.38
   const pronostico = montoActualizado * 0.65

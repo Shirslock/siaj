@@ -5,7 +5,7 @@ import { getCamposFormulario } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../../data/juzgadosPJN'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
-import { formatFecha, formatMonto, normalizarMoneda } from '../../../utils/format'
+import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, OPCIONES_MONEDA, type Moneda, type ParMoneda } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
 
@@ -31,6 +31,15 @@ function valorDisplay(
   if (val === null || val === undefined || val === '') return '—'
   if (campo.type === 'date')    return formatFecha(String(val))
   if (campo.type === 'money')   return formatMonto(Number(val), normalizarMoneda(registro?.[`${campo.id}_moneda`]))
+  if (campo.type === 'money_multi') {
+    const pares = normalizarMontos(val, registro?.[`${campo.id}_moneda`])
+    if (pares.length === 0) return '—'
+    return (
+      <div className="flex flex-col gap-0.5">
+        {pares.map((p, i) => <span key={i}>{formatMonto(p.monto, p.moneda)}</span>)}
+      </div>
+    )
+  }
   if (campo.type === 'boolean') return Boolean(val) ? 'Sí' : 'No'
   if (campo.type === 'juzgado') return getJuzgadoLabel(String(val))
   if (campo.type === 'linea')   return getLineaLabel(String(val))
@@ -234,6 +243,47 @@ export function DatosTab({ exp }: Props) {
           <option value="">Seleccionar…</option>
           {LINEAS_FERROVIARIAS.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
         </select>
+      )
+    }
+    if (campo.type === 'money_multi') {
+      const pares = normalizarMontos(draft[campo.id], draft[`${campo.id}_moneda`])
+      const filas: ParMoneda[] = pares.length > 0 ? pares : [{ moneda: 'ARS', monto: 0 }]
+      const commit = (nuevas: ParMoneda[]) => setDraft(p => ({ ...p, [campo.id]: nuevas }))
+      return (
+        <div className="space-y-2 w-full">
+          {filas.map((par, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <select
+                className="field-input text-sm w-24 flex-shrink-0"
+                value={par.moneda}
+                onChange={e => {
+                  const n = [...filas]; n[i] = { ...n[i], moneda: e.target.value as Moneda }; commit(n)
+                }}
+              >
+                {OPCIONES_MONEDA.map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
+              </select>
+              <input
+                type="number"
+                className="field-input flex-1 text-sm"
+                value={par.monto || ''}
+                onChange={e => {
+                  const n = [...filas]; n[i] = { ...n[i], monto: Number(e.target.value) || 0 }; commit(n)
+                }}
+              />
+              {filas.length > 1 && (
+                <button type="button" onClick={() => commit(filas.filter((_, idx) => idx !== i))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0">
+                  <Icon name="close" size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => commit([...filas, { moneda: 'ARS', monto: 0 }])}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1">
+            <Icon name="add" size={14} />
+            Agregar monto
+          </button>
+        </div>
       )
     }
     if (campo.type === 'multiselect' && campo.options) {

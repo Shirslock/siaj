@@ -10,7 +10,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
-import { normalizarMoneda } from '../../utils/format'
+import { normalizarMontos, sumarMontosPorMoneda, type Moneda } from '../../utils/format'
 import type { Expediente, Area } from '../../types'
 import Icon from '../../components/ui/Icon'
 
@@ -453,13 +453,24 @@ function PanelGerencia({
   const urgentesPorArea = (area: Area) => urgentes.filter(e => e.area === area)
   const expPorArea = (area: Area) => expedientes.filter(e => e.area === area)
 
-  // Solo se suman los montos en pesos: los de otras monedas no son comparables y no se
-  // convierten. Sin moneda guardada se asume ARS, así que los expedientes viejos entran.
-  const montoTotal = useMemo(() => expedientes.reduce((sum, e) => {
-    if (normalizarMoneda(e.campos_mesa?.mesa_monto_moneda) !== 'ARS') return sum
-    const m = Number(e.campos_mesa?.mesa_monto ?? 0)
-    return sum + (isNaN(m) ? 0 : m)
-  }, 0), [expedientes])
+  // Se suma por moneda — nunca se mezclan montos de monedas distintas entre sí. mesa_monto
+  // es money_multi (N pares moneda+monto); los datos viejos con un escalar + mesa_monto_moneda
+  // se leen como lista de 1 (ver normalizarMontos).
+  const montosPorMoneda = useMemo(() =>
+    sumarMontosPorMoneda(
+      expedientes.flatMap(e => normalizarMontos(e.campos_mesa?.mesa_monto, e.campos_mesa?.mesa_monto_moneda))
+    ),
+    [expedientes])
+
+  const SIMBOLO_KPI: Record<Moneda, string> = { ARS: '$', USD: 'US$', EUR: '€' }
+  function abreviarMonto(v: number): string {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`
+    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`
+    return v.toFixed(0)
+  }
+  const montoExpuestoLabel = Object.entries(montosPorMoneda)
+    .map(([moneda, total]) => `${SIMBOLO_KPI[moneda as Moneda]}${abreviarMonto(total ?? 0)}`)
+    .join(' · ') || '$0.0M'
 
   return (
     <div className="space-y-4">
@@ -486,8 +497,8 @@ function PanelGerencia({
           onClick={() => setPanelActivo({ titulo: 'Causas vinculadas', expedientes: expedientes.filter(e => e.vinculos.length > 0) })}
         />
         <KpiCard
-          label="Monto expuesto (ARS)" value={`$${(montoTotal / 1000000).toFixed(1)}M`} badgeColor="gris"
-          onClick={() => setPanelActivo({ titulo: 'Monto expuesto (ARS)', expedientes })}
+          label="Monto expuesto" value={montoExpuestoLabel} badgeColor="gris"
+          onClick={() => setPanelActivo({ titulo: 'Monto expuesto', expedientes })}
         />
       </div>
 

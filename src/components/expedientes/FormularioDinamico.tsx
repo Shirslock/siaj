@@ -3,6 +3,7 @@ import { FormField } from '../ui/FormField'
 import Icon from '../ui/Icon'
 import { JUZGADOS, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../data/juzgadosPJN'
+import { normalizarMontos, OPCIONES_MONEDA, type Moneda, type ParMoneda } from '../../utils/format'
 
 interface Props {
   campos: CampoFormulario[]
@@ -167,6 +168,56 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                 <option value="">Seleccionar…</option>
                 {LINEAS_FERROVIARIAS.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
               </select>
+            </FormField>
+          )
+        }
+
+        if (campo.type === 'money_multi') {
+          const pares = normalizarMontos(valores[campo.id], valores[`${campo.id}_moneda`])
+          const filas: ParMoneda[] = pares.length > 0 ? pares : [{ moneda: 'ARS', monto: 0 }]
+          const commit = (nuevas: ParMoneda[]) => onChange(campo.id, nuevas)
+          return (
+            <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
+              <div className="space-y-2">
+                {filas.map((par, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <select
+                      className="field-input w-24 flex-shrink-0"
+                      value={par.moneda}
+                      onChange={e => {
+                        const n = [...filas]; n[i] = { ...n[i], moneda: e.target.value as Moneda }; commit(n)
+                      }}
+                    >
+                      {OPCIONES_MONEDA.map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      className="field-input flex-1"
+                      value={par.monto || ''}
+                      onChange={e => {
+                        const n = [...filas]; n[i] = { ...n[i], monto: Number(e.target.value) || 0 }; commit(n)
+                      }}
+                    />
+                    {filas.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => commit(filas.filter((_, idx) => idx !== i))}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0"
+                      >
+                        <Icon name="close" size={14} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => commit([...filas, { moneda: 'ARS', monto: 0 }])}
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1"
+                >
+                  <Icon name="add" size={14} />
+                  Agregar monto
+                </button>
+              </div>
             </FormField>
           )
         }

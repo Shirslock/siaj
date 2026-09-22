@@ -288,68 +288,74 @@ export interface CampoSolicitudPenal {
   `DatosTab` apenas tiene valor (`disabled` + estilo gris, chequeado por `campo.id ===
   'mesa_tipo_lanzamiento'`, no por un flag genérico de formulario).
 
-## formularios.ts — Tipo de moneda en los campos `money`
+## formularios.ts — Campos money_multi (N pares moneda+monto)
 
-Un campo `type: 'money'` guarda solo el número: no alcanza para saber si el importe está en pesos
-o en dólares. Por eso **cada campo `money` va acompañado de un `select` de moneda**, ubicado
-inmediatamente después en el mismo array:
+> Actualizado por `feat/montos-multiples` (ver `docs/DELTA_Montos_Multiples.md`). Reemplaza el
+> patrón anterior de `type:'money'` + campo hermano `<id>_moneda` (un solo par).
+
+Un campo de dinero es hoy `type: 'money_multi'`, un único campo cuyo valor es un **array de pares**
+`{ moneda, monto }[]` — no un escalar:
 
 ```ts
-{ id:'mesa_monto',        label:'Monto de la demanda', type:'money' },
-{ id:'mesa_monto_moneda', label:'Tipo de moneda',      type:'select',
-  options:[{ value:'ARS', label:'ARS — Pesos argentinos' },
-           { value:'USD', label:'USD — Dólares' },
-           { value:'EUR', label:'EUR — Euros' }] },
+{ id:'mesa_monto', label:'Monto de la demanda', type:'money_multi' },
 ```
 
-- **Convención de id:** id del monto + sufijo `_moneda`.
-- **Valores:** `'ARS'` | `'USD'` | `'EUR'` (ISO 4217); el label visible antepone el código —
-  "ARS — Pesos argentinos" / "USD — Dólares" / "EUR — Euros". Para sumar una moneda nueva alcanza
-  con agregar la opción y su prefijo en `formatMonto`: la lógica de negocio pregunta por ARS, no
-  por cada moneda extranjera.
-- **Default ARS, campo opcional:** los expedientes cargados antes del cambio no tienen el campo;
-  toda lectura debe interpretar la ausencia de valor como `'ARS'`. No hubo backfill de mocks.
-- **Uno por monto, no uno por formulario:** los tipos con varios montos (COBRO_CANON, MEDIACION,
-  DEMANDA_CIVIL, DEMANDA_LABORAL) llevan un selector por cada uno, para poder tener, por ejemplo,
-  un reclamo en USD y un acuerdo en ARS.
-- No hizo falta tipo nuevo en `types/index.ts`: se reusa `select`, ya soportado por
-  `FormularioDinamico.tsx` y `DatosTab.tsx`.
+En el registro guardado (`campos_mesa[id]` / `campos_abogado[id]`) el valor es, por ejemplo:
 
-Los 15 campos afectados, en 12 tipos de actuación:
+```ts
+mesa_monto: [{ moneda: 'ARS', monto: 4850000 }, { moneda: 'USD', monto: 3200 }]
+```
 
-| Tipo | Etapa | Campo monto | Campo moneda |
-|---|---|---|---|
-| CARTA_DOC | abogado | `abg_monto_reclam` | `abg_monto_reclam_moneda` |
-| MEDIACION | abogado | `monto_acuerdo` | `monto_acuerdo_moneda` |
-| MEDIACION | abogado | `abg_monto_reclamado` | `abg_monto_reclamado_moneda` |
-| SECLO | abogado | `abg_monto_reclamado` | `abg_monto_reclamado_moneda` |
-| COBRO_CANON | abogado | `monto_informado` | `monto_informado_moneda` |
-| COBRO_CANON | abogado | `monto_actualizado` | `monto_actualizado_moneda` |
-| RECLAMO_CONTRAT | abogado | `monto_reclamar` | `monto_reclamar_moneda` |
-| RECUPERO | abogado | `abg_monto_reclamar` | `abg_monto_reclamar_moneda` |
-| CONSIGNACION | abogado | `abg_monto` | `abg_monto_moneda` |
-| EJECUCION_GAR | abogado | `abg_monto_ejecutar` | `abg_monto_ejecutar_moneda` |
-| DEFENSA_CIVIL | mesa | `monto_reclamado` | `monto_reclamado_moneda` |
-| DEMANDA_CIVIL | mesa | `mesa_monto` | `mesa_monto_moneda` |
-| DEMANDA_CIVIL | abogado | `monto_acuerdo` | `monto_acuerdo_moneda` |
-| DEMANDA_LABORAL | mesa | `mesa_monto` | `mesa_monto_moneda` |
-| DEMANDA_LABORAL | abogado | `monto_acuerdo` | `monto_acuerdo_moneda` |
+- **Sin límite de pares:** la UI (`FormularioDinamico.tsx` en Alta, `DatosTab.tsx` en el detalle,
+  y el modal "Iniciar Juicio") ofrece "Agregar monto" para sumar filas y un botón para quitar cada
+  una, con mínimo 1 fila siempre visible.
+- **Compatibilidad con datos viejos:** un valor en el formato anterior (escalar en `campos[id]` +
+  moneda en `campos[`${id}_moneda`]`, o directamente sin moneda) se lee como una lista de 1 par vía
+  `normalizarMontos(valorCampo, monedaLegacy)` (`utils/format.ts`) — no hace falta backfill.
+- **Nunca se mezclan monedas:** cualquier suma/total agrupa por moneda con
+  `sumarMontosPorMoneda(pares)`, nunca convierte ni suma pares de monedas distintas entre sí.
+- **`OPCIONES_MONEDA`** (`utils/format.ts`) es la única fuente del combo ARS/USD/EUR — reemplaza
+  las copias hardcodeadas que antes vivían repetidas en cada campo de `formularios.ts` y en el
+  modal de Iniciar Juicio.
+- Tipo nuevo en `types/index.ts`: `'money_multi'` agregado a `TipoCampo` (se conserva `'money'`
+  por compatibilidad de tipo, ya sin uso en `formularios.ts`).
+
+Los 15 campos afectados, en 12 tipos de actuación (todos `type:'money_multi'` ahora):
+
+| Tipo | Etapa | Campo monto |
+|---|---|---|
+| CARTA_DOC | abogado | `abg_monto_reclam` |
+| MEDIACION | abogado | `monto_acuerdo` |
+| MEDIACION | abogado | `abg_monto_reclamado` |
+| SECLO | abogado | `abg_monto_reclamado` |
+| COBRO_CANON | abogado | `monto_informado` |
+| COBRO_CANON | abogado | `monto_actualizado` |
+| RECLAMO_CONTRAT | abogado | `monto_reclamar` |
+| RECUPERO | abogado | `abg_monto_reclamar` |
+| CONSIGNACION | abogado | `abg_monto` |
+| EJECUCION_GAR | abogado | `abg_monto_ejecutar` |
+| DEFENSA_CIVIL | mesa | `monto_reclamado` |
+| DEMANDA_CIVIL | mesa | `mesa_monto` |
+| DEMANDA_CIVIL | abogado | `monto_acuerdo` |
+| DEMANDA_LABORAL | mesa | `mesa_monto` |
+| DEMANDA_LABORAL | abogado | `monto_acuerdo` |
 
 **Fuera de alcance:** los campos de dinero del circuito penal (`solicitudesPenales.ts` — campo
 `montos` de Conciliación / Reparación Integral / Probation — y la constante `MONTO` de
-`etapasPenales.ts`) siguen sin moneda.
+`etapasPenales.ts`) siguen sin moneda ni pares múltiples.
 
 **Impactos fuera de `formularios.ts`:**
-- `utils/format.ts` — mapa `SIMBOLO_MONEDA` (`$` ARS, `US$` USD, `€` EUR), del que salen el type
-  `Moneda` y los helpers exportados: `formatMonto(valor, moneda = 'ARS')`,
-  `normalizarMoneda(val)` (valor ausente o desconocido → `'ARS'`) y `aplicaIndiceInflacion(moneda)`.
-  Agregar una moneda nueva = agregar una entrada al mapa.
-- `DatosTab.tsx` — resuelve la moneda leyendo `` `${campo.id}_moneda` `` del mismo registro.
-- `DetalleExpediente.page.tsx` — el modal "Iniciar Juicio" carga `monto_moneda` y lo mapea a
-  `mesa_monto_moneda`.
-- `Dashboard.page.tsx` — el KPI "Monto expuesto" suma solo los montos en ARS.
-- `PrevisionTab.tsx` — el índice de inflación se aplica solo si la moneda es ARS; para cualquier
-  otra moneda se muestra el monto base con un aviso.
+- `utils/format.ts` — mapa `SIMBOLO_MONEDA` (`$` ARS, `US$` USD, `€` EUR) del que salen el type
+  `Moneda` y los helpers `formatMonto`, `normalizarMoneda`; más los nuevos `ParMoneda`,
+  `normalizarMontos(valorCampo, monedaLegacy?)`, `sumarMontosPorMoneda(pares)` y `OPCIONES_MONEDA`.
+- `FormularioDinamico.tsx` (Alta) y `DatosTab.tsx` (detalle) — renderizan filas repetibles
+  moneda+monto y muestran todos los pares cargados.
+- `DetalleExpediente.page.tsx` — el modal "Iniciar Juicio" usa `montos: ParMoneda[]` en vez de
+  `monto` + `monto_moneda`, con la misma UI repetible; guarda `mesa_monto` como array.
+- `Dashboard.page.tsx` — el KPI "Monto expuesto" agrupa `mesa_monto` de todas las actuaciones por
+  moneda y muestra un total abreviado por cada una (ya no solo ARS).
+- `PrevisionTab.tsx` — usa el primer par de `monto_reclamado` / `monto_acuerdo` como monto base
+  (la pestaña sigue marcada como ilustrativa/a relevar con negocio).
 
 ---
 
@@ -359,5 +365,5 @@ Los 15 campos afectados, en 12 tipos de actuación:
 - IDs campo abogado: prefijo `abg_`
 - OFICIO en área PENAL → usar `form.variante_penal`
 - Campos con `dependsOn`: ocultos por defecto
-- Todo campo `money` lleva a continuación su select `<id>_moneda` (ARS/USD/EUR) — ver sección
-  "Tipo de moneda en los campos `money`"
+- Todo campo de dinero es `type:'money_multi'` (array de pares moneda+monto, ARS/USD/EUR) — ver
+  sección "Campos money_multi (N pares moneda+monto)"
