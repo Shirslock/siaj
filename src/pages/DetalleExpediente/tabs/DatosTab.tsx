@@ -5,9 +5,11 @@ import { getCamposFormulario } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../../data/juzgadosPJN'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
-import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, OPCIONES_MONEDA, type Moneda, type ParMoneda } from '../../../utils/format'
+import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, limpiarMontos, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../../utils/format'
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
+import { useConfiguracionStore } from '../../../store/configuracion.store'
+import type { MonedaItem } from '../../../types'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 
@@ -26,17 +28,18 @@ function getLineaLabel(id: string): string {
 function valorDisplay(
   campo: CampoFormulario,
   val: unknown,
+  monedas: MonedaItem[],
   registro?: Record<string, unknown>,
 ): React.ReactNode {
   if (val === null || val === undefined || val === '') return '—'
   if (campo.type === 'date')    return formatFecha(String(val))
-  if (campo.type === 'money')   return formatMonto(Number(val), normalizarMoneda(registro?.[`${campo.id}_moneda`]))
+  if (campo.type === 'money')   return formatMonto(Number(val), normalizarMoneda(registro?.[`${campo.id}_moneda`], monedas), monedas)
   if (campo.type === 'money_multi') {
-    const pares = normalizarMontos(val, registro?.[`${campo.id}_moneda`])
+    const pares = normalizarMontos(val, registro?.[`${campo.id}_moneda`], monedas)
     if (pares.length === 0) return '—'
     return (
       <div className="flex flex-col gap-0.5">
-        {pares.map((p, i) => <span key={i}>{formatMonto(p.monto, p.moneda)}</span>)}
+        {pares.map((p, i) => <span key={i}>{formatMonto(p.monto, p.moneda, monedas)}</span>)}
       </div>
     )
   }
@@ -94,6 +97,7 @@ interface Props { exp: Expediente }
 
 export function DatosTab({ exp }: Props) {
   const { actualizarExpediente } = useExpedientesStore()
+  const { monedas } = useConfiguracionStore()
 
   const [edit, setEdit] = useState(false)
   const [draftTop, setDraftTop] = useState<Record<string, unknown>>({})
@@ -114,11 +118,23 @@ export function DatosTab({ exp }: Props) {
     setEdit(true)
   }
 
+  // Una fila de money_multi agregada y dejada sin importe no debe persistir como "$0" —
+  // se descarta al guardar (mismo criterio que el modal "Iniciar Juicio").
+  function limpiarMontosDraft(draft: Record<string, unknown>, campos: CampoFormulario[]): Record<string, unknown> {
+    const limpio = { ...draft }
+    campos.forEach(c => {
+      if (c.type === 'money_multi') {
+        limpio[c.id] = limpiarMontos(normalizarMontos(draft[c.id], draft[`${c.id}_moneda`], monedas))
+      }
+    })
+    return limpio
+  }
+
   function save() {
     actualizarExpediente(exp.id, {
       numero_ee_gde:  String(draftTop['numero_ee_gde'] ?? exp.numero_ee_gde),
-      campos_mesa:    draftMesa,
-      campos_abogado: draftAbogado,
+      campos_mesa:    limpiarMontosDraft(draftMesa, camposMesa),
+      campos_abogado: limpiarMontosDraft(draftAbogado, camposAbogado),
     })
     setEdit(false)
   }
@@ -246,9 +262,10 @@ export function DatosTab({ exp }: Props) {
       )
     }
     if (campo.type === 'money_multi') {
-      const pares = normalizarMontos(draft[campo.id], draft[`${campo.id}_moneda`])
-      const filas: ParMoneda[] = pares.length > 0 ? pares : [{ moneda: 'ARS', monto: 0 }]
+      const pares = normalizarMontos(draft[campo.id], draft[`${campo.id}_moneda`], monedas)
+      const filas: ParMoneda[] = pares.length > 0 ? pares : [{ moneda: proximaMonedaLibre([], monedas) as Moneda, monto: 0 }]
       const commit = (nuevas: ParMoneda[]) => setDraft(p => ({ ...p, [campo.id]: nuevas }))
+      const proxima = proximaMonedaLibre(filas, monedas)
       return (
         <div className="space-y-2 w-full">
           {filas.map((par, i) => (
@@ -260,7 +277,7 @@ export function DatosTab({ exp }: Props) {
                   const n = [...filas]; n[i] = { ...n[i], moneda: e.target.value as Moneda }; commit(n)
                 }}
               >
-                {OPCIONES_MONEDA.map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
+                {opcionesMonedaDisponibles(filas, i, monedas).map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
               </select>
               <input
                 type="number"
@@ -278,11 +295,13 @@ export function DatosTab({ exp }: Props) {
               )}
             </div>
           ))}
-          <button type="button" onClick={() => commit([...filas, { moneda: 'ARS', monto: 0 }])}
-            className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1">
-            <Icon name="add" size={14} />
-            Agregar monto
-          </button>
+          {proxima && (
+            <button type="button" onClick={() => commit([...filas, { moneda: proxima, monto: 0 }])}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1">
+              <Icon name="add" size={14} />
+              Agregar monto
+            </button>
+          )}
         </div>
       )
     }
@@ -433,7 +452,8 @@ export function DatosTab({ exp }: Props) {
           edit={edit}
           value={valorDisplay(
             { id: 'mesa_oficio_judicial', label: '', type: 'text' },
-            exp.campos_mesa['mesa_oficio_judicial']
+            exp.campos_mesa['mesa_oficio_judicial'],
+            monedas
           )}
           input={
             <input type="text"
@@ -489,7 +509,7 @@ export function DatosTab({ exp }: Props) {
                 key={campo.id}
                 label={campo.label}
                 edit={edit}
-                value={valorDisplay(campo, exp.campos_mesa[campo.id], exp.campos_mesa)}
+                value={valorDisplay(campo, exp.campos_mesa[campo.id], monedas, exp.campos_mesa)}
                 input={renderCampoInput(campo, draftMesa, setDraftMesa, camposMesa)}
               />
             ))}
@@ -523,7 +543,7 @@ export function DatosTab({ exp }: Props) {
                 key={campo.id}
                 label={campo.label}
                 edit={edit}
-                value={valorDisplay(campo, exp.campos_abogado[campo.id], exp.campos_abogado)}
+                value={valorDisplay(campo, exp.campos_abogado[campo.id], monedas, exp.campos_abogado)}
                 input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
               />
             ))}

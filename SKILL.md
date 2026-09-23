@@ -62,11 +62,15 @@ npm run build        # build producción
    ```
 4. FormularioDinamico.tsx lo renderiza automáticamente
 5. Si el campo es un monto, usar `type: 'money_multi'` en vez de `'text'`/`'money'` — es un único
-   campo que admite N pares moneda+monto (fila repetible con "Agregar monto"), sin necesidad de un
-   campo hermano `_moneda` aparte:
+   campo que admite hasta una fila por cada moneda del catálogo (fila repetible con "Agregar
+   monto"), sin necesidad de un campo hermano `_moneda` aparte:
    ```ts
    { id: 'mesa_nuevo', label: 'Label', type: 'money_multi' }
    ```
+   Las monedas salen del catálogo editable en Configuración → Tablas → Monedas
+   (`useConfiguracionStore().monedas`) — para agregar una moneda nueva no se toca código, se carga
+   una fila ahí. Los helpers de `utils/format.ts` (formatMonto, normalizarMontos, etc.) reciben ese
+   catálogo como parámetro.
 
 ---
 

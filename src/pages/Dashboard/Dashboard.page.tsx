@@ -8,9 +8,10 @@ import {
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import { useConfiguracionStore } from '../../store/configuracion.store'
 import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
-import { normalizarMontos, sumarMontosPorMoneda, type Moneda } from '../../utils/format'
+import { normalizarMontos, sumarMontosPorMoneda, simboloMoneda, abreviarMonto, type Moneda } from '../../utils/format'
 import type { Expediente, Area } from '../../types'
 import Icon from '../../components/ui/Icon'
 
@@ -448,6 +449,7 @@ function PanelGerencia({
   expedientes: Expediente[]
   setPanelActivo: SetPanel
 }) {
+  const { monedas } = useConfiguracionStore()
   const huerfanas = useMemo(() => expedientes.filter(e => !e.abogado_id), [expedientes])
   const urgentes = useMemo(() => expedientes.filter(e => e.es_urgente), [expedientes])
   const urgentesPorArea = (area: Area) => urgentes.filter(e => e.area === area)
@@ -458,19 +460,13 @@ function PanelGerencia({
   // se leen como lista de 1 (ver normalizarMontos).
   const montosPorMoneda = useMemo(() =>
     sumarMontosPorMoneda(
-      expedientes.flatMap(e => normalizarMontos(e.campos_mesa?.mesa_monto, e.campos_mesa?.mesa_monto_moneda))
+      expedientes.flatMap(e => normalizarMontos(e.campos_mesa?.mesa_monto, e.campos_mesa?.mesa_monto_moneda, monedas))
     ),
-    [expedientes])
+    [expedientes, monedas])
 
-  const SIMBOLO_KPI: Record<Moneda, string> = { ARS: '$', USD: 'US$', EUR: '€' }
-  function abreviarMonto(v: number): string {
-    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`
-    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`
-    return v.toFixed(0)
-  }
   const montoExpuestoLabel = Object.entries(montosPorMoneda)
-    .map(([moneda, total]) => `${SIMBOLO_KPI[moneda as Moneda]}${abreviarMonto(total ?? 0)}`)
-    .join(' · ') || '$0.0M'
+    .map(([moneda, total]) => `${simboloMoneda(moneda as Moneda, monedas)}${abreviarMonto(total ?? 0)}`)
+    .join(' · ') || `${simboloMoneda('ARS', monedas)}0.0M`
 
   return (
     <div className="space-y-4">

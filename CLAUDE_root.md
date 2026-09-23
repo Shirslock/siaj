@@ -49,7 +49,7 @@ npm run build      # build de producción
 |-------------------|----------------|
 | `src/types/index.ts` | TODOS los tipos del dominio. Fuente de verdad de contratos. |
 | `src/data/catalogos.ts` | TIPOS_GESTION, JUZGADOS, LINEAS y todos los catálogos de dropdowns. |
-| `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). Todo campo de dinero es `type:'money_multi'` (N pares moneda+monto, ARS/USD/EUR) — ver `claude-docs/data_CLAUDE.md`. |
+| `src/data/formularios.ts` | Campos por subtipo (etapa mesa + etapa abogado). Todo campo de dinero es `type:'money_multi'` (N pares moneda+monto, máx. 1 fila por moneda; catálogo de monedas editable en Configuración) — ver `claude-docs/data_CLAUDE.md`. |
 | `src/data/usuarios.ts` | 32 usuarios reales UR_001–UR_032, roles y asignaciones. |
 | `src/data/expedientes.mock.ts` | Datos de ejemplo: queue de mesa, expedientes, detalle. |
 | `src/data/estadosProcesales.ts` | Estados y tareas por tipo de gestión. 13 ciclos definidos (ver Sección 13). |
@@ -70,7 +70,7 @@ npm run build      # build de producción
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
 | `src/pages/Home/Home.page.tsx` | "Principal" (`/home`) — Etapa 1. Landing de ABOGADO; COORDINADOR y REFERENTE también entran (conviven con `/dashboard`) con alcance ampliado vía toggle "Mías"/"Mi área"/"Todo". KPIs/contadores con deep-link a `/actuaciones` + Vencimientos/Tareas + distribuciones. Ver `src/pages/Home/Home_CLAUDE.md`. |
 | `src/pages/Home/homeShared.tsx` | Lógica y widgets compartidos del Home (`useHomeData()`, `Tag`, `WidgetVencimientos`, `WidgetPorSubEstado`, `WidgetTipoIntervencion`). |
-| `src/utils/format.ts` | formatFecha, formatMonto(valor, moneda), numerador, normalizarMontos/sumarMontosPorMoneda/OPCIONES_MONEDA (campos money_multi). |
+| `src/utils/format.ts` | formatFecha, numerador, y los helpers de moneda (money_multi) que reciben el catálogo `MonedaItem[]` como parámetro: formatMonto, simboloMoneda, normalizarMoneda, normalizarMontos, opcionesMoneda, opcionesMonedaDisponibles, proximaMonedaLibre; más sumarMontosPorMoneda, limpiarMontos, abreviarMonto (sin dependencia del catálogo). |
 | `src/utils/routing.ts` | Constantes RUTAS + helper de accesos por rol. |
 | `src/utils/alertas.ts` | `getAlertaExpediente(expId, tareasMap, timeline?)` — calcula alerta "Por vencer" de tareas y replies. |
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |

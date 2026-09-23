@@ -3,7 +3,8 @@ import { FormField } from '../ui/FormField'
 import Icon from '../ui/Icon'
 import { JUZGADOS, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../data/juzgadosPJN'
-import { normalizarMontos, OPCIONES_MONEDA, type Moneda, type ParMoneda } from '../../utils/format'
+import { normalizarMontos, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../utils/format'
+import { useConfiguracionStore } from '../../store/configuracion.store'
 
 interface Props {
   campos: CampoFormulario[]
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
+  const { monedas } = useConfiguracionStore()
   if (campos.length === 0) return null
 
   return (
@@ -173,9 +175,10 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
         }
 
         if (campo.type === 'money_multi') {
-          const pares = normalizarMontos(valores[campo.id], valores[`${campo.id}_moneda`])
-          const filas: ParMoneda[] = pares.length > 0 ? pares : [{ moneda: 'ARS', monto: 0 }]
+          const pares = normalizarMontos(valores[campo.id], valores[`${campo.id}_moneda`], monedas)
+          const filas: ParMoneda[] = pares.length > 0 ? pares : [{ moneda: proximaMonedaLibre([], monedas) as Moneda, monto: 0 }]
           const commit = (nuevas: ParMoneda[]) => onChange(campo.id, nuevas)
+          const proxima = proximaMonedaLibre(filas, monedas)
           return (
             <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
               <div className="space-y-2">
@@ -188,7 +191,7 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                         const n = [...filas]; n[i] = { ...n[i], moneda: e.target.value as Moneda }; commit(n)
                       }}
                     >
-                      {OPCIONES_MONEDA.map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
+                      {opcionesMonedaDisponibles(filas, i, monedas).map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
                     </select>
                     <input
                       type="number"
@@ -209,14 +212,16 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                     )}
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => commit([...filas, { moneda: 'ARS', monto: 0 }])}
-                  className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1"
-                >
-                  <Icon name="add" size={14} />
-                  Agregar monto
-                </button>
+                {proxima && (
+                  <button
+                    type="button"
+                    onClick={() => commit([...filas, { moneda: proxima, monto: 0 }])}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors mt-1"
+                  >
+                    <Icon name="add" size={14} />
+                    Agregar monto
+                  </button>
+                )}
               </div>
             </FormField>
           )

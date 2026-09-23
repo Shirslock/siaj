@@ -63,6 +63,12 @@ export interface CatalogoItemExtended extends CatalogoItem {
   localidad?: string
 }
 
+// Catálogo editable de monedas (Configuración → Tablas). `id` es la sigla (ARS/USD/EUR/...),
+// usada como valor de negocio en los campos money_multi — nunca el `label` ni la posición.
+export interface MonedaItem extends CatalogoItem {
+  simbolo: string
+}
+
 export interface TipoGestionItem {
   code: TipoGestion
   id: string

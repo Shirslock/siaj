@@ -1,4 +1,4 @@
-import type { TipoGestionItem, CatalogoItem, CatalogoItemExtended, Area, TipoGestion } from '../types'
+import type { TipoGestionItem, CatalogoItem, CatalogoItemExtended, MonedaItem, Area, TipoGestion } from '../types'
 
 export const LINEAS_FERROVIARIAS: CatalogoItem[] = [
   { id:'LIN_001', label:'ROCA' },
@@ -171,6 +171,16 @@ export const TOPES_CONVENIO: CatalogoItem[] = [
   { id:'TOP_001', label:'SI' },
   { id:'TOP_002', label:'NO' },
   { id:'TOP_003', label:'VIZZOTI' },
+]
+
+// Catálogo editable de monedas (Configuración → Tablas → Monedas). A diferencia de los demás
+// catálogos, acá `id` es la SIGLA (ARS/USD/EUR) — es el valor de negocio que se guarda en los
+// campos money_multi, no un código interno. Agregar una moneda nueva (ej. BRL) es agregar una
+// fila más acá o directamente desde Configuración, sin tocar ningún componente.
+export const MONEDAS_INICIAL: MonedaItem[] = [
+  { id:'ARS', label:'Pesos argentinos', simbolo:'$',   activo:true },
+  { id:'USD', label:'Dólares',          simbolo:'US$', activo:true },
+  { id:'EUR', label:'Euros',            simbolo:'€',   activo:true },
 ]
 
 export const JURISDICCIONES_CS: CatalogoItem[] = [

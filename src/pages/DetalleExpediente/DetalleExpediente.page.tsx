@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
+import { useConfiguracionStore } from '../../store/configuracion.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import type { Expediente } from '../../types'
@@ -25,7 +26,7 @@ import { AsistenteTab }      from './tabs/AsistenteTab'
 import Icon from '../../components/ui/Icon'
 import saulAvatar from '../../assets/saul-avatar.jpg'
 import { toast } from 'react-toastify'
-import { formatFecha, OPCIONES_MONEDA, type Moneda, type ParMoneda } from '../../utils/format'
+import { formatFecha, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
@@ -125,6 +126,7 @@ export default function DetalleExpedientePage() {
   const expId = params['*'] ?? ''
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
+  const { monedas } = useConfiguracionStore()
   const { usuarioActivo } = useUIStore()
   const [searchParams] = useSearchParams()
   const { novedades: novedadesPjn } = usePjnStore()
@@ -161,7 +163,7 @@ export default function DetalleExpedientePage() {
     codemandados: '',
     fecha_inicio: HOY,
     tipo_juicio: '',
-    montos: [{ moneda: 'ARS' as Moneda, monto: '' }],
+    montos: [{ moneda: proximaMonedaLibre([], monedas) as Moneda, monto: '' }],
     ubicacion: '',
     linea: '',
     tipo_lanzamiento: '',
@@ -1344,7 +1346,7 @@ export default function DetalleExpedientePage() {
                           montos: p.montos.map((m, idx) => idx === i ? { ...m, moneda: e.target.value as Moneda } : m),
                         }))}
                       >
-                        {OPCIONES_MONEDA.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {opcionesMonedaDisponibles(formJuicio.montos, i, monedas).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                       <input
                         type="number"
@@ -1367,14 +1369,19 @@ export default function DetalleExpedientePage() {
                       )}
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setFormJuicio(p => ({ ...p, montos: [...p.montos, { moneda: 'ARS' as Moneda, monto: '' }] }))}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors"
-                  >
-                    <Icon name="add" size={14} />
-                    Agregar monto
-                  </button>
+                  {proximaMonedaLibre(formJuicio.montos, monedas) && (
+                    <button
+                      type="button"
+                      onClick={() => setFormJuicio(p => ({
+                        ...p,
+                        montos: [...p.montos, { moneda: proximaMonedaLibre(p.montos, monedas) as Moneda, monto: '' }],
+                      }))}
+                      className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors"
+                    >
+                      <Icon name="add" size={14} />
+                      Agregar monto
+                    </button>
+                  )}
                 </div>
               </div>
             )}

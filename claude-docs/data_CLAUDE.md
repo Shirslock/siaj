@@ -306,19 +306,42 @@ En el registro guardado (`campos_mesa[id]` / `campos_abogado[id]`) el valor es, 
 mesa_monto: [{ moneda: 'ARS', monto: 4850000 }, { moneda: 'USD', monto: 3200 }]
 ```
 
-- **Sin límite de pares:** la UI (`FormularioDinamico.tsx` en Alta, `DatosTab.tsx` en el detalle,
-  y el modal "Iniciar Juicio") ofrece "Agregar monto" para sumar filas y un botón para quitar cada
-  una, con mínimo 1 fila siempre visible.
+- **Máximo una fila por moneda:** la UI (`FormularioDinamico.tsx` en Alta, `DatosTab.tsx` en el
+  detalle, y el modal "Iniciar Juicio") ofrece "Agregar monto" para sumar filas y un botón para
+  quitar cada una, con mínimo 1 fila siempre visible. El selector de moneda de cada fila excluye
+  las monedas que ya usan las OTRAS filas del mismo campo — no se puede duplicar. El botón
+  "Agregar monto" desaparece cuando ya hay una fila por cada moneda activa del catálogo.
+- **Fila vacía → se descarta al guardar:** una fila agregada y dejada sin importe no persiste como
+  `$0` — se filtra con `limpiarMontos(pares)` al guardar (en `DatosTab.save()` y en el submit del
+  modal "Iniciar Juicio").
 - **Compatibilidad con datos viejos:** un valor en el formato anterior (escalar en `campos[id]` +
   moneda en `campos[`${id}_moneda`]`, o directamente sin moneda) se lee como una lista de 1 par vía
-  `normalizarMontos(valorCampo, monedaLegacy)` (`utils/format.ts`) — no hace falta backfill.
+  `normalizarMontos(valorCampo, monedaLegacy, catalogo)` (`utils/format.ts`). Si por algún dato
+  viejo/corrupto aparecieran dos filas de la misma moneda, se descarta la repetida y queda la
+  primera aparición — nunca rompe el render. No hace falta backfill.
 - **Nunca se mezclan monedas:** cualquier suma/total agrupa por moneda con
   `sumarMontosPorMoneda(pares)`, nunca convierte ni suma pares de monedas distintas entre sí.
-- **`OPCIONES_MONEDA`** (`utils/format.ts`) es la única fuente del combo ARS/USD/EUR — reemplaza
-  las copias hardcodeadas que antes vivían repetidas en cada campo de `formularios.ts` y en el
-  modal de Iniciar Juicio.
+- **Catálogo de monedas editable** (Configuración → Tablas → Monedas, ver `pages_CLAUDE.md`): las
+  monedas ya NO están hardcodeadas en `format.ts` — viven en `useConfiguracionStore().monedas`
+  (`MonedaItem[]`, sembrado desde `data/catalogos.ts#MONEDAS_INICIAL` con ARS/USD/EUR activos).
+  Todos los helpers de moneda de `utils/format.ts` reciben el catálogo como parámetro en vez de
+  tener una lista hardcodeada adentro — agregar una moneda (ej. BRL) es una fila nueva en
+  Configuración, sin tocar ningún componente. La validación de unicidad (una fila por moneda) es
+  por **sigla** (`MonedaItem.id`), nunca por label ni por posición, así renombrar una moneda no
+  rompe datos ya cargados. Desactivar una moneda (`activo:false`, el mismo patrón de todos los
+  catálogos del repo — nunca se borra) la saca de los selectores para filas nuevas, pero los montos
+  ya cargados con esa moneda se siguen mostrando y formateando igual.
+- `Moneda` (`utils/format.ts`) es `string` (la sigla), no un union literal — al ser un catálogo
+  editable en runtime, TypeScript no puede conocer de antemano qué siglas van a existir. La
+  validación de que una sigla es válida se hace en runtime contra el catálogo
+  (`normalizarMoneda`); `formatMonto`/`simboloMoneda` nunca rompen ni tragan el importe ante una
+  sigla desconocida — si no la encuentran en el catálogo, muestran la sigla tal cual.
+- La "moneda local" (default cuando falta el dato; base de la actualización por índice en
+  Previsión) es una decisión de negocio fija — la constante `MONEDA_LOCAL = 'ARS'` en
+  `utils/format.ts` — y no depende del orden del catálogo editable.
 - Tipo nuevo en `types/index.ts`: `'money_multi'` agregado a `TipoCampo` (se conserva `'money'`
-  por compatibilidad de tipo, ya sin uso en `formularios.ts`).
+  por compatibilidad de tipo, ya sin uso en `formularios.ts`); y `MonedaItem extends CatalogoItem`
+  (agrega `simbolo`) para el catálogo de monedas.
 
 Los 15 campos afectados, en 12 tipos de actuación (todos `type:'money_multi'` ahora):
 
@@ -345,13 +368,22 @@ Los 15 campos afectados, en 12 tipos de actuación (todos `type:'money_multi'` a
 `etapasPenales.ts`) siguen sin moneda ni pares múltiples.
 
 **Impactos fuera de `formularios.ts`:**
-- `utils/format.ts` — mapa `SIMBOLO_MONEDA` (`$` ARS, `US$` USD, `€` EUR) del que salen el type
-  `Moneda` y los helpers `formatMonto`, `normalizarMoneda`; más los nuevos `ParMoneda`,
-  `normalizarMontos(valorCampo, monedaLegacy?)`, `sumarMontosPorMoneda(pares)` y `OPCIONES_MONEDA`.
-- `FormularioDinamico.tsx` (Alta) y `DatosTab.tsx` (detalle) — renderizan filas repetibles
-  moneda+monto y muestran todos los pares cargados.
+- `utils/format.ts` — ya no tiene ninguna moneda hardcodeada; expone `ParMoneda`, `Moneda` (=
+  `string`), y helpers que reciben el catálogo (`MonedaItem[]`) como parámetro: `formatMonto`,
+  `simboloMoneda`, `normalizarMoneda`, `normalizarMontos`, `opcionesMoneda`,
+  `opcionesMonedaDisponibles`, `proximaMonedaLibre`; más `sumarMontosPorMoneda`, `limpiarMontos` y
+  `abreviarMonto`, que no dependen del catálogo.
+- `store/configuracion.store.ts` — nuevo slice `monedas: MonedaItem[]`, sembrado desde
+  `MONEDAS_INICIAL`; se edita con las acciones genéricas `agregarItem`/`editarItem` (mismas que
+  usa cualquier catálogo `storeKey`).
+- `pages/Configuracion/tablas.config.ts` y `CatalogoPanel.tsx` — nuevo tipo de tabla `'moneda'` y
+  componente `VistaMoneda` (ver `pages_CLAUDE.md`).
+- `FormularioDinamico.tsx` (Alta) y `DatosTab.tsx` (detalle) — leen `monedas` de
+  `useConfiguracionStore()` y renderizan filas repetibles moneda+monto (máximo una por moneda)
+  mostrando todos los pares cargados.
 - `DetalleExpediente.page.tsx` — el modal "Iniciar Juicio" usa `montos: ParMoneda[]` en vez de
-  `monto` + `monto_moneda`, con la misma UI repetible; guarda `mesa_monto` como array.
+  `monto` + `monto_moneda`, con la misma UI repetible; guarda `mesa_monto` como array, descartando
+  filas vacías.
 - `Dashboard.page.tsx` — el KPI "Monto expuesto" agrupa `mesa_monto` de todas las actuaciones por
   moneda y muestra un total abreviado por cada una (ya no solo ARS).
 - `PrevisionTab.tsx` — usa el primer par de `monto_reclamado` / `monto_acuerdo` como monto base

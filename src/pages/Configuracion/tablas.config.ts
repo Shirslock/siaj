@@ -4,6 +4,7 @@ export type TipoTablaConfig =
   | 'tipoGestion'
   | 'usuario'
   | 'integracion'
+  | 'moneda'
 
 export interface TablaConfig {
   id:           string
@@ -32,6 +33,7 @@ export const GRUPOS_CONFIG: GrupoConfig[] = [
       { id: 'canales',        label: 'Canal de Ingreso',        storeKey: '', tipo: 'simple',   soloLectura: true },
       { id: 'intervenciones', label: 'Tipo de Intervención',    storeKey: '', tipo: 'simple',   soloLectura: true },
       { id: 'lineas',         label: 'Líneas Ferroviarias',     storeKey: 'lineas', tipo: 'simple' },
+      { id: 'monedas',        label: 'Monedas',                 storeKey: 'monedas', tipo: 'moneda' },
     ],
   },
   {

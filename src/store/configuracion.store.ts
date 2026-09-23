@@ -8,11 +8,12 @@ import {
   COMISARIAS, TIPOS_HECHO_PENAL,
   TIPOS_HECHO_DESAFUERO, SANCIONES,
   ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE,
+  MONEDAS_INICIAL,
 } from '../data/catalogos'
 import { USUARIOS } from '../data/usuarios'
-import type { CatalogoItem, CatalogoItemExtended, TipoGestionItem } from '../types'
+import type { CatalogoItem, CatalogoItemExtended, MonedaItem, TipoGestionItem } from '../types'
 
-type Tabla = CatalogoItem[] | CatalogoItemExtended[] | TipoGestionItem[]
+type Tabla = CatalogoItem[] | CatalogoItemExtended[] | TipoGestionItem[] | MonedaItem[]
 
 interface ConfiguracionState {
   lineas:                   CatalogoItem[]
@@ -38,6 +39,7 @@ interface ConfiguracionState {
   sanciones:                CatalogoItem[]
   rolesInterviniente:       CatalogoItem[]
   tiposDocInterviniente:    CatalogoItem[]
+  monedas:                  MonedaItem[]
   usuarios:                 typeof USUARIOS
 
   agregarItem:    (tabla: string, item: CatalogoItem) => void
@@ -95,6 +97,7 @@ export const useConfiguracionStore = create<ConfiguracionState>((set) => ({
   sanciones:             SANCIONES,
   rolesInterviniente:    ROLES_INTERVINIENTE,
   tiposDocInterviniente: TIPOS_DOC_INTERVINIENTE,
+  monedas:               MONEDAS_INICIAL,
   usuarios:              [...USUARIOS],
 
   agregarItem: (tabla, item) =>
