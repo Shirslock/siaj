@@ -10,10 +10,43 @@
 > - **Sistema:** SIAJ — Sistema Integral de Asuntos Jurídicos (SOFSE)
 > - **Branch de implementación:** `feat/montos-multiples`
 > - **Fecha de definición:** 2026-09-22
-> - **Estado:** implementado en `develop` (compila; pendiente de prueba funcional en la app y de
->   revisión del usuario — no se pudo probar en navegador en este entorno, ver §9)
+> - **Estado:** mergeado a `develop` el 2026-09-23 (compila; pendiente de prueba funcional en la
+>   app y de revisión del usuario — no se pudo probar en navegador en este entorno, ver §9).
+>   Sin mergear a `main`.
+> - **Trazabilidad:** commits `cb03b34` (N pares moneda+monto) y `8de8d85` (unicidad por moneda +
+>   catálogo editable) → merge `f5764c5` a `develop`. En el mismo merge a `develop` entró
+>   `chore/mock-novedades-actuales` (`e82c2ee` → merge `8070c72`), ajeno a este delta.
 
 ---
+
+## 0. Evolución del campo monto (los tres estados)
+
+Este delta es el tercer estado de un mismo campo. Se resume acá porque el cambio solo se entiende
+en secuencia:
+
+| | Qué permitía cargar | Cómo se veía | Limitación que motivó el cambio siguiente |
+|---|---|---|---|
+| **Original** (desarrollo inicial del equipo) | **Un número suelto**, sin unidad monetaria | Siempre con `$`, aunque el importe fuera en dólares | El dato era ambiguo: `5.400.000` podía ser pesos o dólares, y los totales del Dashboard sumaban todo junto |
+| **`feat/tipo-moneda-montos`** ([delta anterior](./DELTA_Tipo_Moneda_Montos.md), mergeado) | **Un par moneda + monto**: se agregó el campo "Tipo de moneda" (ARS/USD/EUR) al lado de cada importe | Símbolo según la moneda (`$`, `US$`, `€`); el KPI "Monto expuesto" sumaba solo ARS | Una causa con un reclamo en pesos **y** un rubro en dólares no se podía representar: entraba un solo importe |
+| **`feat/montos-multiples`** (este delta) | **Varios pares moneda + monto**, uno por moneda, en cualquiera de los 15 campos de dinero | Todos los importes listados; el KPI muestra un total por cada moneda | — |
+
+**Las reglas que rigen hoy** (el detalle y el porqué de cada una, en §4 y §6):
+
+1. Un campo de monto admite **varias filas moneda + importe**, con "Agregar monto" para sumar y
+   una "X" para quitar. Siempre queda al menos una fila visible.
+2. **Una sola fila por moneda**: no se puede repetir moneda dentro del mismo campo. El selector de
+   una fila nueva no ofrece las monedas ya usadas.
+3. **El máximo de filas no es un número fijo**: es la cantidad de monedas activas del catálogo. Si
+   mañana se agrega el real, el máximo sube solo.
+4. Las **monedas se administran desde Configuración → Tablas → Monedas** (sigla, nombre, símbolo,
+   activo/inactivo). Sumar una moneda nueva no requiere desarrollo.
+5. Una moneda **desactivada** desaparece de los selectores, pero los montos ya cargados en esa
+   moneda se siguen viendo bien. Nunca se borra.
+6. Una fila **agregada y dejada vacía se descarta al guardar**: no queda un importe en `$0`.
+7. **Nunca se mezclan monedas**: los totales se agrupan por moneda y no hay conversión por tipo de
+   cambio (fuera de alcance desde el delta anterior).
+8. Los **datos cargados antes** de cada cambio se siguen viendo: un importe viejo se lee como una
+   única fila, sin migración manual.
 
 ## 1. Situación anterior (antes de este cambio)
 
