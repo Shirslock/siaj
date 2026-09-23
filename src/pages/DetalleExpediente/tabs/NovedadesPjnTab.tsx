@@ -26,7 +26,7 @@ export function NovedadesPjnTab({ exp }: Props) {
     return (
       <div className="mt-4 bg-white rounded-2xl shadow-card p-12 text-center">
         <Icon name="cloud_done" size={36} className="text-[#c0c0c0] mx-auto mb-3" />
-        <p className="text-sm font-medium text-[#7a9ab4]">Sin novedades PJN pendientes para esta actuación.</p>
+        <p className="text-sm font-medium text-[#7a9ab4]">Sin novedades judiciales pendientes para esta actuación.</p>
         <p className="text-xs text-[#9a9a9a] mt-1">Las novedades detectadas automáticamente aparecerán aquí.</p>
       </div>
     )

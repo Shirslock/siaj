@@ -57,7 +57,7 @@ export default function BogaPage() {
         { nombre: 'Mesa SACO', ruta: '/mesa' },
         { nombre: 'Actuaciones', ruta: '/actuaciones' },
         { nombre: 'Agenda', ruta: '/agenda' },
-        { nombre: 'Novedades PJN', ruta: '/novedades-pjn' },
+        { nombre: 'Novedades judiciales', ruta: '/novedades-judiciales' },
         { nombre: 'Configuración del Sistema', ruta: '/configuracion' },
       ],
       actuaciones_del_sistema: resumenActuaciones,

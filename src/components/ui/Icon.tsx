@@ -137,7 +137,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   // Licencias
   clock:                 ClockIcon,
 
-  // Novedades PJN
+  // Novedades judiciales
   pjn:                   ArrowPathIcon,
 
   // Configuración

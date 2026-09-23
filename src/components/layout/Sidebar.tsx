@@ -14,7 +14,7 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'dashboard',      icon: 'nav_dashboard',   label: 'Panel de Control',       ruta: '/dashboard' },
   { key: 'mesa',           icon: 'nav_mesa',        label: 'Mesa SACO',              ruta: '/mesa' },
   { key: 'actuaciones',    icon: 'nav_actuaciones', label: 'Actuaciones',            ruta: '/actuaciones' },
-  { key: 'novedades_pjn',  icon: 'refresh',         label: 'Novedades PJN',          ruta: '/novedades-pjn' },
+  { key: 'novedades_judiciales', icon: 'refresh',   label: 'Novedades judiciales',   ruta: '/novedades-judiciales' },
   { key: 'boga',           icon: 'smart_toy',       label: 'Chat con Boga',          ruta: '/boga' },
   { key: 'agenda',         icon: 'nav_agenda',      label: 'Agenda',                 ruta: '/agenda' },
   { key: 'tareas',         icon: 'nav_solicitudes', label: 'Solicitudes',            ruta: '/tareas' },
@@ -132,7 +132,7 @@ export function Sidebar({ activePage }: SidebarProps) {
             >
               <span className="relative flex-shrink-0">
                 <Icon name={item.icon} size={22} />
-                {item.key === 'novedades_pjn' && novedadesPendientes > 0 && sidebarCollapsed && (
+                {item.key === 'novedades_judiciales' && novedadesPendientes > 0 && sidebarCollapsed && (
                   <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-[#b91c1c] text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 leading-none">
                     {novedadesPendientes > 9 ? '9+' : novedadesPendientes}
                   </span>
@@ -141,7 +141,7 @@ export function Sidebar({ activePage }: SidebarProps) {
               {!sidebarCollapsed && (
                 <span className={`text-sm truncate flex-1 flex items-center justify-between gap-2 ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.label}
-                  {item.key === 'novedades_pjn' && novedadesPendientes > 0 && (
+                  {item.key === 'novedades_judiciales' && novedadesPendientes > 0 && (
                     <span className="min-w-[18px] h-[18px] bg-[#b91c1c] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
                       {novedadesPendientes > 9 ? '9+' : novedadesPendientes}
                     </span>

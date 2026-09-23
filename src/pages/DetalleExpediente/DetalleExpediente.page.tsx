@@ -116,7 +116,7 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'docs',           label: 'Documentos',      icon: 'folder' },
   { key: 'prevision',      label: 'Previsión',       icon: 'trending_up' },
   { key: 'vinculos',       label: 'Vinculados',      icon: 'account_tree' },
-  { key: 'novedades_pjn',  label: 'Novedades PJN',   icon: 'pjn' },
+  { key: 'novedades_pjn',  label: 'Novedades judiciales',   icon: 'pjn' },
   { key: 'asistente',      label: 'Boga',            icon: 'smart_toy' },
 ]
 
@@ -780,14 +780,15 @@ export default function DetalleExpedientePage() {
         ))}
       </div>
 
-      {/* Banner: novedades PJN pendientes — solo aviso, contenido en pestaña */}
+      {/* Banner: novedades judiciales pendientes — solo aviso, contenido en pestaña.
+          El organismo de cada una se distingue con su chip (ver NovedadPjnCard). */}
       {novedadesDeEstaActuacion.length > 0 && tab !== 'novedades_pjn' && (
         <div className="mt-4 p-3 rounded-xl bg-[#e6f1fb] border border-[#B5D4F4] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="pjn" size={16} className="text-[#185fa5]" />
             <span className="text-[13px] text-[#185fa5] font-medium">
               {novedadesDeEstaActuacion.length}
-              {novedadesDeEstaActuacion.length === 1 ? ' novedad detectada por PJN' : ' novedades detectadas por PJN'}
+              {novedadesDeEstaActuacion.length === 1 ? ' novedad judicial detectada' : ' novedades judiciales detectadas'}
             </span>
           </div>
           <button

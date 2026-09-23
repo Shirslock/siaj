@@ -13,6 +13,7 @@ import { toast } from 'react-toastify'
 import type { NovedadPJN } from '../../types'
 
 type Filtro = 'pendientes' | 'vencidas' | 'todas'
+type TabOrganismo = 'PJN' | 'MEV'
 
 interface GrupoCorrida {
   key: string
@@ -41,6 +42,7 @@ export default function NovedadesPJNPage() {
   const { expedientes } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const [filtro, setFiltro] = useState<Filtro>('pendientes')
+  const [tabOrganismo, setTabOrganismo] = useState<TabOrganismo>('PJN')
   const [selMode, setSelMode] = useState(false)
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
   const [modalConfirmar, setModalConfirmar] = useState<'aplicar' | 'descartar' | null>(null)
@@ -50,25 +52,33 @@ export default function NovedadesPJNPage() {
     [novedades, expedientes, usuarioActivo]
   )
 
+  // Las solapas PJN/MEV son presentación pura sobre la misma bandeja: mismo store, mismo
+  // flujo de aplicar/descartar, misma selección masiva y mismo vencimiento a 7 días — acá
+  // solo se recorta la lista por origen antes de que corra el resto de la lógica de abajo.
+  const visiblesOrigen = useMemo(
+    () => visibles.filter(n => n.origen_organismo === tabOrganismo),
+    [visibles, tabOrganismo]
+  )
+
   const alertasVisibles = useMemo(
     () => filtrarAlertasActuacionesPorRol(actuacionesSinCargar, usuarioActivo)
       .filter(a => a.estado === 'pendiente'),
     [actuacionesSinCargar, usuarioActivo]
   )
 
-  const pendientesTodas = visibles.filter(n => n.estado === 'pendiente')
+  const pendientesTodas = visiblesOrigen.filter(n => n.estado === 'pendiente')
   const pendientes = pendientesTodas.filter(n => !esNovedadVencida(n))
   const vencidas = pendientesTodas.filter(n => esNovedadVencida(n))
 
-  const lista = filtro === 'pendientes' ? pendientes : filtro === 'vencidas' ? vencidas : visibles
+  const lista = filtro === 'pendientes' ? pendientes : filtro === 'vencidas' ? vencidas : visiblesOrigen
   const grupos = useMemo(() => agruparPorCorrida(lista), [lista])
 
-  // Selección libre en toda la bandeja — cruza expedientes y corridas, no se limita al
-  // filtro/grupo actual. Solo cuentan ids que sigan pendiente (por si algo cambió mientras
+  // Selección libre dentro de la solapa activa — cruza expedientes y corridas, no se limita
+  // al filtro/grupo actual. Solo cuentan ids que sigan pendiente (por si algo cambió mientras
   // tanto, ej. otra pestaña aplicó/descartó una que ya estaba tildada).
   const novedadesSeleccionadas = useMemo(
-    () => visibles.filter(n => n.estado === 'pendiente' && seleccionados.has(n.id)),
-    [visibles, seleccionados]
+    () => visiblesOrigen.filter(n => n.estado === 'pendiente' && seleccionados.has(n.id)),
+    [visiblesOrigen, seleccionados]
   )
   const expedientesImpactados = useMemo(
     () => new Set(novedadesSeleccionadas.map(n => n.expediente_id)).size,
@@ -127,7 +137,7 @@ export default function NovedadesPJNPage() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Icon name="refresh" size={18} className="text-[#1b3a57]" />
-          <h2 className="text-lg font-bold text-[#1b3a57]">Novedades PJN</h2>
+          <h2 className="text-lg font-bold text-[#1b3a57]">Novedades judiciales</h2>
           {pendientes.length > 0 && (
             <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#185fa5] text-white">
               {pendientes.length} pendientes
@@ -141,42 +151,75 @@ export default function NovedadesPJNPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant={selMode ? 'primary' : 'secondary'} size="sm" onClick={toggleSelMode}>
-            <span className="flex items-center gap-1.5">
-              <Icon name="checklist" size={15} />
-              Modo selección
-            </span>
-          </Button>
-
           <div className="flex items-center gap-1 bg-[#e5e5e5] rounded-lg p-1">
             <button
-              onClick={() => setFiltro('pendientes')}
+              onClick={() => setTabOrganismo('PJN')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                filtro === 'pendientes' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                tabOrganismo === 'PJN' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
               }`}
             >
-              Pendientes
+              PJN
             </button>
             <button
-              onClick={() => setFiltro('vencidas')}
+              onClick={() => setTabOrganismo('MEV')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                filtro === 'vencidas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                tabOrganismo === 'MEV' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
               }`}
             >
-              Vencidas
-            </button>
-            <button
-              onClick={() => setFiltro('todas')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                filtro === 'todas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
-              }`}
-            >
-              Todas
+              MEV
             </button>
           </div>
+
+          {tabOrganismo === 'PJN' && (
+            <>
+              <Button variant={selMode ? 'primary' : 'secondary'} size="sm" onClick={toggleSelMode}>
+                <span className="flex items-center gap-1.5">
+                  <Icon name="checklist" size={15} />
+                  Modo selección
+                </span>
+              </Button>
+
+              <div className="flex items-center gap-1 bg-[#e5e5e5] rounded-lg p-1">
+                <button
+                  onClick={() => setFiltro('pendientes')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    filtro === 'pendientes' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                  }`}
+                >
+                  Pendientes
+                </button>
+                <button
+                  onClick={() => setFiltro('vencidas')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    filtro === 'vencidas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                  }`}
+                >
+                  Vencidas
+                </button>
+                <button
+                  onClick={() => setFiltro('todas')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    filtro === 'todas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                  }`}
+                >
+                  Todas
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
+      {tabOrganismo === 'MEV' ? (
+        <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white py-16 text-center">
+          <Icon name="inbox" size={28} className="text-[#7a9ab4] mx-auto mb-2" />
+          <p className="text-sm font-bold text-[#1b3a57]">Próximamente</p>
+          <p className="text-sm text-[#4a6a84] mt-1">
+            Novedades de la Mesa de Entradas Virtual (MEV).
+          </p>
+        </div>
+      ) : (
+      <>
       {selMode && seleccionados.size > 0 && (
         <div className="mb-4 rounded-xl border border-[#185fa5] bg-[#e6f1fb] px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-10">
           <p className="text-sm font-bold text-[#1b3a57]">
@@ -260,6 +303,8 @@ export default function NovedadesPJNPage() {
             </div>
           ))}
         </div>
+      )}
+      </>
       )}
 
       <Modal

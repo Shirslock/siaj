@@ -262,6 +262,11 @@ export interface Actividad {
 
 export type EstadoNovedadPJN = 'pendiente' | 'aplicada' | 'descartada'
 
+// Organismo judicial de origen de la novedad — no confundir con `NovedadPJN.origen`
+// ('automatica' | 'manual', que distingue cómo se detectó). Pensado para reusarse también en
+// el "estado de sincronización por expediente/organismo" (prototipo futuro, no implementado).
+export type OrganismoJudicial = 'PJN' | 'MEV'
+
 export interface NovedadPJN {
   id: string
   expediente_id: string
@@ -288,6 +293,7 @@ export interface NovedadPJN {
   aplicada_por?: string
   fecha_aplicacion?: string
   origen?: 'automatica' | 'manual'  // opcional — sin valor = 'automatica' (mock original)
+  origen_organismo: OrganismoJudicial  // organismo que originó la novedad (PJN / MEV) — presentación en solapas, no altera el flujo de aplicar/descartar
   intervinientes_pjn?: IntervinientePjnCrudo[]  // ver IntervinientePjnCrudo — datos crudos, no auto-cargan
 }
 

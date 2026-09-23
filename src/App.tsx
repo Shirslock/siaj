@@ -44,7 +44,8 @@ export default function App() {
           <Route path="/agenda"            element={<AgendaPage />} />
           <Route path="/tareas"            element={<TareasPage />} />
           <Route path="/licencias"         element={<LicenciasPage />} />
-          <Route path="/novedades-pjn"     element={<NovedadesPJNPage />} />
+          <Route path="/novedades-pjn"      element={<Navigate to={RUTAS.NOVEDADES_JUDICIALES} replace />} />
+          <Route path={RUTAS.NOVEDADES_JUDICIALES} element={<NovedadesPJNPage />} />
           <Route path="/boga"              element={<BogaPage />} />
           <Route path="/configuracion"     element={<ConfiguracionPage />} />
         </Routes>
