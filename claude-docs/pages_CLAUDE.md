@@ -43,7 +43,7 @@ src/pages/NombrePagina/
 | Timeline | TimelineTab.tsx | ✓ tareas + actividades + feed colapsable |
 | Intervinientes | IntervinientesTab.tsx | ✓ CRUD completo — agregar (modal extraído a `AgregarIntervinienteModal.tsx`, reusado también desde una novedad PJN), editar (modal propio de la tab), eliminar; columna Letrado |
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop con @dnd-kit para reordenar |
-| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
+| Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS; los campos base son `money_multi`, se proyecta el primer par cargado |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Asistente IA | AsistenteTab.tsx | ✓ chat con contexto de la actuación — ver `ASISTENTE_IA_CLAUDE.md` |
 
@@ -55,16 +55,24 @@ Solo accesible para `rolSistema === 'REFERENTE'`. Redirect a `/actuaciones` para
 
 Archivos:
 - `Configuracion.page.tsx` — layout dos columnas (sidebar grupos + contenido)
-- `tablas.config.ts` — definición de 5 grupos y 28 tablas
-- `CatalogoPanel.tsx` — CRUD genérico (tipos: simple / extended / tipoGestion)
+- `tablas.config.ts` — definición de 5 grupos y 29 tablas
+- `CatalogoPanel.tsx` — CRUD genérico (tipos: simple / extended / tipoGestion / moneda)
 - `UsuariosPanel.tsx` — tabla de usuarios con modal edición (FIFO + líneas ferroviarias)
 
 Grupos del sidebar:
-1. Configuración Base (4 tablas — 3 solo lectura)
+1. Configuración Base (5 tablas — 3 solo lectura; incluye "Monedas")
 2. Gestión Jurídica (9 tablas)
 3. Organismos Judiciales (5 tablas)
 4. Catálogo de Hechos y Sanciones (6 tablas)
 5. Personal e Intervinientes (3 tablas)
+
+**Tabla "Monedas"** (`tipo: 'moneda'`, `storeKey: 'monedas'`) — catálogo editable de monedas para
+los campos `money_multi` (ver `data_CLAUDE.md`). Único catálogo donde `id` es la SIGLA (ARS/USD/EUR,
+ISO 4217), no un código interno — es el valor de negocio que queda guardado en los montos. Cada
+ítem tiene además `simbolo` (`$`, `US$`, `€`). Editor propio `VistaMoneda` en `CatalogoPanel.tsx`
+(mismo patrón que `VistaSimple`, con el campo Símbolo agregado). Se desactiva igual que el resto de
+los catálogos (`activo:false`, nunca se borra) — una moneda desactivada sigue resolviendo símbolo y
+formato para montos ya cargados, solo desaparece de los selectores para filas nuevas.
 
 ---
 

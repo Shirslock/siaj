@@ -1,5 +1,6 @@
 import type { Expediente } from '../../../types'
-import { formatMonto, normalizarMoneda, aplicaIndiceInflacion } from '../../../utils/format'
+import { formatMonto, normalizarMontos, aplicaIndiceInflacion } from '../../../utils/format'
+import { useConfiguracionStore } from '../../../store/configuracion.store'
 import Icon from '../../../components/ui/Icon'
 
 interface Props { exp: Expediente }
@@ -13,14 +14,15 @@ const HISTORICO_MOCK = [
 ]
 
 export function PrevisionTab({ exp }: Props) {
-  // El monto base sale de Mesa y, si no está cargado, del acuerdo del letrado:
-  // la moneda tiene que seguir al mismo origen que el monto.
-  const montoMesa = exp.campos_mesa['monto_reclamado']
-  const usaMontoMesa = montoMesa !== undefined && montoMesa !== null
-  const montoBase = Number((usaMontoMesa ? montoMesa : exp.campos_abogado['monto_acuerdo']) ?? 0)
-  const moneda = usaMontoMesa
-    ? normalizarMoneda(exp.campos_mesa['monto_reclamado_moneda'])
-    : normalizarMoneda(exp.campos_abogado['monto_acuerdo_moneda'])
+  const { monedas } = useConfiguracionStore()
+  // El monto base sale de Mesa y, si no está cargado, del acuerdo del letrado. Ambos son
+  // campos money_multi (N pares moneda+monto) — la previsión, todavía a relevar con el
+  // negocio, solo proyecta el primer par cargado.
+  const paresMesa = normalizarMontos(exp.campos_mesa['monto_reclamado'], exp.campos_mesa['monto_reclamado_moneda'], monedas)
+  const paresAbogado = normalizarMontos(exp.campos_abogado['monto_acuerdo'], exp.campos_abogado['monto_acuerdo_moneda'], monedas)
+  const parBase = paresMesa.length > 0 ? paresMesa[0] : paresAbogado[0]
+  const montoBase = parBase?.monto ?? 0
+  const moneda = parBase?.moneda ?? 'ARS'
   const aplicaActualizacion = aplicaIndiceInflacion(moneda)
   const montoActualizado = montoBase * 1.38
   const pronostico = montoActualizado * 0.65
@@ -55,19 +57,19 @@ export function PrevisionTab({ exp }: Props) {
       <div className="grid grid-cols-3 gap-4">
         <MetricCard
           titulo="Monto Demanda"
-          valor={montoBase ? formatMonto(montoBase, moneda) : '—'}
+          valor={montoBase ? formatMonto(montoBase, moneda, monedas) : '—'}
           subtitulo="Monto reclamado al inicio"
         />
         {aplicaActualizacion && (
           <>
             <MetricCard
               titulo="Monto Actualizado"
-              valor={montoBase ? formatMonto(montoActualizado, moneda) : '—'}
+              valor={montoBase ? formatMonto(montoActualizado, moneda, monedas) : '—'}
               subtitulo="× 1,38 — tasa interna SOFSA"
             />
             <MetricCard
               titulo="Pronóstico"
-              valor={montoBase ? formatMonto(pronostico, moneda) : '—'}
+              valor={montoBase ? formatMonto(pronostico, moneda, monedas) : '—'}
               subtitulo="Estimación 65% del monto actualizado"
               highlight
             />
@@ -108,7 +110,7 @@ export function PrevisionTab({ exp }: Props) {
                     <td className="py-3 px-4 text-xs font-medium text-[#1b3a57]">{row.periodo}</td>
                     <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.tasa}</td>
                     <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.acumulada}</td>
-                    <td className="py-3 px-4 text-xs font-mono text-[#1b3a57]">{formatMonto(montoRow, moneda)}</td>
+                    <td className="py-3 px-4 text-xs font-mono text-[#1b3a57]">{formatMonto(montoRow, moneda, monedas)}</td>
                   </tr>
                 )
               })}

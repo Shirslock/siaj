@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
+import { useConfiguracionStore } from '../../store/configuracion.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import type { Expediente } from '../../types'
@@ -25,7 +26,7 @@ import { AsistenteTab }      from './tabs/AsistenteTab'
 import Icon from '../../components/ui/Icon'
 import saulAvatar from '../../assets/saul-avatar.jpg'
 import { toast } from 'react-toastify'
-import { formatFecha } from '../../utils/format'
+import { formatFecha, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
@@ -125,6 +126,7 @@ export default function DetalleExpedientePage() {
   const expId = params['*'] ?? ''
 
   const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
+  const { monedas } = useConfiguracionStore()
   const { usuarioActivo } = useUIStore()
   const [searchParams] = useSearchParams()
   const { novedades: novedadesPjn } = usePjnStore()
@@ -161,8 +163,7 @@ export default function DetalleExpedientePage() {
     codemandados: '',
     fecha_inicio: HOY,
     tipo_juicio: '',
-    monto: '',
-    monto_moneda: 'ARS',
+    montos: [{ moneda: proximaMonedaLibre([], monedas) as Moneda, monto: '' }],
     ubicacion: '',
     linea: '',
     tipo_lanzamiento: '',
@@ -509,8 +510,9 @@ export default function DetalleExpedientePage() {
         mesa_codemandados:  formJuicio.codemandados,
         mesa_fecha_inicio:  formJuicio.fecha_inicio,
         mesa_juicio:        formJuicio.tipo_juicio,
-        mesa_monto:         formJuicio.monto,
-        mesa_monto_moneda:  formJuicio.monto_moneda,
+        mesa_monto: formJuicio.montos
+          .filter(m => m.monto.trim() !== '')
+          .map((m): ParMoneda => ({ moneda: m.moneda, monto: Number(m.monto) || 0 })),
         mesa_oficio_judicial: formJuicio.oficio_judicial,
         mesa_tipo_intervencion: formJuicio.tipo_intervencion,
         mesa_ubicacion:     formJuicio.ubicacion,
@@ -1331,23 +1333,56 @@ export default function DetalleExpedientePage() {
               </div>
             )}
             {exp.tipo !== 'LANZAMIENTO' && (
-              <div>
+              <div className="col-span-2">
                 <label className="field-label">Monto de la Demanda <span className="text-[#b91c1c]">*</span></label>
-                <input type="number" className="field-input w-full" placeholder="$ 0"
-                  value={formJuicio.monto}
-                  onChange={e => setFormJuicio(p => ({ ...p, monto: e.target.value }))} />
-              </div>
-            )}
-            {exp.tipo !== 'LANZAMIENTO' && (
-              <div>
-                <label className="field-label">Tipo de moneda</label>
-                <select className="field-input w-full"
-                  value={formJuicio.monto_moneda}
-                  onChange={e => setFormJuicio(p => ({ ...p, monto_moneda: e.target.value }))}>
-                  <option value="ARS">ARS — Pesos argentinos</option>
-                  <option value="USD">USD — Dólares</option>
-                  <option value="EUR">EUR — Euros</option>
-                </select>
+                <div className="space-y-2">
+                  {formJuicio.montos.map((par, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <select
+                        className="field-input w-40 flex-shrink-0"
+                        value={par.moneda}
+                        onChange={e => setFormJuicio(p => ({
+                          ...p,
+                          montos: p.montos.map((m, idx) => idx === i ? { ...m, moneda: e.target.value as Moneda } : m),
+                        }))}
+                      >
+                        {opcionesMonedaDisponibles(formJuicio.montos, i, monedas).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                      <input
+                        type="number"
+                        className="field-input flex-1"
+                        placeholder="$ 0"
+                        value={par.monto}
+                        onChange={e => setFormJuicio(p => ({
+                          ...p,
+                          montos: p.montos.map((m, idx) => idx === i ? { ...m, monto: e.target.value } : m),
+                        }))}
+                      />
+                      {formJuicio.montos.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setFormJuicio(p => ({ ...p, montos: p.montos.filter((_, idx) => idx !== i) }))}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0"
+                        >
+                          <Icon name="close" size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {proximaMonedaLibre(formJuicio.montos, monedas) && (
+                    <button
+                      type="button"
+                      onClick={() => setFormJuicio(p => ({
+                        ...p,
+                        montos: [...p.montos, { moneda: proximaMonedaLibre(p.montos, monedas) as Moneda, monto: '' }],
+                      }))}
+                      className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors"
+                    >
+                      <Icon name="add" size={14} />
+                      Agregar monto
+                    </button>
+                  )}
+                </div>
               </div>
             )}
             {exp.tipo !== 'LANZAMIENTO' && (

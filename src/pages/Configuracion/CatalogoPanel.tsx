@@ -4,7 +4,7 @@ import { DATOS_SOLO_LECTURA } from './tablas.config'
 import { useConfiguracionStore } from '../../store/configuracion.store'
 import { Modal } from '../../components/ui/Modal'
 import Icon from '../../components/ui/Icon'
-import type { CatalogoItem, CatalogoItemExtended, TipoGestionItem } from '../../types'
+import type { CatalogoItem, CatalogoItemExtended, MonedaItem, TipoGestionItem } from '../../types'
 
 interface Props { tabla: TablaConfig }
 
@@ -230,6 +230,180 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
   )
 }
 
+// ── Vista Moneda ─────────────────────────────────────────────────────────────
+// Único catálogo donde `id` es la sigla (ARS/USD/EUR) — el valor de negocio que queda guardado
+// en los campos money_multi. Se desactiva igual que los demás catálogos (nunca se borra), así
+// una moneda usada en montos ya cargados sigue resolviendo símbolo y formato.
+
+function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
+  const store = useConfiguracionStore()
+  const items = (store[tabla.storeKey as keyof typeof store] as MonedaItem[]) ?? []
+  const { agregarItem, editarItem } = store
+
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [editando, setEditando] = useState<MonedaItem | null>(null)
+  const [form, setForm] = useState({ id: '', label: '', simbolo: '', activo: true })
+
+  const modoEdicion = !!editando
+
+  function abrirNuevo() {
+    setEditando(null)
+    setForm({ id: '', label: '', simbolo: '', activo: true })
+    setModalAbierto(true)
+  }
+
+  function abrirEditar(item: MonedaItem) {
+    setEditando(item)
+    setForm({ id: item.id, label: item.label, simbolo: item.simbolo, activo: item.activo ?? true })
+  }
+
+  function cerrar() {
+    setEditando(null)
+    setModalAbierto(false)
+    setForm({ id: '', label: '', simbolo: '', activo: true })
+  }
+
+  function guardar() {
+    if (!form.label.trim() || !form.simbolo.trim()) return
+    if (modoEdicion && editando) {
+      editarItem(tabla.storeKey, editando.id, { label: form.label.trim(), simbolo: form.simbolo.trim(), activo: form.activo })
+    } else {
+      const id = form.id.trim().toUpperCase()
+      if (!id) return
+      agregarItem(tabla.storeKey, { id, label: form.label.trim(), simbolo: form.simbolo.trim(), activo: form.activo } as MonedaItem)
+    }
+    cerrar()
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <button
+          onClick={abrirNuevo}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+        >
+          <Icon name="add" size={16} /> Nuevo
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+              {['Sigla', 'Nombre', 'Símbolo', 'Estado', ''].map(c => (
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+            {items.map(item => (
+              <tr key={item.id} className="hover:bg-[#f8f8f8]">
+                <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.id}</td>
+                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+                <td className="py-2.5 px-4 font-mono text-xs text-[#4a6a84]">{item.simbolo}</td>
+                <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
+                <td className="py-2.5 px-4">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => abrirEditar(item)}
+                      title="Editar"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                    >
+                      <Icon name="edit" size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal
+        open={modalAbierto || !!editando}
+        onClose={cerrar}
+        titulo={modoEdicion ? `Editar — ${tabla.label}` : `Nueva — ${tabla.label}`}
+        size="sm"
+        footer={
+          <>
+            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={guardar}
+              disabled={!form.label.trim() || !form.simbolo.trim() || (!modoEdicion && !form.id.trim())}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Guardar
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          {!modoEdicion && (
+            <div>
+              <label className="field-label">Sigla (ISO 4217) <span className="text-[#b91c1c]">*</span></label>
+              <input
+                type="text"
+                className="field-input w-full font-mono uppercase"
+                placeholder="Ej: BRL"
+                maxLength={3}
+                value={form.id}
+                onChange={e => setForm(p => ({ ...p, id: e.target.value.toUpperCase() }))}
+              />
+              <p className="text-[11px] text-[#4a6a84] mt-1">
+                Es el valor que queda guardado en los montos — no se puede editar después de creada.
+              </p>
+            </div>
+          )}
+          <div>
+            <label className="field-label">Nombre <span className="text-[#b91c1c]">*</span></label>
+            <input
+              type="text"
+              className="field-input w-full"
+              placeholder="Ej: Reales brasileños"
+              value={form.label}
+              onChange={e => setForm(p => ({ ...p, label: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="field-label">Símbolo <span className="text-[#b91c1c]">*</span></label>
+            <input
+              type="text"
+              className="field-input w-full"
+              placeholder="Ej: R$"
+              value={form.simbolo}
+              onChange={e => setForm(p => ({ ...p, simbolo: e.target.value }))}
+            />
+          </div>
+          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
+                className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
+                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  form.activo ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1b3a57]">Activa</p>
+                <p className="text-[11px] text-[#4a6a84]">
+                  Las monedas inactivas no aparecen para elegir en montos nuevos, pero los montos
+                  ya cargados con esa moneda se siguen mostrando igual.
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
 // ── Vista Extended ────────────────────────────────────────────────────────────
 
 function VistaExtended({ tabla }: { tabla: TablaConfig }) {
@@ -428,5 +602,6 @@ export function CatalogoPanel({ tabla }: Props) {
   if (tabla.soloLectura) return <VistaLectura tabla={tabla} />
   if (tabla.tipo === 'extended') return <VistaExtended tabla={tabla} />
   if (tabla.tipo === 'tipoGestion') return <VistaTipoGestion tabla={tabla} />
+  if (tabla.tipo === 'moneda') return <VistaMoneda tabla={tabla} />
   return <VistaSimple tabla={tabla} />
 }

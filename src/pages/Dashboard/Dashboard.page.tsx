@@ -8,9 +8,10 @@ import {
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
+import { useConfiguracionStore } from '../../store/configuracion.store'
 import { getUsuarioById } from '../../data/usuarios'
 import { RUTAS } from '../../utils/routing'
-import { normalizarMoneda } from '../../utils/format'
+import { normalizarMontos, sumarMontosPorMoneda, simboloMoneda, abreviarMonto, type Moneda } from '../../utils/format'
 import type { Expediente, Area } from '../../types'
 import Icon from '../../components/ui/Icon'
 
@@ -448,18 +449,24 @@ function PanelGerencia({
   expedientes: Expediente[]
   setPanelActivo: SetPanel
 }) {
+  const { monedas } = useConfiguracionStore()
   const huerfanas = useMemo(() => expedientes.filter(e => !e.abogado_id), [expedientes])
   const urgentes = useMemo(() => expedientes.filter(e => e.es_urgente), [expedientes])
   const urgentesPorArea = (area: Area) => urgentes.filter(e => e.area === area)
   const expPorArea = (area: Area) => expedientes.filter(e => e.area === area)
 
-  // Solo se suman los montos en pesos: los de otras monedas no son comparables y no se
-  // convierten. Sin moneda guardada se asume ARS, así que los expedientes viejos entran.
-  const montoTotal = useMemo(() => expedientes.reduce((sum, e) => {
-    if (normalizarMoneda(e.campos_mesa?.mesa_monto_moneda) !== 'ARS') return sum
-    const m = Number(e.campos_mesa?.mesa_monto ?? 0)
-    return sum + (isNaN(m) ? 0 : m)
-  }, 0), [expedientes])
+  // Se suma por moneda — nunca se mezclan montos de monedas distintas entre sí. mesa_monto
+  // es money_multi (N pares moneda+monto); los datos viejos con un escalar + mesa_monto_moneda
+  // se leen como lista de 1 (ver normalizarMontos).
+  const montosPorMoneda = useMemo(() =>
+    sumarMontosPorMoneda(
+      expedientes.flatMap(e => normalizarMontos(e.campos_mesa?.mesa_monto, e.campos_mesa?.mesa_monto_moneda, monedas))
+    ),
+    [expedientes, monedas])
+
+  const montoExpuestoLabel = Object.entries(montosPorMoneda)
+    .map(([moneda, total]) => `${simboloMoneda(moneda as Moneda, monedas)}${abreviarMonto(total ?? 0)}`)
+    .join(' · ') || `${simboloMoneda('ARS', monedas)}0.0M`
 
   return (
     <div className="space-y-4">
@@ -486,8 +493,8 @@ function PanelGerencia({
           onClick={() => setPanelActivo({ titulo: 'Causas vinculadas', expedientes: expedientes.filter(e => e.vinculos.length > 0) })}
         />
         <KpiCard
-          label="Monto expuesto (ARS)" value={`$${(montoTotal / 1000000).toFixed(1)}M`} badgeColor="gris"
-          onClick={() => setPanelActivo({ titulo: 'Monto expuesto (ARS)', expedientes })}
+          label="Monto expuesto" value={montoExpuestoLabel} badgeColor="gris"
+          onClick={() => setPanelActivo({ titulo: 'Monto expuesto', expedientes })}
         />
       </div>
 

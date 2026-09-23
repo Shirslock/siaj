@@ -39,7 +39,9 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
       mesa_tipo_intervencion: 'Demandada',
       mesa_fecha_inicio:   addDays(-18),
       mesa_juicio:         'DAÑOS Y PERJUICIOS',
-      mesa_monto:          4850000,
+      // Demo del campo money_multi: reclamo en pesos + rubro en dólares (ej. gastos médicos
+      // en el exterior). L-0100/2026 mantiene el formato viejo (escalar) para probar compat.
+      mesa_monto: [{ moneda: 'ARS', monto: 4850000 }, { moneda: 'USD', monto: 3200 }],
     },
     campos_abogado: {
       estado_tramite:     'EN TRAMITACIÓN',
