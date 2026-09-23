@@ -91,9 +91,19 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
             <Icon name="description" size={16} className="text-[#185fa5]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-[#185fa5]">
-              {novedad.tipo}
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[#185fa5]">
+                {novedad.tipo}
+              </p>
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                novedad.origen_organismo === 'MEV'
+                  ? 'bg-[#fdf3e3] text-[#b26a00]'
+                  : 'bg-[#e6f1fb] text-[#185fa5]'
+              }`}>
+                <Icon name={novedad.origen_organismo === 'MEV' ? 'inbox' : 'refresh'} size={9} />
+                {novedad.origen_organismo}
+              </span>
+            </div>
             <p className="text-sm font-semibold text-[#1b3a57]">{novedad.detalle}</p>
             {metadata && (
               <p className="text-xs text-[#7a9ab4] mt-0.5">{metadata}</p>

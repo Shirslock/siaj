@@ -80,7 +80,7 @@ npm run build      # build de producción
 | `src/utils/exportTimeline.ts` | Exportar timeline a Excel (xlsx) y PDF (jsPDF + autoTable). Ver Sección 14. |
 | `src/utils/iniciarJuicio.ts` | `MAPA_INICIAR_JUICIO` y `getTipoDocumentoNuevo(tipo)` — mapea tipo origen → tipo documento nuevo. |
 | `src/utils/pjnVisibilidad.ts` | `filtrarNovedadesPorRol(novedades, expedientes, usuario)` — visibilidad de novedades PJN por rol, compartida entre bandeja central, Sidebar, BandejaAbogado y Topbar. También `filtrarAlertasActuacionesPorRol(alertas, usuario)` — visibilidad de las alertas de "causa PJN sin cargar", regla provisoria (ver Sección 15). |
-| `src/utils/pjnVencimiento.ts` | `esNovedadVencida(novedad, hoy?)` / `diasDesdeDeteccion(novedad, hoy?)` — flag derivado: una novedad pendiente "vence" a los 7 días sin aplicar/descartar. No toca `EstadoNovedadPJN` (sigue siendo `pendiente`/`aplicada`/`descartada`); solo cambia el filtro por defecto de la bandeja de Novedades PJN. |
+| `src/utils/pjnVencimiento.ts` | `esNovedadVencida(novedad, hoy?)` / `diasDesdeDeteccion(novedad, hoy?)` — flag derivado: una novedad pendiente "vence" a los 7 días sin aplicar/descartar. No toca `EstadoNovedadPJN` (sigue siendo `pendiente`/`aplicada`/`descartada`); solo cambia el filtro por defecto de la bandeja de Novedades judiciales. |
 | `src/utils/numeroCausa.ts` | `formatNumeroCausaPjn(exp)` — antepone la sigla de fuero PJN al `numero_causa` mostrado (ej. "CIV 61.204/2026"). Solo para display: no toca el `numero_causa` crudo, que sigue siendo la clave de agrupamiento/comparación. |
 | `src/utils/busquedaGlobal.ts` | `buscarGlobal(query, expedientes, usuarios)` — índice cross-entidad del buscador del Topbar (Actuaciones/Intervinientes/Documentos/Usuarios). Ver Sección 19. |
 | `src/hooks/useDebounce.ts` | Hook genérico `useDebounce<T>(value, delayMs)`. Usado por el buscador del Topbar (300ms). |
@@ -282,7 +282,7 @@ El timeline del expediente tiene DOS capas:
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
-| NovedadesPJN/ | /novedades-pjn | ABOGADO, COORDINADOR, REFERENTE | Bandeja de novedades del Portal PJN — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
+| NovedadesPJN/ | /novedades-judiciales (redirect desde /novedades-pjn) | ABOGADO, COORDINADOR, REFERENTE | Bandeja "Novedades judiciales" — solapas PJN/MEV — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 
 ### 10a. Tabs de DetalleExpediente
 
@@ -294,11 +294,11 @@ El timeline del expediente tiene DOS capas:
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
-| Novedades PJN | NovedadesPjnTab.tsx | ✓ agrupado por corrida, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
+| Novedades judiciales | NovedadesPjnTab.tsx | ✓ agrupado por corrida, chip de organismo por card, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
 | Boga (Asistente IA) | AsistenteTab.tsx (tab) + BogaFab.tsx (flotante global) + Boga.page.tsx (`/boga`) | ✓ chat con contexto de la actuación en la tab (con historial ligado a `exp.id`); contexto general del sistema en el flotante (sin historial) y en el módulo `/boga` (historial global) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
-muestra un banner arriba del contenido en cualquier tab salvo "Novedades PJN"; su botón "Revisar"
+muestra un banner arriba del contenido en cualquier tab salvo "Novedades judiciales"; su botón "Revisar"
 navega a esa pestaña (ya no las expande inline debajo del banner).
 
 ---

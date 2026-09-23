@@ -15,7 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/bandeja/area':    'Actuaciones',
   '/agenda':          'Agenda',
   '/configuracion':   'Configuración del Sistema',
-  '/novedades-pjn':   'Novedades PJN',
+  '/novedades-judiciales': 'Novedades judiciales',
   '/boga':            'Chat con Boga',
 }
 
@@ -29,7 +29,7 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/bandeja/area':    'actuaciones',
   '/agenda':          'agenda',
   '/configuracion':   'configuracion',
-  '/novedades-pjn':   'novedades_pjn',
+  '/novedades-judiciales': 'novedades_judiciales',
   '/boga':            'boga',
 }
 

@@ -1,7 +1,16 @@
-# Novedades PJN — sincronización con el Portal PJN
+# Novedades judiciales (PJN / MEV) — sincronización con organismos judiciales
 
 > Rama: `feat/asistente-ia-chat` (desde `develop`). Rediseño a **Nivel 1** aplicado en
 > `feat/novedades-pjn-nivel1`.
+>
+> **Rename + solapas PJN/MEV en `feat/novedades-judiciales-mev`** (prototipo para validar con
+> negocio, sin doc de Delta formal todavía): la bandeja pasó de llamarse "Novedades PJN" a
+> "Novedades judiciales" (ruta `/novedades-judiciales`, con redirect desde la vieja
+> `/novedades-pjn`), y ganó un campo `origen_organismo: 'PJN' | 'MEV'` en `NovedadPJN` — ver
+> "Solapas PJN / MEV" más abajo. El nombre del tipo (`NovedadPJN`), del store (`pjn.store.ts`) y
+> de los archivos/carpeta (`NovedadesPJN.page.tsx`, `NovedadesPjnTab.tsx`) se dejaron sin tocar
+> a propósito (renombrarlos era mucho más invasivo que el pedido) — donde importa es el texto
+> visible al usuario y el modelo de datos, no los nombres internos.
 
 ## Qué es
 
@@ -36,7 +45,8 @@ para esta etapa. `TipoCambioPJN` ya no existe en el código.
 ## Arquitectura
 
 ```
-src/types/index.ts          NovedadPJN (incl. origen?, intervinientes_pjn?), EstadoNovedadPJN, Actividad.origen_pjn
+src/types/index.ts          NovedadPJN (incl. origen?, origen_organismo, intervinientes_pjn?), EstadoNovedadPJN,
+                             OrganismoJudicial ('PJN'|'MEV'), Actividad.origen_pjn
                              ActuacionPjnSinCargar, EstadoAlertaActuacionPjn — ver "Causa en PJN sin cargar" abajo
                              IntervinientePjnCrudo — ver "Intervinientes desde una novedad" abajo
 src/data/pjnNovedades.mock.ts   mock de 25 movimientos + simularConsultaManualPjn (consulta on-demand)
@@ -52,17 +62,19 @@ src/components/pjn/NovedadPjnCard.tsx   card reutilizable (bandeja central + ban
 src/components/pjn/ConsultarNovedadPjnModal.tsx   modal de consulta manual (ver "Consulta manual" abajo)
 src/components/expedientes/AgregarIntervinienteModal.tsx   modal de alta de interviniente, extraído de
                                  IntervinientesTab.tsx para reusarlo desde una novedad — ver abajo
-src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-pjn) — novedades + alertas
+src/pages/NovedadesPJN/NovedadesPJN.page.tsx   bandeja central (/novedades-judiciales, redirect desde /novedades-pjn)
+                                 — solapas PJN/MEV + novedades + alertas
 ```
 
 Puntos de acceso a las novedades:
-- **Bandeja central** (`/novedades-pjn`) — todas las novedades visibles para el usuario,
+- **Bandeja central** (`/novedades-judiciales`) — todas las novedades visibles para el usuario,
   agrupadas por `expediente_id + corrida_id` (varias actuaciones conviven ahí), con filtro
   Pendientes/Vencidas/Todas (ver "Vencimiento" abajo). Cada grupo muestra un header "N
   movimientos detectados el {fecha_deteccion}" antes de sus cards, ordenado por `row_index`
   ascendente; los grupos se ordenan por `fecha_deteccion` descendente. Arriba de los grupos,
-  un bloque aparte lista las alertas de "causa en PJN sin cargar" (ver esa sección abajo).
-  Toggle "Modo selección" para aplicar/descartar en masa — ver "Selección masiva" abajo.
+  un bloque aparte lista las alertas de "causa en PJN sin cargar" (ver esa sección abajo, solo
+  visible en la solapa PJN). Toggle "Modo selección" para aplicar/descartar en masa — ver
+  "Selección masiva" abajo. Solapas PJN/MEV arriba de todo — ver "Solapas PJN / MEV" abajo.
 - **Banner en `DetalleExpediente.page.tsx`** — si la actuación abierta tiene novedades
   pendientes, aparece arriba del contenido (visible en cualquier tab) con un toggle
   "Revisar/Ocultar" que despliega las cards inline (`mostrarActuacion={false}`), agrupadas
@@ -71,10 +83,13 @@ Puntos de acceso a las novedades:
   acción pendiente.
 - **Badge "PJN" en `BandejaAbogado.page.tsx`** — junto a los badges de Urgente/Por vencer, si
   la fila tiene novedades pendientes (vencidas incluidas).
-- **Sidebar** — entrada "Novedades PJN" con badge de contador (número junto al label
-  expandido, burbuja sobre el ícono cuando el sidebar está colapsado). El contador suma
-  novedades pendientes **más** alertas de "causa sin cargar" pendientes, ambas filtradas por
-  rol.
+- **Sidebar** — entrada "Novedades judiciales" (`key: 'novedades_judiciales'`, antes
+  `novedades_pjn` — se renombró junto con el label porque es una key de nav interna,
+  independiente de la key `novedades_pjn` de la pestaña del detalle de expediente, que no se
+  tocó) con badge de contador (número junto al label expandido, burbuja sobre el ícono cuando
+  el sidebar está colapsado). El contador suma novedades pendientes de **ambos organismos**
+  (no filtra por `origen_organismo` — las solapas PJN/MEV son solo presentación dentro de la
+  bandeja) **más** alertas de "causa sin cargar" pendientes, todas filtradas por rol.
 - **Campana del Topbar** — ver "Integración con notificaciones" abajo.
 
 ## `aplicarNovedad` — una sola rama, sin clasificación
@@ -303,7 +318,7 @@ export interface IntervinientePjnCrudo {
 
 - **`AgregarIntervinienteModal.tsx`** (`src/components/expedientes/`): el modal de alta de
   interviniente, extraído de `IntervinientesTab.tsx` para poder abrirse también desde una
-  card de novedad en la bandeja central (`/novedades-pjn`), fuera del contexto de esa tab.
+  card de novedad en la bandeja central (`/novedades-judiciales`), fuera del contexto de esa tab.
   Props `expedienteId`, `open`, `onClose`, y `valoresIniciales?:
   Partial<Omit<Interviniente, 'id'>>` para pre-cargar — reusa
   `useExpedientesStore().agregarInterviniente` tal cual. La edición sigue viviendo inline en
@@ -345,22 +360,81 @@ calculadas en cada render con `filtrarNovedadesPorRol` y mapeadas a la forma de
   aplica — no vive en ese store); se considera "resuelta" cuando se aplica o descarta desde
   el módulo, momento en el que deja de listarse por no estar `pendiente`.
 
-## Pestaña "Novedades PJN" en Detalle de Expediente (`NovedadesPjnTab.tsx`)
+## Solapas PJN / MEV (`feat/novedades-judiciales-mev`)
+
+Prototipo para validar con negocio — no tiene doc de Delta formal todavía. Pedido: que la
+bandeja distinga el organismo de origen de cada novedad, dejando el modelo preparado para una
+futura feature de "estado de sincronización por expediente/organismo" (detectar la inversa: una
+actuación en SIAJ que no está o no se actualiza en el organismo) — **esa segunda feature no está
+implementada**, esto solo deja el campo `origen_organismo` listo para reusarse ahí.
+
+- **Campo nuevo**: `NovedadPJN.origen_organismo: OrganismoJudicial` (`'PJN' | 'MEV'`, no
+  opcional). **No confundir con `NovedadPJN.origen`** (`'automatica' | 'manual'`, distingue
+  cómo se detectó la novedad, no de qué organismo viene) — son dos campos independientes.
+  `OrganismoJudicial` vive en `types/index.ts` con un comentario explícito marcándolo como
+  reusable para la futura feature de sincronización.
+- **Mock**: los 25 movimientos de `PJN_NOVEDADES_MOCK` y los que genera
+  `simularConsultaManualPjn` quedan todos `origen_organismo: 'PJN'` (los primeros vía un
+  `.map()` sobre el array crudo `PJN_NOVEDADES_RAW`, para no repetir el campo en los 25
+  literales). No hay datos mock de MEV — la solapa MEV es un estado vacío real, sin
+  inventar novedades.
+- **Solapas, no un store nuevo**: `NovedadesPJN.page.tsx` agrega un estado `tabOrganismo:
+  'PJN' | 'MEV'` (pill switcher, mismo patrón visual que el filtro Pendientes/Vencidas/Todas
+  que ya tenía la página) que filtra `visibles` (la lista ya filtrada por rol) en un paso
+  adicional (`visiblesOrigen`) **antes** de que corra el resto de la lógica existente
+  (pendientes/vencidas/agrupamiento/selección masiva) — nada de eso se duplicó ni se tocó a
+  nivel de store o de `pjn.store.ts`.
+- **Solapa MEV**: estado vacío fijo ("Próximamente: novedades de la Mesa de Entradas Virtual
+  (MEV)"), sin contadores, sin "Modo selección" ni el filtro Pendientes/Vencidas/Todas
+  (no tiene sentido con la bandeja vacía) y sin el bloque de "Actuaciones en PJN sin cargar"
+  (es específico de PJN por diseño — depende del Portal PJN, no existe su equivalente MEV).
+- **Chip de organismo por novedad**: `NovedadPjnCard.tsx` (compartida por la bandeja central,
+  el banner/pestaña del detalle de expediente y el modal de consulta manual) muestra un chip
+  junto al tipo de movimiento — mismo patrón visual que el badge "PJN" del timeline / los
+  badges "SOLICITUD"/"RESPUESTA" (`inline-flex ... rounded text-[9px] font-bold` + ícono):
+  celeste `bg-[#e6f1fb] text-[#185fa5]` + ícono `refresh` para PJN, ámbar
+  `bg-[#fdf3e3] text-[#b26a00]` + ícono `inbox` para MEV.
+- **Contadores**: el badge de pendientes del Sidebar y la campana del Topbar
+  (`notifsPjn` en `Topbar.tsx`) **no filtran por organismo** — cuentan pendientes de ambos
+  (hoy solo hay PJN, así que no hay diferencia visible todavía). Es deliberado: las solapas son
+  para navegar la bandeja, no para decidir qué notifica. El único contador por-notificación que
+  sigue diciendo literalmente "Novedad PJN" es el chip del panel de la campana (`Topbar.tsx`,
+  variable `esPjn`) — no se generalizó a "Novedad {organismo}" en esta iteración porque hoy
+  todo lo que llega ahí es PJN; si se carga mock de MEV, hay que revisar ese chip.
+
+## Pestaña "Novedades judiciales" en Detalle de Expediente (`NovedadesPjnTab.tsx`)
 
 Agregado en `feat/integracion` (mergeada a `develop` el 2026-09-11, fuera del flujo Dev habitual
 de esta sesión). Antes, `DetalleExpediente.page.tsx` mostraba las novedades pendientes de la
 actuación inline, debajo de un banner colapsable (`mostrarPanelPjn`). Ahora es una pestaña más
-(`novedades_pjn`, ícono `pjn`, ubicada entre "Vinculados" y "Boga"):
+(key `novedades_pjn` — sin renombrar, ver nota al pie de esta sección —, ícono `pjn`, ubicada
+entre "Vinculados" y "Boga"), con label **"Novedades judiciales"** desde
+`feat/novedades-judiciales-mev`:
 
 - El banner de aviso arriba del contenido se mantiene (mismo conteo
   `novedadesDeEstaActuacion.length`), pero ahora solo se muestra cuando la pestaña activa **no**
-  es "Novedades PJN", y su botón "Revisar" navega a la pestaña (`setTab('novedades_pjn')`) en vez
-  de expandir contenido inline.
+  es la de novedades, y su botón "Revisar" navega a la pestaña (`setTab('novedades_pjn')`) en
+  vez de expandir contenido inline. El texto del banner pasó de "N novedades detectadas por
+  PJN" a "N novedades judiciales detectadas" (sin nombrar el organismo) porque ahora agrega
+  ambos orígenes — el chip de `NovedadPjnCard` distingue cuál es cuál.
+- **Sin solapas PJN/MEV acá adentro**: a diferencia de la bandeja central, esta pestaña es por
+  expediente — un expediente tramita en un solo organismo, así que una solapa quedaría siempre
+  vacía. En su lugar, cada card lleva el chip de organismo (ver sección de arriba). Nombrar la
+  pestaña según el organismo de la causa quedó descartado: depende de saber por qué organismo
+  tramita cada expediente, dato que todavía no existe en SIAJ (llegaría con la futura feature
+  de "estado de sincronización").
 - `NovedadesPjnTab.tsx` reproduce la misma lógica de agrupamiento por `corrida_id` que tenía el
   banner expandido (grupos ordenados por `fecha_deteccion` desc, items internos por
   `row_index`), renderizando `NovedadPjnCard` con `mostrarActuacion={false}` — mismo componente
   que usa la bandeja central y el modal de consulta manual.
 - El badge numérico de la pestaña usa el mismo `novedadesDeEstaActuacion.length`.
+
+**Nota sobre la key `novedades_pjn` sin renombrar:** es la key del `Tab` (union type),
+del `tabCounters`, de los `if`/`onClick` que la referencian y del `?tab=` de deep-link — 
+renombrarla era mucho más invasivo que cambiar un label, y no tiene ningún efecto visible para
+el usuario (solo el label importa). Si en algún momento se justifica el renombre completo,
+tocar `DetalleExpediente.page.tsx` líneas del `type Tab`, el array `TABS`, `tabCounters` y los
+tres usos de `setTab`/`tab ===`.
 
 ## Panel de credenciales PJN / MEV (Configuración → Integración)
 
@@ -381,7 +455,8 @@ genérico `CatalogoPanel` — ver `CLAUDE_root.md` sección 17).
 ## Datos del mock
 
 25 movimientos crudos sobre 3 actuaciones con `numero_causa` real, agrupados en 4 corridas
-(`corrida_id`):
+(`corrida_id`); los 25 son `origen_organismo: 'PJN'` (ver "Solapas PJN / MEV" arriba — no hay
+mock de MEV, esa solapa es un estado vacío real):
 
 | Actuación | Área | Letrado | Corrida | Movimientos |
 |---|---|---|---|---|
@@ -457,6 +532,11 @@ nada externo).
 
 ## Pendiente / próximas etapas
 
+- **Estado de sincronización por expediente/organismo** (próxima feature, todavía no
+  implementada): detectar la inversa de lo que ya hace este módulo — una actuación cargada en
+  SIAJ que no está o no se actualiza en el organismo (PJN o MEV) que le corresponde. El campo
+  `origen_organismo`/`OrganismoJudicial` de "Solapas PJN / MEV" (arriba) se dejó pensado para
+  reusarse ahí, pero el diseño real de esa feature no está hecho.
 - Sin integración real con el Portal PJN — todo el flujo de detección es mock (novedades y
   alertas de "causa sin cargar" por igual).
 - **Credenciales PJN/MEV** (Configuración → Integración, `IntegracionPanel.tsx`): panel 100%

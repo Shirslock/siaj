@@ -20,7 +20,7 @@ filtro propio, el filtro de alcance (`?letrado=` para MIAS, `?area=` para AREA �
 coordinador tiene más de un área, con el pool ya acotado a sus áreas del lado de la Bandeja — nada
 para TODO). Ver `BandejaAbogado.page.tsx` (`filtroInicial`) para cómo se hidrata.
 
-Es **Etapa 1**: no toca Agenda, Solicitudes (`/tareas`), Novedades PJN ni el Asistente IA. Todos
+Es **Etapa 1**: no toca Agenda, Solicitudes (`/tareas`), Novedades judiciales ni el Asistente IA. Todos
 los widgets son de solo lectura y navegan a `/actuaciones` (`BandejaAbogado.page.tsx`) con query
 params — no hay listas nuevas ni edición desde acá.
 

@@ -13,7 +13,10 @@ function hace(dias: number): string {
 // datos crudos, sin clasificar, agrupados por corrida (`corrida_id`). El letrado decide
 // movimiento por movimiento si lo aplica al historial. Solo aplica a actuaciones con
 // `numero_causa` real cargado.
-export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
+//
+// Todos estos registros son de origen PJN — se marcan acá abajo con un solo `.map()`
+// (ver `PJN_NOVEDADES_MOCK`) en vez de repetir `origen_organismo: 'PJN'` en cada item.
+const PJN_NOVEDADES_RAW: Omit<NovedadPJN, 'origen_organismo'>[] = [
   // ── C-0100/2026 (CIVIL) — corrida antigua, detecta movimientos de hace ~9/10 días ──
   // Secuencia real: pedido de alegatos (fs.253) → autos para alegar (fs.254) →
   // dos cédulas notificadas el mismo día a las 09:58.
@@ -159,6 +162,9 @@ export const PJN_NOVEDADES_MOCK: NovedadPJN[] = [
     oficina: 'JCC22', tipo: 'EVENTO', detalle: 'NOTIFICACION', estado: 'pendiente' },
 ]
 
+export const PJN_NOVEDADES_MOCK: NovedadPJN[] =
+  PJN_NOVEDADES_RAW.map(n => ({ ...n, origen_organismo: 'PJN' as const }))
+
 // Textos crudos realistas para simular la respuesta de una consulta manual — deliberadamente
 // en la misma línea del mock de arriba (tipos sin clasificar, tal cual los expone el PJN).
 const MOVS_MANUAL_MOCK: Array<Pick<NovedadPJN, 'tipo' | 'detalle' | 'oficina' | 'foja'>> = [
@@ -243,6 +249,7 @@ export function simularConsultaManualPjn(
         foja: mov.foja,
         estado: 'pendiente',
         origen: 'manual',
+        origen_organismo: 'PJN',
       }))
 
       resolve({ corridaId, novedades })

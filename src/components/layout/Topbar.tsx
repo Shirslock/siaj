@@ -131,7 +131,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
     }
   }
 
-  // Novedades PJN pendientes visibles para el usuario activo, presentadas como
+  // Novedades judiciales pendientes visibles para el usuario activo, presentadas como
   // notificaciones "virtuales" (no viven en notificaciones.store — se descartan
   // vía usePjnStore, no vía notificaciones.store.descartar).
   const notifsPjn: Notificacion[] = filtrarNovedadesPorRol(novedadesPjn, expedientes, usuarioActivo)
