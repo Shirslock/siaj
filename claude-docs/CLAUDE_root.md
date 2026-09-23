@@ -58,7 +58,7 @@ npm run build      # build de producción
 | `src/store/expedientes.store.ts` | Estado de expedientes + acciones + tareasMap. |
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global (`busquedaGlobal`). |
 | `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
-| `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. También `actuacionesSinCargar` — alertas de causas que el PJN expone sin actuación cargada en SIAJ — descartar/resolver. Ver `claude-docs/NOVEDADES_PJN_CLAUDE.md`. |
+| `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. También `actuacionesSinCargar` — alertas de causas que el PJN expone sin actuación cargada en SIAJ — descartar/resolver. Ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md`. |
 | `src/store/notificaciones.store.ts` | Notificaciones reales del Topbar (ASIGNACION/REASIGNACION/ALERTA_VENCIMIENTO). La campana también mezcla novedades PJN pendientes como entradas virtuales — no persisten en este store. |
 | `src/store/bogaHistorial.store.ts` | Historial de conversaciones con Boga, persistido en `localStorage` (sin backend). Conversaciones agrupadas por `scope` (`'global'` o `exp.id` de una actuación). Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
@@ -282,7 +282,7 @@ El timeline del expediente tiene DOS capas:
 | CausaDetalle/ | /causa/* | ABOGADO, COORDINADOR, REFERENTE | 4 tabs, ruta tolera barras |
 | Configuracion/ | /configuracion | REFERENTE únicamente | Panel admin — ver Sección 17 |
 | Agenda/ | /agenda | ABOGADO, COORDINADOR, REFERENTE | Pendiente |
-| NovedadesPJN/ | /novedades-judiciales (redirect desde /novedades-pjn) | ABOGADO, COORDINADOR, REFERENTE | Bandeja "Novedades judiciales" — solapas PJN/MEV — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
+| NovedadesPJN/ | /novedades-judiciales (redirect desde /novedades-pjn) | ABOGADO, COORDINADOR, REFERENTE | Bandeja "Novedades judiciales" — solapas PJN/MEV — ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md` |
 
 ### 10a. Tabs de DetalleExpediente
 
@@ -294,7 +294,7 @@ El timeline del expediente tiene DOS capas:
 | Documentos | DocumentosTab.tsx | ✓ carga + drag-and-drop reordenamiento |
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
-| Novedades judiciales | NovedadesPjnTab.tsx | ✓ agrupado por corrida, chip de organismo por card, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
+| Novedades judiciales | NovedadesPjnTab.tsx | ✓ agrupado por corrida, chip de organismo por card, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md` |
 | Boga (Asistente IA) | AsistenteTab.tsx (tab) + BogaFab.tsx (flotante global) + Boga.page.tsx (`/boga`) | ✓ chat con contexto de la actuación en la tab (con historial ligado a `exp.id`); contexto general del sistema en el flotante (sin historial) y en el módulo `/boga` (historial global) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
@@ -521,7 +521,7 @@ Cualquier otro rol es redirigido a `/actuaciones`.
 | `extended` | Nombre / Tipo / Provincia / Localidad / Estado / Acciones | Para juzgados, tribunales, fiscalías, UFIs, comisarías |
 | `tipoGestion` | Código / Label / Áreas / Canal / Estado | Solo lectura visual (sin edición inline por complejidad) |
 | `usuario` | Nombre / Rol / Área/s / Estado / Acciones | `UsuariosPanel` — lógica especial con FIFO y líneas ferroviarias |
-| `integracion` | Cards por credencial (sistema, usuario, vencimiento) | `IntegracionPanel.tsx` — no usa `CatalogoPanel`; estado local propio, no `configuracion.store.ts`. **100% mock**, sin persistencia ni conexión real con PJN/MEV — ver `claude-docs/NOVEDADES_PJN_CLAUDE.md` |
+| `integracion` | Cards por credencial (sistema, usuario, vencimiento) | `IntegracionPanel.tsx` — no usa `CatalogoPanel`; estado local propio, no `configuracion.store.ts`. **100% mock**, sin persistencia ni conexión real con PJN/MEV — ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md` |
 
 ### Tablas solo lectura
 
