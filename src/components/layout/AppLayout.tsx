@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { BogaFab } from '../boga/BogaFab'
 
 const PAGE_TITLES: Record<string, string> = {
   '/home':            'Principal',
@@ -15,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/agenda':          'Agenda',
   '/configuracion':   'Configuración del Sistema',
   '/novedades-pjn':   'Novedades PJN',
+  '/boga':            'Chat con Boga',
 }
 
 const PAGE_ACTIVE: Record<string, string> = {
@@ -28,6 +30,7 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/agenda':          'agenda',
   '/configuracion':   'configuracion',
   '/novedades-pjn':   'novedades_pjn',
+  '/boga':            'boga',
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -50,6 +53,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   // si el pathname es exactamente /configuracion, el main se muestra a pantalla completa (sin max-width ni centrado)
   const esConfiguracion = pathname === '/configuracion'
 
+  // dentro del detalle de una actuación ya está la tab "Boga" con contexto específico,
+  // y en /boga ya está el chat a pantalla completa — el flotante es redundante en ambos
+  const mostrarBogaFab = !pathname.startsWith('/expediente/') && pathname !== '/boga'
+
   return (
     <div className="min-h-screen bg-[var(--color-surface)]">
       <Sidebar activePage={activePage} />
@@ -63,6 +70,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </main>
+      {mostrarBogaFab && <BogaFab />}
     </div>
   )
 }

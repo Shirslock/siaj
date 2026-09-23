@@ -1,7 +1,14 @@
 # Asistente IA — probar en local
 
-El Asistente IA (tab "Saúl" en el detalle de una actuación) corre contra Groq a través de
-una función serverless de Vercel (`api/chat.ts`).
+El Asistente IA, **Boga**, corre contra Groq a través de una función serverless de Vercel
+(`api/chat.ts`). Tiene tres puntos de entrada en la UI: el módulo "Chat con Boga" (`/boga`, con
+historial de conversaciones tipo Claude/ChatGPT), la tab "Boga" en el detalle de una actuación
+(con historial simple ligado a esa actuación), y un botón flotante visible en el resto de las
+pantallas del sistema (sin historial, charla efímera) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md`.
+Los tres comparten el mismo setup local descripto acá.
+
+El historial de conversaciones se guarda solo en el `localStorage` del navegador (no hay backend
+propio para eso) — **no se sincroniza entre dispositivos ni navegadores**.
 
 ## Pasos
 
@@ -26,8 +33,9 @@ npm run dev
 
 5. Abrir la URL que muestra la **Terminal 2** (normalmente `http://localhost:5173`) — **no**
    el puerto 3001, ese es solo el backend.
-6. Ir a cualquier actuación → tab "Saúl". Las llamadas del chat a `/api/chat` salen desde el
-   navegador hacia el puerto de Vite, y el proxy configurado en `vite.config.ts`
+6. Ir al módulo "Chat con Boga" (`/boga`), a cualquier actuación → tab "Boga", o usar el botón
+   flotante (visible en el resto de las pantallas). Las llamadas del chat a `/api/chat` salen
+   desde el navegador hacia el puerto de Vite, y el proxy configurado en `vite.config.ts`
    (`server.proxy['/api']`) las redirige por atrás al puerto 3001.
 
 ## Apagar el agente en local

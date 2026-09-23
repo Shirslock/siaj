@@ -350,7 +350,7 @@ calculadas en cada render con `filtrarNovedadesPorRol` y mapeadas a la forma de
 Agregado en `feat/integracion` (mergeada a `develop` el 2026-09-11, fuera del flujo Dev habitual
 de esta sesión). Antes, `DetalleExpediente.page.tsx` mostraba las novedades pendientes de la
 actuación inline, debajo de un banner colapsable (`mostrarPanelPjn`). Ahora es una pestaña más
-(`novedades_pjn`, ícono `pjn`, ubicada entre "Vinculados" y "Saúl"):
+(`novedades_pjn`, ícono `pjn`, ubicada entre "Vinculados" y "Boga"):
 
 - El banner de aviso arriba del contenido se mantiene (mismo conteo
   `novedadesDeEstaActuacion.length`), pero ahora solo se muestra cuando la pestaña activa **no**
