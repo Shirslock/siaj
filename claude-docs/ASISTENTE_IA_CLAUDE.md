@@ -6,13 +6,14 @@
 
 ## Qué es
 
-El asistente de IA del sistema, llamado **Boga**, tiene tres puntos de entrada que comparten el
-mismo componente de chat (`src/components/boga/BogaChat.tsx`):
+El asistente de IA del sistema, llamado **Boga**, tiene dos superficies de chat que comparten el
+mismo componente (`src/components/boga/BogaChat.tsx`), más un acceso rápido:
 
 1. **Módulo "Chat con Boga"** (`/boga`, `src/pages/Boga/Boga.page.tsx`): página dedicada estilo
    ventana de chat de Claude/ChatGPT — panel lateral con el historial de conversaciones (título +
    fecha, click para retomar una, botón "Nueva conversación", borrar) y el chat activo a la
-   derecha. Mismo contexto general del sistema que el flotante. Historial con `scope: 'global'`.
+   derecha. Contexto general del sistema (resumen de todas las actuaciones + secciones de
+   navegación). Historial con `scope: 'global'`.
 2. **Tab "Boga" en `DetalleExpediente`** (`src/pages/DetalleExpediente/tabs/AsistenteTab.tsx`):
    chat con contexto de la actuación abierta, para que el abogado pregunte cosas como carátula,
    estado o historial sin salir del expediente. Tiene un historial simple (dropdown propio, sin
@@ -20,10 +21,10 @@ mismo componente de chat (`src/components/boga/BogaChat.tsx`):
    entre actuaciones.
 3. **Botón flotante global** (`src/components/boga/BogaFab.tsx`, montado en `AppLayout.tsx`):
    visible en cualquier pantalla que **no** sea el detalle de una actuación ni el módulo `/boga`
-   (ahí ya hay una entrada dedicada), con contexto general del sistema (resumen de todas las
-   actuaciones + secciones de navegación). Se dejó **sin historial** — sigue siendo una charla
-   efímera, ya que no era el foco del pedido y el módulo `/boga` cubre el caso de uso de retomar
-   conversaciones.
+   (ahí ya hay una entrada dedicada). **No abre un chat propio: navega a `/boga`.** Antes desplegaba
+   un popover con su propio `BogaChat` efímero; se reemplazó porque duplicaba el contexto y las
+   preguntas sugeridas de `Boga.page.tsx` y perdía la conversación al cerrarse, mientras que `/boga`
+   ya la persiste.
 
 Corre contra **Groq** (modelo `openai/gpt-oss-120b`) a través de una función serverless de
 Vercel — la API key nunca se expone al frontend.
@@ -33,7 +34,7 @@ Vercel — la API key nunca se expone al frontend.
 ```
 AsistenteTab.tsx ──┐
                     ├─► BogaChat.tsx (useChat de @ai-sdk/react)
-BogaFab.tsx ───────┘        │  POST /api/chat  { messages, expedienteContext }
+Boga.page.tsx ─────┘        │  POST /api/chat  { messages, expedienteContext }
                              ▼
                      api/chat.ts  (Vercel Edge Function)
                              │  streamText({ model: groq(...), system, messages })
@@ -59,7 +60,7 @@ BogaFab.tsx ───────┘        │  POST /api/chat  { messages, exp
   - `AsistenteTab.tsx` arma el contexto con la actuación actual (id, área, tipo, carátula,
     estado, abogado, campos_mesa/abogado, últimos 15 ítems del timeline) + un resumen de las
     demás actuaciones. Chiste inicial activo (`incluirChiste` por defecto `true`).
-  - `BogaFab.tsx` arma un contexto general (`modo: 'asistente_general_del_sistema'`, secciones
+  - `Boga.page.tsx` arma un contexto general (`modo: 'asistente_general_del_sistema'`, secciones
     de navegación, resumen de todas las actuaciones). Chiste inicial desactivado
     (`incluirChiste={false}`), porque es una interacción de ayuda general, no ligada a una
     actuación puntual.
@@ -188,11 +189,6 @@ a la función.
 
 ## Pendiente / próximas etapas
 
-- El botón flotante (`BogaFab.tsx`) sigue sin historial — charla efímera, se pierde al cerrarlo.
-  Se dejó así a propósito (ver "Qué es" arriba); si en algún momento se pide sumárselo, el
-  approach sería el mismo que en `Boga.page.tsx`/`AsistenteTab.tsx` (store + `mensajesIniciales`/
-  `onMensajesChange`), con `scope: 'global'` (compartiendo historial con el módulo `/boga`) o un
-  scope propio, a definir.
 - El historial no se sincroniza entre dispositivos/navegadores (limitación conocida y aceptada,
   ver sección "Historial de conversaciones" arriba) — para eso haría falta backend propio, que
   hoy el proyecto no tiene.

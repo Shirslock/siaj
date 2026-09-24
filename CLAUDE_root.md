@@ -22,7 +22,7 @@
 | React Toastify | react-toastify | Toasts/notificaciones |
 | @dnd-kit/core + sortable + utilities | — | Drag-and-drop (DocumentosTab) |
 | Recharts | recharts | Gráficos del Dashboard (donut por área, barras por letrado/sub-estado) |
-| Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`) | `ai@7` | Chat del Asistente IA "Boga" (`BogaChat.tsx`, usado por `AsistenteTab.tsx` y `BogaFab.tsx`) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`) | `ai@7` | Chat del Asistente IA "Boga" (`BogaChat.tsx`, usado por `AsistenteTab.tsx` y `Boga.page.tsx`) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 | `pdfjs-dist` + `mammoth` | `pdfjs-dist@6`, `mammoth@1` | Extracción de texto client-side de archivos adjuntos (PDF/Word) en el chat de Boga — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 **Sin** tailwind.config.ts — la config vive en `src/index.css` con `@theme { }`.
@@ -68,7 +68,7 @@ npm run build      # build de producción
 | `src/components/ui/FormField.tsx` | Wrapper label + hint + error para inputs. |
 | `src/components/layout/` | AppLayout, Sidebar, Topbar (con buscador global persistente — ver Sección 19), UserSwitcher. |
 | `src/components/expedientes/` | TablaExpedientes, FilaExpediente, FormularioDinamico. `AgregarIntervinienteModal.tsx` — modal de alta de interviniente, extraído de `IntervinientesTab.tsx` para reusarlo desde una novedad PJN (`NovedadPjnCard.tsx`). |
-| `src/components/boga/` | `BogaChat.tsx` — chat compartido del Asistente IA (soporta retomar una conversación guardada vía `mensajesIniciales`/`onMensajesChange`). `BogaFab.tsx` — botón flotante global (fuera del detalle de actuación), montado en `AppLayout.tsx`, sin historial (charla efímera). Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
+| `src/components/boga/` | `BogaChat.tsx` — chat compartido del Asistente IA (soporta retomar una conversación guardada vía `mensajesIniciales`/`onMensajesChange`). `BogaFab.tsx` — botón flotante global (fuera del detalle de actuación y de `/boga`), montado en `AppLayout.tsx`; no abre chat propio, navega a `/boga`. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/pages/Boga/Boga.page.tsx` | Módulo "Chat con Boga" (`/boga`) — historial de conversaciones a la izquierda (estilo ventana de chat de Claude/ChatGPT) + chat activo a la derecha. Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/pages/*/` | Una carpeta por página. NombrePagina.page.tsx + hooks locales. |
 | `src/pages/Configuracion/` | Panel de administrador — solo REFERENTE. Ver Sección 17. |
@@ -295,7 +295,7 @@ El timeline del expediente tiene DOS capas:
 | Previsión | PrevisionTab.tsx | ✓ mock SIGEJ — la actualización por índice solo aplica a montos en ARS |
 | Vinculados | VinculosTab.tsx | ✓ modal vincular |
 | Novedades judiciales | NovedadesPjnTab.tsx | ✓ agrupado por corrida, chip de organismo por card, reusa `NovedadPjnCard` — ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md` |
-| Boga (Asistente IA) | AsistenteTab.tsx (tab) + BogaFab.tsx (flotante global) + Boga.page.tsx (`/boga`) | ✓ chat con contexto de la actuación en la tab (con historial ligado a `exp.id`); contexto general del sistema en el flotante (sin historial) y en el módulo `/boga` (historial global) — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
+| Boga (Asistente IA) | AsistenteTab.tsx (tab) + Boga.page.tsx (`/boga`) + BogaFab.tsx (acceso flotante) | ✓ chat con contexto de la actuación en la tab (con historial ligado a `exp.id`); contexto general del sistema en el módulo `/boga` (historial global). El botón flotante solo navega a `/boga` — ver `claude-docs/ASISTENTE_IA_CLAUDE.md` |
 
 Además, si hay novedades PJN pendientes para la actuación abierta, `DetalleExpediente.page.tsx`
 muestra un banner arriba del contenido en cualquier tab salvo "Novedades judiciales"; su botón "Revisar"
