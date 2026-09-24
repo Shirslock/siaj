@@ -26,7 +26,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 | `CatalogoItem` | `{ id, label, activo? }` — base para todos los catálogos. `activo` es opcional; `undefined` equivale a activo |
 | `CatalogoItemExtended` | CatalogoItem + tipo? + provincia? + localidad? |
 | `TipoGestionItem` | CatalogoItem + areas + canal + canales |
-| `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal + `email?`, `matriculas?` (CABA/PROVINCIA/FEDERAL), `activo?` |
+| `Usuario` | Usuario con rolBD, roles[], rolSistema, áreas, fifoOrder, lineasPenal + `email?`, `matriculas?` (CABA/PROVINCIA/FEDERAL, cada una con tomo + folio), `activo?` |
 | `Licencia` | Licencia de un usuario (motivo, fechas, reemplazante) — definida en `store/tareas.store.ts` |
 | `MotivoLicencia` | 'vacaciones' \| 'medica' \| 'examen' \| 'otro' — definido en `store/tareas.store.ts` |
 | `Expediente` | Entidad principal — incluye estadoProcesal |
@@ -48,7 +48,7 @@ Si existe y le faltan campos → extenderla, no duplicarla.
 ## Campos destacados de Usuario
 
 - `email?: string` — mail del usuario (editable desde UsuariosPanel).
-- `matriculas?: Partial<Record<'CABA' | 'PROVINCIA' | 'FEDERAL', string>>` — matrículas por jurisdicción.
+- `matriculas?: Partial<Record<'CABA' | 'PROVINCIA' | 'FEDERAL', { tomo: string; folio: string }>>` — matrículas por jurisdicción. La matrícula se compone de Tomo + Folio, cargados por separado para cada una de las tres jurisdicciones desde UsuariosPanel.
 - `activo?: boolean` — estado alta/baja; se gestiona con el switch Activo/Inactivo en UsuariosPanel.
 
 ## Campos destacados de Expediente

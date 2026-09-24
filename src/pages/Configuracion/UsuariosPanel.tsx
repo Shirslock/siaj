@@ -8,7 +8,16 @@ import type { Area } from '../../types'
 type RolBDOpcion = 'abogado' | 'abogada' | 'asistente_jurídico' | 'abogado_coordinador' | 'gerente' | 'adm_mesa'
 type JurisdiccionMatricula = 'CABA' | 'PROVINCIA' | 'FEDERAL'
 
-const JURISDICCIONES: JurisdiccionMatricula[] = ['CABA', 'PROVINCIA', 'FEDERAL']
+interface DatosMatricula {
+  tomo:  string
+  folio: string
+}
+
+const JURISDICCIONES: { value: JurisdiccionMatricula; label: string }[] = [
+  { value: 'CABA',      label: 'CABA' },
+  { value: 'PROVINCIA', label: 'Provincia Bs. As.' },
+  { value: 'FEDERAL',   label: 'Federal' },
+]
 
 const ROL_BD_OPCIONES: { value: RolBDOpcion; label: string }[] = [
   { value: 'abogado',             label: 'Abogado' },
@@ -48,7 +57,7 @@ interface FormUsuario {
   areas:       Area[]
   fifoOrder:   Partial<Record<'CIVIL' | 'LABORAL', number>>
   lineasPenal: string[]
-  matriculas:  Partial<Record<JurisdiccionMatricula, string>>
+  matriculas:  Partial<Record<JurisdiccionMatricula, DatosMatricula>>
   activo:      boolean
 }
 
@@ -107,6 +116,14 @@ export function UsuariosPanel() {
     }))
   }
 
+  function setMatricula(jur: JurisdiccionMatricula, campo: keyof DatosMatricula, valor: string) {
+    setForm(p => {
+      const actual = { tomo: '', folio: '', ...p.matriculas[jur], [campo]: valor }
+      const vacia  = !actual.tomo.trim() && !actual.folio.trim()
+      return { ...p, matriculas: { ...p.matriculas, [jur]: vacia ? undefined : actual } }
+    })
+  }
+
   const tieneCivLab = form.areas.includes('CIVIL') || form.areas.includes('LABORAL')
   const tienePenal  = form.areas.includes('PENAL')
 
@@ -136,7 +153,7 @@ export function UsuariosPanel() {
           </thead>
           <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
             {usuarios.map(u => {
-              const matriculas = (u as any).matriculas as Partial<Record<JurisdiccionMatricula, string>> | undefined
+              const matriculas = (u as any).matriculas as Partial<Record<JurisdiccionMatricula, DatosMatricula>> | undefined
               const activo     = (u as any).activo ?? true
               return (
                 <tr key={u.id} className="hover:bg-[#f8f8f8]">
@@ -172,9 +189,12 @@ export function UsuariosPanel() {
                   {/* Matrícula */}
                   <td className="py-2.5 px-4">
                     {matriculas && Object.keys(matriculas).length > 0
-                      ? Object.entries(matriculas).map(([jur, num]) => (
+                      ? Object.entries(matriculas).map(([jur, mat]) => (
                           <div key={jur} className="text-[10px] text-[#1b3a57]">
-                            <span className="font-bold text-[#4a6a84]">{jur}:</span> {num}
+                            <span className="font-bold text-[#4a6a84]">
+                              {JURISDICCIONES.find(j => j.value === jur)?.label ?? jur}:
+                            </span>{' '}
+                            <span className="font-mono">T° {mat.tomo} F° {mat.folio}</span>
                           </div>
                         ))
                       : <span className="text-[#c0c0c0] text-xs">—</span>}
@@ -288,19 +308,29 @@ export function UsuariosPanel() {
           <div>
             <label className="field-label mb-2 block">Matrículas</label>
             <div className="space-y-2">
-              {JURISDICCIONES.map(jur => (
+              {JURISDICCIONES.map(({ value: jur, label }) => (
                 <div key={jur} className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-20 flex-shrink-0">{jur}</span>
-                  <input
-                    type="text"
-                    className="field-input flex-1 font-mono text-sm"
-                    placeholder={`Nro. matrícula ${jur}...`}
-                    value={form.matriculas[jur] ?? ''}
-                    onChange={e => setForm(p => ({
-                      ...p,
-                      matriculas: { ...p.matriculas, [jur]: e.target.value || undefined },
-                    }))}
-                  />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-28 flex-shrink-0">{label}</span>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">T°</span>
+                    <input
+                      type="text"
+                      className="field-input w-full font-mono text-sm"
+                      placeholder="Tomo"
+                      value={form.matriculas[jur]?.tomo ?? ''}
+                      onChange={e => setMatricula(jur, 'tomo', e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">F°</span>
+                    <input
+                      type="text"
+                      className="field-input w-full font-mono text-sm"
+                      placeholder="Folio"
+                      value={form.matriculas[jur]?.folio ?? ''}
+                      onChange={e => setMatricula(jur, 'folio', e.target.value)}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -429,19 +459,29 @@ export function UsuariosPanel() {
           <div>
             <label className="field-label mb-2 block">Matrículas</label>
             <div className="space-y-2">
-              {JURISDICCIONES.map(jur => (
+              {JURISDICCIONES.map(({ value: jur, label }) => (
                 <div key={jur} className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-20 flex-shrink-0">{jur}</span>
-                  <input
-                    type="text"
-                    className="field-input flex-1 font-mono text-sm"
-                    placeholder={`Nro. matrícula ${jur}...`}
-                    value={form.matriculas[jur] ?? ''}
-                    onChange={e => setForm(p => ({
-                      ...p,
-                      matriculas: { ...p.matriculas, [jur]: e.target.value || undefined },
-                    }))}
-                  />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-28 flex-shrink-0">{label}</span>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">T°</span>
+                    <input
+                      type="text"
+                      className="field-input w-full font-mono text-sm"
+                      placeholder="Tomo"
+                      value={form.matriculas[jur]?.tomo ?? ''}
+                      onChange={e => setMatricula(jur, 'tomo', e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">F°</span>
+                    <input
+                      type="text"
+                      className="field-input w-full font-mono text-sm"
+                      placeholder="Folio"
+                      value={form.matriculas[jur]?.folio ?? ''}
+                      onChange={e => setMatricula(jur, 'folio', e.target.value)}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

@@ -94,7 +94,7 @@ export interface Usuario {
   }
   cuil?: string
   email?: string
-  matriculas?: Partial<Record<'CABA' | 'PROVINCIA' | 'FEDERAL', string>>
+  matriculas?: Partial<Record<'CABA' | 'PROVINCIA' | 'FEDERAL', { tomo: string; folio: string }>>
   activo?: boolean
 }
 

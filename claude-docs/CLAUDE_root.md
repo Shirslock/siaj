@@ -520,7 +520,7 @@ Cualquier otro rol es redirigido a `/actuaciones`.
 | `simple` | ID / Valor / Estado / Acciones | Modal nuevo (código + valor) o editar (solo valor) |
 | `extended` | Nombre / Tipo / Provincia / Localidad / Estado / Acciones | Para juzgados, tribunales, fiscalías, UFIs, comisarías |
 | `tipoGestion` | Código / Label / Áreas / Canal / Estado | Solo lectura visual (sin edición inline por complejidad) |
-| `usuario` | Nombre / Rol / Área/s / Estado / Acciones | `UsuariosPanel` — lógica especial con FIFO y líneas ferroviarias |
+| `usuario` | Nombre / Rol / Área/s / Mail / Matrícula / Secuencia-Línea / Estado / Acciones | `UsuariosPanel` — lógica especial con FIFO, líneas ferroviarias y matrículas. Cada jurisdicción (CABA / Provincia Bs. As. / Federal) se carga con Tomo + Folio por separado |
 | `integracion` | Cards por credencial (sistema, usuario, vencimiento) | `IntegracionPanel.tsx` — no usa `CatalogoPanel`; estado local propio, no `configuracion.store.ts`. **100% mock**, sin persistencia ni conexión real con PJN/MEV — ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md` |
 
 ### Tablas solo lectura

@@ -57,7 +57,7 @@ Archivos:
 - `Configuracion.page.tsx` — layout dos columnas (sidebar grupos + contenido)
 - `tablas.config.ts` — definición de 5 grupos y 29 tablas
 - `CatalogoPanel.tsx` — CRUD genérico (tipos: simple / extended / tipoGestion / moneda)
-- `UsuariosPanel.tsx` — tabla de usuarios con modal edición (FIFO + líneas ferroviarias)
+- `UsuariosPanel.tsx` — tabla de usuarios con modal edición (FIFO + líneas ferroviarias + matrículas Tomo/Folio por jurisdicción)
 
 Grupos del sidebar:
 1. Configuración Base (5 tablas — 3 solo lectura; incluye "Monedas")
