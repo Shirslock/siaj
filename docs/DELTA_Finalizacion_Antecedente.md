@@ -11,7 +11,7 @@
 > - **Estado:** implementado y compilando en la rama. Sin merge a `develop` ni a `main`, y
 >   **sin prueba funcional en navegador** (ver §9).
 > - **Trazabilidad:** `d16c8c5` (matriz de estados), `51787d7` (actuación derivada + cascada +
->   validación), `1562c01` (timer de impulsorio a la derivada) y `4a4c1cb` (restaura el checkbox
+>   validación), `1562c01` (timer de impulsorio a la derivada) y `35742a8` (restaura el checkbox
 >   manual, revirtiendo la parte automática de `1562c01`). `ec4c459` es un chore ajeno
 >   (`.gitignore`).
 
@@ -72,7 +72,7 @@ bloqueado— si lo está cerrando con trabajo pendiente.
 | Se validan **solo las tareas del estado actual** | Es el criterio que ya usa el resto del sistema para avanzar de estado | Validar todas las tareas de todos los estados recorridos — demasiado estricto para un cierre |
 | `no_procedente` cuenta como **resuelta** | Criterio ya establecido en la UI existente: *"Completá o marcá como 'No procedente' todas las tareas del estado actual"* | Contarla como pendiente — contradecía el texto que el sistema ya le muestra al letrado |
 | El timer de impulsorio **pasa a la derivada** | El juicio corre en la actuación derivada; el antecedente ya no impulsa nada. Antes, en los 6 tipos que se parcheaban, el timer quedaba en el mismo expediente que llevaba el juicio — al separarlos hay que decidir dónde vive | Dejarlo en el antecedente — el plazo procesal no tiene sentido en una actuación administrativa ya judicializada |
-| El marcado del impulsorio **sigue siendo manual** (checkbox) | Decisión del usuario. Se probó automatizarlo —toda actividad de una derivada impulsando sola— y se revirtió: el letrado tiene que poder decidir qué acto impulsa el proceso y cuál no | Automatizar por tipo de actuación (implementado en `1562c01`, revertido en `4a4c1cb`) |
+| El marcado del impulsorio **sigue siendo manual** (checkbox) | Decisión del usuario. Se probó automatizarlo —toda actividad de una derivada impulsando sola— y se revirtió: el letrado tiene que poder decidir qué acto impulsa el proceso y cuál no | Automatizar por tipo de actuación (implementado en `1562c01`, revertido en `35742a8`) |
 | El **Lanzamiento judicializado** lleva timer igual que las demandas | Una sola regla para las tres actuaciones derivadas | Lanzamiento judicializado sin timer |
 
 ---
@@ -108,8 +108,8 @@ Los 7 tipos de antecedente de `MAPA_INICIAR_JUICIO`, y las 3 actuaciones derivad
 2. Se crea una actuación nueva del tipo que corresponde, en estado `ASIGNADO`, con el set
    completo de `campos_mesa` del formulario, `antecedente_id` apuntando al origen, y el timer de
    impulsorio arrancando ese día.
-3. El antecedente queda con `es_juicio_iniciado`, la causa común y `es_principal: false` —
-   la derivada pasa a ser la principal de la causa si hay número de causa real.
+3. El antecedente queda solo con la causa común y `es_principal: false` — la derivada pasa a ser
+   la principal de la causa si hay número de causa real. El antecedente ya no lleva timer.
 4. Se navega a la actuación nueva.
 
 ### 6.2 Finalizar la actuación derivada
@@ -144,7 +144,7 @@ resetea el plazo desde la fecha de esa actividad (se respeta la carga retroactiv
 | `src/data/estadosProcesales.ts` | Constante `FINALIZADO_ANTECEDENTE` (`esArchivado: true`, sin tareas) agregada a los 7 arrays de estados |
 | `src/utils/tareasPendientes.ts` | **Nuevo.** `esTareaPendiente()` (`sin_estado` / `en_curso`) y `getTareasPendientesEstadoActual()`; si el estado nunca se inicializó en `tareasMap`, usa las tareas por defecto del estado |
 | `src/pages/DetalleExpediente/DetalleExpediente.page.tsx` | `confirmarIniciarJuicio()` generalizado; `finalizarAntecedente()` nuevo; `confirmarCausal()` y `confirmarEstado()` con la advertencia; modal "Tareas pendientes" |
-| `src/pages/DetalleExpediente/tabs/TimelineTab.tsx` | Sin cambios netos. El checkbox de movimiento impulsorio se eliminó en `1562c01` y se restauró en `4a4c1cb`; queda igual que antes del delta, pero ahora se muestra en la derivada porque `es_juicio_iniciado` se mudó ahí |
+| `src/pages/DetalleExpediente/tabs/TimelineTab.tsx` | Sin cambios netos. El checkbox de movimiento impulsorio se eliminó en `1562c01` y se restauró en `35742a8`; queda igual que antes del delta, pero ahora se muestra en la derivada porque `es_juicio_iniciado` se mudó ahí |
 
 ---
 
