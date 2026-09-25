@@ -489,6 +489,9 @@ export default function DetalleExpedientePage() {
       es_principal:    tieneCausaReal,
       es_urgente:      exp!.es_urgente,
       antecedente_id:  exp!.id,
+      // El timer de impulsorio corre en la derivada; el antecedente no lo conserva.
+      es_juicio_iniciado:  true,
+      fecha_inicio_juicio: HOY,
       campos_mesa: {
         mesa_num_causa:     formJuicio.numero_causa,
         mesa_juzgado:       formJuicio.juzgado,
@@ -533,8 +536,6 @@ export default function DetalleExpedientePage() {
     agregarExpediente(nuevaActuacion)
 
     actualizarExpediente(exp!.id, {
-      es_juicio_iniciado:  true,
-      fecha_inicio_juicio: HOY,
       numero_causa:        causaComun,
       es_principal:        false,
     })
@@ -549,7 +550,6 @@ export default function DetalleExpedientePage() {
       activo:           true,
       subitems:         [],
       estadoExpediente: exp!.estado,
-      es_movimiento_impulsorio: true,
       creado_por:       usuarioActivo?.id,
     })
 
