@@ -276,6 +276,9 @@ los tipos de `MAPA_INICIAR_JUICIO` (`COBRO_CANON`, `RECLAMO_CONTRAT`, `RECUPERO`
 `EJECUCION_GAR`, `CONSIGNACION`, `DESAFUERO`) **no se tocaron** — siguen parcheando el mismo
 expediente como antes.
 
+> **Superado.** En `feat/finalizacion-antecedente` esa asimetría se eliminó: los 7 tipos crean
+> actuación nueva. Ver `docs/DELTA_Finalizacion_Antecedente.md`.
+
 **Fix de mapeo faltante (detectado en el mismo paso):** `formJuicio` ya tenía los campos
 `ubicacion` y `linea` desde antes, pero `confirmarIniciarJuicio()` no los volcaba a
 `campos_mesa.mesa_ubicacion` / `campos_mesa.mesa_linea`. Corregido.

@@ -131,11 +131,8 @@ Ambas acciones viven en el menú `+` del header y crean/transforman actuaciones.
 condicionalmente por `tipo` y estado:
 
 - **Iniciar Juicio** (Civil/Laboral): `show` si `TIPOS_CON_JUICIO.has(exp.tipo)` y el estado es
-  `JUICIO_INICIADO`. Para la mayoría de los tipos (COBRO_CANON, RECLAMO_CONTRAT, RECUPERO,
-  EJECUCION_GAR, CONSIGNACION, DESAFUERO) **NO crea un expediente nuevo** — actualiza el actual
-  (`es_juicio_iniciado`, `fecha_inicio_juicio`, `campos_mesa.mesa_*`, incluye `mesa_ubicacion`/
-  `mesa_linea`). **LANZAMIENTO es la única excepción**: crea un expediente nuevo de
-  `tipo: 'LANZAMIENTO_JUDICIALIZADO'` — ver "Flujo Iniciar Juicio → Lanzamiento" abajo.
+  `JUICIO_INICIADO`. **Siempre crea una actuación nueva** del tipo que indica
+  `MAPA_INICIAR_JUICIO`, para los 7 tipos — ver "Flujo Iniciar Juicio" abajo.
 - **Iniciar Querella** (Penal): `show` si `exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`.
   SÍ crea un expediente nuevo de `tipo: 'QUERELLA'`, análogo a "Iniciar Juicio → Lanzamiento" pero
   para el flujo penal. Se llamaba "Nueva Querella" (label del menú, título del modal, título de la
@@ -178,23 +175,30 @@ siempre se renderiza primero (sort estable aplicado justo antes del render en
 `BandejaAbogado.page.tsx`/`BandejaArea.page.tsx`/`TablaExpedientes.tsx` — ver Sección 7 de
 `CLAUDE.md`), así que la Querella recién creada aparece arriba de la Carta SAE de origen.
 
-### Flujo Iniciar Juicio → Lanzamiento (`confirmarIniciarJuicio`, rama LANZAMIENTO)
+### Flujo Iniciar Juicio (`confirmarIniciarJuicio`)
 
-Mismo patrón que `confirmarNuevaQuerella`, pero desde el modal "Iniciar Juicio" y solo cuando
-`MAPA_INICIAR_JUICIO[exp.tipo] === 'LANZAMIENTO_JUDICIALIZADO'` (o sea, `exp.tipo === 'LANZAMIENTO'`):
+Mismo patrón que `confirmarNuevaQuerella`, pero desde el modal "Iniciar Juicio". Un solo camino
+para los 7 tipos de `MAPA_INICIAR_JUICIO`:
 
-1. `causaComun = formJuicio.numero_causa.trim() || exp.numero_causa || exp.id` (mismo patrón sentinela).
-2. Crea el expediente `LANZAMIENTO_JUDICIALIZADO` nuevo (`id: C-LJ###### / L-LJ######` según
-   `exp.area`), `estado`/`estadoProcesal: 'ASIGNADO'`, `campos_mesa` con los mapeos de `formJuicio`
-   (incluye `mesa_tipo_lanzamiento`, obligatorio — el modal bloquea "Confirmar Inicio" sin ese
-   campo cuando el tipo origen es LANZAMIENTO). `es_principal` usa `tieneCausaReal`, mismo cálculo
-   que en Nueva Querella.
-3. Parchea el LANZAMIENTO origen: `es_juicio_iniciado: true`, `fecha_inicio_juicio`,
-   `numero_causa: causaComun`, `es_principal: false`.
-4. Agrega movimiento impulsorio al timeline del origen y navega al expediente nuevo.
-5. El resto de `MAPA_INICIAR_JUICIO` (COBRO_CANON/RECLAMO_CONTRAT/RECUPERO/EJECUCION_GAR →
-   DEMANDA_CIVIL_ACTORA; CONSIGNACION/DESAFUERO → DEMANDA_LABORAL_ACTORA) sigue el camino
-   original de parchear el mismo expediente — no se tocó.
+1. `causaComun = formJuicio.numero_causa.trim() || exp.numero_causa || exp.id` (patrón sentinela).
+2. Crea la actuación nueva del tipo destino (`id: C-|L- + DCA|DLA|LJ + ######` según `exp.area` y
+   destino), `estado`/`estadoProcesal: 'ASIGNADO'`, `campos_mesa` con el set completo de
+   `formJuicio`, `antecedente_id: exp.id` y el timer de impulsorio (`es_juicio_iniciado`,
+   `fecha_inicio_juicio`). `es_principal` usa `tieneCausaReal`, mismo cálculo que en Nueva Querella.
+   Para LANZAMIENTO, `mesa_tipo_lanzamiento` es obligatorio — el modal bloquea "Confirmar Inicio"
+   sin ese campo.
+3. Patchea el antecedente: solo `numero_causa: causaComun` y `es_principal: false`. El timer ya
+   no queda en el antecedente.
+4. Agrega una actividad al timeline del antecedente y navega a la actuación nueva.
+
+### Finalización en cascada del antecedente (`finalizarAntecedente`)
+
+Al finalizar la actuación derivada (`confirmarCausal`), si tiene `antecedente_id` y el antecedente
+no está ya archivado, este pasa a `FINALIZADO` (archivado) con una actividad que registra la
+cascada y la causal. Antes de ejecutarla, `advertirTareasPendientes()` muestra un modal si el
+antecedente tiene tareas `sin_estado`/`en_curso` en su estado actual — advierte, no bloquea. La
+misma advertencia corre en `confirmarEstado()` al llevar el antecedente a un estado archivado.
+Ver `docs/DELTA_Finalizacion_Antecedente.md` y `src/utils/tareasPendientes.ts`.
 
 ## Agenda/ — Lógica de negocio
 

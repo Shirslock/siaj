@@ -187,9 +187,11 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 - **Recurso de Queja — ELIMINADO:** el sistema de trámite paralelo (flag `queja_en_tramite`, checklist `TAREAS_RECURSO_QUEJA`, acción `toggleQuejaEnTramite`, bloque visual en REF/EJECUCION_SENTENCIA) fue dado de baja por completo — decisión de negocio. Ya no existe en el código. `REF.siguiente` sigue apuntando directo a `EJECUCION_SENTENCIA`, sin ningún trámite asociado.
 - **Cambio de estado Penal:** navegación libre entre etapas. Sin bloqueo por hitos. RECHAZADO es rama alternativa desde ACEPTADO.
 - **Tipo de Intervención afecta tareas:** Actora y Demandada tienen conjuntos de tareas distintos para el mismo tipo de gestión y estado procesal.
-- **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'` y el tipo está en `TIPOS_CON_JUICIO`. Ver Sección 13. Para la mayoría de los tipos **parchea el expediente actual** (no crea uno nuevo); **LANZAMIENTO es la excepción** — crea un expediente `LANZAMIENTO_JUDICIALIZADO` nuevo, mismo patrón que "Nueva Querella" (ver Sección 13).
-- **Timer Iniciar Juicio:** 3 meses calendario desde la fecha de creación del documento nuevo. Alerta a los 75 días (2,5 meses). El timer se resetea con cada movimiento impulsorio registrado.
-- **Movimiento impulsorio:** checkbox en modal de Nueva Actividad Genérica. Solo visible en documentos generados por Iniciar Juicio (Demanda parte actora y Lanzamiento judicializado).
+- **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'` y el tipo está en `TIPOS_CON_JUICIO`. Ver Sección 13. **Siempre crea una actuación nueva** del tipo que indica `MAPA_INICIAR_JUICIO`, para los 7 tipos — mismo patrón que "Nueva Querella". La actuación original queda como **antecedente**, vinculada desde la derivada por `antecedente_id`.
+- **Finalización del antecedente:** al finalizar la actuación derivada, el antecedente pasa **en cascada** a `FINALIZADO` (archivado). No es alcanzable a mano. Si el antecedente ya estaba archivado (Devuelto al sector), no se lo pisa. Ver `docs/DELTA_Finalizacion_Antecedente.md`.
+- **Advertencia de tareas pendientes:** al finalizar la derivada y al archivar el antecedente, si el antecedente tiene tareas `sin_estado`/`en_curso` en su **estado actual** se muestra un modal que las lista y ofrece "Continuar igual". **Advierte, no bloquea.** `no_procedente` cuenta como resuelta. Efecto lateral: el bloqueo duro del select de Cambiar estado se eximió para los destinos archivados de los 7 tipos.
+- **Timer Iniciar Juicio:** 3 meses calendario desde la creación de la actuación derivada. Alerta a los 75 días (2,5 meses). Corre en la **derivada**, no en el antecedente.
+- **Movimiento impulsorio:** sin checkbox. En una actuación derivada de Iniciar Juicio **toda actividad cargada desde "Nueva actividad" es impulsoria** y resetea el timer desde la fecha de esa actividad. Las solicitudes y las actividades de sistema (cambio de estado, finalización) no impulsan.
 - **`es_principal` nunca sin `numero_causa`:** el badge "Principal · PJN" exige un número de causa REAL — nunca puede quedar `true` si `numero_causa` es `null`/vacío. En los flujos que crean un expediente nuevo agrupado a una causa (`confirmarNuevaQuerella`, `confirmarIniciarJuicio` rama Lanzamiento) se calcula `tieneCausaReal = !!(campo del modal || exp.numero_causa)`, **sin contar el fallback a `exp.id`** (ese fallback es solo un sentinela de agrupación cuando no hay causa real todavía, no una causa verdadera) — y ese booleano es el que se asigna a `es_principal`, no `true` hardcodeado.
 - **Nueva Actuación Penal:** Abogado Penalista, Asistente Jurídico Penal y Coordinador pueden crear actuaciones Penales sin pasar por Mesa SACO. Área pre-seleccionada en Penal (no editable). Letrado selección manual. Mesa SACO recibe notificación en campana al crearse. **Único punto de acceso: botón "+ Nueva Actuación" del header de `BandejaAbogado.page.tsx`** (gate `esAbogadoPenal(usuarioActivo)`). El menú `+` de `DetalleExpediente.page.tsx` tenía una opción duplicada ("Nueva Actuación") que navegaba a la misma ruta genérica sin precompletar nada del expediente abierto — se eliminó por ser redundante.
 - **Iniciar Querella:** opción del menú `+` en `DetalleExpediente.page.tsx`, visible cuando `exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada`. Se llamaba "Nueva Querella" en el label del menú, título de modal y en el título de la actividad que queda registrada en la Carta SAE de origen — renombrado a "Iniciar Querella" / "Querella iniciada" para UI; identificadores internos (`confirmarNuevaQuerella`, `formQuerella`, `BLANK_QUERELLA`) no se tocaron.
@@ -428,21 +430,20 @@ LANZAMIENTO_JUDICIALIZADO) y registra la actividad con la causal en la descripci
    - COBRO_CANON / RECLAMO_CONTRAT / RECUPERO / EJECUCION_GAR → `DEMANDA_CIVIL_ACTORA`
    - LANZAMIENTO → `LANZAMIENTO_JUDICIALIZADO`
    - CONSIGNACION / DESAFUERO → `DEMANDA_LABORAL_ACTORA`
-4. El documento nuevo activa timer de 3 meses. Ver Sección 7 — Timer Iniciar Juicio.
-5. **Comportamiento según tipo origen, en `confirmarIniciarJuicio()`:**
-   - COBRO_CANON / RECLAMO_CONTRAT / RECUPERO / EJECUCION_GAR / CONSIGNACION / DESAFUERO:
-     **parchea el expediente actual** — `campos_mesa.mesa_*`, `es_juicio_iniciado`,
-     `fecha_inicio_juicio`. No crea nada nuevo. `exp.tipo` no cambia.
-   - **LANZAMIENTO (única excepción):** crea un expediente **nuevo**
-     (`id: C-LJ###### / L-LJ######` según área) con `tipo: 'LANZAMIENTO_JUDICIALIZADO'`,
-     `estado`/`estadoProcesal: 'ASIGNADO'`, mismo patrón que `confirmarNuevaQuerella`
-     (`agregarExpediente` + patch del origen con `es_juicio_iniciado`, `es_principal: false`,
-     `numero_causa`). Requiere el campo `mesa_tipo_lanzamiento` (Operativo/Comercial, ver
-     arriba) — el modal bloquea "Confirmar Inicio" sin ese campo si el tipo origen es
-     LANZAMIENTO. `es_principal` del expediente nuevo usa `tieneCausaReal` (Sección 7), no
-     `true` hardcodeado. Navega automáticamente al expediente nuevo tras confirmar.
-   - Campos `mesa_ubicacion`/`mesa_linea` (existían en `formJuicio` pero no se volcaban a
-     `campos_mesa`) están mapeados en ambos caminos desde esta reconstrucción.
+4. La actuación derivada activa el timer de 3 meses. Ver Sección 7 — Timer Iniciar Juicio.
+5. **`confirmarIniciarJuicio()` — un solo camino para los 7 tipos:** crea una actuación **nueva**
+   (`id: C-|L- + DCA|DLA|LJ + ######` según área y destino) con `estado`/`estadoProcesal:
+   'ASIGNADO'`, el set completo de `campos_mesa` del formulario, `antecedente_id` apuntando al
+   origen y el timer (`es_juicio_iniciado`, `fecha_inicio_juicio`). Mismo patrón que
+   `confirmarNuevaQuerella`. Al antecedente solo se le patchea `numero_causa` y
+   `es_principal: false`, más una actividad de timeline que deja constancia.
+   `es_principal` de la actuación nueva usa `tieneCausaReal` (Sección 7), no `true` hardcodeado.
+   Navega automáticamente a la actuación nueva tras confirmar.
+6. **LANZAMIENTO** requiere además `mesa_tipo_lanzamiento` (Operativo/Comercial, ver arriba) —
+   el modal bloquea "Confirmar Inicio" sin ese campo.
+7. Al **finalizar** la actuación derivada, el antecedente pasa en cascada a `FINALIZADO`
+   (`finalizarAntecedente()`), con advertencia previa si tiene tareas pendientes. Ver
+   `docs/DELTA_Finalizacion_Antecedente.md`.
 
 ### Ciclos Penales
 - `getEtapasPenales(tipo)` (`src/data/etapasPenales.ts`) **ignora el parámetro `tipo`** y devuelve siempre el mismo ciclo (`ETAPAS_QUERELLA`) para **todos** los tipos del área PENAL — QUERELLA, DEFENSA_PENAL y CARTA_SUCESO (Carta SAE) incluidos. No hay un ciclo separado por tipo pese al nombre de la función.
@@ -472,6 +473,7 @@ Funciones en `src/utils/exportTimeline.ts`:
 ## 15. Pendientes de definición (confirmar con cliente antes de implementar)
 
 - Comportamiento exacto al vencer el plazo de 3 meses de Iniciar Juicio (¿cambia estado? ¿notificación adicional?).
+- Si un antecedente puede finalizarse sin juicio: hoy `FINALIZADO` solo se alcanza por cascada desde la actuación derivada.
 - Criterio para seleccionar nuevo expediente principal al desagrupar cuando el principal es el desagrupado.
 - Si los hitos Penales registrados en el feed tienen opción de Reply.
 - Si las actividades genéricas Penales tienen fecha de vencimiento y fecha de aviso (como Civil/Laboral).
