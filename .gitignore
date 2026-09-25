@@ -17,6 +17,9 @@ dist-ssr
 .env*.local
 .env.ghpages
 
+# Archivos de bloqueo que Office deja mientras un .xlsx/.docx está abierto
+~$*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
