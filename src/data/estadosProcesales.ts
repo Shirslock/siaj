@@ -405,6 +405,17 @@ const DEVUELTO_SECTOR_B: EstadoProcesal = {
   ],
 }
 
+// Estado final del ANTECEDENTE de un juicio (los 7 tipos de MAPA_INICIAR_JUICIO).
+// No se alcanza a mano: el antecedente pasa a FINALIZADO en cascada cuando se
+// finaliza la actuación derivada (ver finalizarAntecedente en DetalleExpediente).
+const FINALIZADO_ANTECEDENTE: EstadoProcesal = {
+  codigo: 'FINALIZADO',
+  label: 'Finalizado',
+  siguiente: undefined,
+  esArchivado: true,
+  tareas: [],
+}
+
 // ── CICLO A: Cobro de Cánones ─────────────────────────────
 export const ESTADOS_COBRO_CANON: EstadoProcesal[] = [
   {
@@ -435,6 +446,7 @@ export const ESTADOS_COBRO_CANON: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_A,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO A: Reclamo a Contratistas ──────────────────────
@@ -467,6 +479,7 @@ export const ESTADOS_RECLAMO_CONTRAT: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_A,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO A: Recuperos ────────────────────────────────────
@@ -499,6 +512,7 @@ export const ESTADOS_RECUPERO: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_A,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO A: Ejecución de Garantías ──────────────────────
@@ -529,6 +543,7 @@ export const ESTADOS_EJECUCION_GAR: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_A,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO A: Lanzamientos ─────────────────────────────────
@@ -559,6 +574,7 @@ export const ESTADOS_LANZAMIENTO: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_A,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO B: Consignaciones ───────────────────────────────
@@ -586,6 +602,7 @@ export const ESTADOS_CONSIGNACION: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_B,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO B: Desafueros ───────────────────────────────────
@@ -614,6 +631,7 @@ export const ESTADOS_DESAFUERO: EstadoProcesal[] = [
     ],
   },
   DEVUELTO_SECTOR_B,
+  FINALIZADO_ANTECEDENTE,
 ]
 
 // ── CICLO: Demanda Civil — Parte Actora ──────────────────

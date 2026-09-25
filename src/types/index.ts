@@ -125,6 +125,7 @@ export interface Expediente {
   fecha_ultimo_impulsorio?: string
   es_querella_iniciada?: boolean
   id_querella_derivada?: string   // id del expediente QUERELLA derivado
+  antecedente_id?: string         // en una actuación derivada de Iniciar Juicio: id del antecedente (Cobro de cánones, Lanzamiento, etc.)
   causal_finalizacion?: string    // bloqueado, se autocompleta al Finalizar
 }
 

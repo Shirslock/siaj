@@ -4,7 +4,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useConfiguracionStore } from '../../store/configuracion.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
-import type { Expediente } from '../../types'
+import type { Expediente, Tarea } from '../../types'
 import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
@@ -30,6 +30,7 @@ import { formatFecha, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
+import { getTareasPendientesEstadoActual } from '../../utils/tareasPendientes'
 import { NovedadesPjnTab }  from './tabs/NovedadesPjnTab'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente' | 'novedades_pjn'
@@ -37,6 +38,8 @@ type AccionMenu = 'estado' | 'causa' | 'desagrupar' | 'reasignar' | 'iniciar_jui
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
 const HOY = new Date().toISOString().split('T')[0]
+// Estados "archivado" del select genérico (ESTADOS_POR_TIPO) de los tipos sin flujo procesal.
+const ESTADOS_ARCHIVADO_GENERICO = new Set(['ARCHIVADO', 'ARCHIVADA'])
 const TIPOS_CON_JUICIO = new Set([
   'COBRO_CANON', 'RECLAMO_CONTRAT', 'RECUPERO', 'EJECUCION_GAR',
   'LANZAMIENTO', 'CONSIGNACION', 'DESAFUERO',
@@ -125,7 +128,7 @@ export default function DetalleExpedientePage() {
   const params = useParams()
   const expId = params['*'] ?? ''
 
-  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
+  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas, expedientes } = useExpedientesStore()
   const { monedas } = useConfiguracionStore()
   const { usuarioActivo } = useUIStore()
   const [searchParams] = useSearchParams()
@@ -147,6 +150,13 @@ export default function DetalleExpedientePage() {
   const [nuevoAbogado, setNuevoAbogado] = useState('')
   const [motivoEstado, setMotivoEstado] = useState('')
   const [modalCausal, setModalCausal] = useState(false)
+  // Advertencia blanda de tareas pendientes del antecedente: lista y deja continuar, nunca bloquea.
+  const [advertenciaTareas, setAdvertenciaTareas] = useState<{
+    contexto: 'finalizar' | 'archivar'
+    antecedenteId: string
+    estadoLabel: string
+    tareas: Tarea[]
+  } | null>(null)
   const [causalSeleccionada, setCausalSeleccionada] = useState('')
   const [causalLibre, setCausalLibre] = useState('')
   const [formJuicio, setFormJuicio] = useState({
@@ -270,7 +280,17 @@ export default function DetalleExpedientePage() {
     setAccion(a)
   }
 
-  function confirmarEstado() {
+  /** Si el antecedente tiene tareas pendientes en su estado actual, abre la advertencia y devuelve true. */
+  function advertirTareasPendientes(antecedente: Expediente, contexto: 'finalizar' | 'archivar'): boolean {
+    const tareas = getTareasPendientesEstadoActual(antecedente, tareasMap)
+    if (tareas.length === 0) return false
+    const estadoLabel = getEstadoProcesal(antecedente.tipo, antecedente.estadoProcesal ?? antecedente.estado)?.label
+      ?? antecedente.estadoProcesal ?? antecedente.estado
+    setAdvertenciaTareas({ contexto, antecedenteId: antecedente.id, estadoLabel, tareas })
+    return true
+  }
+
+  function confirmarEstado(advertenciaAceptada = false) {
     if (exp!.area === 'PENAL') {
       if (!nuevoEstado || nuevoEstado === exp!.estadoProcesal) { setAccion(null); return }
       const etapas = getEtapasPenales(exp!.tipo)
@@ -308,6 +328,9 @@ export default function DetalleExpedientePage() {
       const idxActual = todosEstados.findIndex(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
       const destCodigo = nuevoEstado
       const destEstado = todosEstados.find(e => e.codigo === destCodigo) ?? siguienteEstadoProcesal!
+      // Archivar el antecedente (p.ej. Devuelto al sector): advierte si quedan tareas pendientes.
+      if (!advertenciaAceptada && TIPOS_CON_JUICIO.has(exp!.tipo) && destEstado.esArchivado &&
+          advertirTareasPendientes(exp!, 'archivar')) return
       const idxDest = todosEstados.findIndex(e => e.codigo === destCodigo)
       const esRetroceso = idxDest < idxActual
       const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
@@ -346,14 +369,22 @@ export default function DetalleExpedientePage() {
       return
     }
     if (!nuevoEstado || nuevoEstado === exp!.estado) { setAccion(null); return }
+    if (!advertenciaAceptada && TIPOS_CON_JUICIO.has(exp!.tipo) && ESTADOS_ARCHIVADO_GENERICO.has(nuevoEstado) &&
+        advertirTareasPendientes(exp!, 'archivar')) return
     actualizarEstado(exp!.id, nuevoEstado)
     toast.success(`Estado actualizado a "${nuevoEstado}".`)
     setAccion(null)
   }
 
-  function confirmarCausal() {
+  function confirmarCausal(advertenciaAceptada = false) {
     const causal = causalSeleccionada || causalLibre.trim()
     if (!causal) return
+    const antecedente = exp!.antecedente_id ? expedientes.find(e => e.id === exp!.antecedente_id) : undefined
+    // El antecedente solo se finaliza en cascada si sigue activo (no pisa un Devuelto/Finalizado previo).
+    const cascadaAntecedente = antecedente &&
+      !getEstadoProcesal(antecedente.tipo, antecedente.estadoProcesal ?? antecedente.estado)?.esArchivado
+      ? antecedente : undefined
+    if (cascadaAntecedente && !advertenciaAceptada && advertirTareasPendientes(cascadaAntecedente, 'finalizar')) return
     const estadoCodigo = exp!.estadoProcesal ?? exp!.estado
     const estadoActual = getEstadoProcesal(exp!.tipo, estadoCodigo)
     const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
@@ -375,12 +406,38 @@ export default function DetalleExpedientePage() {
     })
     actualizarEstado(exp!.id, codigoFinalizado)
     actualizarExpediente(exp!.id, { estadoProcesal: codigoFinalizado, causal_finalizacion: causal })
-    toast.success('Actuación finalizada.')
+    if (cascadaAntecedente) finalizarAntecedente(cascadaAntecedente, causal)
+    toast.success(cascadaAntecedente
+      ? `Actuación finalizada. El antecedente ${cascadaAntecedente.id} también quedó finalizado.`
+      : 'Actuación finalizada.')
     setModalCausal(false)
     setCausalSeleccionada('')
     setCausalLibre('')
     setNuevoEstado('')
     setMotivoEstado('')
+  }
+
+  /** Cascada: al finalizar la actuación derivada, el antecedente pasa a FINALIZADO (archivado). */
+  function finalizarAntecedente(antecedente: Expediente, causal: string) {
+    const estadoCodigo = antecedente.estadoProcesal ?? antecedente.estado
+    const estadoActual = getEstadoProcesal(antecedente.tipo, estadoCodigo)
+    const tareas = tareasMap[`${antecedente.id}__${estadoCodigo}`] ?? estadoActual?.tareas ?? []
+    agregarActividad(antecedente.id, {
+      id: `ACT_${Date.now()}_ANT`,
+      expediente_id: antecedente.id,
+      tipo: 'MOVIMIENTO',
+      titulo: `Cambio de estado: ${estadoActual?.label ?? estadoCodigo} → Finalizado`,
+      descripcion: `Finalizada en cascada al finalizar la actuación derivada ${exp!.id}. Causal: ${causal}`,
+      fecha: HOY,
+      activo: true,
+      subitems: [],
+      estadoExpediente: 'FINALIZADO',
+      tareasSnapshot: tareas,
+      doc_gde: null,
+      creado_por: usuarioActivo?.id,
+    })
+    actualizarEstado(antecedente.id, 'FINALIZADO')
+    actualizarExpediente(antecedente.id, { estadoProcesal: 'FINALIZADO' })
   }
 
   function confirmarCausa() {
@@ -404,101 +461,35 @@ export default function DetalleExpedientePage() {
 
   function confirmarIniciarJuicio() {
     const tipoDestino = MAPA_INICIAR_JUICIO[exp!.tipo]
+    if (!tipoDestino) return
 
-    // LANZAMIENTO es el único origen que crea un expediente NUEVO
-    // (LANZAMIENTO_JUDICIALIZADO) — mismo patrón que confirmarNuevaQuerella.
-    // El resto de MAPA_INICIAR_JUICIO sigue parcheando el expediente actual.
-    if (tipoDestino === 'LANZAMIENTO_JUDICIALIZADO') {
-      const idNuevo = `${exp!.area === 'CIVIL' ? 'C' : 'L'}-LJ${Date.now().toString().slice(-6)}`
-      // "Principal · PJN" solo si hay número de causa REAL — el id del
-      // expediente origen es un sentinela de agrupación, no una causa.
-      const tieneCausaReal = !!(formJuicio.numero_causa.trim() || exp!.numero_causa)
-      const causaComun = formJuicio.numero_causa.trim() || exp!.numero_causa || exp!.id
+    // Iniciar Juicio SIEMPRE crea una actuación nueva del tipo que indica
+    // MAPA_INICIAR_JUICIO (mismo patrón que confirmarNuevaQuerella). El
+    // expediente actual queda como antecedente, vinculado por `antecedente_id`.
+    const prefijo = { LANZAMIENTO_JUDICIALIZADO: 'LJ', DEMANDA_CIVIL_ACTORA: 'DCA', DEMANDA_LABORAL_ACTORA: 'DLA' }[tipoDestino] ?? 'J'
+    const tipoLabel = TIPOS_GESTION.find(t => t.code === tipoDestino)?.label ?? tipoDestino
+    const idNuevo = `${exp!.area === 'CIVIL' ? 'C' : 'L'}-${prefijo}${Date.now().toString().slice(-6)}`
+    // "Principal · PJN" solo si hay número de causa REAL — el id del
+    // expediente origen es un sentinela de agrupación, no una causa.
+    const tieneCausaReal = !!(formJuicio.numero_causa.trim() || exp!.numero_causa)
+    const causaComun = formJuicio.numero_causa.trim() || exp!.numero_causa || exp!.id
+    const esLanzamiento = tipoDestino === 'LANZAMIENTO_JUDICIALIZADO'
 
-      const nuevoLanzamiento: Expediente = {
-        id:              idNuevo,
-        area:            exp!.area,
-        tipo:            'LANZAMIENTO_JUDICIALIZADO',
-        estado:          'ASIGNADO',
-        estadoProcesal:  'ASIGNADO',
-        caratula:        formJuicio.caratula || exp!.caratula,
-        numero_ee_gde:   exp!.numero_ee_gde,
-        abogado_id:      exp!.abogado_id,
-        fecha_recepcion: HOY,
-        numero_causa:    causaComun,
-        es_principal:    tieneCausaReal,
-        es_urgente:      exp!.es_urgente,
-        campos_mesa: {
-          mesa_num_causa:        formJuicio.numero_causa,
-          mesa_juzgado:          formJuicio.juzgado,
-          mesa_secretaria:       formJuicio.secretaria,
-          mesa_caratula:         formJuicio.caratula,
-          mesa_abogado_contr:    formJuicio.abogado_contraria,
-          mesa_parte_actora:     formJuicio.parte_actora,
-          mesa_parte_dem:        formJuicio.parte_demandada,
-          mesa_codemandados:     formJuicio.codemandados,
-          mesa_fecha_inicio:     formJuicio.fecha_inicio,
-          mesa_juicio:           formJuicio.tipo_juicio,
-          mesa_ubicacion:        formJuicio.ubicacion,
-          mesa_linea:            formJuicio.linea,
-          mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento,
-        },
-        campos_abogado: {},
-        timeline: [
-          {
-            id:               `${idNuevo}_REC_01`,
-            expediente_id:    idNuevo,
-            tipo:             'RECEPCION',
-            titulo:           'Lanzamiento judicializado iniciado',
-            descripcion:      `Iniciado desde el lanzamiento administrativo ${exp!.id}. Tipo de lanzamiento: ${formJuicio.tipo_lanzamiento}.`,
-            fecha:            HOY,
-            activo:           true,
-            subitems:         [],
-            estadoExpediente: 'ASIGNADO',
-            creado_por:       usuarioActivo?.id,
-          },
-        ],
-        intervinientes: [],
-        documentos:     [],
-        vinculos:       [],
-      }
-
-      agregarExpediente(nuevoLanzamiento)
-
-      actualizarExpediente(exp!.id, {
-        es_juicio_iniciado:  true,
-        fecha_inicio_juicio: HOY,
-        numero_causa:        causaComun,
-        es_principal:        false,
-      })
-
-      agregarActividad(exp!.id, {
-        id:               `${exp!.id}_JUI_${Date.now()}`,
-        expediente_id:    exp!.id,
-        tipo:             'MOVIMIENTO',
-        titulo:           'Juicio iniciado — Lanzamiento judicializado',
-        descripcion:      `Se inició el lanzamiento judicializado ${idNuevo} (${formJuicio.tipo_lanzamiento}).`,
-        fecha:            HOY,
-        activo:           true,
-        subitems:         [],
-        estadoExpediente: exp!.estado,
-        es_movimiento_impulsorio: true,
-        creado_por:       usuarioActivo?.id,
-      })
-
-      toast.success(`Lanzamiento judicializado ${idNuevo} creado (${formJuicio.tipo_lanzamiento}).`, { autoClose: 6000 })
-      setAccion(null)
-      setTimeout(() => navigate(RUTAS.EXPEDIENTE(idNuevo)), 800)
-      return
-    }
-
-    actualizarExpediente(exp!.id, {
-      numero_causa: formJuicio.numero_causa.trim() || exp!.numero_causa,
-      es_juicio_iniciado: true,
-      fecha_inicio_juicio: new Date().toISOString().split('T')[0],
-      fecha_ultimo_impulsorio: undefined,
+    const nuevaActuacion: Expediente = {
+      id:              idNuevo,
+      area:            exp!.area,
+      tipo:            tipoDestino as Expediente['tipo'],
+      estado:          'ASIGNADO',
+      estadoProcesal:  'ASIGNADO',
+      caratula:        formJuicio.caratula || exp!.caratula,
+      numero_ee_gde:   exp!.numero_ee_gde,
+      abogado_id:      exp!.abogado_id,
+      fecha_recepcion: HOY,
+      numero_causa:    causaComun,
+      es_principal:    tieneCausaReal,
+      es_urgente:      exp!.es_urgente,
+      antecedente_id:  exp!.id,
       campos_mesa: {
-        ...exp!.campos_mesa,
         mesa_num_causa:     formJuicio.numero_causa,
         mesa_juzgado:       formJuicio.juzgado,
         mesa_secretaria:    formJuicio.secretaria,
@@ -513,15 +504,58 @@ export default function DetalleExpedientePage() {
         mesa_monto: formJuicio.montos
           .filter(m => m.monto.trim() !== '')
           .map((m): ParMoneda => ({ moneda: m.moneda, monto: Number(m.monto) || 0 })),
-        mesa_oficio_judicial: formJuicio.oficio_judicial,
+        mesa_oficio_judicial:   formJuicio.oficio_judicial,
         mesa_tipo_intervencion: formJuicio.tipo_intervencion,
         mesa_ubicacion:     formJuicio.ubicacion,
         mesa_linea:         formJuicio.linea,
         ...(formJuicio.tipo_lanzamiento ? { mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento } : {}),
       },
+      campos_abogado: {},
+      timeline: [
+        {
+          id:               `${idNuevo}_REC_01`,
+          expediente_id:    idNuevo,
+          tipo:             'RECEPCION',
+          titulo:           `${tipoLabel} iniciada`,
+          descripcion:      `Iniciada desde la actuación ${exp!.id} (${TIPOS_GESTION.find(t => t.code === exp!.tipo)?.label ?? exp!.tipo}).${esLanzamiento && formJuicio.tipo_lanzamiento ? ` Tipo de lanzamiento: ${formJuicio.tipo_lanzamiento}.` : ''}`,
+          fecha:            HOY,
+          activo:           true,
+          subitems:         [],
+          estadoExpediente: 'ASIGNADO',
+          creado_por:       usuarioActivo?.id,
+        },
+      ],
+      intervinientes: [],
+      documentos:     [],
+      vinculos:       [],
+    }
+
+    agregarExpediente(nuevaActuacion)
+
+    actualizarExpediente(exp!.id, {
+      es_juicio_iniciado:  true,
+      fecha_inicio_juicio: HOY,
+      numero_causa:        causaComun,
+      es_principal:        false,
     })
-    toast.success('Juicio iniciado y datos registrados.')
+
+    agregarActividad(exp!.id, {
+      id:               `${exp!.id}_JUI_${Date.now()}`,
+      expediente_id:    exp!.id,
+      tipo:             'MOVIMIENTO',
+      titulo:           `Juicio iniciado — ${tipoLabel}`,
+      descripcion:      `Se inició ${tipoLabel} ${idNuevo}. Esta actuación queda como antecedente.`,
+      fecha:            HOY,
+      activo:           true,
+      subitems:         [],
+      estadoExpediente: exp!.estado,
+      es_movimiento_impulsorio: true,
+      creado_por:       usuarioActivo?.id,
+    })
+
+    toast.success(`${tipoLabel} ${idNuevo} creada.`, { autoClose: 6000 })
     setAccion(null)
+    setTimeout(() => navigate(RUTAS.EXPEDIENTE(idNuevo)), 800)
   }
 
   function confirmarNuevaQuerella() {
@@ -820,7 +854,7 @@ export default function DetalleExpedientePage() {
 
       {/* Modal: Cambiar estado */}
       <Modal
-        open={accion === 'estado'}
+        open={accion === 'estado' && !advertenciaTareas}
         onClose={() => setAccion(null)}
         titulo="Cambiar estado"
         size="sm"
@@ -830,7 +864,7 @@ export default function DetalleExpedientePage() {
               Cancelar
             </button>
             <button
-              onClick={confirmarEstado}
+              onClick={() => confirmarEstado()}
               disabled={(() => {
                 if (exp.area === 'PENAL') return !nuevoEstado
                 if (!esFlujoProcesal) return !nuevoEstado
@@ -843,6 +877,8 @@ export default function DetalleExpedientePage() {
                 const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
                 const esRetroceso = idxDest < idxActual
                 if (esRetroceso) return !motivoEstado.trim()
+                // Archivar el antecedente (Devuelto al sector): advertencia blanda, no bloquea.
+                if (TIPOS_CON_JUICIO.has(exp.tipo) && todos[idxDest]?.esArchivado) return false
                 return tieneTareasPendientes
               })()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
@@ -916,12 +952,14 @@ export default function DetalleExpedientePage() {
                 : (siguienteEstadoProcesal ? [siguienteEstadoProcesal] : [])
             const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
             const esRetroceso = !esAsignado && codigosRamificados.length === 0 && !siguienteComercial && nuevoEstado !== codigoFinalizado && idxDest < idxActual
+            const destinoArchivaAntecedente = TIPOS_CON_JUICIO.has(exp.tipo) && !!todos[idxDest]?.esArchivado
+            const bloqueaPorTareas = tieneTareasPendientes && !destinoArchivaAntecedente
             const esTipoConFinalizacionLibre = TIPOS_FINALIZACION_LIBRE.has(exp.tipo)
             const mostrarFinalizarSiempre = esTipoConFinalizacionLibre && estadoCodigo !== codigoFinalizado &&
               !siguientes.some(e => e.codigo === codigoFinalizado)
             return (
               <div className="space-y-3">
-                {!esAsignado && !esRetroceso && nuevoEstado !== codigoFinalizado && tieneTareasPendientes && (
+                {!esAsignado && !esRetroceso && nuevoEstado !== codigoFinalizado && bloqueaPorTareas && (
                   <div className="flex items-start gap-2 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-xl">
                     <Icon name="warning" size={14} className="text-[#b91c1c] flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-[#b91c1c]">
@@ -955,8 +993,8 @@ export default function DetalleExpedientePage() {
                       {(siguientes.length > 0 || mostrarFinalizarSiempre) && (
                         <optgroup label="Avanzar">
                           {siguientes.map(e => (
-                            <option key={e.codigo} value={e.codigo} disabled={tieneTareasPendientes}>
-                              {e.label}{tieneTareasPendientes ? ' (tareas pendientes)' : ''}
+                            <option key={e.codigo} value={e.codigo} disabled={tieneTareasPendientes && !(TIPOS_CON_JUICIO.has(exp.tipo) && e.esArchivado)}>
+                              {e.label}{tieneTareasPendientes && !(TIPOS_CON_JUICIO.has(exp.tipo) && e.esArchivado) ? ' (tareas pendientes)' : ''}
                             </option>
                           ))}
                           {mostrarFinalizarSiempre && (
@@ -1005,7 +1043,7 @@ export default function DetalleExpedientePage() {
 
       {/* Modal: Finalizar actuación — causal de finalización */}
       <Modal
-        open={modalCausal}
+        open={modalCausal && !advertenciaTareas}
         onClose={() => { setModalCausal(false); setCausalSeleccionada(''); setCausalLibre('') }}
         titulo="Finalizar actuación"
         size="sm"
@@ -1018,7 +1056,7 @@ export default function DetalleExpedientePage() {
               Cancelar
             </button>
             <button
-              onClick={confirmarCausal}
+              onClick={() => confirmarCausal()}
               disabled={!causalSeleccionada && !causalLibre.trim()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
@@ -1061,6 +1099,57 @@ export default function DetalleExpedientePage() {
             </div>
           )
         })()}
+      </Modal>
+
+      {/* Modal: advertencia de tareas pendientes del antecedente (blanda: permite continuar) */}
+      <Modal
+        open={!!advertenciaTareas}
+        onClose={() => setAdvertenciaTareas(null)}
+        titulo="Tareas pendientes"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setAdvertenciaTareas(null)}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Volver
+            </button>
+            <button
+              onClick={() => {
+                const contexto = advertenciaTareas?.contexto
+                setAdvertenciaTareas(null)
+                if (contexto === 'finalizar') confirmarCausal(true)
+                else if (contexto === 'archivar') confirmarEstado(true)
+              }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            >
+              Continuar igual
+            </button>
+          </>
+        }
+      >
+        {advertenciaTareas && (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
+              <Icon name="warning" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[#d97706]">
+                {advertenciaTareas.contexto === 'finalizar'
+                  ? <>Al finalizar esta actuación se finalizará también el antecedente <span className="font-mono font-bold">{advertenciaTareas.antecedenteId}</span>, que tiene tareas pendientes en «{advertenciaTareas.estadoLabel}».</>
+                  : <>La actuación <span className="font-mono font-bold">{advertenciaTareas.antecedenteId}</span> tiene tareas pendientes en «{advertenciaTareas.estadoLabel}».</>}
+                {' '}Podés continuar igual.
+              </p>
+            </div>
+            <ul className="space-y-1.5 max-h-60 overflow-y-auto">
+              {advertenciaTareas.tareas.map(t => (
+                <li key={t.id} className="flex items-start gap-2 text-xs text-[#1b3a57]">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#d97706] flex-shrink-0" />
+                  <span>{t.nombre} <span className="text-[#4a6a84]">({t.estado === 'en_curso' ? 'en curso' : 'sin iniciar'})</span></span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Modal>
 
       {/* Modal: Agrupar a causa */}
