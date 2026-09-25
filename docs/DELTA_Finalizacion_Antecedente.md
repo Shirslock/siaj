@@ -11,7 +11,9 @@
 > - **Estado:** implementado y compilando en la rama. Sin merge a `develop` ni a `main`, y
 >   **sin prueba funcional en navegador** (ver §9).
 > - **Trazabilidad:** `d16c8c5` (matriz de estados), `51787d7` (actuación derivada + cascada +
->   validación), `1562c01` (timer de impulsorio), `ec4c459` (chore ajeno: `.gitignore`).
+>   validación), `1562c01` (timer de impulsorio a la derivada) y `4a4c1cb` (restaura el checkbox
+>   manual, revirtiendo la parte automática de `1562c01`). `ec4c459` es un chore ajeno
+>   (`.gitignore`).
 
 ---
 
@@ -55,8 +57,8 @@ bloqueado— si lo está cerrando con trabajo pendiente.
 2. **Estado final del antecedente**, alcanzado en cascada al finalizar la actuación derivada.
 3. **Advertencia de tareas pendientes** del antecedente, al finalizar la derivada y al archivar
    el antecedente.
-4. **El timer de impulsorio corre en la actuación derivada**, y toda actividad nueva ahí lo
-   resetea automáticamente.
+4. **El timer de impulsorio corre en la actuación derivada**, no en el antecedente. El marcado
+   sigue siendo manual, con el checkbox de Nueva Actividad.
 
 ---
 
@@ -69,9 +71,9 @@ bloqueado— si lo está cerrando con trabajo pendiente.
 | La validación de tareas **advierte pero no bloquea** | Pedido explícito del usuario: el letrado tiene que poder cerrar igual | Bloqueo duro — se descartó por trabar al letrado ante tareas que pueden haber perdido sentido |
 | Se validan **solo las tareas del estado actual** | Es el criterio que ya usa el resto del sistema para avanzar de estado | Validar todas las tareas de todos los estados recorridos — demasiado estricto para un cierre |
 | `no_procedente` cuenta como **resuelta** | Criterio ya establecido en la UI existente: *"Completá o marcá como 'No procedente' todas las tareas del estado actual"* | Contarla como pendiente — contradecía el texto que el sistema ya le muestra al letrado |
-| El timer de impulsorio **pasa a la derivada** y es automático | Regla de negocio: cualquier actividad de una demanda parte actora funciona como impulsoria. El antecedente ya no impulsa nada | Mantener el checkbox manual — quedaba sin sentido si toda actividad impulsa |
-| El **Lanzamiento judicializado** va igual que las demandas | Decisión del usuario: una sola regla para las tres actuaciones derivadas | Checkbox manual solo para lanzamientos, o lanzamientos sin timer |
-| Solo **"Nueva actividad"** resetea el timer | Una solicitud es un pedido interno, no un acto procesal que impulse la causa | Incluir solicitudes y actividades de sistema (cambios de estado, finalización) |
+| El timer de impulsorio **pasa a la derivada** | El juicio corre en la actuación derivada; el antecedente ya no impulsa nada. Antes, en los 6 tipos que se parcheaban, el timer quedaba en el mismo expediente que llevaba el juicio — al separarlos hay que decidir dónde vive | Dejarlo en el antecedente — el plazo procesal no tiene sentido en una actuación administrativa ya judicializada |
+| El marcado del impulsorio **sigue siendo manual** (checkbox) | Decisión del usuario. Se probó automatizarlo —toda actividad de una derivada impulsando sola— y se revirtió: el letrado tiene que poder decidir qué acto impulsa el proceso y cuál no | Automatizar por tipo de actuación (implementado en `1562c01`, revertido en `4a4c1cb`) |
+| El **Lanzamiento judicializado** lleva timer igual que las demandas | Una sola regla para las tres actuaciones derivadas | Lanzamiento judicializado sin timer |
 
 ---
 
@@ -94,7 +96,7 @@ Los 7 tipos de antecedente de `MAPA_INICIAR_JUICIO`, y las 3 actuaciones derivad
   se creó `VinculoExpediente` ni pantalla que muestre el antecedente desde la derivada.
 - **Migración de datos**: las derivadas creadas antes de `1562c01` no tienen el flag del timer.
   Es mock en memoria, no se migró nada.
-- **Solicitudes y actividades de sistema** como movimiento impulsorio (ver §4).
+- **Automatizar el movimiento impulsorio.** Se probó y se revirtió: sigue siendo manual (ver §4).
 
 ---
 
@@ -126,9 +128,10 @@ sector requirente").
 
 ### 6.4 Timer de impulsorio
 
-Corre en la actuación derivada. Toda actividad cargada desde **Nueva actividad** la marca como
-movimiento impulsorio y resetea el plazo desde la fecha de esa actividad (se respeta la carga
-retroactiva). Ya no hay checkbox: el letrado no decide si impulsa o no.
+Corre en la actuación derivada, que es donde el letrado trabaja el juicio. El antecedente deja de
+mostrar timer. El marcado es **manual**: el checkbox "Marcar como movimiento impulsorio" del modal
+de Nueva Actividad sigue existiendo, ahora visible en la derivada en lugar del antecedente, y
+resetea el plazo desde la fecha de esa actividad (se respeta la carga retroactiva).
 
 ---
 
@@ -141,7 +144,7 @@ retroactiva). Ya no hay checkbox: el letrado no decide si impulsa o no.
 | `src/data/estadosProcesales.ts` | Constante `FINALIZADO_ANTECEDENTE` (`esArchivado: true`, sin tareas) agregada a los 7 arrays de estados |
 | `src/utils/tareasPendientes.ts` | **Nuevo.** `esTareaPendiente()` (`sin_estado` / `en_curso`) y `getTareasPendientesEstadoActual()`; si el estado nunca se inicializó en `tareasMap`, usa las tareas por defecto del estado |
 | `src/pages/DetalleExpediente/DetalleExpediente.page.tsx` | `confirmarIniciarJuicio()` generalizado; `finalizarAntecedente()` nuevo; `confirmarCausal()` y `confirmarEstado()` con la advertencia; modal "Tareas pendientes" |
-| `src/pages/DetalleExpediente/tabs/TimelineTab.tsx` | Eliminado el checkbox de movimiento impulsorio (y su estado y su cartel); toda actividad nueva de una derivada impulsa |
+| `src/pages/DetalleExpediente/tabs/TimelineTab.tsx` | Sin cambios netos. El checkbox de movimiento impulsorio se eliminó en `1562c01` y se restauró en `4a4c1cb`; queda igual que antes del delta, pero ahora se muestra en la derivada porque `es_juicio_iniciado` se mudó ahí |
 
 ---
 
