@@ -59,7 +59,7 @@ npm run build      # build de producción
 | `src/store/ui.store.ts` | Usuario activo, sidebar, sessionStorage, búsqueda global (`busquedaGlobal`). |
 | `src/store/configuracion.store.ts` | Estado del panel de administración — catálogos editables + usuarios. |
 | `src/store/pjn.store.ts` | Novedades detectadas por la sincronización con el Portal PJN — aplicar/descartar. También `actuacionesSinCargar` — alertas de causas que el PJN expone sin actuación cargada en SIAJ — descartar/resolver. Ver `claude-docs/NOVEDADES_JUDICIALES_CLAUDE.md`. |
-| `src/store/notificaciones.store.ts` | Notificaciones reales del Topbar (ASIGNACION/REASIGNACION/ALERTA_VENCIMIENTO). La campana también mezcla novedades PJN pendientes como entradas virtuales — no persisten en este store. |
+| `src/store/notificaciones.store.ts` | Notificaciones reales del Topbar (ASIGNACION/REASIGNACION/ALERTA_VENCIMIENTO). Catálogo productivo completo: `docs/SIAJ_Matriz_Notificaciones.xlsx`. La campana también mezcla novedades PJN pendientes como entradas virtuales — no persisten en este store. |
 | `src/store/bogaHistorial.store.ts` | Historial de conversaciones con Boga, persistido en `localStorage` (sin backend). Conversaciones agrupadas por `scope` (`'global'` o `exp.id` de una actuación). Ver `claude-docs/ASISTENTE_IA_CLAUDE.md`. |
 | `src/components/ui/Icon.tsx` | Wrapper de íconos. Mapea nombres → Heroicons. SIEMPRE usar <Icon name="..."> |
 | `src/components/ui/Button.tsx` | 4 variantes: primary, secondary, ghost, danger. |
@@ -198,6 +198,7 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 - **Orden dentro de un grupo-causa (Bandeja):** el expediente con `es_principal: true` siempre se renderiza primero al expandir el grupo; el resto conserva su orden relativo (sort estable). Aplicado en `BandejaAbogado.page.tsx` (map de `exps` antes de `renderExpRow`), `BandejaArea.page.tsx` (`renderFilasChild`) y `TablaExpedientes.tsx` (tabla de expedientes de `CausaDetalle.page.tsx`). `construirItems()`/`causaMap` NO se tocan — el sort va justo antes del render, no en el agrupamiento.
 - **Tabs Activos/Archivados de BandejaAbogado:** `ESTADOS_CERRADO` decide qué cae en "Archivados". Incluye `'ARCHIVO'` (código real del ciclo Penal) además de `'ARCHIVADO'`/`'ARCHIVADA'`/`'CERRADO'`/`'CUMPLIDO'`/`'COMPLETADA'` — sin `'ARCHIVO'` en la lista, ningún expediente Penal archivado aparecía nunca en "Archivados" (bug preexistente, corregido).
 - **Reasignación:** al reasignar, el letrado nuevo recibe notificación de asignación y el anterior recibe notificación de desasignación.
+- **Notificaciones — catálogo productivo:** el listado completo de notificaciones (disparador, canal Campana/Mail, destinatario, contenido, HU) vive en `docs/SIAJ_Matriz_Notificaciones.xlsx`. El prototipo solo modela parte (ver `notificaciones.store.ts`); **no hay envío de mail en el prototipo**. Reglas transversales: los avisos al titular de una actuación se copian al **reemplazante** mientras su licencia esté activa (HU31 §4); solicitudes Externo SIAJ van por Campana + Mail con recordatorio a los N días hábiles (HU-25); licencias notifican designación, cancelación, inicio y fin del reemplazo (HU31 §4). Las filas de Novedades PJN/MEV están **pendientes de validación**.
 
 ---
 

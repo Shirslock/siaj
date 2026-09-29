@@ -210,6 +210,8 @@ Helpers (mismo archivo):
 - `esReemplazanteActivo(licencias, reemplazanteId, titularId): boolean` — si un usuario reemplaza hoy a otro.
 
 `Licencia`: `{ id, usuario_id, motivo, motivo_detalle?, fecha_inicio, fecha_fin, reemplazante_id, created_at }`.
+
+Notificaciones de licencias (productivo, no modeladas en el prototipo): ver HU31 §4 (`docs/SIAJ_HU_Licencias.docx`) y `docs/SIAJ_Matriz_Notificaciones.xlsx`.
 `motivo_detalle` es obligatorio cuando `motivo === 'otro'`.
 
 ---

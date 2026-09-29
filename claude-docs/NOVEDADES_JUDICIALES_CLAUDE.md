@@ -348,6 +348,8 @@ export interface IntervinientePjnCrudo {
 
 ## Integración con notificaciones (Topbar)
 
+> Catálogo productivo: la fila "Novedad PJN/MEV" de `docs/SIAJ_Matriz_Notificaciones.xlsx` está **pendiente de validación** (canal, destinatario, resumen diario).
+
 El panel de la campana (`Topbar.tsx`) **ya tenía datos reales** antes de este módulo
 (`notificaciones.store.ts`, con tipos `ASIGNACION`/`REASIGNACION`/`ALERTA_VENCIMIENTO`) — no
 estaba decorativo. Las novedades PJN pendientes se suman como entradas **virtuales**,
