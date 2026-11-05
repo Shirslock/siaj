@@ -13,8 +13,28 @@ interface Props {
   area?: string
 }
 
+type OpcionSelect = string | { value: string; label: string }
+
+/** Opciones de un select. Si el campo declara `catalogo`, salen del catálogo de
+ * Configuración (solo activos); el valor ya cargado se conserva aunque se haya
+ * desactivado después. Sin catálogo (o vacío), usa `campo.options`. */
+export function opcionesDeCampo(
+  campo: CampoFormulario,
+  config: Record<string, unknown>,
+  valorActual?: string,
+): OpcionSelect[] {
+  const base = (campo.options ?? []) as OpcionSelect[]
+  if (!campo.catalogo) return base
+  const items = config[campo.catalogo] as { label: string; activo?: boolean }[] | undefined
+  if (!items?.length) return base
+  const activos = items.filter(i => i.activo !== false).map(i => i.label)
+  if (valorActual && !activos.includes(valorActual)) activos.push(valorActual)
+  return activos
+}
+
 export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
-  const { monedas } = useConfiguracionStore()
+  const config = useConfiguracionStore()
+  const { monedas } = config
   if (campos.length === 0) return null
 
   return (
@@ -41,7 +61,7 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
             <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
               <select className="field-input" value={valor} onChange={e => onChange(campo.id, e.target.value)}>
                 <option value="">Seleccionar…</option>
-                {(campo.options as Array<string | { value: string; label: string }>).map(opt => {
+                {opcionesDeCampo(campo, config as unknown as Record<string, unknown>, valor).map(opt => {
                   const v = typeof opt === 'string' ? opt : opt.value
                   const l = typeof opt === 'string' ? opt : opt.label
                   return <option key={v} value={v}>{l}</option>

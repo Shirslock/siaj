@@ -1,4 +1,4 @@
-export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO' | 'NOVEDAD_PJN'
+export type TipoNotificacion = 'ASIGNACION' | 'REASIGNACION' | 'ALERTA_VENCIMIENTO' | 'NOVEDAD_PJN' | 'INICIO_JUICIO'
 
 export interface Notificacion {
   id: string
@@ -49,6 +49,8 @@ export type TipoGestion =
   | 'PEDIDO_CAUSA_PENAL'
   | 'DEMANDA_CIVIL'
   | 'DEMANDA_LABORAL'
+  | 'DEMANDA_CIVIL_ACTORA'    // solo se crean desde "Iniciar Juicio" (Delta 13)
+  | 'DEMANDA_LABORAL_ACTORA'
   | 'OTRAS'
 
 export interface CatalogoItem {
@@ -77,6 +79,8 @@ export interface TipoGestionItem {
   canal: Canal
   canales: Canal[]
   soloDesdeJuicio?: boolean
+  /** false = desactivado: no se ofrece en el alta, pero sigue en el catálogo (histórico). */
+  activo?: boolean
 }
 
 export interface Usuario {
@@ -126,6 +130,12 @@ export interface Expediente {
   es_querella_iniciada?: boolean
   id_querella_derivada?: string   // id del expediente QUERELLA derivado
   causal_finalizacion?: string    // bloqueado, se autocompleta al Finalizar
+  // Delta 13 — "Iniciar Juicio" siempre crea una actuación nueva (derivada).
+  antecedente_id?: string         // en la derivada: id de la actuación origen
+  id_juicio_derivado?: string     // en el antecedente: id de la actuación derivada
+  // Delta 3 — sub-estado DESARCHIVADO (Civil/Laboral): estado terminal al que
+  // vuelve la actuación con "Volver a archivo".
+  estado_previo_desarchivo?: string
 }
 
 export interface VinculoExpediente {
@@ -226,6 +236,11 @@ export interface LogAuditoria {
   campo_despues?: string       // snapshot posterior
 }
 
+export interface AdjuntoRef {
+  nombre: string
+  size: string
+}
+
 export interface Actividad {
   id?: string
   expediente_id?: string
@@ -243,7 +258,8 @@ export interface Actividad {
   subitems: SubActividad[]
   creado_por?: string
   activo: boolean
-  adjunto_nombre?: string | null
+  adjunto_nombre?: string | null          // legado (un solo adjunto); usar `adjuntos` para los nuevos
+  adjuntos?: AdjuntoRef[]                 // adjuntos múltiples
   tareasSnapshot?: Tarea[]
   es_movimiento_impulsorio?: boolean
   replies?: Reply[]
@@ -362,6 +378,7 @@ export interface Tarea {
   diasAlerta?: number | null
   observaciones?: string
   docGde?: string | null
+  adjuntos?: AdjuntoRef[]
   rango_aviso?: 'diario' | 5 | 10 | 15 | null
   mostrar_en_agenda?: boolean
 }
@@ -465,6 +482,9 @@ export interface CampoFormulario {
   onchange?: string
   dependsOn?: { field: string; value: string }
   juzgadoRef?: string
+  /** Clave de un catálogo de configuracion.store (CatalogoItem[]): si está, las
+   * opciones del select salen de ahí (solo activas) y `options` queda de respaldo. */
+  catalogo?: string
 }
 
 export interface FormularioSubtipo {

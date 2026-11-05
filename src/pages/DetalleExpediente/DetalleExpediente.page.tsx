@@ -3,15 +3,16 @@ import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
 import { useConfiguracionStore } from '../../store/configuracion.store'
 import { usePjnStore } from '../../store/pjn.store'
+import { useNotificacionesStore } from '../../store/notificaciones.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
-import type { Expediente } from '../../types'
+import type { Expediente, Tarea } from '../../types'
 import { useUIStore } from '../../store/ui.store'
 import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
 import { ESTADOS_POR_TIPO } from '../../data/expedientes.mock'
-import { getEstadoProcesal, getEstadosProcesales } from '../../data/estadosProcesales'
+import { getEstadoProcesal, getEstadosProcesales, esEstadoArchivado, TIPOS_ANTECEDENTE, TIPOS_CICLO_ACUERDO } from '../../data/estadosProcesales'
 import { getCausalesPorEstado } from '../../data/causalesFinalizacion'
 import { MAPA_INICIAR_JUICIO } from '../../utils/iniciarJuicio'
 import { FUEROS_PENAL, getJuzgadosPorFuero } from '../../data/juzgadosPJN'
@@ -68,7 +69,26 @@ function getCodigoFinalizado(tipo: string): string {
 const RAMIFICACIONES_POR_CODIGO: Record<string, string[]> = {
   ALEGATO:    ['SENTENCIA_1_FAV', 'SENTENCIA_1_DESFAV'],
   APELACION:  ['SENTENCIA_2_FAV', 'SENTENCIA_2_DESFAV'],
-  CONSTATACION_JUDICIAL: ['SENTENCIA_LANZAMIENTO', 'TRASLADO_DEFENSOR_OFICIAL'],
+  // Delta 5C — bifurcación por vulnerabilidad (Lanzamiento Judicializado)
+  CONSTATACION_JUDICIAL: ['SENTENCIA_LANZAMIENTO', 'TRABA_LITIS'],
+}
+
+// Texto de la opción en el select "Avanzar" cuando la rama necesita explicarse
+// (el label del estado solo no dice por qué se elige ese camino).
+const LABEL_RAMA: Record<string, Record<string, string>> = {
+  CONSTATACION_JUDICIAL: {
+    SENTENCIA_LANZAMIENTO: 'Sin personas vulnerables → Sentencia de Lanzamiento',
+    TRABA_LITIS:           'Con personas vulnerables → Traba de Litis',
+  },
+}
+
+// Estados terminales de los tipos sin ciclo propio (fallback ESTADOS_POR_TIPO)
+// desde los que se puede desarchivar (Delta 3).
+const ESTADOS_TERMINALES_GENERICOS = new Set(['ARCHIVADO', 'ARCHIVADA', 'CERRADO', 'CUMPLIDO', 'COMPLETADA', 'FINALIZADO'])
+
+/** Tareas no resueltas (ni cumplidas ni "no procedente") de un estado. */
+function tareasSinResolver(tareas: Tarea[]): Tarea[] {
+  return tareas.filter(t => t.estado !== 'cumplido' && t.estado !== 'no_procedente')
 }
 
 // Split Operativo/Comercial de LANZAMIENTO_JUDICIALIZADO — el circuito
@@ -97,6 +117,17 @@ const TIPOS_EN_ANALISIS_CICLO_B = new Set(['CONSIGNACION', 'DESAFUERO'])
  * dado el `tipoExpediente` (solo relevante para EN_ANALISIS). Vacío si el
  * estado no ramifica (es una transición lineal vía `siguiente`). */
 function getRamificaciones(codigoEstado: string, tipoExpediente: string): string[] {
+  // Mediaciones / SECLO — el letrado elige el resultado: Cumplido (acuerdo) o
+  // Cumplido (no acuerdo). Desde En Análisis también puede pedir información.
+  if (TIPOS_CICLO_ACUERDO.has(tipoExpediente)) {
+    if (codigoEstado === 'EN_ANALISIS') return ['SOLICITUD_INFORMACION', 'CUMPLIDO_ACUERDO', 'CUMPLIDO_SIN_ACUERDO']
+    if (codigoEstado === 'SOLICITUD_INFORMACION') return ['CUMPLIDO_ACUERDO', 'CUMPLIDO_SIN_ACUERDO']
+    return []
+  }
+  // Defensa Civil — asume o no asume la representación.
+  if (tipoExpediente === 'DEFENSA_CIVIL') {
+    return codigoEstado === 'EN_ANALISIS' ? ['ASUME_REPRESENTACION', 'NO_ASUME_REPRESENTACION'] : []
+  }
   if (codigoEstado === 'EN_ANALISIS') {
     if (TIPOS_EN_ANALISIS_CICLO_B.has(tipoExpediente)) {
       return ['JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE']
@@ -105,6 +136,11 @@ function getRamificaciones(codigoEstado: string, tipoExpediente: string): string
       return ['ACUERDO_EXTRAJUDICIAL', 'JUICIO_INICIADO', 'DEVUELTO_SECTOR_REQUIRENTE']
     }
     return []
+  }
+  // Delta 13 — desde JUICIO_INICIADO el antecedente se puede archivar a mano
+  // (Devuelto al sector requirente). Su FINALIZADO llega solo en cascada.
+  if (codigoEstado === 'JUICIO_INICIADO' && TIPOS_ANTECEDENTE.has(tipoExpediente)) {
+    return ['DEVUELTO_SECTOR_REQUIRENTE']
   }
   return RAMIFICACIONES_POR_CODIGO[codigoEstado] ?? []
 }
@@ -125,7 +161,7 @@ export default function DetalleExpedientePage() {
   const params = useParams()
   const expId = params['*'] ?? ''
 
-  const { expedienteActivo: exp, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
+  const { expedienteActivo: exp, expedientes, setExpedienteActivo, actualizarEstado, asignarAbogado, actualizarExpediente, agregarActividad, agregarExpediente, vincularExpediente, tareasMap, inicializarTareas } = useExpedientesStore()
   const { monedas } = useConfiguracionStore()
   const { usuarioActivo } = useUIStore()
   const [searchParams] = useSearchParams()
@@ -149,6 +185,15 @@ export default function DetalleExpedientePage() {
   const [modalCausal, setModalCausal] = useState(false)
   const [causalSeleccionada, setCausalSeleccionada] = useState('')
   const [causalLibre, setCausalLibre] = useState('')
+  // Delta 13 — advertencia blanda de tareas pendientes (no bloquea).
+  //  · 'finalizar_derivada': al finalizar la derivada, tareas sin resolver del ANTECEDENTE.
+  //  · 'archivar_antecedente': al llevar el antecedente a un estado archivado.
+  const [pendientes, setPendientes] = useState<{
+    contexto: 'finalizar_derivada' | 'archivar_antecedente'
+    expId: string
+    estadoLabel: string
+    tareas: Tarea[]
+  } | null>(null)
   const [formJuicio, setFormJuicio] = useState({
     oficio_judicial: '',
     tipo_intervencion: 'Actora',
@@ -224,11 +269,35 @@ export default function DetalleExpedientePage() {
     : undefined
   const esFlujoProcesal = !!siguienteEstadoProcesal || getRamificaciones(exp.estadoProcesal ?? exp.estado, exp.tipo).length > 0
 
+  // Delta 3 — DESARCHIVADO en Civil/Laboral (Penal tiene su propio manejo).
+  const estadoCodActual = exp.estadoProcesal ?? exp.estado
+  const enDesarchivadoCL = exp.area !== 'PENAL' && estadoCodActual === 'DESARCHIVADO'
+  const esTerminalCL = exp.area !== 'PENAL' && !enDesarchivadoCL && (
+    esEstadoArchivado(exp.tipo, estadoCodActual) ||
+    (!exp.estadoProcesal && ESTADOS_TERMINALES_GENERICOS.has(exp.estado))
+  )
+  /** Label legible de un código de estado C/L (con fallback al código crudo). */
+  const labelEstadoCL = (codigo: string) => getEstadoProcesal(exp.tipo, codigo)?.label ?? codigo
+
+  // Delta 13 — actuaciones relacionadas por "Iniciar Juicio".
+  const antecedente = exp.antecedente_id ? expedientes.find(e => e.id === exp.antecedente_id) : undefined
+  /** Advertencia blanda al archivar un antecedente (no bloquea por tareas). */
+  const esArchivoBlando = (codigoDestino: string) =>
+    TIPOS_ANTECEDENTE.has(exp.tipo) && esEstadoArchivado(exp.tipo, codigoDestino)
+
+  // Delta 7 — no se puede iniciar querella sin intervención definida.
+  const tipoIntervencion = String(exp.campos_mesa?.['mesa_tipo_intervencion'] ?? '')
+  const querellaBloqueada = !tipoIntervencion || tipoIntervencion === 'Sin Intervención'
+
   function openAccion(a: AccionMenu) {
     setMenuOpen(false)
     if (a === 'estado') {
       if (exp!.area === 'PENAL') {
         setNuevoEstado('')
+      } else if (enDesarchivadoCL) {
+        setNuevoEstado(exp!.estado_previo_desarchivo ?? '')
+      } else if (esTerminalCL) {
+        setNuevoEstado('DESARCHIVADO')
       } else if (esFlujoProcesal) {
         const todosEstados = getEstadosProcesales(exp!.tipo)
         const estadoCod = exp!.estadoProcesal ?? exp!.estado
@@ -270,7 +339,54 @@ export default function DetalleExpedientePage() {
     setAccion(a)
   }
 
-  function confirmarEstado() {
+  /** Registra un movimiento de sistema de cambio de estado C/L con el formato
+   * que el feed de TimelineTab reconoce ("Cambio de estado: A → B"). */
+  function registrarCambioEstadoCL(expId: string, desde: string, hacia: string, descripcion: string, extra: Partial<Expediente> = {}) {
+    agregarActividad(expId, {
+      id: `ACT_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      expediente_id: expId,
+      tipo: 'MOVIMIENTO',
+      titulo: `Cambio de estado: ${desde} → ${hacia}`,
+      descripcion,
+      fecha: HOY,
+      activo: true,
+      subitems: [],
+      estadoExpediente: extra.estadoProcesal ?? extra.estado ?? hacia,
+      doc_gde: null,
+      creado_por: usuarioActivo?.id,
+    })
+  }
+
+  function confirmarEstado(omitirAvisoPendientes = false) {
+    // ── Delta 3 — Desarchivar / Volver a archivo (Civil/Laboral) ──
+    if (enDesarchivadoCL || (esTerminalCL && nuevoEstado === 'DESARCHIVADO')) {
+      const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+      const conCiclo = !!exp!.estadoProcesal
+      if (enDesarchivadoCL) {
+        const destino = exp!.estado_previo_desarchivo
+        if (!destino) { setAccion(null); return }
+        registrarCambioEstadoCL(exp!.id, 'Desarchivado', labelEstadoCL(destino),
+          motivoEstado.trim() || `Actuación devuelta a archivo por ${nombre}.`, { estado: destino })
+        actualizarEstado(exp!.id, destino)
+        actualizarExpediente(exp!.id, {
+          estadoProcesal: conCiclo ? destino : undefined,
+          estado_previo_desarchivo: undefined,
+        })
+        toast.success(`Actuación devuelta a ${labelEstadoCL(destino)}.`)
+      } else {
+        registrarCambioEstadoCL(exp!.id, labelEstadoCL(estadoCodActual), 'Desarchivado',
+          motivoEstado.trim() || `Actuación desarchivada por ${nombre}.`, { estado: 'DESARCHIVADO' })
+        actualizarEstado(exp!.id, 'DESARCHIVADO')
+        actualizarExpediente(exp!.id, {
+          estadoProcesal: conCiclo ? 'DESARCHIVADO' : undefined,
+          estado_previo_desarchivo: estadoCodActual,
+        })
+        toast.info('Actuación desarchivada. Cargá la actividad y luego volvé a archivo desde Cambiar estado.', { autoClose: 6000 })
+      }
+      setMotivoEstado('')
+      setAccion(null)
+      return
+    }
     if (exp!.area === 'PENAL') {
       if (!nuevoEstado || nuevoEstado === exp!.estadoProcesal) { setAccion(null); return }
       const etapas = getEtapasPenales(exp!.tipo)
@@ -303,6 +419,23 @@ export default function DetalleExpedientePage() {
         setAccion(null)
         setModalCausal(true)
         return
+      }
+      // Delta 13 (5.3) — archivar un antecedente con tareas sin resolver:
+      // advertencia blanda (Volver / Continuar igual), nunca bloqueo.
+      if (!omitirAvisoPendientes && esArchivoBlando(nuevoEstado)) {
+        const sinResolver = tareasSinResolver(
+          tareasMap[`${exp!.id}__${estadoCodActual}`] ?? estadoProcesalActual?.tareas ?? []
+        )
+        if (sinResolver.length > 0) {
+          setAccion(null)
+          setPendientes({
+            contexto: 'archivar_antecedente',
+            expId: exp!.id,
+            estadoLabel: estadoProcesalActual?.label ?? estadoCodActual,
+            tareas: sinResolver,
+          })
+          return
+        }
       }
       const todosEstados = getEstadosProcesales(exp!.tipo)
       const idxActual = todosEstados.findIndex(e => e.codigo === (exp!.estadoProcesal ?? exp!.estado))
@@ -343,6 +476,7 @@ export default function DetalleExpedientePage() {
       setNuevoEstado('')
       setMotivoEstado('')
       setAccion(null)
+      setPendientes(null)
       return
     }
     if (!nuevoEstado || nuevoEstado === exp!.estado) { setAccion(null); return }
@@ -351,9 +485,28 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
-  function confirmarCausal() {
+  function confirmarCausal(omitirAvisoPendientes = false) {
     const causal = causalSeleccionada || causalLibre.trim()
     if (!causal) return
+
+    // Delta 13 (5.2) — si la actuación deriva de un antecedente que todavía tiene
+    // tareas sin resolver en su estado actual, se avisa (sin bloquear).
+    if (!omitirAvisoPendientes && antecedente && !esEstadoArchivado(antecedente.tipo, antecedente.estadoProcesal ?? antecedente.estado)) {
+      const codAnt = antecedente.estadoProcesal ?? antecedente.estado
+      const defAnt = getEstadoProcesal(antecedente.tipo, codAnt)
+      const sinResolver = tareasSinResolver(tareasMap[`${antecedente.id}__${codAnt}`] ?? defAnt?.tareas ?? [])
+      if (sinResolver.length > 0) {
+        setModalCausal(false)
+        setPendientes({
+          contexto: 'finalizar_derivada',
+          expId: antecedente.id,
+          estadoLabel: defAnt?.label ?? codAnt,
+          tareas: sinResolver,
+        })
+        return
+      }
+    }
+
     const estadoCodigo = exp!.estadoProcesal ?? exp!.estado
     const estadoActual = getEstadoProcesal(exp!.tipo, estadoCodigo)
     const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
@@ -375,7 +528,35 @@ export default function DetalleExpedientePage() {
     })
     actualizarEstado(exp!.id, codigoFinalizado)
     actualizarExpediente(exp!.id, { estadoProcesal: codigoFinalizado, causal_finalizacion: causal })
+
+    // Delta 13 — cascada: el antecedente pasa a FINALIZADO (archivado), salvo que
+    // ya estuviera archivado (Devuelto al sector / Finalizado): no se lo pisa.
+    if (antecedente) {
+      const codAnt = antecedente.estadoProcesal ?? antecedente.estado
+      if (!esEstadoArchivado(antecedente.tipo, codAnt)) {
+        const defAnt = getEstadoProcesal(antecedente.tipo, codAnt)
+        agregarActividad(antecedente.id, {
+          id: `ACT_${Date.now()}_CASC`,
+          expediente_id: antecedente.id,
+          tipo: 'MOVIMIENTO',
+          titulo: `Cambio de estado: ${defAnt?.label ?? codAnt} → Finalizado`,
+          descripcion: `Finalizado en cascada al finalizar la actuación derivada ${exp!.id}. Causal: ${causal}`,
+          fecha: HOY,
+          activo: true,
+          subitems: [],
+          estadoExpediente: 'FINALIZADO',
+          tareasSnapshot: tareasMap[`${antecedente.id}__${codAnt}`] ?? defAnt?.tareas ?? [],
+          doc_gde: null,
+          creado_por: usuarioActivo?.id,
+        })
+        actualizarEstado(antecedente.id, 'FINALIZADO')
+        actualizarExpediente(antecedente.id, { estadoProcesal: 'FINALIZADO', causal_finalizacion: causal })
+        toast.info(`El antecedente ${antecedente.id} pasó a Finalizado.`, { autoClose: 6000 })
+      }
+    }
+
     toast.success('Actuación finalizada.')
+    setPendientes(null)
     setModalCausal(false)
     setCausalSeleccionada('')
     setCausalLibre('')
@@ -402,129 +583,156 @@ export default function DetalleExpedientePage() {
     setAccion(null)
   }
 
+  // Delta 13 — "Iniciar Juicio" SIEMPRE crea una actuación nueva (derivada), para
+  // los 7 tipos de MAPA_INICIAR_JUICIO. El antecedente queda como actuación
+  // separada, vinculada por causa común y por antecedente_id / id_juicio_derivado.
   function confirmarIniciarJuicio() {
     const tipoDestino = MAPA_INICIAR_JUICIO[exp!.tipo]
+    if (!tipoDestino) { setAccion(null); return }
+    const esLanzamiento = tipoDestino === 'LANZAMIENTO_JUDICIALIZADO'
+    const labelDestino = TIPOS_GESTION.find(t => t.code === tipoDestino)?.label ?? tipoDestino
 
-    // LANZAMIENTO es el único origen que crea un expediente NUEVO
-    // (LANZAMIENTO_JUDICIALIZADO) — mismo patrón que confirmarNuevaQuerella.
-    // El resto de MAPA_INICIAR_JUICIO sigue parcheando el expediente actual.
-    if (tipoDestino === 'LANZAMIENTO_JUDICIALIZADO') {
-      const idNuevo = `${exp!.area === 'CIVIL' ? 'C' : 'L'}-LJ${Date.now().toString().slice(-6)}`
-      // "Principal · PJN" solo si hay número de causa REAL — el id del
-      // expediente origen es un sentinela de agrupación, no una causa.
-      const tieneCausaReal = !!(formJuicio.numero_causa.trim() || exp!.numero_causa)
-      const causaComun = formJuicio.numero_causa.trim() || exp!.numero_causa || exp!.id
+    const idNuevo = `${exp!.area === 'LABORAL' ? 'L' : 'C'}-${esLanzamiento ? 'LJ' : 'DA'}${Date.now().toString().slice(-6)}`
+    // "Principal · PJN" solo si hay número de causa REAL — el id del
+    // expediente origen es un sentinela de agrupación, no una causa.
+    const tieneCausaReal = !!(formJuicio.numero_causa.trim() || exp!.numero_causa)
+    const causaComun = formJuicio.numero_causa.trim() || exp!.numero_causa || exp!.id
 
-      const nuevoLanzamiento: Expediente = {
-        id:              idNuevo,
-        area:            exp!.area,
-        tipo:            'LANZAMIENTO_JUDICIALIZADO',
-        estado:          'ASIGNADO',
-        estadoProcesal:  'ASIGNADO',
-        caratula:        formJuicio.caratula || exp!.caratula,
-        numero_ee_gde:   exp!.numero_ee_gde,
-        abogado_id:      exp!.abogado_id,
-        fecha_recepcion: HOY,
-        numero_causa:    causaComun,
-        es_principal:    tieneCausaReal,
-        es_urgente:      exp!.es_urgente,
-        campos_mesa: {
-          mesa_num_causa:        formJuicio.numero_causa,
-          mesa_juzgado:          formJuicio.juzgado,
-          mesa_secretaria:       formJuicio.secretaria,
-          mesa_caratula:         formJuicio.caratula,
-          mesa_abogado_contr:    formJuicio.abogado_contraria,
-          mesa_parte_actora:     formJuicio.parte_actora,
-          mesa_parte_dem:        formJuicio.parte_demandada,
-          mesa_codemandados:     formJuicio.codemandados,
-          mesa_fecha_inicio:     formJuicio.fecha_inicio,
-          mesa_juicio:           formJuicio.tipo_juicio,
-          mesa_ubicacion:        formJuicio.ubicacion,
-          mesa_linea:            formJuicio.linea,
-          mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento,
-        },
-        campos_abogado: {},
-        timeline: [
-          {
-            id:               `${idNuevo}_REC_01`,
-            expediente_id:    idNuevo,
-            tipo:             'RECEPCION',
-            titulo:           'Lanzamiento judicializado iniciado',
-            descripcion:      `Iniciado desde el lanzamiento administrativo ${exp!.id}. Tipo de lanzamiento: ${formJuicio.tipo_lanzamiento}.`,
-            fecha:            HOY,
-            activo:           true,
-            subitems:         [],
-            estadoExpediente: 'ASIGNADO',
-            creado_por:       usuarioActivo?.id,
-          },
-        ],
-        intervinientes: [],
-        documentos:     [],
-        vinculos:       [],
-      }
-
-      agregarExpediente(nuevoLanzamiento)
-
-      actualizarExpediente(exp!.id, {
-        es_juicio_iniciado:  true,
-        fecha_inicio_juicio: HOY,
-        numero_causa:        causaComun,
-        es_principal:        false,
-      })
-
-      agregarActividad(exp!.id, {
-        id:               `${exp!.id}_JUI_${Date.now()}`,
-        expediente_id:    exp!.id,
-        tipo:             'MOVIMIENTO',
-        titulo:           'Juicio iniciado — Lanzamiento judicializado',
-        descripcion:      `Se inició el lanzamiento judicializado ${idNuevo} (${formJuicio.tipo_lanzamiento}).`,
-        fecha:            HOY,
-        activo:           true,
-        subitems:         [],
-        estadoExpediente: exp!.estado,
-        es_movimiento_impulsorio: true,
-        creado_por:       usuarioActivo?.id,
-      })
-
-      toast.success(`Lanzamiento judicializado ${idNuevo} creado (${formJuicio.tipo_lanzamiento}).`, { autoClose: 6000 })
-      setAccion(null)
-      setTimeout(() => navigate(RUTAS.EXPEDIENTE(idNuevo)), 800)
-      return
+    // Set completo de campos_mesa del formulario (las filas de monto vacías se descartan).
+    const camposMesaNuevos: Record<string, unknown> = {
+      mesa_num_causa:     formJuicio.numero_causa,
+      mesa_juzgado:       formJuicio.juzgado,
+      mesa_secretaria:    formJuicio.secretaria,
+      mesa_caratula:      formJuicio.caratula,
+      mesa_abogado_contr: formJuicio.abogado_contraria,
+      mesa_parte_actora:  formJuicio.parte_actora,
+      mesa_parte_dem:     formJuicio.parte_demandada,
+      mesa_codemandados:  formJuicio.codemandados,
+      mesa_fecha_inicio:  formJuicio.fecha_inicio,
+      mesa_juicio:        formJuicio.tipo_juicio,
+      mesa_ubicacion:     formJuicio.ubicacion,
+      mesa_linea:         formJuicio.linea,
+      ...(esLanzamiento
+        ? { mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento }
+        : {
+            mesa_coactores:         formJuicio.coactores,
+            mesa_oficio_judicial:   formJuicio.oficio_judicial,
+            mesa_tipo_intervencion: formJuicio.tipo_intervencion,
+            mesa_monto: formJuicio.montos
+              .filter(m => m.monto.trim() !== '')
+              .map((m): ParMoneda => ({ moneda: m.moneda, monto: Number(m.monto) || 0 })),
+          }),
     }
 
+    const nuevaActuacion: Expediente = {
+      id:              idNuevo,
+      area:            exp!.area,
+      tipo:            tipoDestino as Expediente['tipo'],
+      estado:          'ASIGNADO',
+      estadoProcesal:  'ASIGNADO',
+      caratula:        formJuicio.caratula || exp!.caratula,
+      numero_ee_gde:   exp!.numero_ee_gde,
+      abogado_id:      exp!.abogado_id,
+      fecha_recepcion: HOY,
+      numero_causa:    causaComun,
+      es_principal:    tieneCausaReal,
+      es_urgente:      exp!.es_urgente,
+      antecedente_id:  exp!.id,
+      // Timer de impulsorio: arranca el día en que se inicia el juicio.
+      es_juicio_iniciado:  true,
+      fecha_inicio_juicio: HOY,
+      campos_mesa:     camposMesaNuevos,
+      campos_abogado:  {},
+      timeline: [
+        {
+          id:               `${idNuevo}_REC_01`,
+          expediente_id:    idNuevo,
+          tipo:             'RECEPCION',
+          titulo:           `${labelDestino} iniciada desde antecedente`,
+          descripcion:      `Iniciada con "Iniciar Juicio" desde ${exp!.id} (${tipoLabel}).${esLanzamiento ? ` Tipo de lanzamiento: ${formJuicio.tipo_lanzamiento}.` : ''}`,
+          fecha:            HOY,
+          activo:           true,
+          subitems:         [],
+          estadoExpediente: 'ASIGNADO',
+          creado_por:       usuarioActivo?.id,
+        },
+      ],
+      intervinientes: [],
+      documentos:     [],
+      vinculos: [{
+        id:            exp!.id,
+        area:          exp!.area,
+        tipo:          exp!.tipo,
+        caratula:      exp!.caratula,
+        estado:        exp!.estado,
+        estadoLabel:   estadoProcesalActual?.label ?? exp!.estado,
+        tipo_relacion: 'ANTECEDENTE',
+        numero_causa:  causaComun,
+        abogado_id:    exp!.abogado_id,
+      }],
+    }
+
+    agregarExpediente(nuevaActuacion)
+
     actualizarExpediente(exp!.id, {
-      numero_causa: formJuicio.numero_causa.trim() || exp!.numero_causa,
-      es_juicio_iniciado: true,
-      fecha_inicio_juicio: new Date().toISOString().split('T')[0],
-      fecha_ultimo_impulsorio: undefined,
-      campos_mesa: {
-        ...exp!.campos_mesa,
-        mesa_num_causa:     formJuicio.numero_causa,
-        mesa_juzgado:       formJuicio.juzgado,
-        mesa_secretaria:    formJuicio.secretaria,
-        mesa_caratula:      formJuicio.caratula,
-        mesa_abogado_contr: formJuicio.abogado_contraria,
-        mesa_parte_actora:  formJuicio.parte_actora,
-        mesa_parte_dem:     formJuicio.parte_demandada,
-        mesa_coactores:     formJuicio.coactores,
-        mesa_codemandados:  formJuicio.codemandados,
-        mesa_fecha_inicio:  formJuicio.fecha_inicio,
-        mesa_juicio:        formJuicio.tipo_juicio,
-        mesa_monto: formJuicio.montos
-          .filter(m => m.monto.trim() !== '')
-          .map((m): ParMoneda => ({ moneda: m.moneda, monto: Number(m.monto) || 0 })),
-        mesa_oficio_judicial: formJuicio.oficio_judicial,
-        mesa_tipo_intervencion: formJuicio.tipo_intervencion,
-        mesa_ubicacion:     formJuicio.ubicacion,
-        mesa_linea:         formJuicio.linea,
-        ...(formJuicio.tipo_lanzamiento ? { mesa_tipo_lanzamiento: formJuicio.tipo_lanzamiento } : {}),
-      },
+      es_juicio_iniciado:  true,
+      fecha_inicio_juicio: HOY,
+      numero_causa:        causaComun,
+      es_principal:        false,
+      id_juicio_derivado:  idNuevo,
     })
-    toast.success('Juicio iniciado y datos registrados.')
+    vincularExpediente(exp!.id, {
+      id:            idNuevo,
+      area:          exp!.area,
+      tipo:          nuevaActuacion.tipo,
+      caratula:      nuevaActuacion.caratula,
+      estado:        'ASIGNADO',
+      estadoLabel:   'Asignado',
+      tipo_relacion: 'JUDICIALIZADO',
+      numero_causa:  causaComun,
+      abogado_id:    exp!.abogado_id,
+    })
+
+    agregarActividad(exp!.id, {
+      id:               `${exp!.id}_JUI_${Date.now()}`,
+      expediente_id:    exp!.id,
+      tipo:             'MOVIMIENTO',
+      titulo:           `Juicio iniciado — ${labelDestino}`,
+      descripcion:      `Se creó la actuación ${idNuevo} (${labelDestino}${esLanzamiento ? ` · ${formJuicio.tipo_lanzamiento}` : ''}). Este antecedente pasa a Finalizado cuando se finalice la actuación derivada.`,
+      fecha:            HOY,
+      activo:           true,
+      subitems:         [],
+      estadoExpediente: exp!.estado,
+      creado_por:       usuarioActivo?.id,
+    })
+
+    // Notificación por campana a Mesa SACO (todos los usuarios con rol adm_mesa).
+    const quien = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Un letrado'
+    USUARIOS.filter(u => u.rolBD === 'adm_mesa').forEach(u => {
+      useNotificacionesStore.getState().agregarNotificacion({
+        tipo:           'INICIO_JUICIO',
+        titulo:         `Juicio iniciado — ${labelDestino}`,
+        descripcion:    `${quien} inició juicio desde ${exp!.id}. Se creó la actuación ${idNuevo} (${labelDestino}).`,
+        expedienteId:   idNuevo,
+        tipoGestion:    labelDestino,
+        caratula:       nuevaActuacion.caratula,
+        numeroCausa:    tieneCausaReal ? causaComun : null,
+        leida:          false,
+        fecha:          new Date().toISOString(),
+        destinatarioId: u.id,
+      })
+    })
+
+    toast.success(`Actuación ${idNuevo} creada (${labelDestino}).`, { autoClose: 6000 })
     setAccion(null)
+    setTimeout(() => navigate(RUTAS.EXPEDIENTE(idNuevo)), 800)
   }
 
   function confirmarNuevaQuerella() {
+    if (querellaBloqueada) {
+      toast.error('No se puede iniciar una querella sin Tipo de Intervención definido.')
+      return
+    }
     if (!formQuerella.caratula.trim()) {
       toast.error('La carátula es obligatoria.')
       return
@@ -705,6 +913,24 @@ export default function DetalleExpedientePage() {
                   Ver Querella →
                 </button>
               )}
+              {exp.id_juicio_derivado && (
+                <button
+                  onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id_juicio_derivado!))}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#eeedfe] text-[#534ab7] border border-[#AFA9EC] hover:bg-[#CECBF6] transition-colors"
+                >
+                  <Icon name="gavel" size={12} />
+                  Ver juicio {exp.id_juicio_derivado} →
+                </button>
+              )}
+              {exp.antecedente_id && (
+                <button
+                  onClick={() => navigate(RUTAS.EXPEDIENTE(exp.antecedente_id!))}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#f5f5f5] text-[#4a6a84] border border-[rgba(0,0,0,0.12)] hover:bg-[#e8e8e8] transition-colors"
+                >
+                  <Icon name="account_tree" size={12} />
+                  Antecedente {exp.antecedente_id} →
+                </button>
+              )}
             </div>
             <h1 className="font-headline font-bold text-xl text-[#1b3a57] leading-snug">{exp.caratula}</h1>
             <div className="flex items-center gap-4 mt-1.5 text-xs text-[#4a6a84] flex-wrap">
@@ -733,19 +959,28 @@ export default function DetalleExpedientePage() {
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
                   { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
                   { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
-                  { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' },
-                  { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Iniciar Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada },
+                  { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' && !exp.id_juicio_derivado },
+                  { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Iniciar Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada,
+                    disabled: querellaBloqueada,
+                    hint: 'Definí el Tipo de Intervención (Datos) para poder iniciar la querella.' },
                   { key: 'consultar_pjn' as AccionMenu, icon: 'search', label: 'Consultar Novedad PJN', show: !!exp.numero_causa },
                 ]
                 .filter(item => item.show)
-                .map(item => (
+                .map((item: { key: AccionMenu; icon: string; label: string; disabled?: boolean; hint?: string }) => (
                   <button
                     key={item.key}
-                    onClick={() => openAccion(item.key)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
+                    onClick={() => { if (!item.disabled) openAccion(item.key) }}
+                    disabled={item.disabled}
+                    title={item.disabled ? item.hint : undefined}
+                    className="w-full flex items-start gap-2.5 px-4 py-2.5 text-sm text-left text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   >
                     <Icon name={item.icon} size={18} />
-                    {item.label}
+                    <span>
+                      {item.label}
+                      {item.disabled && item.hint && (
+                        <span className="block text-[10px] text-[#4a6a84] leading-snug mt-0.5">{item.hint}</span>
+                      )}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -830,9 +1065,10 @@ export default function DetalleExpedientePage() {
               Cancelar
             </button>
             <button
-              onClick={confirmarEstado}
+              onClick={() => confirmarEstado()}
               disabled={(() => {
                 if (exp.area === 'PENAL') return !nuevoEstado
+                if (enDesarchivadoCL || esTerminalCL) return !nuevoEstado
                 if (!esFlujoProcesal) return !nuevoEstado
                 const estadoCodigo = exp.estadoProcesal ?? exp.estado
                 if (estadoCodigo === 'ASIGNADO') return false
@@ -843,6 +1079,7 @@ export default function DetalleExpedientePage() {
                 const idxDest = todos.findIndex(e => e.codigo === nuevoEstado)
                 const esRetroceso = idxDest < idxActual
                 if (esRetroceso) return !motivoEstado.trim()
+                if (esArchivoBlando(nuevoEstado)) return false
                 return tieneTareasPendientes
               })()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
@@ -896,6 +1133,47 @@ export default function DetalleExpedientePage() {
               Esta acción quedará registrada en el timeline.
             </p>
           </div>
+        ) : (enDesarchivadoCL || esTerminalCL) ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
+              <Icon name="info" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[#854f0b]">
+                {enDesarchivadoCL
+                  ? 'La actuación está desarchivada. Una vez cargada la actividad, volvé a archivarla.'
+                  : 'La actuación está en un estado terminal. Desarchivala para cargar una actividad genérica; después vas a tener que volver a archivarla.'}
+              </p>
+            </div>
+            <div>
+              <label className="field-label">Nuevo estado</label>
+              <select className="field-input w-full" value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)}>
+                {enDesarchivadoCL ? (
+                  <option value={exp.estado_previo_desarchivo ?? ''}>
+                    Volver a archivo ({labelEstadoCL(exp.estado_previo_desarchivo ?? '')})
+                  </option>
+                ) : (
+                  <>
+                    <option value="DESARCHIVADO">Desarchivar actuación</option>
+                    {/* Tipos sin ciclo propio conservan su lista de estados */}
+                    {!exp.estadoProcesal && estadosPosibles
+                      .filter(s => s !== exp.estado)
+                      .map(s => <option key={s} value={s}>{s}</option>)}
+                  </>
+                )}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Motivo (opcional)</label>
+              <textarea
+                className="field-input resize-none h-20 w-full"
+                placeholder="Anotá el motivo del cambio..."
+                value={motivoEstado}
+                onChange={e => setMotivoEstado(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-[#4a6a84] italic text-center">
+              Esta acción quedará registrada en el timeline.
+            </p>
+          </div>
         ) : esFlujoProcesal ? (
           (() => {
             const estadoCodigo = exp.estadoProcesal ?? exp.estado
@@ -921,7 +1199,7 @@ export default function DetalleExpedientePage() {
               !siguientes.some(e => e.codigo === codigoFinalizado)
             return (
               <div className="space-y-3">
-                {!esAsignado && !esRetroceso && nuevoEstado !== codigoFinalizado && tieneTareasPendientes && (
+                {!esAsignado && !esRetroceso && nuevoEstado !== codigoFinalizado && tieneTareasPendientes && !esArchivoBlando(nuevoEstado) && (
                   <div className="flex items-start gap-2 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-xl">
                     <Icon name="warning" size={14} className="text-[#b91c1c] flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-[#b91c1c]">
@@ -954,11 +1232,14 @@ export default function DetalleExpedientePage() {
                     >
                       {(siguientes.length > 0 || mostrarFinalizarSiempre) && (
                         <optgroup label="Avanzar">
-                          {siguientes.map(e => (
-                            <option key={e.codigo} value={e.codigo} disabled={tieneTareasPendientes}>
-                              {e.label}{tieneTareasPendientes ? ' (tareas pendientes)' : ''}
-                            </option>
-                          ))}
+                          {siguientes.map(e => {
+                            const bloqueada = tieneTareasPendientes && !esArchivoBlando(e.codigo)
+                            return (
+                              <option key={e.codigo} value={e.codigo} disabled={bloqueada}>
+                                {LABEL_RAMA[estadoCodigo]?.[e.codigo] ?? e.label}{bloqueada ? ' (tareas pendientes)' : ''}
+                              </option>
+                            )
+                          })}
                           {mostrarFinalizarSiempre && (
                             <option value={codigoFinalizado}>Finalizado</option>
                           )}
@@ -1018,7 +1299,7 @@ export default function DetalleExpedientePage() {
               Cancelar
             </button>
             <button
-              onClick={confirmarCausal}
+              onClick={() => confirmarCausal()}
               disabled={!causalSeleccionada && !causalLibre.trim()}
               className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
@@ -1035,6 +1316,12 @@ export default function DetalleExpedientePage() {
               <p className="text-xs text-[#4a6a84]">
                 Vas a finalizar la actuación <span className="font-mono font-bold">{exp.id}</span>. Indicá la causal de finalización.
               </p>
+              {antecedente && !esEstadoArchivado(antecedente.tipo, antecedente.estadoProcesal ?? antecedente.estado) && (
+                <p className="text-xs text-[#1b3a57] bg-[#f0f7ff] border border-[#C4DFE8] rounded-xl px-3 py-2">
+                  El antecedente <span className="font-mono font-bold">{antecedente.id}</span> también pasará a
+                  Finalizado, con la misma causal registrada en su línea de tiempo.
+                </p>
+              )}
               {opcionesCausal.length > 0 ? (
                 <div>
                   <label className="field-label">Causal de finalización</label>
@@ -1061,6 +1348,59 @@ export default function DetalleExpedientePage() {
             </div>
           )
         })()}
+      </Modal>
+
+      {/* Modal: Tareas pendientes — advertencia blanda (Delta 13), no bloquea */}
+      <Modal
+        open={!!pendientes}
+        onClose={() => setPendientes(null)}
+        titulo="Tareas pendientes"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => {
+                const ctx = pendientes?.contexto
+                setPendientes(null)
+                if (ctx === 'finalizar_derivada') setModalCausal(true)
+                else setAccion('estado')
+              }}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            >
+              Volver
+            </button>
+            <button
+              onClick={() => {
+                if (pendientes?.contexto === 'finalizar_derivada') confirmarCausal(true)
+                else confirmarEstado(true)
+              }}
+              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            >
+              Continuar igual
+            </button>
+          </>
+        }
+      >
+        {pendientes && (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
+              <Icon name="warning" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[#854f0b]">
+                {pendientes.contexto === 'finalizar_derivada'
+                  ? <>El antecedente <span className="font-mono font-bold">{pendientes.expId}</span> tiene tareas sin resolver en <b>{pendientes.estadoLabel}</b>. Si continuás, se archiva igual con estas tareas pendientes.</>
+                  : <>Esta actuación tiene tareas sin resolver en <b>{pendientes.estadoLabel}</b>. Si continuás, se archiva igual con estas tareas pendientes.</>}
+              </p>
+            </div>
+            <ul className="max-h-56 overflow-y-auto space-y-1">
+              {pendientes.tareas.map(t => (
+                <li key={t.id} className="flex items-start gap-2 text-xs text-[#1b3a57]">
+                  <Icon name="schedule" size={12} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
+                  {t.nombre}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Modal>
 
       {/* Modal: Agrupar a causa */}
@@ -1186,8 +1526,10 @@ export default function DetalleExpedientePage() {
             <div>
               <p className="text-xs font-bold text-amber-800">Confirmar inicio de acción judicial</p>
               <p className="text-[11px] text-amber-700 mt-0.5">
-                Esta acción registrará el inicio del proceso judicial para{' '}
-                <span className="font-mono font-bold">{exp.id}</span>.
+                Se creará una actuación nueva de tipo{' '}
+                <b>{TIPOS_GESTION.find(t => t.code === MAPA_INICIAR_JUICIO[exp.tipo])?.label ?? MAPA_INICIAR_JUICIO[exp.tipo]}</b>{' '}
+                con estos datos. <span className="font-mono font-bold">{exp.id}</span> queda como antecedente y pasa a
+                Finalizado cuando se finalice la nueva actuación.
               </p>
             </div>
           </div>

@@ -24,7 +24,8 @@ import { toast } from 'react-toastify'
 
 // 'ARCHIVO' es el código de estado terminal real del ciclo Penal (etapasPenales.ts) —
 // distinto de 'ARCHIVADO'/'ARCHIVADA' que usan los demás tipos.
-const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA'] as const
+// Incluye los terminales de los ciclos procesales C/L (Delta 13) — mismo criterio que homeShared.
+const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA', 'FINALIZADO', 'TERMINADO', 'DEVUELTO_SECTOR_REQUIRENTE', 'CUMPLIDO_ACUERDO', 'CUMPLIDO_SIN_ACUERDO', 'NO_ASUME_REPRESENTACION'] as const
 
 // ─── Types & helpers ───────────────────────────────────────────────────────────
 

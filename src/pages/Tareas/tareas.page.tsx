@@ -11,6 +11,8 @@ import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
+import { AdjuntosInput } from '../../components/ui/AdjuntosInput'
+import { aAdjuntoRef } from '../../utils/validarAdjuntos'
 import { useSolicitudesStore, type Solicitud } from '../../store/tareas.store'
 import { useNotificacionesStore } from '../../store/notificaciones.store'
 
@@ -47,7 +49,8 @@ export default function TareasPage() {
   const [vista, setVista] = useState<'mis_solicitudes' | 'mis_pedidos'>('mis_solicitudes')
   const [modalRespuesta, setModalRespuesta] = useState<Solicitud | null>(null)
   const [modalVer, setModalVer] = useState<Solicitud | null>(null)
-  const [respForm, setRespForm] = useState({ comentario: '', adjunto_nombre: '', adjunto_size: '' })
+  const [respForm, setRespForm] = useState<{ comentario: string }>({ comentario: '' })
+  const [respArchivos, setRespArchivos] = useState<File[]>([])
   const [menuSol, setMenuSol] = useState<string | null>(null)
 
   const uid = usuarioActivo?.id ?? ''
@@ -79,8 +82,7 @@ export default function TareasPage() {
     if (!modalRespuesta || !respForm.comentario.trim()) return
     responderSolicitud(modalRespuesta.id, {
       comentario: respForm.comentario,
-      adjunto_nombre: respForm.adjunto_nombre || undefined,
-      adjunto_size: respForm.adjunto_size || undefined,
+      ...(respArchivos.length > 0 ? { adjuntos: respArchivos.map(aAdjuntoRef) } : {}),
       respondido_por: uid,
       fecha: new Date().toISOString().split('T')[0],
     })
@@ -98,7 +100,8 @@ export default function TareasPage() {
     }
     toast.success('Respuesta registrada. Solicitud marcada como cumplida.')
     setModalRespuesta(null)
-    setRespForm({ comentario: '', adjunto_nombre: '', adjunto_size: '' })
+    setRespForm({ comentario: '' })
+    setRespArchivos([])
   }
 
   const PRIORIDAD_COLOR: Record<string, string> = {
@@ -312,16 +315,16 @@ export default function TareasPage() {
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-widest text-green-700">Respuesta</p>
                 <p className="text-sm text-[#1b3a57]">{modalVer.respuesta.comentario}</p>
-                {modalVer.respuesta.adjunto_nombre && (
-                  <div className="flex items-center gap-2 mt-1">
+                {(modalVer.respuesta.adjuntos?.length ? modalVer.respuesta.adjuntos : modalVer.respuesta.adjunto_nombre ? [{ nombre: modalVer.respuesta.adjunto_nombre, size: modalVer.respuesta.adjunto_size ?? '' }] : []).map((adj, i) => (
+                  <div key={i} className="flex items-center gap-2 mt-1">
                     <Icon name="attach_file" size={13} className="text-[#4a6a84]" />
-                    <span className="text-xs text-[#4a6a84]">{modalVer.respuesta.adjunto_nombre}</span>
+                    <span className="text-xs text-[#4a6a84]">{adj.nombre}</span>
                     <button className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#1b3a57] text-white hover:opacity-80 transition-opacity ml-1">
                       <Icon name="download" size={11} />
                       Descargar
                     </button>
                   </div>
-                )}
+                ))}
                 <p className="text-[10px] text-[#7a9ab4]">
                   {formatFecha(modalVer.respuesta.fecha)} · {(() => {
                     const u = getUsuarioById(modalVer.respuesta.respondido_por)
@@ -367,18 +370,8 @@ export default function TareasPage() {
               />
             </div>
             <div>
-              <label className="field-label">Adjunto (opcional)</label>
-              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] cursor-pointer hover:bg-[#f5f5f5] transition-colors">
-                <Icon name="attach_file" size={18} className="text-[#4a6a84]" />
-                <span className="text-sm text-[#4a6a84]">{respForm.adjunto_nombre || 'Seleccionar archivo...'}</span>
-                <input type="file" className="hidden" onChange={e => {
-                  const f = e.target.files?.[0]
-                  if (f) setRespForm(p => ({ ...p, adjunto_nombre: f.name, adjunto_size: `${(f.size / 1024).toFixed(0)} KB` }))
-                }} />
-              </label>
-              {respForm.adjunto_nombre && (
-                <p className="text-[10px] text-[#4a6a84] mt-1">{respForm.adjunto_nombre} · {respForm.adjunto_size}</p>
-              )}
+              <label className="field-label">Adjuntos (opcional)</label>
+              <AdjuntosInput archivos={respArchivos} onChange={setRespArchivos} />
             </div>
           </div>
         )}
