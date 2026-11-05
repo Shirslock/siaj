@@ -7,6 +7,7 @@ import { ROL_ACCESOS, mapRol } from '../../data/usuarios'
 import { filtrarNovedadesPorRol, filtrarAlertasActuacionesPorRol } from '../../utils/pjnVisibilidad'
 import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
+import logoTrenes from '../../assets/logoTrenes.svg'
 
 const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = [
   { key: 'home',           icon: 'nav_home',        label: 'Principal',              ruta: '/home' },
@@ -55,16 +56,19 @@ export function Sidebar({ activePage }: SidebarProps) {
   return (
     <>
       {/* Cierra el menú al hacer clic afuera */}
-      {sidebarOpen && <div className="fixed inset-0 z-40" onClick={closeSidebar} />}
+      {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/40" onClick={closeSidebar} />}
 
       <aside
-        className={`bg-[#E5E5E5] text-[#1b3a57] w-64 h-full flex flex-col transition-transform duration-300 overflow-y-auto overflow-x-hidden py-6 fixed top-0 left-0 z-50 shadow-xl ${
+        className={`bg-[#0B2545] text-slate-200 w-64 h-full flex flex-col transition-transform duration-300 overflow-y-auto overflow-x-hidden py-6 fixed top-0 left-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,.35)] ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <p className="px-4 pb-4 text-lg font-semibold text-[#1b3a57]">SIAJ</p>
+        <div className="flex flex-col items-start gap-2.5 px-6 pt-1 pb-[22px] mb-5 border-b border-white/10">
+          <img src={logoTrenes} alt="Trenes Argentinos Operaciones" className="w-44 h-auto brightness-0 invert" />
+          <span className="text-xl font-bold tracking-[0.18em] text-white leading-tight">SIAJ</span>
+        </div>
 
-        <nav className="flex flex-col gap-3 px-4 flex-1">
+        <nav className="flex flex-col gap-1.5 px-3.5 flex-1">
           {visibleItems.map(item => {
             const active = isActive(item)
             return (
@@ -72,8 +76,11 @@ export function Sidebar({ activePage }: SidebarProps) {
                 key={item.key}
                 to={item.ruta}
                 onClick={closeSidebar}
-                className={`flex items-center gap-3 transition-colors text-sm hover:text-blue-700 ${
-                  active ? 'text-blue-700 font-semibold' : 'text-[#1b3a57]'
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-white/[.08] hover:text-white ${
+                  active
+                    ? 'bg-blue-500/[.22] text-white font-semibold shadow-[inset_3px_0_0_#60A5FA]'
+                    : 'text-slate-300'
                 }`}
               >
                 <Icon name={item.icon} size={20} />
@@ -91,7 +98,7 @@ export function Sidebar({ activePage }: SidebarProps) {
         </nav>
 
         {/* Herramienta de la demo: cambiar de usuario (no existe en el PRD) */}
-        <div className="relative px-4 pt-4 mt-4 border-t border-black/10">
+        <div className="relative px-3.5 pt-4 mt-4 border-t border-white/10">
           {showSwitcher && (
             <UserSwitcher
               onClose={() => setShowSwitcher(false)}
@@ -101,7 +108,7 @@ export function Sidebar({ activePage }: SidebarProps) {
           <button
             ref={switcherButtonRef}
             onClick={() => setShowSwitcher(v => !v)}
-            className="flex items-center gap-3 text-sm text-[#1b3a57] hover:text-blue-700 transition-colors"
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-300 hover:bg-white/[.08] hover:text-white transition-colors"
           >
             <Icon name="swap_horiz" size={20} />
             Cambiar usuario
