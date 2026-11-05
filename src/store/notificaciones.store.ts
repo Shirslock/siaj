@@ -39,6 +39,7 @@ export const useNotificacionesStore = create<NotificacionesState>((set, get) => 
 
     agregarNotificacion: (n) =>
     set((s) => ({
-      notificaciones: [{ ...n, id: `NTF_${Date.now()}` }, ...s.notificaciones],
+      // El sufijo aleatorio evita ids repetidos al notificar a varios usuarios en el mismo instante.
+      notificaciones: [{ ...n, id: `NTF_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` }, ...s.notificaciones],
     })),
 }))

@@ -326,6 +326,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                 ) : (
                   misNotifs.map(notif => {
                     const esPjn = notif.tipo === 'NOVEDAD_PJN'
+                    const esJuicio = notif.tipo === 'INICIO_JUICIO'
                     return (
                     <div
                       key={notif.id}
@@ -351,11 +352,13 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${
                             esPjn
                               ? 'bg-[#e6f1fb] text-[#185fa5]'
-                              : notif.tipo === 'REASIGNACION'
-                                ? 'bg-[#fef3c7] text-[#d97706]'
-                                : 'bg-[#C4DFE8] text-[#1b3a57]'
+                              : esJuicio
+                                ? 'bg-[#e8def8] text-[#5b3a9a]'
+                                : notif.tipo === 'REASIGNACION'
+                                  ? 'bg-[#fef3c7] text-[#d97706]'
+                                  : 'bg-[#C4DFE8] text-[#1b3a57]'
                           }`}>
-                            {esPjn ? 'Novedad PJN' : notif.tipo === 'REASIGNACION' ? 'Reasignación' : 'Asignación'}
+                            {esPjn ? 'Novedad PJN' : esJuicio ? 'Juicio iniciado' : notif.tipo === 'REASIGNACION' ? 'Reasignación' : 'Asignación'}
                           </span>
                           <span className="text-[11px] text-[#4a6a84] truncate">
                             {notif.tipoGestion}
@@ -370,7 +373,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                         </p>
 
                         <p className="text-xs text-[#1b3a57] line-clamp-2 mt-0.5">
-                          {esPjn ? notif.titulo : notif.caratula}
+                          {esPjn ? notif.titulo : esJuicio ? (notif.descripcion ?? notif.caratula) : notif.caratula}
                         </p>
 
                         <p className="text-[10px] text-[#7a9ab4] mt-1">

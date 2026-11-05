@@ -14,7 +14,10 @@ import type { Area, Expediente, Tarea } from '../../types'
 
 // 'ARCHIVO' es el código de estado terminal real del ciclo Penal (etapasPenales.ts) —
 // distinto de 'ARCHIVADO'/'ARCHIVADA' que usan los demás tipos (mismo criterio que BandejaAbogado).
-export const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA']
+// Delta 13: también los terminales de los ciclos procesales C/L (FINALIZADO,
+// TERMINADO de Lanzamiento Judicializado, DEVUELTO_SECTOR_REQUIRENTE) — un
+// antecedente finalizado en cascada ya no cuenta como activo.
+export const ESTADOS_CERRADO = ['ARCHIVADO', 'ARCHIVADA', 'ARCHIVO', 'CERRADO', 'CUMPLIDO', 'COMPLETADA', 'FINALIZADO', 'TERMINADO', 'DEVUELTO_SECTOR_REQUIRENTE', 'CUMPLIDO_ACUERDO', 'CUMPLIDO_SIN_ACUERDO', 'NO_ASUME_REPRESENTACION']
 
 // ── Card base de widget ─────────────────────────────────────────────────────────
 

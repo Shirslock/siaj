@@ -586,7 +586,7 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
                   </div>
                 </td>
                 <td className="py-2.5 px-4 text-xs text-[#4a6a84] font-mono">{item.canal}</td>
-                <td className="py-2.5 px-4"><BadgeActivo activo={(item as unknown as CatalogoItem).activo} /></td>
+                <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
               </tr>
             ))}
           </tbody>

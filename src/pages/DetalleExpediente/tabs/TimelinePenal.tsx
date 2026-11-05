@@ -20,6 +20,8 @@ import { formatFecha } from '../../../utils/format'
 import { getEtapasPenales, getEtapaPenal } from '../../../data/etapasPenales'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
+import { validarAdjuntos } from '../../../utils/validarAdjuntos'
+import { AdjuntosInput } from '../../../components/ui/AdjuntosInput'
 import { useSolicitudesStore, PERSONAS_POR_AREA } from '../../../store/tareas.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { TIPO_ACTIVIDAD_SOLICITUD_PENAL, getConfigPorTipoActividad, solicitudEstaCompleta } from '../../../data/solicitudesPenales'
@@ -38,6 +40,9 @@ const TIPOS: { value: TipoActividad; label: string }[] = [
   { value: 'NOTIFICACION',   label: 'Notificación' },
   { value: 'MOVIMIENTO',     label: 'Movimiento' },
   { value: 'NOTA_RESPUESTA', label: 'Nota / Respuesta' },
+  // Delta 6B — mismas 2 actividades simples que en Civil/Laboral
+  { value: 'RECURSO_INCIDENTE', label: 'Interposición de Recurso' },
+  { value: 'DILIGENCIAMIENTO',  label: 'Diligenciamiento' },
   { value: 'OTRO',           label: 'Otro' },
 ]
 
@@ -157,6 +162,30 @@ function ProcesalStepperPenal({
   )
 }
 
+// ── Campo de archivos (múltiples) de un hito penal ────
+// El valor del campo es la lista de nombres separados por salto de línea.
+
+function CampoUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  // Nombres ya guardados al abrir el campo (edición de un hito cargado antes).
+  const [previos] = useState<string[]>(() => (value ? value.split('\n').filter(Boolean) : []))
+  const [nuevos, setNuevos] = useState<File[]>([])
+  function cambiar(files: File[]) {
+    setNuevos(files)
+    onChange([...previos, ...files.map(f => f.name)].join('\n'))
+  }
+  return (
+    <div className="space-y-1.5">
+      {previos.map((n, i) => (
+        <div key={`${n}-${i}`} className="flex items-center gap-2 text-[11px] text-[#4a6a84]">
+          <Icon name="attach_file" size={13} />
+          <span className="truncate">{n}</span>
+        </div>
+      ))}
+      <AdjuntosInput archivos={nuevos} onChange={cambiar} compacto />
+    </div>
+  )
+}
+
 // ── Campo genérico de input ───────────────────────────
 
 function CampoInput({
@@ -181,10 +210,7 @@ function CampoInput({
           onChange={e => onChange(e.target.value)}
         />
       ) : campo.type === 'upload' ? (
-        <div className="border-2 border-dashed border-[rgba(0,0,0,0.15)] rounded-xl p-3 text-center text-xs text-[#7a9ab4]">
-          <Icon name="upload_file" size={18} className="mx-auto mb-1 text-[#7a9ab4] block" />
-          Arrastrá el archivo o hacé click · PDF máx 25MB
-        </div>
+        <CampoUpload value={value} onChange={onChange} />
       ) : campo.type === 'select' ? (
         <select
           className="field-input w-full text-xs"
@@ -1569,8 +1595,8 @@ export function TimelinePenal({ exp }: Props) {
 
               const todosCampos = [...config.campos, ...camposCondicionales]
 
-              function handleFileUpload(campoId: string, file: File) {
-                const docId = `DOC_SOL_${Date.now()}`
+              function handleFileUpload(campoId: string, file: File, idx = 0) {
+                const docId = `DOC_SOL_${Date.now()}_${idx}`
                 agregarDocumento(exp.id, {
                   id: docId,
                   nombre: file.name,
@@ -1623,13 +1649,19 @@ export function TimelinePenal({ exp }: Props) {
                         {c.permiteArchivo && (
                           <label className="flex items-center gap-1.5 text-[11px] text-[#4a6a84] cursor-pointer mt-1 hover:text-[#1b3a57]">
                             <Icon name="attach_file" size={13} />
-                            Adjuntar archivo
+                            Adjuntar archivos
                             <input
                               type="file"
+                              multiple
                               hidden
-                              onChange={e => {
-                                const f = e.target.files?.[0]
-                                if (f) handleFileUpload(c.id, f)
+                              onChange={async e => {
+                                const input = e.target
+                                const seleccion = Array.from(input.files ?? [])
+                                if (seleccion.length === 0) return
+                                const { aceptados, rechazados } = await validarAdjuntos(seleccion)
+                                rechazados.forEach(r => toast.error(`"${r.nombre}" no se adjuntó: ${r.motivo}.`, { autoClose: 7000 }))
+                                aceptados.forEach((f, i) => handleFileUpload(c.id, f, i))
+                                input.value = ''
                               }}
                             />
                           </label>

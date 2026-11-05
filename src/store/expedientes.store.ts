@@ -12,6 +12,9 @@ interface ExpedientesState {
   setExpedienteActivo: (id: string) => void
   agregarExpediente: (exp: Expediente) => void
   actualizarExpediente: (id: string, patch: Partial<Expediente>) => void
+  /** Delta 10 — renombra un agrupador de causa: todas las actuaciones con
+   * numero_causa === anterior pasan a `nuevo` (null = quedan sin agrupar). */
+  renombrarAgrupador: (anterior: string, nuevo: string | null) => void
   actualizarCampoMesa: (id: string, campo: string, valor: unknown) => void
   actualizarCampoAbogado: (id: string, campo: string, valor: unknown) => void
   actualizarEstado: (id: string, estado: string) => void
@@ -73,6 +76,14 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
     return {
       expedientes: applyToArr(s.expedientes, id, fn),
       expedienteActivo: applyToActivo(s.expedienteActivo, id, fn),
+    }
+  }),
+
+  renombrarAgrupador: (anterior, nuevo) => set(s => {
+    const fn = (e: Expediente) => e.numero_causa === anterior ? { ...e, numero_causa: nuevo } : e
+    return {
+      expedientes: s.expedientes.map(fn),
+      expedienteActivo: s.expedienteActivo ? fn(s.expedienteActivo) : null,
     }
   }),
 
@@ -273,7 +284,8 @@ export const useExpedientesStore = create<ExpedientesState>((set, get) => ({
           fecha_vencimiento:  antes.fecha_vencimiento,
           fecha_aviso:        antes.fecha_aviso,
         }),
-        campo_despues: JSON.stringify(cambios),
+        // undefined → null para que quede registrado en la auditoría un campo que se quitó (p. ej. el vencimiento).
+        campo_despues: JSON.stringify(cambios, (_k, v) => v === undefined ? null : v),
       }
       return {
         ...e,

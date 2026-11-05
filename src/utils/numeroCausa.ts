@@ -10,6 +10,25 @@ const CAMPOS_FUERO = ['mesa_juzgado_fuero', 'juzgado_fuero', 'abg_juzgado_fuero'
 
 const SENTINELAS_SIN_CAUSA = new Set(['SS', 'SS SOFSE'])
 
+// ── Delta 10 — Agrupador de causa del Oficio Penal ──────────────────────
+// El Oficio Penal tiene 3 campos independientes (N° de Causa, N° de IPP,
+// N° de Sumario). El agrupador (`numero_causa`, con el que se agrupa en la
+// Bandeja) sale por prioridad: N° de Causa > N° de IPP > N° de Sumario.
+// IPP y Sumario son mutuamente excluyentes, así que nunca compiten entre sí.
+
+/** true si el tipo/área usa la regla de agrupador del Oficio Penal. */
+export function usaAgrupadorOficioPenal(exp: Pick<Expediente, 'tipo' | 'area'>): boolean {
+  return exp.tipo === 'OFICIO' && exp.area === 'PENAL'
+}
+
+export const CAMPOS_AGRUPADOR_OFICIO_PENAL = ['mesa_num_causa', 'mesa_num_ipp', 'mesa_num_sumario'] as const
+
+/** Valor del agrupador según la regla de prioridad, o null si los 3 están vacíos. */
+export function calcularAgrupadorOficioPenal(campos: Record<string, unknown>): string | null {
+  const v = (k: string) => String(campos[k] ?? '').trim()
+  return v('mesa_num_causa') || v('mesa_num_ipp') || v('mesa_num_sumario') || null
+}
+
 function siglaFueroExplicito(exp: Expediente): string | null {
   const registros = [exp.campos_mesa, exp.campos_abogado]
   for (const registro of registros) {

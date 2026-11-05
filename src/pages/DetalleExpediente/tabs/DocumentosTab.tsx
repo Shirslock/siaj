@@ -4,6 +4,8 @@ import Icon from '../../../components/ui/Icon'
 import { useExpedientesStore } from '../../../store/expedientes.store'
 import { Modal } from '../../../components/ui/Modal'
 import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { validarAdjuntos, formatearTamano } from '../../../utils/validarAdjuntos'
 import {
   DndContext,
   closestCenter,
@@ -144,26 +146,36 @@ export function DocumentosTab({ exp }: Props) {
           onClick={() => document.getElementById('doc-upload')?.click()}
         >
           <Icon name="upload_file" size={18} />
-          Subir documento
+          Subir documentos
         </button>
         <input
           id="doc-upload"
           type="file"
+          multiple
           className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            const ext = (file.name.split('.').pop() ?? 'FILE').toUpperCase()
-            agregarDocumento(exp.id, {
-              id: `DOC_${Date.now()}`,
-              nombre: file.name.replace(/\.[^/.]+$/, ''),
-              tipo: ext,
-              fecha: new Date().toISOString().split('T')[0],
-              size: `${Math.round(file.size / 1024)} KB`,
-              icon: getIconForExt(ext),
-              color: getColorForExt(ext),
+          onChange={async (e) => {
+            const input = e.target
+            const seleccion = Array.from(input.files ?? [])
+            if (seleccion.length === 0) return
+            // Sin videos (sueltos ni dentro de un .zip)
+            const { aceptados, rechazados } = await validarAdjuntos(seleccion)
+            rechazados.forEach(r => toast.error(`"${r.nombre}" no se subió: ${r.motivo}.`, { autoClose: 7000 }))
+            aceptados.forEach((file, i) => {
+              const ext = (file.name.split('.').pop() ?? 'FILE').toUpperCase()
+              agregarDocumento(exp.id, {
+                id: `DOC_${Date.now()}_${i}`,
+                nombre: file.name.replace(/\.[^/.]+$/, ''),
+                tipo: ext,
+                fecha: new Date().toISOString().split('T')[0],
+                size: formatearTamano(file.size),
+                icon: getIconForExt(ext),
+                color: getColorForExt(ext),
+              })
             })
-            e.target.value = ''
+            if (aceptados.length > 0) {
+              toast.success(aceptados.length === 1 ? 'Documento subido.' : `${aceptados.length} documentos subidos.`)
+            }
+            input.value = ''
           }}
         />
       </div>

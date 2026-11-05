@@ -30,9 +30,14 @@ export const TIPOS_GESTION: TipoGestionItem[] = [
   { code:'DEFENSA_CIVIL',     id:'TPG_014', label:'Defensa Civil',                    areas:['CIVIL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
   { code:'DEFENSA_PENAL',     id:'TPG_015', label:'Defensa Penal',                    areas:['PENAL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
   { code:'CARTA_SUCESO',      id:'TPG_016', label:'Carta Suceso (SAE)',               areas:['PENAL'],                   canal:'OTROS',    canales:['OTROS'] },
-  { code:'PEDIDO_CAUSA_PENAL',id:'TPG_017', label:'Pedido de Causa Penal',            areas:['CIVIL','LABORAL','PENAL'], canal:'MEMO_GDE', canales:['MEMO_GDE'] },
+  // Delta 14 — desactivado: ya no se puede dar de alta. El registro queda en el
+  // catálogo (badge "Inactivo" en Configuración) por regla de no-borrado.
+  { code:'PEDIDO_CAUSA_PENAL',id:'TPG_017', label:'Pedido de Causa Penal',            areas:['CIVIL','LABORAL','PENAL'], canal:'MEMO_GDE', canales:['MEMO_GDE'], activo: false },
   { code:'DEMANDA_CIVIL',     id:'TPG_018', label:'Demanda Civil',                    areas:['CIVIL'],                   canal:'EE_GDE',   canales:['EE_GDE'] },
   { code:'DEMANDA_LABORAL',   id:'TPG_019', label:'Demanda Laboral',                  areas:['LABORAL'],                 canal:'EE_GDE',   canales:['EE_GDE'] },
+  // Delta 13 — actuaciones derivadas: solo nacen de "Iniciar Juicio", no del alta.
+  { code:'DEMANDA_CIVIL_ACTORA',   id:'TPG_024', label:'Demanda Civil — Parte Actora',   areas:['CIVIL'],   canal:'EE_GDE', canales:['EE_GDE'], soloDesdeJuicio: true },
+  { code:'DEMANDA_LABORAL_ACTORA', id:'TPG_025', label:'Demanda Laboral — Parte Actora', areas:['LABORAL'], canal:'EE_GDE', canales:['EE_GDE'], soloDesdeJuicio: true },
   { code:'OTRAS',             id:'TPG_022', label:'Otras presentaciones / gestiones', areas:['CIVIL','LABORAL','PENAL'], canal:'MEMO_GDE', canales:['EE_GDE','MEMO_GDE','OTROS'] },
 ]
 
@@ -108,7 +113,19 @@ export const TIPOS_INTERVENCION_CIVIL_LAB: CatalogoItem[] = [
 
 export const TIPOS_INTERVENCION_PENAL: CatalogoItem[] = [
   { id:'TI_003', label:'Denunciante' },
+  { id:'TI_005', label:'Actuación de Oficio' },
   { id:'TI_004', label:'Sin Intervención' },
+]
+
+/** Delta 9B — tipos de hecho nuevos, aplicables a Demanda Civil y Demanda Laboral.
+ * Se suman a los catálogos tiposHechoDemandaCivil / tiposHechoDemandaLaboral
+ * (configuracion.store) y quedan como opciones de respaldo del formulario. */
+export const TIPOS_HECHO_DEMANDA_DELTA9 = [
+  'DOBLE INDEMNIZACIÓN',
+  'INEXISTENCIA DE VÍNCULO LABORAL',
+  'DESAFUERO',
+  'CONSIGNACIÓN LABORAL',
+  'EMPLEADO FERROBAIRES',
 ]
 
 export const TIPOS_JUICIO: CatalogoItem[] = [
@@ -122,6 +139,11 @@ export const TIPOS_JUICIO: CatalogoItem[] = [
   { id:'JUI_008', label:'DIFERENCIAS SALARIALES' },
   { id:'JUI_009', label:'EJECUCIÓN FISCAL' },
   { id:'JUI_010', label:'EJECUTIVO O PREPARACIÓN VÍA EJECUTIVA' },
+  // Delta 9A — nuevos tipos de juicio (Demanda Laboral)
+  { id:'JUI_011', label:'INDEMNIZACIÓN POR FALLECIMIENTO' },
+  { id:'JUI_012', label:'REINSTALACIÓN LABORAL' },
+  { id:'JUI_013', label:'MEDIDA CAUTELAR' },
+  { id:'JUI_014', label:'INDEMNIZACIÓN ART. 212' },
 ]
 
 export const TIPOS_HECHO_PENAL: CatalogoItem[] = [

@@ -184,8 +184,9 @@ export type EstadoSolicitud = 'pendiente' | 'respondida'
 
 export interface RespuestaSolicitud {
   comentario: string
-  adjunto_nombre?: string
+  adjunto_nombre?: string   // legado (un solo adjunto)
   adjunto_size?: string
+  adjuntos?: { nombre: string; size: string }[]   // adjuntos múltiples
   respondido_por: string   // usuario id
   fecha: string
 }
@@ -340,6 +341,10 @@ export const useSolicitudesStore = create<SolicitudesState>((set) => ({
       const expStore = useExpedientesStore.getState()
       const HOY = new Date().toISOString().split('T')[0]
 
+      const adjuntos = respuesta.adjuntos && respuesta.adjuntos.length > 0
+        ? respuesta.adjuntos
+        : respuesta.adjunto_nombre ? [{ nombre: respuesta.adjunto_nombre, size: respuesta.adjunto_size ?? '—' }] : []
+
       expStore.agregarActividad(sol.expediente_id, {
         id: `SOLR_${Date.now()}`,
         expediente_id: sol.expediente_id,
@@ -347,7 +352,7 @@ export const useSolicitudesStore = create<SolicitudesState>((set) => ({
         titulo: `Respuesta: ${sol.titulo}`,
         descripcion: [
           respuesta.comentario,
-          respuesta.adjunto_nombre ? `Adjunto: ${respuesta.adjunto_nombre}` : null,
+          adjuntos.length > 0 ? `Adjunto${adjuntos.length > 1 ? 's' : ''}: ${adjuntos.map(a => a.nombre).join(', ')}` : null,
           `Respondido por: ${respuesta.respondido_por}`,
         ].filter(Boolean).join('\n'),
         fecha: respuesta.fecha ?? HOY,
@@ -356,21 +361,22 @@ export const useSolicitudesStore = create<SolicitudesState>((set) => ({
         estadoExpediente: '',
         es_solicitud: true,
         solicitud_id: sol.id,
-        doc_gde: respuesta.adjunto_nombre ?? undefined,
+        doc_gde: adjuntos[0]?.nombre ?? undefined,
+        ...(adjuntos.length > 0 ? { adjuntos } : {}),
       })
 
-      // Si hay adjunto → agregar al repositorio de documentos del expediente
-      if (respuesta.adjunto_nombre) {
+      // Cada adjunto → repositorio de documentos del expediente
+      adjuntos.forEach((a, i) => {
         expStore.agregarDocumento(sol.expediente_id, {
-          id:     `DOC_SOL_${Date.now()}`,
-          nombre: respuesta.adjunto_nombre,
-          tipo:   respuesta.adjunto_nombre.split('.').pop()?.toUpperCase() ?? 'FILE',
+          id:     `DOC_SOL_${Date.now()}_${i}`,
+          nombre: a.nombre,
+          tipo:   a.nombre.split('.').pop()?.toUpperCase() ?? 'FILE',
           fecha:  respuesta.fecha ?? HOY,
-          size:   respuesta.adjunto_size ?? '—',
+          size:   a.size,
           icon:   'attach_file',
           color:  'text-[#4a6a84]',
         })
-      }
+      })
 
       return { solicitudes: solicitudesActualizadas }
     }),

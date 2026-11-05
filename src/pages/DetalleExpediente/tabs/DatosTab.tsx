@@ -9,6 +9,9 @@ import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, limpiarMo
 import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
 import { useConfiguracionStore } from '../../../store/configuracion.store'
+import { opcionesDeCampo } from '../../../components/expedientes/FormularioDinamico'
+import { calcularAgrupadorOficioPenal, usaAgrupadorOficioPenal, CAMPOS_AGRUPADOR_OFICIO_PENAL } from '../../../utils/numeroCausa'
+import { toast } from 'react-toastify'
 import type { MonedaItem } from '../../../types'
 
 const ALL_JUZGADOS = [...JUZGADOS, ...TRIBUNALES, ...FISCALIAS, ...UFIS, ...COMISARIAS]
@@ -96,8 +99,9 @@ function Seccion({ titulo }: { titulo: string }) {
 interface Props { exp: Expediente }
 
 export function DatosTab({ exp }: Props) {
-  const { actualizarExpediente } = useExpedientesStore()
-  const { monedas } = useConfiguracionStore()
+  const { actualizarExpediente, renombrarAgrupador, expedientes } = useExpedientesStore()
+  const config = useConfiguracionStore()
+  const { monedas } = config
 
   const [edit, setEdit] = useState(false)
   const [draftTop, setDraftTop] = useState<Record<string, unknown>>({})
@@ -131,11 +135,43 @@ export function DatosTab({ exp }: Props) {
   }
 
   function save() {
+    const mesaLimpio = limpiarMontosDraft(draftMesa, camposMesa)
+
+    // Delta 1 / 2A — Tipo de Intervención obligatorio.
+    if (!String(mesaLimpio['mesa_tipo_intervencion'] ?? '').trim()) {
+      toast.error('El Tipo de Intervención es obligatorio.')
+      return
+    }
+
     actualizarExpediente(exp.id, {
       numero_ee_gde:  String(draftTop['numero_ee_gde'] ?? exp.numero_ee_gde),
-      campos_mesa:    limpiarMontosDraft(draftMesa, camposMesa),
+      campos_mesa:    mesaLimpio,
       campos_abogado: limpiarMontosDraft(draftAbogado, camposAbogado),
     })
+
+    // Delta 10 — agrupador de causa del Oficio Penal (Causa > IPP > Sumario).
+    // Solo se recalcula si cambió alguno de los 3 campos: un agrupamiento hecho a
+    // mano ("Agrupar a causa") no se pisa al guardar otros datos.
+    if (usaAgrupadorOficioPenal(exp)) {
+      const cambioCampos = CAMPOS_AGRUPADOR_OFICIO_PENAL.some(k =>
+        String(mesaLimpio[k] ?? '').trim() !== String(exp.campos_mesa?.[k] ?? '').trim())
+      const nuevo = calcularAgrupadorOficioPenal(mesaLimpio)
+      const anterior = exp.numero_causa ?? null
+      if (cambioCampos && nuevo !== anterior) {
+        if (anterior) {
+          // Renombra el agrupador: todas las actuaciones agrupadas bajo el valor
+          // anterior se re-agrupan bajo el nuevo.
+          const cuantas = expedientes.filter(e => e.numero_causa === anterior).length
+          renombrarAgrupador(anterior, nuevo)
+          toast.info(nuevo
+            ? `Agrupador de causa: ${anterior} → ${nuevo}${cuantas > 1 ? ` (${cuantas} actuaciones re-agrupadas)` : ''}.`
+            : `La actuación quedó sin agrupador de causa.`)
+        } else {
+          actualizarExpediente(exp.id, { numero_causa: nuevo })
+          toast.info(`Agrupador de causa: ${nuevo}.`)
+        }
+      }
+    }
     setEdit(false)
   }
 
@@ -167,7 +203,7 @@ export function DatosTab({ exp }: Props) {
           onChange={e => change(e.target.value)}
         >
           <option value="">Seleccionar…</option>
-          {(campo.options as Array<string | { value: string; label: string }>).map(opt => {
+          {opcionesDeCampo(campo, config as unknown as Record<string, unknown>, val).map(opt => {
             const v = typeof opt === 'string' ? opt : opt.value
             const l = typeof opt === 'string' ? opt : opt.label
             return <option key={v} value={v}>{l}</option>
@@ -356,11 +392,19 @@ export function DatosTab({ exp }: Props) {
         </label>
       )
     }
+    // Delta 10 — en el Oficio Penal, N° de IPP y N° de Sumario son mutuamente
+    // excluyentes: con uno cargado, el otro queda bloqueado.
+    const excluyente = usaAgrupadorOficioPenal(exp)
+      ? ({ mesa_num_ipp: 'mesa_num_sumario', mesa_num_sumario: 'mesa_num_ipp' } as Record<string, string>)[campo.id]
+      : undefined
+    const bloqueadoPorExcluyente = !!excluyente && !!String(draft[excluyente] ?? '').trim()
     return (
       <input
         type={campo.type === 'date' ? 'date' : campo.type === 'money' ? 'number' : 'text'}
-        className={`field-input w-full text-sm${campo.mono ? ' font-mono' : ''}`}
+        className={`field-input w-full text-sm${campo.mono ? ' font-mono' : ''}${bloqueadoPorExcluyente ? ' bg-[#f5f5f5] cursor-not-allowed' : ''}`}
         value={val}
+        disabled={bloqueadoPorExcluyente}
+        title={bloqueadoPorExcluyente ? 'N° de IPP y N° de Sumario son excluyentes: vaciá el otro para cargar este.' : undefined}
         onChange={e => change(e.target.value)}
       />
     )
@@ -465,7 +509,7 @@ export function DatosTab({ exp }: Props) {
           }
         />
         <FieldRow
-          label="Tipo de Intervención"
+          label={edit ? 'Tipo de Intervención *' : 'Tipo de Intervención'}
           edit={edit}
           value={String(exp.campos_mesa['mesa_tipo_intervencion'] ?? '—')}
           input={
