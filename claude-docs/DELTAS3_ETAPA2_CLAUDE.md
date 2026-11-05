@@ -285,3 +285,17 @@ implementó en esta rama.
 - Coordinador y Gerente: tercer segmento "Por letrado" junto a Mías / Mi área (o Todo), con desplegable de letrados
   (Coordinador: los que comparten alguna de sus áreas; Gerente: todos). Detalle técnico en `src/pages/Home/Home_CLAUDE.md`.
 - Documentado como Delta 22 (Parte A) en el docx; 2 capturas pendientes. El docx ya cubre los deltas 1–22.
+
+## Delta 23 — Rediseño visual del sidebar (2026-11-05, rama `feat/delta-sidebar`)
+- Fuente: `claude-docs/SIAJ_Delta_Sidebar.docx` (probado en vivo sobre siajtest, 22/10/2026). Cambio solo visual: fondo `#0B2545`, texto
+  `slate-200/300`, sombra lateral, bloque de marca en columna (`logoTrenes.svg` en blanco, `w-44`, y «SIAJ» 20px `tracking-[0.18em]` debajo),
+  ítems con `rounded-lg px-3 py-2.5`, hover `bg-white/[.08]` y activo `bg-blue-500/[.22]` + barra izquierda `#60A5FA` (con `aria-current="page"`).
+  El fondo del overlay vuelve a oscurecerse (`bg-black/40`), como indica el delta. Implementado en `src/components/layout/Sidebar.tsx`.
+- Documentado como Delta 23 (Parte A) en `docs/Deltas3_Etapa2/SIAJ_Deltas3_Etapa2.docx`, con 1 captura pendiente. El docx cubre los deltas 1–23.
+- Los ratios de contraste del delta (15,39 / 10,36 / 11,44) son del documento fuente; no se recalcularon.
+
+## Delta 24 — Principal: tarjetas de indicadores más compactas (2026-11-05, rama `feat/delta-sidebar`)
+- Pedido de Cristian ("ocupan mucho espacio"): las 5 KpiCard dejan de ser cuadradas (`aspect-square`, ~255 px) y pasan a ~105 px de alto:
+  `px-3 py-3 gap-1.5`, círculo `w-8 h-8` (ícono 16), número `text-xl`. Sin cambios en etiqueta, grilla ni tarjeta destacada (navy). Es un ajuste
+  propio del prototipo: el PRD las tiene cuadradas. `src/pages/Home/homeShared.tsx` (`KpiCard`).
+- Documentado como Delta 24 (Parte A) en el docx, con 1 captura pendiente. El docx cubre los deltas 1–24.
