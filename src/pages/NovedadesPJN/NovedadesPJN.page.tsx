@@ -137,7 +137,7 @@ export default function NovedadesPJNPage() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Icon name="refresh" size={18} className="text-gray-800" />
-          <h2 className="text-lg font-semibold text-gray-800">Novedades judiciales</h2>
+          <h1 className="text-2xl font-semibold text-gray-800">Novedades judiciales</h1>
           {pendientes.length > 0 && (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-700 text-white">
               {pendientes.length} pendientes

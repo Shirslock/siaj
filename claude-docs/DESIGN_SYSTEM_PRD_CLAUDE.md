@@ -109,3 +109,15 @@ Relevado en el PRD como Penal (actuación `/actuaciones/699`, Carta SAE Suceso; 
 - **Alta** (`AltaExpediente.page.tsx`): `max-w-4xl`, título "Nuevo Ingreso de Actuación", secciones sin círculo numerado con `h2 text-lg … border-b`,
   Canal y Área como listas desplegables ("Seleccioná..."), dropzone del PRD ("Solo PDF · Máx. 20 MB"), botones "Cancelar" / "Revisar y enviar".
 - Pendiente de etapas anteriores: Principal (KPIs cuadrados, paneles, barras) y Boga, Novedades judiciales, Agenda, Licencias, Dashboard, Configuración.
+
+## Etapa 3 — Principal y resto de las pantallas (rama `feat/principal-resto-prd`)
+- **Principal** (`Home.page.tsx`, `homeShared.tsx`): `p-6 flex flex-col gap-4`, h1 `text-xl`; KPIs cuadrados (`aspect-square`, círculo de ícono
+  `w-9 h-9`, valor `text-2xl`; la destacada en navy `#0B2545`); paneles `bg-white border rounded-lg p-4`; "Vencimientos y tareas" ocupa 2/3 con
+  toggle Todas / Vencidas / Por vencer (`border-gray-300`, activo `bg-blue-700`) y grupos con encabezado de texto (rojo con triángulo / ámbar);
+  barras de distribución: etiqueta · pista gris con relleno azul · contador. El selector de alcance (Mías / Mi área / Por letrado) usa el mismo toggle.
+- **Resto**: cada página lleva su `h1 text-2xl font-semibold` (el header ya no muestra título): se agregó a Panel de Control y Novedades judiciales;
+  Licencias, Solicitudes y Causa pasaron a `text-2xl`; se quitó `max-w-screen-xl` (el PRD usa todo el ancho). Configuración y Boga ajustaron su alto al
+  nuevo layout (`100vh - 80px`: header 48 + `main p-4`).
+- **Estado de la alineación**: todas las pantallas usan ya los tokens del PRD. Lo que no existe en el PRD (Boga, Novedades, Agenda, Licencias, Dashboard,
+  Configuración, selector de usuario demo) se resolvió con el mismo sistema. Pendiente opcional: el logo del header (imagen `logoTrenes.svg` del PRD) y
+  revisar con el PRD los estados vacíos y el panel de Avisos.

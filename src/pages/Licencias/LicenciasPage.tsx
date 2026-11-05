@@ -231,12 +231,12 @@ export default function LicenciasPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-screen-xl">
+    <div className="p-6 space-y-6">
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-headline font-semibold text-3xl text-gray-800">Licencias</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">Licencias</h1>
           <p className="text-sm text-gray-500 mt-1">Gestioná tus ausencias y designá reemplazantes.</p>
         </div>
         <button

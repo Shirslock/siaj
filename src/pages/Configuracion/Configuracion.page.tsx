@@ -28,7 +28,7 @@ export default function ConfiguracionPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex h-[calc(100vh-80px)] overflow-hidden bg-white border border-gray-200 rounded-lg">
       {/* Sidebar izquierdo */}
       <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
         <div className="px-4 py-4 border-b border-gray-200">

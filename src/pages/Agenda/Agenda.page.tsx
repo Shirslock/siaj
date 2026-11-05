@@ -351,7 +351,7 @@ export default function AgendaPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 space-y-4 max-w-screen-xl">
+    <div className="p-6 space-y-4">
 
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">

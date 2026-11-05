@@ -166,7 +166,7 @@ export default function CausaDetallePage() {
           </p>
         </div>
 
-        <h1 className="font-headline font-semibold text-3xl text-gray-800 mb-1 ml-10">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-1 ml-10">
           {formatNumeroCausaPjn(expsDeCausa[0])}
         </h1>
 

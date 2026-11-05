@@ -83,7 +83,7 @@ export default function BogaPage() {
   }
 
   return (
-    <div className="p-6 h-[calc(100vh-4rem)] flex flex-col">
+    <div className="p-6 h-[calc(100vh-80px)] flex flex-col">
       <div className="flex gap-4 flex-1 min-h-0">
         <aside className="w-72 flex-shrink-0 bg-white rounded-lg shadow-card flex flex-col overflow-hidden">
           <div className="p-3 border-b border-gray-200 flex-shrink-0">
