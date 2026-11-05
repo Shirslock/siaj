@@ -8,6 +8,7 @@ import { USUARIOS } from '../../data/usuarios'
 import { filtrarNovedadesPorRol } from '../../utils/pjnVisibilidad'
 import type { RolSistema, Notificacion } from '../../types'
 import Icon from '../ui/Icon'
+import logoTrenes from '../../assets/logoTrenes.svg'
 import { RUTAS } from '../../utils/routing'
 import { useDebounce } from '../../hooks/useDebounce'
 import { buscarGlobal } from '../../utils/busquedaGlobal'
@@ -185,9 +186,7 @@ export function Topbar() {
         >
           <Icon name="menu" size={24} className="text-white" />
         </button>
-        <span className="text-sm font-semibold tracking-wide uppercase whitespace-nowrap hidden sm:block">
-          Trenes Argentinos <span className="font-normal opacity-80">Operaciones</span>
-        </span>
+        <img src={logoTrenes} alt="Trenes Argentinos Operaciones" className="w-44 h-6 brightness-0 invert hidden sm:block" />
       </div>
 
       {/* Buscador global (se mantiene del prototipo) */}

@@ -111,11 +111,11 @@ export default function TareasPage() {
   }
 
   return (
-    <div className="p-6 space-y-5 max-w-screen-xl">
+    <div className="p-6 space-y-5">
 
       {/* Header */}
       <div>
-        <h1 className="font-headline font-semibold text-3xl text-gray-800">Solicitudes</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">Solicitudes</h1>
         <p className="text-sm text-gray-500 mt-1">
           {solicitudesFiltradas.length} solicitud{solicitudesFiltradas.length !== 1 ? 'es' : ''}
         </p>

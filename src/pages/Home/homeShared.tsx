@@ -30,11 +30,11 @@ export function WidgetCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="p-5 rounded-lg border border-gray-200 bg-white">
+    <div className="bg-white border border-gray-200 rounded-lg p-4">
       {titulo && (
-        <h2 className="font-headline text-[17px] font-semibold text-gray-800 leading-tight">{titulo}</h2>
+        <h2 className="text-sm font-semibold text-gray-800">{titulo}</h2>
       )}
-      {sub && <p className="text-[12px] text-gray-400 mt-0.5 mb-4">{sub}</p>}
+      {sub && <p className="text-xs text-gray-400 mb-3">{sub}</p>}
       {children}
     </div>
   )
@@ -46,7 +46,7 @@ export function WidgetCard({
 // Los tonos claros solo cambian la cajita del ícono; `destacado` pinta la tarjeta entera
 // (fondo navy de la marca) para que resalte del resto de la fila.
 const TARJETA_CLARA = {
-  tarjeta: 'bg-white border-gray-200 hover:border-blue-700',
+  tarjeta: 'bg-white border-gray-200 text-gray-800',
   label: 'text-gray-500',
   valor: 'text-gray-800',
 }
@@ -55,8 +55,8 @@ const TONOS_KPI = {
   teal: { ...TARJETA_CLARA, caja: 'bg-green-100', icono: 'text-green-600' },
   rojo: { ...TARJETA_CLARA, caja: 'bg-red-100', icono: 'text-red-500' },
   destacado: {
-    tarjeta: 'bg-linear-to-br from-blue-700 to-blue-800 border-blue-700 hover:border-blue-600',
-    label: 'text-blue-100',
+    tarjeta: 'bg-[#0B2545] border-[#0B2545] text-white',
+    label: 'text-white/90',
     valor: 'text-white',
     caja: 'bg-white/15',
     icono: 'text-white',
@@ -76,17 +76,15 @@ export function KpiCard({
   return (
     <div
       onClick={onClick}
-      className={`flex flex-col justify-between gap-4 min-h-[172px] p-5 rounded-lg border transition-all ${t.tarjeta} ${
+      className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 aspect-square text-center transition-shadow ${t.tarjeta} ${
         onClick ? 'cursor-pointer hover:shadow-md' : ''
       }`}
     >
-      <span className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${t.caja}`}>
-        <Icon name={icono} size={26} className={t.icono} />
+      <span className={`flex items-center justify-center w-9 h-9 rounded-full ${t.caja}`}>
+        <Icon name={icono} size={18} className={t.icono} />
       </span>
-      <div className="min-w-0">
-        <p className={`text-[38px] font-semibold leading-none ${t.valor}`}>{valor}</p>
-        <p className={`text-[14px] leading-snug mt-2 ${t.label}`}>{label}</p>
-      </div>
+      <span className={`text-2xl font-semibold leading-none ${t.valor}`}>{valor}</span>
+      <span className={`text-xs leading-tight ${t.label}`}>{label}</span>
     </div>
   )
 }
@@ -105,31 +103,21 @@ export function BarrasDistribucion({ filas }: { filas: FilaBarra[] }) {
   const max = Math.max(...filas.map(f => f.valor), 1)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {filas.map(f => (
         <div
           key={f.label}
           onClick={f.onClick}
-          className={`flex items-center gap-3 ${f.onClick ? 'cursor-pointer group' : ''}`}
+          className={`flex items-center gap-3 text-xs ${f.onClick ? 'cursor-pointer group' : ''}`}
         >
-          <span
-            title={f.label}
-            className="text-[13px] text-gray-800 flex-1 min-w-0 truncate group-hover:underline"
-          >
-            {f.label}
-          </span>
-          <span className="text-[13px] font-semibold text-gray-800 w-6 text-right flex-shrink-0">
-            {f.valor}
-          </span>
-          <span className="h-2 w-[38%] rounded-full bg-blue-100 flex-shrink-0 overflow-hidden">
+          <span title={f.label} className="w-2/5 text-gray-600 truncate group-hover:underline">{f.label}</span>
+          <span className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
             <span
-              className="block h-full rounded-full transition-all"
-              style={{
-                width: f.valor > 0 ? `${Math.max((f.valor / max) * 100, 6)}%` : '5px',
-                background: f.valor > 0 ? f.color : '#b9cddd',
-              }}
+              className="block h-full rounded-full bg-blue-600 transition-all"
+              style={{ width: f.valor > 0 ? `${Math.max((f.valor / max) * 100, 4)}%` : '0%' }}
             />
           </span>
+          <span className="w-7 text-right text-gray-600 flex-shrink-0">{f.valor}</span>
         </div>
       ))}
     </div>
@@ -142,15 +130,15 @@ export function WidgetCerradas({ valor, onClick }: { valor: number; onClick?: ()
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between gap-4 px-5 py-4 rounded-lg border border-gray-200 bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-blue-700' : ''
+      className={`flex items-center justify-between gap-4 p-4 rounded-lg border border-gray-200 bg-white transition-shadow ${
+        onClick ? 'cursor-pointer hover:shadow-md' : ''
       }`}
     >
       <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-gray-500">Actuaciones cerradas</p>
-        <p className="text-[11.5px] text-gray-400 mt-0.5">Total de actuaciones finalizadas.</p>
+        <p className="text-sm font-semibold text-gray-800">Actuaciones cerradas</p>
+        <p className="text-xs text-gray-400 mt-0.5">Total de actuaciones finalizadas.</p>
       </div>
-      <span className="text-[26px] font-semibold text-gray-800 leading-none flex-shrink-0">{valor}</span>
+      <span className="text-2xl font-semibold text-gray-800 leading-none flex-shrink-0">{valor}</span>
     </div>
   )
 }
@@ -291,14 +279,14 @@ function GrupoVencimientos({
 }) {
   if (items.length === 0) return null
   const cls = tono === 'rojo'
-    ? { fondo: 'bg-red-50', icono: 'text-red-600', texto: 'text-red-700' }
-    : { fondo: 'bg-amber-50', icono: 'text-amber-700', texto: 'text-amber-700' }
+    ? { icono: 'text-red-600', texto: 'text-red-600' }
+    : { icono: 'text-amber-700', texto: 'text-amber-700' }
 
   return (
     <div>
-      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${cls.fondo}`}>
-        <Icon name={icono} size={16} className={cls.icono} />
-        <span className={`text-[13px] font-semibold ${cls.texto}`}>
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon name={icono} size={14} className={cls.icono} />
+        <span className={`text-xs font-semibold ${cls.texto}`}>
           {titulo} ({items.length})
         </span>
       </div>
@@ -325,27 +313,23 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
     : 'Sin vencimientos activos.'
 
   return (
-    <div className="p-5 rounded-lg border border-gray-200 bg-white">
+    <div className="bg-white border border-gray-200 rounded-lg p-4">
       {/* Encabezado: título + tabs + buscador */}
       <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h2 className="font-headline text-[19px] font-semibold text-gray-800 leading-tight">
-            Vencimientos y tareas
-          </h2>
-          <p className="text-[12px] text-gray-400 mt-0.5">
-            Plazos y tareas activas, ordenados por urgencia.
-          </p>
+          <h2 className="text-sm font-semibold text-gray-800">Vencimientos y tareas</h2>
+          <p className="text-xs text-gray-400">Plazos y tareas activas, ordenados por urgencia.</p>
         </div>
 
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {TABS_VENC.map(t => (
+        <div className="inline-flex rounded-md border border-gray-300 overflow-hidden shrink-0">
+          {TABS_VENC.map((t, i) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
                 tab === t.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800'
+                  ? 'bg-blue-700 text-white'
+                  : `${i > 0 ? 'border-l border-gray-300 ' : ''}bg-white text-gray-600 hover:bg-gray-50`
               }`}
             >
               {t.label}
@@ -370,7 +354,7 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
 
       <button
         onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
-        className="mt-5 text-[12px] font-semibold text-gray-800 hover:underline cursor-pointer"
+        className="mt-3 text-xs text-blue-700 hover:underline cursor-pointer"
       >
         Ver todas las actuaciones con alerta →
       </button>

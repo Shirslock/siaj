@@ -671,6 +671,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full p-6">
+      <h1 className="text-2xl font-semibold text-gray-800 mb-1">Panel de Control</h1>
       <HeaderPowerBI />
 
       <p className="text-gray-500 text-sm mb-4">
