@@ -56,6 +56,6 @@ Se abrió `https://siajtest.trenesargentinos.gob.ar/actuaciones/mesa-saco` con C
   Activos / Archivados (botones pegados), Urgentes (llama), Por vencer (triángulo) y Limpiar filtros (×).
   El PRD **no** tiene "Exportar Excel" ni "Expandir todo": son del prototipo (Delta 18) y van al final de la barra.
 - Estructura de página: `main.p-4` > `div.p-6.space-y-4`. Ya replicado (`AppLayout` y las dos bandejas).
-- Header: `bg-[#0B2545] p-4 max-h-12`, logo = imagen `logoTrenes.svg` (`w-44 h-6`, invertida a blanco), avatar con ícono de persona.
+- Header: `bg-[#0B2545] p-4 max-h-12`, logo = imagen `logoTrenes.svg` (`w-44 h-6`, invertida a blanco). El avatar (`profile.svg`, 30px) ya se replicó como SVG inline (`PerfilIcon` en `Topbar.tsx`), aproximado a partir de la captura porque el archivo no se pudo leer.
   El prototipo usa un wordmark de texto y las iniciales; para igualarlo haría falta copiar el SVG del logo (pendiente de OK).
 - El resto de las páginas (p-6/p-8 propios) llevan ahora 16px extra por el `main.p-4`: se normaliza en las etapas 2 y 3.

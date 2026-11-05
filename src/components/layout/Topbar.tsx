@@ -33,6 +33,17 @@ function fechaRelativa(iso: string): string {
   return `Hace ${dias} días`
 }
 
+// Avatar del PRD (profile.svg, 30px): círculo con aro claro y silueta de persona.
+function PerfilIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" role="img" aria-label="perfil" className="flex-shrink-0">
+      <circle cx="15" cy="15" r="14" fill="#12365F" stroke="#E6EEF7" strokeWidth="1.5" />
+      <circle cx="15" cy="11.5" r="4.5" fill="#B7D3EA" />
+      <path d="M6.5 24.2c.8-4.1 4.3-6.6 8.5-6.6s7.7 2.5 8.5 6.6a13.5 13.5 0 0 1-17 0Z" fill="#B7D3EA" />
+    </svg>
+  )
+}
+
 export function Topbar() {
   const navigate = useNavigate()
   const panelRef = useRef<HTMLDivElement>(null)
@@ -163,10 +174,6 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [panelAbierto])
 
-  const initials = usuarioActivo
-    ? `${usuarioActivo.apellido.charAt(0)}${usuarioActivo.nombre.charAt(0)}`
-    : '?'
-
   return (
     <header className="bg-[#0B2545] text-white px-4 h-12 flex items-center justify-between gap-4 shadow-md sticky top-0 z-10 flex-shrink-0">
       {/* Hamburguesa + logo (PRD §2) */}
@@ -259,13 +266,11 @@ export function Topbar() {
       {/* Usuario + notificaciones */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {usuarioActivo && (
-          <div className="order-2 flex items-center" title={ROL_LABEL[usuarioActivo.rolSistema]}>
-            <span className="px-2 text-white text-sm hidden sm:block">
+          <div className="order-2 relative flex items-center cursor-pointer" title={ROL_LABEL[usuarioActivo.rolSistema]}>
+            <span className="px-2 text-white hidden sm:block">
               Hola, {usuarioActivo.nombre} {usuarioActivo.apellido}
             </span>
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-              {initials}
-            </div>
+            <PerfilIcon />
           </div>
         )}
 
