@@ -18,6 +18,8 @@ import { useNotificacionesStore } from '../../../store/notificaciones.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
 import { AdjuntosInput } from '../../../components/ui/AdjuntosInput'
+import { StepperPRD, type PasoStepper } from '../../../components/timeline/StepperPRD'
+import { EtapasAcordeon, type EtapaTL } from '../../../components/timeline/EtapasAcordeon'
 import { aAdjuntoRef, adjuntosDeActividad } from '../../../utils/validarAdjuntos'
 
 interface Props { exp: Expediente }
@@ -67,120 +69,122 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
   const estados = todosEstados.filter(e => e.codigo !== 'ASIGNADO')
   const idxActual = estados.findIndex(e => e.codigo === estadoCodigo)
 
-  if (estados.length <= 1) return null
+  const pasos: PasoStepper[] = estados.map((estado, idx) => ({
+    key: estado.codigo,
+    label: estado.label,
+    estado: idx === idxActual ? 'current' : idx < idxActual ? 'done' : 'pending',
+  }))
 
-  return (
-    <div className="bg-white rounded-2xl shadow-card px-16 py-4 mb-4">
-      <div className="flex items-center gap-0">
-        {estados.map((estado, idx) => {
-          const isPast    = idx < idxActual
-          const isCurrent = idx === idxActual
-          const isFuture  = idx > idxActual
-          const isLast    = idx === estados.length - 1
-
-          return (
-            <div key={estado.codigo} className="flex items-center flex-1 min-w-0">
-              {/* Nodo */}
-              <div className="flex flex-col items-center flex-shrink-0">
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
-                    isCurrent
-                      ? 'bg-[#1b3a57] border-[#1b3a57] text-white shadow-md'
-                      : isPast
-                      ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#1b3a57]'
-                      : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.12)] text-[#4a6a84]'
-                  }`}
-                >
-                  {isPast
-                    ? <Icon name="check" size={16} />
-                    : <span className="text-xs">{idx + 1}</span>
-                  }
-                </div>
-                <span className={`mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[80px] truncate ${
-                  isCurrent ? 'text-[#1b3a57]' : isFuture ? 'text-[#4a6a84]' : 'text-[rgba(27,58,87,0.70)]'
-                }`}>
-                  {estado.label}
-                </span>
-              </div>
-              {/* Línea conectora */}
-              {!isLast && (
-                <div className="flex-1 h-px mx-2 mb-4 relative">
-                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.08)] rounded-full" />
-                  {isPast && (
-                    <div className="absolute inset-0 bg-[rgba(27,58,87,0.40)] rounded-full" />
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
+  return <StepperPRD pasos={pasos} pendienteDeInicio={(exp.estadoProcesal ?? 'INICIO') === 'ASIGNADO'} />
 }
 
-// ── Ítem de tarea en el feed ─────────────────────────────────────────────────
+// ── Tareas de una etapa (PRD §8.4 c) ─────────────────────────────────────────
 
-function TareaFeedItem({
-  tarea,
-  numero,
-  estadoLabel: _estadoLabel,
-  onClick,
-  isSelected,
+function TareasEtapa({
+  tareas,
+  soloLectura = false,
+  seleccionadaId,
+  onSelect,
+  puedeAvanzar = false,
 }: {
-  tarea: Tarea
-  numero: number
-  estadoLabel: string
-  onClick?: () => void
-  isSelected: boolean
+  tareas: Tarea[]
+  soloLectura?: boolean
+  seleccionadaId?: string
+  onSelect?: (t: Tarea) => void
+  puedeAvanzar?: boolean
 }) {
-  const urg = calcularUrgencia(tarea.fechaVencimiento)
+  const [mostrarTodas, setMostrarTodas] = useState(false)
+  const total = tareas.length
+  const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
+  const pct = total > 0 ? Math.round((completadas / total) * 100) : 0
+  const visibles = mostrarTodas ? tareas : tareas.slice(0, 8)
 
-  const estadoConfig = {
-    cumplido:       { icon: 'check_circle', color: 'text-green-600', bg: 'bg-green-50',  badge: 'bg-green-100 text-green-700',   label: 'Cumplido' },
-    en_curso:       { icon: 'schedule',     color: 'text-amber-500', bg: 'bg-amber-50',  badge: 'bg-amber-100 text-amber-700',   label: 'En curso' },
-    no_procedente:  { icon: 'block',        color: 'text-[#7a9ab4]',   bg: 'bg-[#e8e8e8]', badge: 'bg-[#e8e8e8] text-[#4a6a84]', label: 'No proc.' },
-    sin_estado:     { icon: 'radio_button_unchecked', color: 'text-[rgba(0,0,0,0.35)]', bg: '', badge: '', label: '' },
-  }[tarea.estado]
+  if (total === 0) {
+    return (
+      <p className="text-center text-xs text-gray-400 py-3 border-b border-gray-100">
+        Este estado no requiere tareas.
+      </p>
+    )
+  }
 
   return (
-    <div
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[rgba(0,0,0,0.04)] transition-all hover:bg-[#f0f0f0] ${
-        isSelected ? 'bg-[rgba(27,58,87,0.05)] border-l-2 border-l-[#1b3a57]' : 'border-l-2 border-l-transparent'
-      }`}
-    >
-      {/* Número */}
-      <span className="text-[10px] font-bold text-[#4a6a84] w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
-
-      {/* Ícono estado */}
-      <Icon name={estadoConfig.icon} size={18} className={`flex-shrink-0 ${estadoConfig.color}`} />
-
-      {/* Nombre */}
-      <p className="text-xs text-[#1b3a57] flex-1 truncate">{tarea.nombre}</p>
-
-      {/* Urgencia / Vencido */}
-      {tarea.fechaVencimiento && urg === 'rojo' && tarea.estado !== 'cumplido' && tarea.estado !== 'no_procedente' && (
-        <span className="flex items-center gap-1 text-[9px] font-black text-[#b91c1c] bg-red-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
-          <Icon name="warning" size={10} />
-          Vencido
-        </span>
-      )}
-      {tarea.fechaVencimiento && urg !== 'rojo' && (
-        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-          urg === 'ambar' ? 'bg-amber-500' : 'bg-green-500'
-        }`} />
+    <div className="px-4 py-3 border-b border-gray-100">
+      {soloLectura && (
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-xs font-medium text-amber-700">
+          <Icon name="lock" size={14} className="flex-shrink-0" />
+          Estado con retroceso activo — solo lectura. Podés agregar actividades genéricas.
+        </div>
       )}
 
-      {/* Badge estado */}
-      {tarea.estado !== 'sin_estado' && (
-        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${estadoConfig.badge}`}>
-          {estadoConfig.label}
-        </span>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-xs text-gray-500">{completadas}/{total}</span>
+        <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+          <div className="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-xs text-gray-500">{pct}%</span>
+      </div>
+
+      <ul>
+        {visibles.map((t, idx) => {
+          const urg = calcularUrgencia(t.fechaVencimiento)
+          const hecha = t.estado === 'cumplido'
+          const clickeable = !!onSelect && !soloLectura
+          return (
+            <li
+              key={t.id}
+              onClick={clickeable ? () => onSelect!(t) : undefined}
+              className={`flex items-center gap-2.5 py-2 px-2 -mx-2 rounded transition-colors ${
+                clickeable ? 'cursor-pointer hover:bg-gray-50' : ''
+              } ${seleccionadaId === t.id ? 'bg-blue-50' : ''}`}
+            >
+              <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                hecha ? 'bg-green-100 text-green-600'
+                : t.estado === 'en_curso' ? 'bg-amber-100 text-amber-600'
+                : t.estado === 'no_procedente' ? 'bg-gray-100 text-gray-400'
+                : 'border-2 border-gray-300'
+              }`}>
+                {hecha && <Icon name="check" size={12} />}
+                {t.estado === 'en_curso' && <Icon name="schedule" size={12} />}
+                {t.estado === 'no_procedente' && <Icon name="block" size={12} />}
+              </span>
+              <span className={`text-sm flex-1 ${t.estado === 'no_procedente' ? 'text-gray-400' : 'text-gray-800'}`}>
+                {String(idx + 1).padStart(2, '0')}. {t.nombre}
+              </span>
+              {t.fechaVencimiento && urg === 'rojo' && t.estado !== 'cumplido' && t.estado !== 'no_procedente' && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 flex-shrink-0">
+                  <Icon name="warning" size={11} />
+                  VENCIDA
+                </span>
+              )}
+              {t.estado !== 'sin_estado' && (
+                <span className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  hecha ? 'bg-green-100 text-green-700'
+                  : t.estado === 'en_curso' ? 'bg-amber-100 text-amber-700'
+                  : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {hecha ? 'Cumplido' : t.estado === 'en_curso' ? 'En curso' : 'No proc.'}
+                </span>
+              )}
+              {clickeable && <Icon name="chevron_right" size={14} className="text-gray-400 flex-shrink-0" />}
+            </li>
+          )
+        })}
+      </ul>
+
+      {!mostrarTodas && total > 8 && (
+        <button
+          className="mt-1 text-xs text-gray-500 hover:text-gray-800"
+          onClick={() => setMostrarTodas(true)}
+        >
+          + {total - 8} tareas más...
+        </button>
       )}
 
-      {/* Chevron */}
-      <Icon name="chevron_right" className="flex-shrink-0" size={14} />
+      {puedeAvanzar && (
+        <div className="mt-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+          ✓ Ya podés pasar de Estado
+        </div>
+      )}
     </div>
   )
 }
@@ -224,19 +228,19 @@ function TareaDetailPanel({
 
   return (
     <div className="w-96 flex-shrink-0 sticky top-4 self-start">
-      <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden shadow-card">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-card">
         {/* Header */}
-        <div className="px-5 pt-4 pb-3 border-b border-[rgba(0,0,0,0.06)] bg-[#f0f0f0]">
+        <div className="px-5 pt-4 pb-3 border-b border-gray-200 bg-gray-100">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 mb-1">
                 ESTADO PROCESAL · {estadoLabel.toUpperCase()}
               </p>
-              <p className="text-sm font-bold text-[#1b3a57] leading-snug">{tarea.nombre}</p>
+              <p className="text-sm font-semibold text-gray-800 leading-snug">{tarea.nombre}</p>
             </div>
             <button
               onClick={onCerrar}
-              className="p-1 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors flex-shrink-0"
+              className="p-1 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0"
             >
               <Icon name="close" size={16} />
             </button>
@@ -245,22 +249,22 @@ function TareaDetailPanel({
           {/* Pill estado actual */}
           <div className="mt-2">
             {estadoLocal === 'sin_estado' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#e8e8e8] text-[#4a6a84] border border-[rgba(0,0,0,0.12)]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500 border border-gray-200">
                 <Icon name="radio_button_unchecked" size={12} />
                 Pendiente
               </span>
             ) : estadoLocal === 'cumplido' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
                 <Icon name="check_circle" size={12} />
                 Cumplido
               </span>
             ) : estadoLocal === 'en_curso' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
                 <Icon name="schedule" size={12} />
                 En curso
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500">
                 <Icon name="block" size={12} />
                 No procedente
               </span>
@@ -274,8 +278,8 @@ function TareaDetailPanel({
           {/* Observaciones */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84]">Observaciones</label>
-              <span className="text-[9px] text-[#4a6a84]">
+              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500">Observaciones</label>
+              <span className="text-[9px] text-gray-500">
                 {(cambiosLocales.observaciones ?? tarea.observaciones ?? '').length} car.
               </span>
             </div>
@@ -290,26 +294,26 @@ function TareaDetailPanel({
 
           {/* Estado de la actividad */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-2">
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-2">
               Estado de la actividad
             </label>
             <div className="flex gap-2 py-2">
               {estadoOpts.map(opt => {
                 const isActive = estadoLocal === opt.value
                 const activeClass =
-                  opt.value === 'cumplido'      ? 'border-[#1b3a57] bg-[#1b3a57] text-white text-sm' :
+                  opt.value === 'cumplido'      ? 'border-blue-700 bg-blue-700 text-white text-sm' :
                   opt.value === 'en_curso'       ? 'border-amber-500 bg-amber-50 text-amber-700 text-sm' :
-                                                   'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84] text-sm'
+                                                   'border-gray-300 bg-gray-100 text-gray-500 text-sm'
                 return (
                   <button
                     key={opt.value}
                     onClick={() => setCambiosLocales(p => ({ ...p, estado: opt.value }))}
-                    className={`flex flex-1 items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${
-                      isActive ? activeClass : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#e8e8e8]'
+                    className={`flex flex-1 items-center justify-center gap-2 py-3 rounded-lg border-2 transition-all ${
+                      isActive ? activeClass : 'border-gray-200 text-gray-500 hover:bg-gray-100'
                     }`}
                   >
                     <Icon name={opt.icon} size={20} />
-                    <span className="text-[10px] font-bold leading-tight">{opt.label}</span>
+                    <span className="text-[10px] font-semibold leading-tight">{opt.label}</span>
                   </button>
                 )
               })}
@@ -319,7 +323,7 @@ function TareaDetailPanel({
           {/* Fechas */}
           <div className="grid grid-cols-2 gap-3 items-start">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">
                 Fecha de actualización
               </label>
               <div className="relative">
@@ -332,7 +336,7 @@ function TareaDetailPanel({
               </div>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">
                 Fecha de vencimiento
               </label>
               <div className="relative">
@@ -344,7 +348,7 @@ function TareaDetailPanel({
                 />
               </div>
               {urgenciaLocal === 'rojo' && (
-                <p className="text-[9px] text-[#b91c1c] mt-1 flex items-center gap-1">
+                <p className="text-[9px] text-red-700 mt-1 flex items-center gap-1">
                   <Icon name="warning" size={11} />
                   Plazo vencido
                 </p>
@@ -352,7 +356,7 @@ function TareaDetailPanel({
               {/* Sin fecha pill */}
               <div className="h-3 mt-1">
                 {!(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
-                  <span className="text-[9px] text-[#4a6a84]">Sin fecha</span>
+                  <span className="text-[9px] text-gray-500">Sin fecha</span>
                 )}
               </div>
             </div>
@@ -364,7 +368,7 @@ function TareaDetailPanel({
               <div
                 onClick={() => setCambiosLocales(p => ({ ...p, mostrar_en_agenda: !(p.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  (cambiosLocales.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  (cambiosLocales.mostrar_en_agenda ?? tarea.mostrar_en_agenda ?? false) ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -372,8 +376,8 @@ function TareaDetailPanel({
                 }`} />
               </div>
               <div>
-                <p className="text-xs font-medium text-[#1b3a57]">Mostrar en agenda</p>
-                <p className="text-[10px] text-[#4a6a84]">Aparecerá en el calendario en la fecha de vencimiento</p>
+                <p className="text-xs font-medium text-gray-800">Mostrar en agenda</p>
+                <p className="text-[10px] text-gray-500">Aparecerá en el calendario en la fecha de vencimiento</p>
               </div>
             </label>
           )}
@@ -381,10 +385,10 @@ function TareaDetailPanel({
           {/* Fecha de aviso */}
           {(cambiosLocales.fechaVencimiento ?? tarea.fechaVencimiento) && (
             <div>
-              <label className="text-[9px] text-[#4a6a84] font-black uppercase tracking-widest block mb-1">
+              <label className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide block mb-1">
                 Fecha de aviso
               </label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1.5">
+              <p className="text-[10px] text-gray-400 mb-1.5">
                 A partir de qué fecha recibir el aviso de proximidad al vencimiento.
               </p>
               <input
@@ -404,7 +408,7 @@ function TareaDetailPanel({
           {/* Rango de aviso */}
           {(cambiosLocales.fecha_aviso ?? tarea.fecha_aviso) && (
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-2">
+              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-2">
                 Frecuencia de notificación
               </label>
               <div className="flex gap-2">
@@ -419,10 +423,10 @@ function TareaDetailPanel({
                     <button
                       key={String(op.value)}
                       onClick={() => setCambiosLocales(p => ({ ...p, rango_aviso: op.value }))}
-                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
+                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-colors ${
                         actual === op.value
-                          ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                          : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                          ? 'bg-blue-700 border-blue-700 text-white'
+                          : 'border-gray-200 text-gray-500 hover:bg-gray-100'
                       }`}
                     >
                       {op.label}
@@ -435,7 +439,7 @@ function TareaDetailPanel({
 
           {/* Documento GDE */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">
               Documento GDE
             </label>
             <input
@@ -449,13 +453,13 @@ function TareaDetailPanel({
 
           {/* Adjunto */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">
               Adjuntos
             </label>
             {(tarea.adjuntos ?? []).length > 0 && (
               <div className="space-y-1 mb-1.5">
                 {(tarea.adjuntos ?? []).map((a, i) => (
-                  <div key={`${a.nombre}-${i}`} className="flex items-center gap-2 text-[11px] text-[#4a6a84]">
+                  <div key={`${a.nombre}-${i}`} className="flex items-center gap-2 text-[11px] text-gray-500">
                     <Icon name="attach_file" size={13} />
                     <span className="truncate flex-1">{a.nombre}</span>
                     <span className="text-[10px]">{a.size}</span>
@@ -468,404 +472,22 @@ function TareaDetailPanel({
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-4 flex gap-2 justify-end border-t border-[rgba(0,0,0,0.06)] pt-3">
+        <div className="px-5 pb-4 flex gap-2 justify-end border-t border-gray-200 pt-3">
           <button
             onClick={onCerrar}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            className="px-3 py-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={onGuardar}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity"
           >
             <Icon name="save" size={14} />
             Guardar
           </button>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ── Entrada del feed (actividad genérica o de sistema) ───────────────────────
-
-function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, onToggleSnapshot, tareasHistoricas = [] }: {
-  act: Actividad
-  idx: number
-  isLast: boolean
-  hijas?: Actividad[]
-  snapshotOpen?: boolean
-  onToggleSnapshot?: () => void
-  tareasHistoricas?: Tarea[]
-}) {
-  const iconMap: Record<string, string> = {
-    RECEPCION:      'inbox',
-    CONTESTACION:   'reply',
-    PRESENTACION:   'upload_file',
-    AUDIENCIA:      'gavel',
-    PERICIA:        'science',
-    TRASLADO:       'send',
-    NOTIFICACION:   'notifications',
-    MOVIMIENTO:     'swap_horiz',
-    NOTA_RESPUESTA: 'edit_note',
-    RECURSO_INCIDENTE: 'gavel',
-    DILIGENCIAMIENTO: 'forward',
-    OTRO:           'more_horiz',
-  }
-  const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
-    (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
-  const esSolicitud = act.id?.startsWith('SOL_') || act.titulo.startsWith('Solicitud:')
-  const iconoActividad = isSistema ? 'swap_horiz' : esSolicitud ? 'task' : (iconMap[act.tipo] ?? 'radio_button_unchecked')
-
-  return (
-    <div className="flex flex-col mb-3">
-      <div className="flex gap-3">
-        {/* Timeline dot */}
-        <div className="flex flex-col items-center flex-shrink-0 mt-1">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-            isSistema ? 'bg-[#C4DFE8] border border-[rgba(27,58,87,0.20)]' : 'bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)]'
-          }`}>
-            <Icon name={iconoActividad} size={14} className={isSistema ? 'text-[#1b3a57]' : 'text-[#4a6a84]'} />
-          </div>
-          {!isLast && <div className="w-px flex-1 bg-[rgba(0,0,0,0.08)] mt-1" />}
-        </div>
-
-        {/* Card */}
-        <div className={`flex-1 rounded-xl border p-3.5 mb-3 ${
-          isSistema
-            ? 'bg-[rgba(27,58,87,0.05)] border-[rgba(27,58,87,0.20)]'
-            : 'bg-white border-[rgba(0,0,0,0.10)] shadow-card'
-        }`}>
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{act.titulo}</p>
-              {act.es_solicitud && act.tipo === 'NOTA_RESPUESTA' && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
-                  <Icon name="check" size={9} />
-                  RESPUESTA
-                </span>
-              )}
-              {act.es_solicitud && act.tipo !== 'NOTA_RESPUESTA' && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
-                  <Icon name="task" size={9} />
-                  SOLICITUD
-                </span>
-              )}
-              {act.origen_pjn && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e6f1fb] text-[#185fa5]">
-                  <Icon name="refresh" size={9} />
-                  PJN
-                </span>
-              )}
-              {act.escrito_estado === 'GENERADO' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
-                  Pendiente de aprobación externa
-                </span>
-              )}
-              {act.escrito_estado === 'APROBADO_CARGADO' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
-                  Aprobado y cargado
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <p className="text-[10px] text-[#4a6a84] whitespace-nowrap">{formatFecha(act.fecha)}</p>
-              {isSistema && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57]">
-                  Sistema
-                </span>
-              )}
-              {isSistema && tareasHistoricas.length > 0 && (
-                <button
-                  onClick={onToggleSnapshot}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1.5 transition-colors mt-1"
-                >
-                  <Icon name="checklist" size={14} />
-                  {tareasHistoricas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHistoricas.length} tareas
-                  <Icon name={snapshotOpen ? 'unfold_less' : 'unfold_more'} size={12} />
-                </button>
-              )}
-            </div>
-          </div>
-          {act.descripcion && (
-            <p className="text-xs text-[#4a6a84]">{act.descripcion}</p>
-          )}
-          {(act.doc_gde || adjuntosDeActividad(act).length > 0) && (
-            <div className="flex flex-wrap gap-3 mt-1.5">
-              {act.doc_gde && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
-                  <Icon name="description" size={14} />
-                  {act.doc_gde}
-                </span>
-              )}
-              {adjuntosDeActividad(act).map((adj, i) => (
-                <a
-                  key={`${adj.nombre}-${i}`}
-                  href="#"
-                  onClick={e => e.preventDefault()}
-                  title="Descarga no disponible en esta versión"
-                  className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-                >
-                  <Icon name="attach_file" size={14} />
-                  {adj.nombre}
-                  <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
-                </a>
-              ))}
-            </div>
-          )}
-          {act.fecha_vencimiento && (
-            <div className="flex flex-wrap items-center gap-2 mt-1.5">
-              {act.estado === 'COMPLETADA' ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#166534]">
-                  <Icon name="check_circle" size={12} />
-                  Vencimiento cumplido · {formatFecha(act.fecha_vencimiento)}
-                </span>
-              ) : (
-                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  act.fecha_vencimiento <= HOY ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#fef3c7] text-[#92400e]'
-                }`}>
-                  <Icon name="clock" size={12} />
-                  {act.fecha_vencimiento < HOY ? 'Venció' : act.fecha_vencimiento === HOY ? 'Vence hoy' : 'Vence'} · {formatFecha(act.fecha_vencimiento)}
-                </span>
-              )}
-            </div>
-          )}
-          {act.subitems && act.subitems.length > 0 && (
-            <div className="mt-2 pl-3 border-l-2 border-[rgba(0,0,0,0.08)] space-y-1">
-              {act.subitems.map((sub, si) => (
-                <div key={si}>
-                  <p className="text-xs font-medium text-[#1b3a57]">{sub.titulo}</p>
-                  {sub.descripcion && <p className="text-[10px] text-[#4a6a84]">{sub.descripcion}</p>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Panel tareas históricas — solo lectura */}
-      {isSistema && tareasHistoricas.length > 0 && snapshotOpen && (
-        <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
-          <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
-            {(() => {
-              const matchEstado = act.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
-              const labelEstadoAnterior = matchEstado?.[1]?.trim() ?? 'estado anterior'
-              return (
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
-                  TAREAS DEL ESTADO: {labelEstadoAnterior.toUpperCase()}
-                </span>
-              )
-            })()}
-            <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
-          </div>
-
-          {tareasHistoricas.map(tarea => {
-            const dimmed = tarea.estado === 'sin_estado'
-            return (
-              <div key={tarea.id} className={`flex items-start gap-3 px-4 py-2 border-b border-[rgba(0,0,0,0.04)] last:border-0 ${dimmed ? 'opacity-40' : ''}`}>
-                {/* Ícono estado */}
-                <div className="flex-shrink-0 mt-0.5">
-                  {tarea.estado === 'cumplido' && (
-                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                      <span className="text-green-600 text-[10px]">✓</span>
-                    </div>
-                  )}
-                  {tarea.estado === 'no_procedente' && (
-                    <div className="w-4 h-4 rounded-full bg-[#e8e8e8] flex items-center justify-center text-[#4a6a84] text-[10px]">⊘</div>
-                  )}
-                  {tarea.estado === 'en_curso' && (
-                    <div className="w-4 h-4 rounded-full bg-[#C4DFE8] flex items-center justify-center">
-                      <Icon name="schedule" size={10} className="text-[#1b3a57]" />
-                    </div>
-                  )}
-                  {tarea.estado === 'sin_estado' && (
-                    <div className="w-4 h-4 rounded-full border-2 border-[rgba(0,0,0,0.15)]" />
-                  )}
-                </div>
-
-                {/* Nombre + observaciones inline */}
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[11px] font-medium ${
-                    tarea.estado === 'cumplido'       ? 'line-through text-[#7a9ab4]'
-                    : tarea.estado === 'no_procedente' ? 'text-[#7a9ab4]'
-                    : 'text-[#1b3a57]'
-                  }`}>{tarea.nombre}</p>
-                  {tarea.observaciones && (
-                    <p className="text-[10px] text-[#7a9ab4] mt-0.5 italic">{tarea.observaciones}</p>
-                  )}
-                </div>
-
-                {/* Chip estado */}
-                {tarea.estado !== 'sin_estado' && (
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${
-                    tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
-                    : tarea.estado === 'en_curso' ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                    : 'bg-[#e8e8e8] text-[#4a6a84]'
-                  }`}>
-                    {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
-                  </span>
-                )}
-
-                {/* Fecha */}
-                {tarea.fecha && (
-                  <span className="text-[10px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{tarea.fecha}</span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Actividades hijas indentadas */}
-      {hijas.length > 0 && (
-        <div className="ml-10 mt-1 space-y-1.5">
-          {hijas.map((hija, hi) => (
-            <div key={hija.id ?? hi} className="flex gap-3 pl-4 border-l-2 border-[rgba(27,58,87,0.20)] ml-3">
-              <div className="flex flex-col items-center flex-shrink-0 mt-1">
-                <div className="w-6 h-6 rounded-full bg-[#e8e8e8] border border-[rgba(0,0,0,0.10)] flex items-center justify-center">
-                  <Icon name="subdirectory_arrow_right" size={12} className="text-[#4a6a84]" />
-                </div>
-              </div>
-              <div className="flex-1 rounded-xl border border-[rgba(0,0,0,0.10)] bg-white shadow-card p-3 mb-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-[#1b3a57] leading-snug">{hija.titulo}</p>
-                  <p className="text-[10px] text-[#4a6a84] whitespace-nowrap flex-shrink-0">{formatFecha(hija.fecha)}</p>
-                </div>
-                {hija.descripcion && (
-                  <p className="text-xs text-[#4a6a84] mt-0.5">{hija.descripcion}</p>
-                )}
-                {(hija.doc_gde || hija.adjunto_nombre) && (
-                  <div className="flex flex-wrap gap-3 mt-1.5">
-                    {hija.doc_gde && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
-                        <Icon name="description" size={14} />
-                        {hija.doc_gde}
-                      </span>
-                    )}
-                    {hija.adjunto_nombre && (
-                      <a
-                        href="#"
-                        onClick={e => e.preventDefault()}
-                        title="Descarga no disponible en esta versión"
-                        className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-                      >
-                        <Icon name="attach_file" size={14} />
-                        {hija.adjunto_nombre}
-                        <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Bloque de tareas del estado actual ───────────────────────────────────────
-
-function TareasBlock({
-  exp,
-  tareas,
-  estadoProcesal,
-  completadas,
-  total,
-  soloLectura = false,
-  tareaSeleccionada,
-  setTareaSeleccionada,
-}: {
-  exp: Expediente
-  tareas: Tarea[]
-  estadoProcesal: NonNullable<ReturnType<typeof getEstadoProcesal>>
-  completadas: number
-  total: number
-  soloLectura?: boolean
-  tareaSeleccionada: Tarea | null
-  setTareaSeleccionada: (t: Tarea) => void
-}) {
-  const [mostrarTodas, setMostrarTodas] = useState(false)
-  const siguienteEstado = estadoProcesal.siguiente
-    ? getEstadoProcesal(exp.tipo, estadoProcesal.siguiente)
-    : undefined
-  const puedeAvanzar = (total === 0 || completadas === total) && !!siguienteEstado
-  const progresoPct = total > 0 ? Math.round((completadas / total) * 100) : 0
-  const tareasVisibles = mostrarTodas ? tareas : tareas.slice(0, 8)
-
-  return (
-    <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden mb-4 shadow-card">
-      {/* Header bloque tareas */}
-      <div className="px-5 py-3 flex items-center gap-3 bg-[#f0f0f0] border-b border-[rgba(0,0,0,0.06)]">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-bold text-[#4a6a84] uppercase tracking-wide">
-              Estado actual:
-            </span>
-            <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
-              progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-[#C4DFE8] text-[#1b3a57]'
-            }`}>
-              {estadoProcesal.label.toUpperCase()}
-            </span>
-          </div>
-          <span className="text-xs text-[#4a6a84]">{completadas}/{total} tareas</span>
-          {/* Barra de progreso */}
-          <div className="flex-1 bg-[#e8e8e8] h-1.5 rounded-full max-w-[100px]">
-            <div
-              className={`h-1.5 rounded-full transition-all ${progresoPct === 100 ? 'bg-green-500' : 'bg-[#1b3a57]'}`}
-              style={{ width: `${progresoPct}%` }}
-            />
-          </div>
-          <span className="text-[10px] font-bold text-[#4a6a84]">{progresoPct}%</span>
-        </div>
-
-        {puedeAvanzar && (
-          <p className="text-[10px] text-green-700 font-semibold flex items-center gap-1 flex-shrink-0">
-             <Icon name="check_circle" size={12} />
-            Listo para avanzar al siguiente estado
-          </p>
-        )}
-      </div>
-
-      {/* Banner solo lectura */}
-      {soloLectura && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#fef3c7] border-b border-[#fde68a]">
-          <Icon name="lock" size={14} className="text-[#d97706] flex-shrink-0" />
-          <p className="text-xs text-[#d97706] font-medium">
-            Estado con retroceso activo — solo lectura. Podés agregar actividades genéricas.
-          </p>
-        </div>
-      )}
-
-      {/* Lista tareas */}
-      {tareas.length === 0 ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-xs text-[#4a6a84] italic">Este estado no requiere tareas. Podés avanzar directamente.</p>
-        </div>
-      ) : (
-        <>
-          {tareasVisibles.map((tarea, idx) => (
-            <TareaFeedItem
-              key={tarea.id}
-              tarea={tarea}
-              numero={idx + 1}
-              estadoLabel={estadoProcesal.label}
-              onClick={soloLectura ? undefined : () => setTareaSeleccionada(tarea)}
-              isSelected={!soloLectura && tareaSeleccionada?.id === tarea.id}
-            />
-          ))}
-          {!mostrarTodas && tareas.length > 8 && (
-            <button
-              className="w-full px-5 py-2.5 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors text-left"
-              onClick={() => setMostrarTodas(true)}
-            >
-              + {tareas.length - 8} tareas más...
-            </button>
-          )}
-        </>
-      )}
     </div>
   )
 }
@@ -879,26 +501,26 @@ function ReplyList({ replies }: { replies: Reply[] }) {
       {replies.map(reply => {
         const autorU = getUsuarioById(reply.autor_id)
         return (
-          <div key={reply.id} className="pl-4 border-l-2 border-[#C4DFE8]">
-            <div className="bg-[#f9f9f9] rounded-xl px-4 py-3">
+          <div key={reply.id} className="pl-4 border-l-2 border-blue-200">
+            <div className="bg-gray-50 rounded-lg px-4 py-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-[#1b3a57]">
+                <span className="text-[11px] font-semibold text-gray-800">
                   {autorU ? getNombreCompleto(autorU) : reply.autor_id}
                 </span>
-                <span className="text-[10px] text-[#7a9ab4]">{formatFecha(reply.fecha)}</span>
+                <span className="text-[10px] text-gray-400">{formatFecha(reply.fecha)}</span>
               </div>
-              <p className="text-xs text-[#1b3a57] whitespace-pre-wrap">{reply.texto}</p>
+              <p className="text-xs text-gray-800 whitespace-pre-wrap">{reply.texto}</p>
               {reply.doc_gde && (
-                <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
+                <p className="text-[10px] font-mono text-gray-800 mt-1.5 flex items-center gap-1">
                   <Icon name="attach_file" size={11} />
                   {reply.doc_gde}
                 </p>
               )}
               {reply.fecha_vencimiento && (
                 <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-[10px] text-[#4a6a84]">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
+                  <span className="text-[10px] text-gray-500">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
                   {reply.fecha_aviso && (
-                    <span className="text-[10px] text-[#d97706]">Aviso: {formatFecha(reply.fecha_aviso)}</span>
+                    <span className="text-[10px] text-amber-700">Aviso: {formatFecha(reply.fecha_aviso)}</span>
                   )}
                 </div>
               )}
@@ -917,17 +539,17 @@ function LogAuditoriaList({ log }: { log: LogAuditoria[] }) {
   return (
     <div className="ml-10 mr-4 mb-1">
       <details className="group">
-        <summary className="text-[10px] text-[#7a9ab4] cursor-pointer hover:text-[#4a6a84] list-none flex items-center gap-1 select-none">
+        <summary className="text-[10px] text-gray-400 cursor-pointer hover:text-gray-500 list-none flex items-center gap-1 select-none">
           <Icon name="history" size={11} />
           {log.length} registro{log.length > 1 ? 's' : ''} de auditoría
           <Icon name="expand_more" size={11} className="group-open:rotate-180 transition-transform" />
         </summary>
-        <div className="mt-1.5 space-y-1 border-l-2 border-[#e8e8e8] pl-3">
+        <div className="mt-1.5 space-y-1 border-l-2 border-gray-200 pl-3">
           {log.map(entry => {
             const autor = getUsuarioById(entry.usuario_id)
             return (
-              <div key={entry.id} className="text-[10px] text-[#7a9ab4]">
-                <span className={`font-bold mr-1 ${entry.tipo === 'ELIMINACION' ? 'text-[#b91c1c]' : 'text-[#4a6a84]'}`}>
+              <div key={entry.id} className="text-[10px] text-gray-400">
+                <span className={`font-semibold mr-1 ${entry.tipo === 'ELIMINACION' ? 'text-red-700' : 'text-gray-500'}`}>
                   {entry.tipo === 'EDICION' ? '✎ Editado' : '✕ Eliminado'}
                 </span>
                 por {autor ? getNombreCompleto(autor) : entry.usuario_id}
@@ -968,8 +590,6 @@ export function TimelineTab({ exp }: Props) {
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
   const [menuExport, setMenuExport] = useState(false)
-  const [snapshotsExpandidos, setSnapshotsExpandidos] = useState<Set<number>>(new Set())
-  const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
   const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
   const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
   const [editTarget, setEditTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
@@ -1118,20 +738,6 @@ export function TimelineTab({ exp }: Props) {
     eliminarActividad(exp.id, globalIdx, usuarioActivo?.id ?? '')
     toast.success('Actividad eliminada. Registro de auditoría generado.')
   }
-
-  const toggleEstado = (idx: number) =>
-    setEstadosExpandidos(prev => {
-      const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
-      return next
-    })
-
-  const toggleSnapshot = (idx: number) =>
-    setSnapshotsExpandidos(prev => {
-      const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
-      return next
-    })
 
   const estadoCodigo = exp.estadoProcesal ?? 'INICIO'
   const estadoProcesal = getEstadoProcesal(exp.tipo, estadoCodigo)
@@ -1360,6 +966,214 @@ export function TimelineTab({ exp }: Props) {
     return () => document.removeEventListener('click', handler)
   }, [menuActividad])
 
+  // ── Etapas (acordeón del PRD) ───────────────────────
+  const nombreDe = (id?: string) => {
+    const u = id ? getUsuarioById(id) : undefined
+    return u ? getNombreCompleto(u) : undefined
+  }
+
+  const TIPO_LABEL_ACT: Record<string, string> = Object.fromEntries(TIPOS.map(t => [t.value, t.label]))
+
+  function renderEventoCL(a: Actividad) {
+    const adjuntos = adjuntosDeActividad(a)
+    return (
+      <div>
+        <div className="flex items-start gap-2.5 py-3 -mx-2 px-2 rounded hover:bg-gray-50 transition-colors">
+          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mt-0.5">
+            <Icon name="notes" size={12} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700">
+                {TIPO_LABEL_ACT[a.tipo] ?? a.tipo}
+              </span>
+              {a.es_solicitud && a.tipo === 'NOTA_RESPUESTA' && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700">Respuesta</span>
+              )}
+              {a.es_solicitud && a.tipo !== 'NOTA_RESPUESTA' && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">Solicitud</span>
+              )}
+              {a.es_movimiento_impulsorio && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">Impulsorio</span>
+              )}
+            </div>
+            <p className="text-sm font-semibold text-gray-800">{a.titulo}</p>
+            {a.descripcion && <p className="text-xs text-gray-500">{a.descripcion}</p>}
+            {(a.doc_gde || adjuntos.length > 0) && (
+              <div className="flex flex-wrap gap-3 mt-1">
+                {a.doc_gde && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-gray-700">
+                    <Icon name="description" size={12} />{a.doc_gde}
+                  </span>
+                )}
+                {adjuntos.map((adj, i) => (
+                  <span key={`${adj.nombre}-${i}`} className="inline-flex items-center gap-1 text-[10px] text-gray-500">
+                    <Icon name="attach_file" size={12} />{adj.nombre}
+                  </span>
+                ))}
+              </div>
+            )}
+            {a.fecha_vencimiento && (
+              <div className="mt-1.5">
+                {a.estado === 'COMPLETADA' ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                    <Icon name="check_circle" size={12} />
+                    Vencimiento cumplido · {formatFecha(a.fecha_vencimiento)}
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    a.fecha_vencimiento <= HOY ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    <Icon name="clock" size={12} />
+                    {a.fecha_vencimiento < HOY ? 'Venció' : a.fecha_vencimiento === HOY ? 'Vence hoy' : 'Vence'} · {formatFecha(a.fecha_vencimiento)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-gray-400 whitespace-nowrap">{formatFecha(a.fecha)}</span>
+        </div>
+        {esLetrado && !a.es_solicitud && (
+          <div className="ml-7 pb-2 flex items-center gap-3">
+            <button
+              onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition-colors"
+            >
+              <Icon name="reply" size={13} />
+              Comentar
+            </button>
+            {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
+              <button
+                onClick={e => {
+                  e.stopPropagation()
+                  const r = e.currentTarget.getBoundingClientRect()
+                  setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
+                }}
+                className="p-0.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <Icon name="more_vert" size={14} />
+              </button>
+            )}
+          </div>
+        )}
+        {(a.replies ?? []).length > 0 && (
+          <div className="ml-7 mb-2 space-y-1.5">
+            <ReplyList replies={a.replies ?? []} />
+          </div>
+        )}
+        <LogAuditoriaList log={a.log ?? []} />
+      </div>
+    )
+  }
+
+  function renderRecepcionCL(a: Actividad) {
+    return (
+      <div className="flex items-start gap-2.5 py-3">
+        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-50 border border-gray-200 text-gray-400 flex items-center justify-center mt-0.5">
+          <Icon name="swap_horiz" size={12} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-gray-800 font-medium leading-snug">{a.titulo}</p>
+          {a.descripcion && <p className="text-xs text-gray-500">{a.descripcion}</p>}
+          {a.doc_gde && (
+            <p className="text-[10px] font-mono text-gray-700 mt-1 flex items-center gap-1">
+              <Icon name="attach_file" size={12} />{a.doc_gde}
+            </p>
+          )}
+        </div>
+        <span className="text-xs text-gray-400 whitespace-nowrap">{formatFecha(a.fecha)}</span>
+      </div>
+    )
+  }
+
+  // El orden de exp.timeline es cronológico: lo posterior a una transición de estado ocurrió en
+  // el estado al que esa transición ingresó.
+  const etapasCL: EtapaTL[] = (() => {
+    const sinRecep = sorted.filter(a => a.tipo !== 'RECEPCION')
+    const recepcion = sorted.find(a => a.tipo === 'RECEPCION')
+    const idxT = sinRecep.map((a, i) => ({ a, i })).filter(({ a }) => esMovimientoSistema(a)).map(({ i }) => i)
+    const q = busqueda.trim().toLowerCase()
+    const mostrarEventos = filtroTab === 'todo' || filtroTab === 'actividades'
+    const mostrarTareas  = filtroTab === 'todo' || filtroTab === 'tareas'
+    const pasa = (a: Actividad) => {
+      if (!mostrarEventos || esMovimientoSistema(a)) return false
+      if (q && !(a.titulo.toLowerCase().includes(q) || a.descripcion?.toLowerCase().includes(q))) return false
+      return true
+    }
+    const entre = (desde: number, hasta: number) => sinRecep.slice(desde, hasta).filter(pasa).reverse()
+    const parse = (a: Actividad) => {
+      const m = a.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) → (.+)/)
+      return { anterior: m?.[1]?.trim() ?? '', nueva: m?.[2]?.trim() ?? a.estadoExpediente ?? '' }
+    }
+    const esAsignado = (label: string) => /asignad/i.test(label)
+    const recepcionNodo = recepcion && mostrarEventos && (!q || (recepcion.titulo + (recepcion.descripcion ?? '')).toLowerCase().includes(q))
+      ? [renderRecepcionCL(recepcion)] : []
+
+    const tareasActual = mostrarTareas && !esEstadoInicial && estadoProcesal ? (
+      <TareasEtapa
+        tareas={tareas}
+        soloLectura={estadoFueAvanzado}
+        seleccionadaId={tareaSeleccionada?.id}
+        onSelect={t => { setTareaSeleccionada(t); setCambiosLocales({}) }}
+        puedeAvanzar={(total === 0 || completadas === total) && !!estadoProcesal.siguiente}
+      />
+    ) : undefined
+
+    if (idxT.length === 0) {
+      return [{
+        key: 'actual',
+        label: estadoProcesal?.label ?? estadoCodigo,
+        actual: true,
+        fecha: sorted.length ? sorted[0].fecha : HOY,
+        extra: tareasActual,
+        eventos: [...entre(0, sinRecep.length).map(renderEventoCL), ...recepcionNodo],
+        vacio: esEstadoInicial ? 'Actuación pendiente de inicio.' : undefined,
+      }]
+    }
+
+    const etapas: EtapaTL[] = []
+    for (let j = idxT.length - 1; j >= 0; j--) {
+      const T = sinRecep[idxT[j]]
+      const sig = j + 1 < idxT.length ? sinRecep[idxT[j + 1]] : undefined
+      const { anterior } = parse(T)
+      const fin = sig ? idxT[j + 1] : sinRecep.length
+      let nodos = entre(idxT[j] + 1, fin).map(renderEventoCL)
+      if (j === 0 && esAsignado(anterior)) {
+        nodos = [...nodos, ...entre(0, idxT[0]).map(renderEventoCL), ...recepcionNodo]
+      }
+      etapas.push({
+        key: `et-${j}`,
+        label: parse(T).nueva,
+        actual: !sig,
+        fecha: T.fecha,
+        ingreso: !sig ? { label: anterior, por: nombreDe(T.creado_por) } : undefined,
+        salida: sig ? { label: parse(sig).nueva, por: nombreDe(sig.creado_por) } : undefined,
+        extra: !sig
+          ? tareasActual
+          : (mostrarTareas
+              ? (() => {
+                  const hist = getTareasHistoricas(sig)
+                  return hist.length > 0 ? <TareasEtapa tareas={hist} soloLectura={false} /> : undefined
+                })()
+              : undefined),
+        eventos: nodos,
+      })
+    }
+    const primera = sinRecep[idxT[0]]
+    if (!esAsignado(parse(primera).anterior)) {
+      const pre = entre(0, idxT[0])
+      etapas.push({
+        key: 'et-pre',
+        label: parse(primera).anterior,
+        actual: false,
+        fecha: sinRecep[0]?.fecha ?? primera.fecha,
+        salida: { label: parse(primera).nueva, por: nombreDe(primera.creado_por) },
+        eventos: [...pre.map(renderEventoCL), ...recepcionNodo],
+      })
+    }
+    return etapas
+  })()
+
   const FILTRO_TABS: { key: FiltroTab; label: string; count?: number }[] = [
     { key: 'todo',        label: 'Todo' },
     { key: 'sistema',     label: 'Sistema',     count: cntSistema },
@@ -1368,15 +1182,15 @@ export function TimelineTab({ exp }: Props) {
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
 
       {/* ── Stepper procesal ── */}
       <ProcesalStepper exp={exp} />
 
       {enDesarchivado && (
-        <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-2xl">
-          <Icon name="info" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#854f0b]">
+        <div className="flex items-start gap-2 px-4 py-3 bg-amber-100 border border-amber-200 rounded-lg">
+          <Icon name="info" size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-800">
             {yaCargoEnDesarchivado
               ? 'Ya se registró la actividad en Desarchivado. Volvé a archivo desde el botón + → Cambiar estado.'
               : 'Actuación desarchivada: podés cargar una actividad genérica. Después volvé a archivo desde el botón + → Cambiar estado.'}
@@ -1384,379 +1198,96 @@ export function TimelineTab({ exp }: Props) {
         </div>
       )}
 
-      {/* ── Header: título + filtros + acción ── */}
-      <div className="bg-white rounded-2xl shadow-card px-5 py-3">
-        <div className="flex items-center justify-between gap-3">
-          {/* Título y contadores */}
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-[#1b3a57]">Ciclo de Vida — Actividades</p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#C4DFE8] text-[#1b3a57] font-semibold">
-              {completadas} de {total + sorted.length} completadas
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-
-            {/* Tabs filtro */}
-            <div className="flex items-center gap-1 bg-[#e8e8e8] rounded-xl p-1">
-              {FILTRO_TABS.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFiltroTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                    filtroTab === tab.key
-                      ? 'bg-white shadow-sm text-[#1b3a57]'
-                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
-                  }`}
-                >
-                  {tab.label}
-                  {tab.count !== undefined && tab.count > 0 && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                      filtroTab === tab.key
-                        ? 'bg-[#1b3a57] text-white'
-                        : 'bg-[#e0e0e0] text-[#4a6a84]'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Botón exportar */}
-            <div className="relative" onClick={e => e.stopPropagation()}>
-              <button
-                onClick={() => setMenuExport(v => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] hover:bg-[#f0f0f0] transition-colors"
-              >
-                <Icon name="download" size={14} />
-                Exportar
-                <Icon name="chevron_right" size={12} className={menuExport ? 'rotate-90 transition-transform' : 'transition-transform'} />
-              </button>
-
-              {menuExport && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg z-50 py-1 min-w-[160px]">
-                  <button
-                    onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
-                  >
-                    <Icon name="description" size={16} className="text-[#15803d]" />
-                    Descargar Excel
-                  </button>
-                  <button
-                    onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, tituloDoc, subtituloDoc); setMenuExport(false) }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
-                  >
-                    <Icon name="picture_as_pdf" size={16} className="text-[#b91c1c]" />
-                    Descargar PDF
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Botón nueva actividad */}
-            <button
-              onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
-              disabled={yaCargoEnDesarchivado}
-              title={yaCargoEnDesarchivado ? 'Ya se registró una actividad en Desarchivado. Volvé a archivo para continuar.' : undefined}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Icon name="add" size={16} />
-              Nueva Actividad
-            </button>
-          </div>
-        </div>
-
-        {/* Buscador */}
-        <div className="relative mt-3">
-          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a6a84] pointer-events-none" />
-          <input
-            className="field-input pl-9 w-full text-sm"
-            placeholder="Buscar actividad..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* ── Layout principal: feed + panel lateral ── */}
+      {/* ── Ciclo de Vida — Actividades (PRD letrado §6) ── */}
       <div className="flex gap-5 items-start">
+        <div className="flex-1 min-w-0">
+          <div className="bg-white border border-gray-200 rounded-lg p-5">
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-gray-700">Ciclo de Vida — Actividades</h2>
+                {total > 0 && !esEstadoInicial && (
+                  <span className="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                    {completadas} de {total} completadas
+                  </span>
+                )}
+              </div>
 
-        {/* ── Columna izquierda: feed ── */}
-        <div className="flex-1 min-w-0 space-y-0">
-
-          {/* Bloque tareas (tab todo o tareas) */}
-          {(filtroTab === 'todo' || filtroTab === 'tareas') && !esEstadoInicial && estadoProcesal && (
-            <TareasBlock
-              exp={exp}
-              tareas={tareas}
-              estadoProcesal={estadoProcesal}
-              completadas={completadas}
-              total={total}
-              soloLectura={estadoFueAvanzado}
-              tareaSeleccionada={tareaSeleccionada}
-              setTareaSeleccionada={(t) => {
-                if (estadoFueAvanzado) return
-                setTareaSeleccionada(t)
-                setCambiosLocales({})
-              }}
-            />
-          )}
-
-          {/* Feed colapsable por estado */}
-          {filtroTab !== 'tareas' && (
-            <div className="mb-4 bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden shadow-card">
-              {gruposFeed.grupos.map((grupo, gi) => {
-                const { sistema, tareasHist, actividades } = grupo
-                const expandido = estadosExpandidos.has(gi)
-                const snapshotOpen = sistema ? snapshotsExpandidos.has(gi) : false
-
-                if (!sistema) {
-                  // Período actual — actividades sin agrupar
-                  if (actividades.length === 0 && !esEstadoInicial) return null
-                  return (
-                    <div key={`actual-${gi}`}>
-                      {esEstadoInicial && (
-                        <div className="p-6 text-center">
-                          <Icon name="inbox" className="block mb-2 mx-auto" size={32} />
-                          <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
-                          <p className="text-xs text-[#4a6a84]">Usá <strong>Acciones → Cambiar estado</strong> para comenzar.</p>
-                        </div>
-                      )}
-                      {actividades.map((a, ai) => (
-                        <div key={a.id ?? ai}>
-                          <ActividadFeedItem
-                            act={a}
-                            idx={ai}
-                            isLast={ai === actividades.length - 1}
-                            hijas={[]}
-                            snapshotOpen={false}
-                            onToggleSnapshot={() => {}}
-                            tareasHistoricas={[]}
-                          />
-                          {esLetrado && !a.es_solicitud && (
-                            <div className="pl-14 pb-2 -mt-2 flex items-center gap-2">
-                              <button
-                                onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
-                              >
-                                <Icon name="reply" size={13} />
-                                Comentar
-                              </button>
-                              {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    const r = e.currentTarget.getBoundingClientRect()
-                                    setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
-                                  }}
-                                  className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
-                                >
-                                  <Icon name="more_vert" size={14} />
-                                </button>
-                              )}
-                            </div>
-                          )}
-                          <ReplyList replies={a.replies ?? []} />
-                          <LogAuditoriaList log={a.log ?? []} />
-                        </div>
-                      ))}
-                    </div>
-                  )
-                }
-
-                // Entrada de cambio de estado — colapsable
-                return (
-                  <div key={sistema.id ?? gi} className="border-t border-[rgba(0,0,0,0.06)] first:border-t-0">
-                    {/* Cabecera colapsable */}
-                    <div
-                      onClick={() => toggleEstado(gi)}
-                      className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+                  {FILTRO_TABS.map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setFiltroTab(tab.key)}
+                      className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-r border-gray-200 last:border-r-0 transition-colors ${
+                        filtroTab === tab.key ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon name={expandido ? 'expand_less' : 'expand_more'} size={16} className="text-[#1b3a57]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#1b3a57]">{sistema.titulo}</p>
-                        {sistema.descripcion && <p className="text-xs text-[#4a6a84]">{sistema.descripcion}</p>}
-                        {tareasHist.length > 0 && (
-                          <button
-                            onClick={e => { e.stopPropagation(); toggleSnapshot(gi) }}
-                            className="flex items-center gap-1.5 text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] border border-[rgba(0,0,0,0.12)] rounded-lg px-2.5 py-1 transition-colors mt-1.5"
-                          >
-                            <Icon name="checklist" size={14} />
-                            {tareasHist.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHist.length} tareas
-                            <Icon name={snapshotOpen ? 'unfold_less' : 'unfold_more'} size={12} />
-                          </button>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-1">{formatFecha(sistema.fecha)}</span>
+                      {tab.label}
+                      {tab.count !== undefined && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{tab.count}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Exportar */}
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => setMenuExport(v => !v)}
+                    className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50 transition-colors whitespace-nowrap"
+                  >
+                    <Icon name="download" size={14} />
+                    Exportar
+                  </button>
+                  {menuExport && (
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1">
+                      <button
+                        onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Icon name="description" size={16} className="text-green-700" />
+                        Descargar Excel
+                      </button>
+                      <button
+                        onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, tituloDoc, subtituloDoc); setMenuExport(false) }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Icon name="picture_as_pdf" size={16} className="text-red-700" />
+                        Descargar PDF
+                      </button>
                     </div>
-
-                    {/* Snapshot tareas */}
-                    {snapshotOpen && tareasHist.length > 0 && (
-                      <div className="border border-[rgba(0,0,0,0.10)] rounded-xl overflow-hidden bg-[#f9f9f9] mb-3 ml-10">
-                        <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(0,0,0,0.06)]">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">
-                            {(() => {
-                              const match = sistema.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
-                              const label = match?.[1]?.trim() ?? 'estado anterior'
-                              return `TAREAS DEL ESTADO: ${label.toUpperCase()}`
-                            })()}
-                          </span>
-                          <span className="text-[10px] text-[#7a9ab4] ml-auto italic">No se pueden modificar</span>
-                        </div>
-                        {tareasHist.map(tarea => {
-                          const dimmed = tarea.estado === 'sin_estado'
-                          return (
-                            <div key={tarea.id} className={`flex items-start gap-3 px-4 py-2 border-b border-[rgba(0,0,0,0.04)] last:border-0 ${dimmed ? 'opacity-40' : ''}`}>
-                              <div className="flex-shrink-0 mt-0.5">
-                                {tarea.estado === 'cumplido' && (
-                                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                                    <span className="text-green-600 text-[10px]">✓</span>
-                                  </div>
-                                )}
-                                {tarea.estado === 'no_procedente' && (
-                                  <div className="w-4 h-4 rounded-full bg-[#e8e8e8] flex items-center justify-center text-[#4a6a84] text-[10px]">⊘</div>
-                                )}
-                                {tarea.estado === 'en_curso' && (
-                                  <div className="w-4 h-4 rounded-full bg-[#C4DFE8] flex items-center justify-center">
-                                    <Icon name="schedule" size={10} className="text-[#1b3a57]" />
-                                  </div>
-                                )}
-                                {tarea.estado === 'sin_estado' && (
-                                  <div className="w-4 h-4 rounded-full border-2 border-[rgba(0,0,0,0.15)]" />
-                                )}
-                              </div>
-                              <p className={`text-xs flex-1 ${
-                                tarea.estado === 'cumplido' ? 'line-through text-[#7a9ab4]'
-                                : tarea.estado === 'no_procedente' ? 'text-[#7a9ab4]'
-                                : 'text-[#1b3a57]'
-                              }`}>
-                                {tarea.nombre}
-                              </p>
-                              {tarea.estado !== 'sin_estado' && (
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                                  tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
-                                  : tarea.estado === 'en_curso' ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                                  : 'bg-[#e8e8e8] text-[#4a6a84]'
-                                }`}>
-                                  {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
-                                </span>
-                              )}
-                              {tarea.observaciones && (
-                                <p className="text-[10px] text-[#7a9ab4] mt-0.5 italic w-full pl-7">{tarea.observaciones}</p>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {/* Actividades del período */}
-                    {expandido && (
-                      <div className="border-t border-[rgba(0,0,0,0.05)] bg-[#fafafa]">
-                        {actividades.length === 0 ? (
-                          <p className="px-16 py-3 text-xs text-[#7a9ab4] italic">Sin actividades en este período.</p>
-                        ) : (
-                          actividades.map((a, ai) => (
-                            <div key={a.id ?? ai}>
-                              <div className="flex items-start gap-3 px-5 py-3 border-b border-[rgba(0,0,0,0.04)] last:border-0 ml-10">
-                                <div className="w-7 h-7 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0">
-                                  <Icon name="description" size={14} className="text-[#4a6a84]" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="text-sm text-[#1b3a57] font-medium">{a.titulo}</p>
-                                    {a.es_solicitud && a.tipo === 'NOTA_RESPUESTA' && (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
-                                        <Icon name="check" size={9} />
-                                        RESPUESTA
-                                      </span>
-                                    )}
-                                    {a.es_solicitud && a.tipo !== 'NOTA_RESPUESTA' && (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
-                                        <Icon name="task" size={9} />
-                                        SOLICITUD
-                                      </span>
-                                    )}
-                                  </div>
-                                  {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
-                                  {(a.doc_gde || adjuntosDeActividad(a).length > 0) && (
-                                    <div className="flex flex-wrap gap-3 mt-1">
-                                      {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]"><Icon name="description" size={12} />{a.doc_gde}</span>}
-                                      {adjuntosDeActividad(a).map((adj, i) => <span key={`${adj.nombre}-${i}`} className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{adj.nombre}</span>)}
-                                    </div>
-                                  )}
-                                  {esLetrado && !a.es_solicitud && (
-                                    <div className="flex items-center gap-2 mt-1.5">
-                                      <button
-                                        onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                        className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
-                                      >
-                                        <Icon name="reply" size={13} />
-                                        Comentar
-                                      </button>
-                                      {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
-                                        <button
-                                          onClick={e => {
-                                            e.stopPropagation()
-                                            const r = e.currentTarget.getBoundingClientRect()
-                                            setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
-                                          }}
-                                          className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
-                                        >
-                                          <Icon name="more_vert" size={14} />
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                                <span className="text-[11px] text-[#7a9ab4] flex-shrink-0">{formatFecha(a.fecha)}</span>
-                              </div>
-                              {(a.replies ?? []).length > 0 && (
-                                <div className="ml-20 mr-5 mb-2 space-y-1.5">
-                                  <ReplyList replies={a.replies ?? []} />
-                                </div>
-                              )}
-                              <LogAuditoriaList log={a.log ?? []} />
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-              {!esEstadoInicial && gruposFeed.grupos.every(g => !g.sistema && g.actividades.length === 0) && !gruposFeed.entradaRecepcion && (
-                <div className="p-8 text-center text-[#4a6a84] text-sm">
-                  No hay actividades que coincidan.
+                  )}
                 </div>
-              )}
-              {/* Entrada de recepción — siempre visible al final */}
-              {gruposFeed.entradaRecepcion && (
-                <div className="flex items-start gap-3 px-5 py-3.5 border-t border-[rgba(0,0,0,0.05)]">
-                  <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Icon name="inbox" size={16} className="text-[#4a6a84]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1b3a57]">{gruposFeed.entradaRecepcion.titulo}</p>
-                    {gruposFeed.entradaRecepcion.descripcion && (
-                      <p className="text-xs text-[#4a6a84]">{gruposFeed.entradaRecepcion.descripcion}</p>
-                    )}
-                    {gruposFeed.entradaRecepcion.doc_gde && (
-                      <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
-                        <Icon name="attach_file" size={12} />
-                        {gruposFeed.entradaRecepcion.doc_gde}
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(gruposFeed.entradaRecepcion.fecha)}</span>
-                </div>
-              )}
+
+                <button
+                  onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
+                  disabled={yaCargoEnDesarchivado}
+                  title={yaCargoEnDesarchivado ? 'Ya se registró una actividad en Desarchivado. Volvé a archivo para continuar.' : undefined}
+                  className="flex items-center gap-1 text-xs bg-blue-700 text-white rounded-md px-2.5 py-1.5 hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Icon name="add" size={14} />
+                  Nueva Actividad
+                </button>
+              </div>
             </div>
-          )}
 
+            {/* Buscador */}
+            <div className="relative mb-4">
+              <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Buscar actividad..."
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+              />
+            </div>
+
+            <EtapasAcordeon
+              key={etapasCL.map(e => e.key).join('|')}
+              etapas={etapasCL}
+              vacio="No hay actividades que coincidan."
+            />
+          </div>
         </div>
 
         {/* ── Panel lateral tarea ── */}
@@ -1777,11 +1308,11 @@ export function TimelineTab({ exp }: Props) {
         <div
           onClick={e => e.stopPropagation()}
           style={{ position: 'fixed', left: menuActividad.x, top: menuActividad.y }}
-          className="w-56 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
+          className="w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
         >
           <button
             onClick={() => { abrirEdicion(menuActividad.act, menuActividad.globalIdx); setMenuActividad(null) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-gray-800 hover:bg-gray-100 transition-colors text-left"
           >
             <Icon name="edit" size={13} />
             Editar
@@ -1789,7 +1320,7 @@ export function TimelineTab({ exp }: Props) {
           {menuActividad.act.fecha_vencimiento && menuActividad.act.estado !== 'COMPLETADA' && (
             <button
               onClick={() => { marcarVencimientoCumplido(menuActividad.globalIdx); setMenuActividad(null) }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#166534] hover:bg-[#dcfce7] transition-colors text-left"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-green-800 hover:bg-green-100 transition-colors text-left"
             >
               <Icon name="check_circle" size={13} />
               Marcar vencimiento cumplido
@@ -1797,7 +1328,7 @@ export function TimelineTab({ exp }: Props) {
           )}
           <button
             onClick={() => { confirmarEliminacion(menuActividad.globalIdx); setMenuActividad(null) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-red-700 hover:bg-red-100 transition-colors text-left"
           >
             <Icon name="delete" size={13} />
             Eliminar
@@ -1809,11 +1340,12 @@ export function TimelineTab({ exp }: Props) {
       <Modal
         open={modalNuevaActividad}
         onClose={cerrarModal}
-        titulo="Nueva actividad"
+        titulo="Nueva Actividad"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="md"
         footer={
           <>
-            <button onClick={cerrarModal} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrarModal} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
@@ -1823,7 +1355,7 @@ export function TimelineTab({ exp }: Props) {
                   ? (!formAct.titulo.trim() || !formAct.descripcion.trim())
                   : (!formSolicitud.titulo.trim() || (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria))
               }
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               {tabModal === 'generica' ? 'Agregar' : 'Crear solicitud'}
             </button>
@@ -1831,17 +1363,17 @@ export function TimelineTab({ exp }: Props) {
         }
       >
         {/* Tabs */}
-        <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1 mb-4">
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
           {([
             ['generica',  'Actividad Genérica'],
             ['solicitud', 'Nueva Solicitud'],
           ] as const).map(([val, lbl]) => (
             <button key={val} type="button"
               onClick={() => setTabModal(val)}
-              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 tabModal === val
-                  ? 'bg-white text-[#1b3a57] shadow-sm'
-                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}>
               {lbl}
             </button>
@@ -1866,7 +1398,7 @@ export function TimelineTab({ exp }: Props) {
               <button
                 type="button"
                 onClick={() => setModalEscrito(true)}
-                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#4a9ab5] text-[#1b3a57] text-xs font-semibold hover:bg-[rgba(27,58,87,0.05)] transition-colors"
+                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-blue-500 text-gray-800 text-xs font-semibold hover:bg-blue-50 transition-colors"
               >
                 <Icon name="article" size={16} />
                 Generar Escrito
@@ -1874,7 +1406,7 @@ export function TimelineTab({ exp }: Props) {
             )}
           </div>
           <div>
-            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Título <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full" value={formAct.titulo} onChange={e => setFormAct(p => ({ ...p, titulo: e.target.value }))} autoFocus />
           </div>
           <div>
@@ -1882,7 +1414,7 @@ export function TimelineTab({ exp }: Props) {
             <input type="date" className="field-input w-full" value={formAct.fecha} onChange={e => setFormAct(p => ({ ...p, fecha: e.target.value }))} />
           </div>
           <div>
-            <label className="field-label">Descripción <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Descripción <span className="text-red-700">*</span></label>
             <textarea className="field-input w-full resize-y" style={{ minHeight: 72 }} value={formAct.descripcion} onChange={e => setFormAct(p => ({ ...p, descripcion: e.target.value }))} />
           </div>
           <div>
@@ -1913,7 +1445,7 @@ export function TimelineTab({ exp }: Props) {
               <div
                 onClick={() => setFormAct(p => ({ ...p, mostrar_en_agenda: !p.mostrar_en_agenda }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  formAct.mostrar_en_agenda ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  formAct.mostrar_en_agenda ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -1921,15 +1453,15 @@ export function TimelineTab({ exp }: Props) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Mostrar en agenda</p>
-                <p className="text-[11px] text-[#4a6a84]">Aparecerá en el calendario en la fecha de vencimiento</p>
+                <p className="text-sm font-medium text-gray-800">Mostrar en agenda</p>
+                <p className="text-[11px] text-gray-500">Aparecerá en el calendario en la fecha de vencimiento</p>
               </div>
             </label>
           )}
           {formAct.fecha_vencimiento && (
             <div>
               <label className="field-label">Fecha de aviso (opcional)</label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1">
+              <p className="text-[10px] text-gray-400 mb-1">
                 A partir de qué fecha recibir el aviso de proximidad al vencimiento.
               </p>
               <input
@@ -1955,10 +1487,10 @@ export function TimelineTab({ exp }: Props) {
                     key={String(op.value)}
                     type="button"
                     onClick={() => setFormAct(p => ({ ...p, rango_aviso: op.value }))}
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-colors ${
                       formAct.rango_aviso === op.value
-                        ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                        : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        ? 'bg-blue-700 border-blue-700 text-white'
+                        : 'border-gray-200 text-gray-500 hover:bg-gray-100'
                     }`}
                   >
                     {op.label}
@@ -1973,29 +1505,29 @@ export function TimelineTab({ exp }: Props) {
           </div>
 
           {exp.es_juicio_iniciado && !exp.id_juicio_derivado && (
-            <div className="pt-3 border-t border-[rgba(0,0,0,0.08)]">
+            <div className="pt-3 border-t border-gray-200">
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-[#1b3a57] w-4 h-4 flex-shrink-0"
+                  className="mt-0.5 accent-blue-700 w-4 h-4 flex-shrink-0"
                   checked={esImpulsorio}
                   onChange={e => setEsImpulsorio(e.target.checked)}
                 />
                 <div>
-                  <p className="text-sm font-semibold text-[#1b3a57] group-hover:text-[#2a5278]">
+                  <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-800">
                     Marcar como movimiento impulsorio
                   </p>
-                  <p className="text-xs text-[#7a9ab4] mt-0.5">
+                  <p className="text-xs text-gray-400 mt-0.5">
                     Resetea el timer de 3 meses desde la fecha de esta actividad.
                   </p>
                 </div>
               </label>
               {esImpulsorio && (
-                <div className="mt-2 flex items-start gap-2 px-3 py-2.5 bg-[#C4DFE8] rounded-xl">
-                  <Icon name="schedule" size={14} className="text-[#1b3a57] flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-[#1b3a57]">
+                <div className="mt-2 flex items-start gap-2 px-3 py-2.5 bg-blue-100 rounded-lg">
+                  <Icon name="schedule" size={14} className="text-gray-800 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-800">
                     El plazo procesal se reiniciará a partir del{' '}
-                    <span className="font-bold">{formAct.fecha || 'hoy'}</span>.
+                    <span className="font-semibold">{formAct.fecha || 'hoy'}</span>.
                     Nueva alerta: en 75 días.
                   </p>
                 </div>
@@ -2022,16 +1554,17 @@ export function TimelineTab({ exp }: Props) {
         open={!!replyTarget}
         onClose={() => { setReplyTarget(null); limpiarFormReply() }}
         titulo="Agregar comentario"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="sm"
         footer={
           <>
-            <button onClick={() => { setReplyTarget(null); limpiarFormReply() }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => { setReplyTarget(null); limpiarFormReply() }} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarReply}
               disabled={!formReply.texto.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar
             </button>
@@ -2040,13 +1573,13 @@ export function TimelineTab({ exp }: Props) {
       >
         <div className="space-y-3 py-1">
           {replyTarget && (
-            <div className="bg-[#f5f5f5] rounded-xl px-3 py-2 flex items-start gap-2">
-              <Icon name="reply" size={14} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-[#4a6a84] line-clamp-2">{replyTarget.act.titulo}</p>
+            <div className="bg-gray-100 rounded-lg px-3 py-2 flex items-start gap-2">
+              <Icon name="reply" size={14} className="text-gray-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-gray-500 line-clamp-2">{replyTarget.act.titulo}</p>
             </div>
           )}
           <div>
-            <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Comentario <span className="text-red-700">*</span></label>
             <textarea
               className="field-input w-full resize-none"
               style={{ minHeight: 80 }}
@@ -2080,7 +1613,7 @@ export function TimelineTab({ exp }: Props) {
           {formReply.fecha_vencimiento && (
             <div>
               <label className="field-label">Fecha de aviso (opcional)</label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
+              <p className="text-[10px] text-gray-400 mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
               <input
                 type="date"
                 className="field-input w-full"
@@ -2098,16 +1631,17 @@ export function TimelineTab({ exp }: Props) {
         open={!!editTarget}
         onClose={() => setEditTarget(null)}
         titulo="Editar actividad"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="md"
         footer={
           <>
-            <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarEdicion}
               disabled={!formEdit.titulo.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar cambios
             </button>
@@ -2116,7 +1650,7 @@ export function TimelineTab({ exp }: Props) {
       >
         <div className="space-y-3 py-1">
           <div>
-            <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Título <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full" value={formEdit.titulo} onChange={e => setFormEdit(p => ({ ...p, titulo: e.target.value }))} />
           </div>
           <div>
@@ -2138,7 +1672,7 @@ export function TimelineTab({ exp }: Props) {
                 <button
                   type="button"
                   onClick={() => setFormEdit(p => ({ ...p, fecha_vencimiento: '', fecha_aviso: '' }))}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-[#b91c1c] hover:underline"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-red-700 hover:underline"
                 >
                   <Icon name="close" size={12} />
                   Quitar vencimiento
@@ -2168,9 +1702,9 @@ export function TimelineTab({ exp }: Props) {
               />
             </div>
           )}
-          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#faeeda] border border-[#fde68a]">
-            <Icon name="info" size={14} className="text-[#854f0b] flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-[#854f0b]">
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+            <Icon name="info" size={14} className="text-amber-800 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-800">
               Los cambios quedan registrados en el log de auditoría de la actividad.
             </p>
           </div>

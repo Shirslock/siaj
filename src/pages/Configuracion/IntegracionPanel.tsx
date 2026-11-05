@@ -116,18 +116,18 @@ export function IntegracionPanel() {
 
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-[#1b3a57]">Credenciales PJN / MEV</h2>
-        <p className="text-xs text-[#7a9ab4] mt-0.5">
+        <h2 className="text-lg font-semibold text-gray-800">Credenciales PJN / MEV</h2>
+        <p className="text-xs text-gray-400 mt-0.5">
           Gestión de usuarios de integración automática con sistemas externos.
         </p>
       </div>
 
       {/* Banner informativo */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200">
         <Icon name="info" size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
         <div className="text-xs text-blue-800 space-y-1">
-          <p><span className="font-bold">PJN:</span> La contraseña vence cada <span className="font-bold">200 días</span>. Cuando venza, actualizarla primero en el portal PJN y luego en SIAJ.</p>
-          <p><span className="font-bold">MEV:</span> La contraseña vence cada <span className="font-bold">90 días</span>. Mismo procedimiento.</p>
+          <p><span className="font-semibold">PJN:</span> La contraseña vence cada <span className="font-semibold">200 días</span>. Cuando venza, actualizarla primero en el portal PJN y luego en SIAJ.</p>
+          <p><span className="font-semibold">MEV:</span> La contraseña vence cada <span className="font-semibold">90 días</span>. Mismo procedimiento.</p>
           <p className="text-blue-700">Si la credencial vence, la integración automática dejará de funcionar hasta que sea renovada.</p>
         </div>
       </div>
@@ -141,40 +141,40 @@ export function IntegracionPanel() {
           const pct = Math.max(0, Math.min(100, (dias / politica) * 100))
 
           return (
-            <div key={c.id} className={`bg-white rounded-2xl shadow-card border ${dias <= 15 ? 'border-red-200' : 'border-[rgba(0,0,0,0.06)]'}`}>
+            <div key={c.id} className={`bg-white rounded-lg shadow-card border ${dias <= 15 ? 'border-red-200' : 'border-gray-200'}`}>
               <div className="px-6 py-4 flex items-start justify-between gap-4">
 
                 {/* Info principal */}
                 <div className="flex items-start gap-4 flex-1 min-w-0">
                   {/* Ícono sistema */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    c.sistema === 'PJN' ? 'bg-[#1b3a57]' : 'bg-[#7c3aed]'
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    c.sistema === 'PJN' ? 'bg-blue-700' : 'bg-violet-600'
                   }`}>
-                    <span className="text-white text-[11px] font-black">{c.sistema}</span>
+                    <span className="text-white text-[11px] font-semibold">{c.sistema}</span>
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-sm font-bold text-[#1b3a57]">{c.sistema}</p>
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                        c.tipo === 'automatico' ? 'bg-[#dbeafe] text-[#1b3a57]' : 'bg-[#e8e8e8] text-[#4a6a84]'
+                      <p className="text-sm font-semibold text-gray-800">{c.sistema}</p>
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        c.tipo === 'automatico' ? 'bg-blue-100 text-gray-800' : 'bg-gray-100 text-gray-500'
                       }`}>
                         {c.tipo === 'automatico' ? 'Automático' : 'Personal'}
                       </span>
                     </div>
-                    <p className="text-xs font-mono text-[#4a6a84] truncate">{c.usuario}</p>
-                    <p className="text-[11px] text-[#7a9ab4] mt-0.5">{c.descripcion}</p>
+                    <p className="text-xs font-mono text-gray-500 truncate">{c.usuario}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{c.descripcion}</p>
 
                     {/* Barra de progreso */}
                     <div className="mt-3 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-[#4a6a84]">Último cambio: {c.fecha_actualizacion}</span>
-                        <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${estado.color}`}>
+                        <span className="text-[10px] text-gray-500">Último cambio: {c.fecha_actualizacion}</span>
+                        <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${estado.color}`}>
                           <Icon name={estado.icon} size={11} />
                           {estado.label}
                         </span>
                       </div>
-                      <div className="h-1.5 bg-[#e8e8e8] rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
                             dias < 0 ? 'bg-red-500' : dias <= 15 ? 'bg-red-400' : dias <= 30 ? 'bg-amber-400' : 'bg-green-500'
@@ -182,7 +182,7 @@ export function IntegracionPanel() {
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <p className="text-[9px] text-[#9a9a9a]">
+                      <p className="text-[9px] text-gray-400">
                         Política: vence cada {politica} días
                       </p>
                     </div>
@@ -192,7 +192,7 @@ export function IntegracionPanel() {
                 {/* Botón actualizar */}
                 <button
                   onClick={() => abrirEditar(c)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-[#1b3a57] text-[#1b3a57] hover:bg-[#1b3a57] hover:text-white transition-colors flex-shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border-2 border-blue-700 text-gray-800 hover:bg-blue-700 hover:text-white transition-colors flex-shrink-0"
                 >
                   <Icon name="key" size={14} />
                   Actualizar credencial
@@ -223,13 +223,13 @@ export function IntegracionPanel() {
         size="md"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrar} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={guardar}
               disabled={!form.usuario.trim() || !passwordMatch}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               <Icon name="save" size={15} />
               Guardar
@@ -240,10 +240,10 @@ export function IntegracionPanel() {
         {editando && (
           <div className="space-y-4">
 
-            <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
+            <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
               <Icon name="info" size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800">
-                Primero actualizá la contraseña en el portal <span className="font-bold">{editando.sistema}</span>, luego ingresá la nueva contraseña acá para mantener la integración activa.
+                Primero actualizá la contraseña en el portal <span className="font-semibold">{editando.sistema}</span>, luego ingresá la nueva contraseña acá para mantener la integración activa.
               </p>
             </div>
 
@@ -269,7 +269,7 @@ export function IntegracionPanel() {
                 />
                 <button
                   onClick={() => setMostrarPass(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a6a84] hover:text-[#1b3a57]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
                 >
                   <Icon name={mostrarPass ? 'visibility_off' : 'visibility'} size={16} />
                 </button>
@@ -288,7 +288,7 @@ export function IntegracionPanel() {
                 />
                 <button
                   onClick={() => setMostrarPass2(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a6a84] hover:text-[#1b3a57]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
                 >
                   <Icon name={mostrarPass2 ? 'visibility_off' : 'visibility'} size={16} />
                 </button>
@@ -308,10 +308,10 @@ export function IntegracionPanel() {
               />
             </div>
 
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#f5f5f5] border border-[rgba(0,0,0,0.06)]">
-              <Icon name="update" size={14} className="text-[#4a6a84]" />
-              <p className="text-xs text-[#4a6a84]">
-                Al guardar, el contador de vencimiento se reiniciará a <span className="font-bold">{editando && POLITICA_VENCIMIENTO[editando.sistema]} días</span>.
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gray-100 border border-gray-200">
+              <Icon name="update" size={14} className="text-gray-500" />
+              <p className="text-xs text-gray-500">
+                Al guardar, el contador de vencimiento se reiniciará a <span className="font-semibold">{editando && POLITICA_VENCIMIENTO[editando.sistema]} días</span>.
               </p>
             </div>
 

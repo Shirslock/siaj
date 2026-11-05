@@ -1,59 +1,28 @@
 import type { Area, RolSistema } from '../../types'
 
-interface BadgeConfig {
-  bg: string
-  text: string
-  dot?: string
-}
+// PRD (siaj-design-system.md §7): los estados se ven todos con el mismo chip neutro
+// (no hay color por estado); el área es un chip rectangular con fondo sólido de marca.
 
-const ESTADO_CONFIG: Record<string, BadgeConfig> = {
-  EN_TRAMITE:           { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  'EN TRAMITACIÓN':     { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  'EN TRAMITACION':     { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  EN_PLAZO_CONTESTAR:   { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#2a5278]' },
-  'EN ANÁLISIS':        { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#2a5278]' },
-  SUSPENSION_TERMINOS:  { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  'AUDIENCIA PACTADA':  { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]', dot: 'bg-[#7dbad2]' },
-  EN_PRUEBA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  PENDIENTE_GDE:        { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]' },
-  PENDIENTE:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
-  'PENDIENTE CARGA':    { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
-  CUMPLIDO:             { bg: 'bg-[#dcfce7]',  text: 'text-[#15803d]', dot: 'bg-[#15803d]' },
-  ACUERDO:              { bg: 'bg-[#dcfce7]',  text: 'text-[#15803d]', dot: 'bg-[#15803d]' },
-  ARCHIVADO:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  ARCHIVADA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  URGENTE:              { bg: 'bg-[#fee2e2]',  text: 'text-[#b91c1c]', dot: 'bg-[#b91c1c]' },
-  INSTRUCCIÓN:          { bg: 'bg-[#C4DFE8]',  text: 'text-[#1b3a57]', dot: 'bg-[#4a9ab5]' },
-  'ELEVADA A JUICIO':   { bg: 'bg-[#dbeafe]',  text: 'text-[#1b3a57]', dot: 'bg-[#1b3a57]' },
-  SENTENCIA:            { bg: 'bg-[#e8e8e8]',  text: 'text-[#4a6a84]' },
-  OBSERVADO:            { bg: 'bg-[#fef3c7]',  text: 'text-[#d97706]', dot: 'bg-[#d97706]' },
-  ASIGNADO:             { bg: 'bg-[#E5E5E5]',  text: 'text-[#1b3a57]', dot: 'bg-[#7dbad2]' },
-  DESARCHIVADO:         { bg: 'bg-[#fef3c7]',  text: 'text-[#854f0b]', dot: 'bg-[#d97706]' },
-}
-
-const DEFAULT_CONFIG: BadgeConfig = {
-  bg: 'bg-[#e8e8e8]',
-  text: 'text-[#4a6a84]',
-}
-
-export function EstadoBadge({ code, label }: { code: string; label: string }) {
-  const cfg = ESTADO_CONFIG[code] ?? ESTADO_CONFIG[label] ?? DEFAULT_CONFIG
+export function EstadoBadge({ label }: { code?: string; label: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${cfg.bg} ${cfg.text}`}>
-      {cfg.dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />}
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 whitespace-nowrap">
       {label}
     </span>
   )
 }
 
+const AREA_COLOR: Record<Area, string> = {
+  CIVIL:   'var(--color-area-civil)',
+  PENAL:   'var(--color-area-penal)',
+  LABORAL: 'var(--color-area-laboral)',
+}
+
 export function AreaBadge({ area }: { area: Area }) {
-  const config: Record<Area, string> = {
-    CIVIL:   'bg-[#C4DFE8] text-[#1b3a57]',
-    LABORAL: 'bg-[#dbeafe] text-[#1b3a57]',
-    PENAL:   'bg-[#e8e8e8] text-[#1b3a57]',
-  }
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${config[area]}`}>
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white whitespace-nowrap"
+      style={{ backgroundColor: AREA_COLOR[area] }}
+    >
       {area}
     </span>
   )
@@ -61,10 +30,10 @@ export function AreaBadge({ area }: { area: Area }) {
 
 export function RolBadge({ rol }: { rol: RolSistema }) {
   const config: Record<RolSistema, string> = {
-    REFERENTE:      'bg-[#1b3a57] text-white',
-    COORDINADOR:    'bg-[#2a5278] text-white',
-    ABOGADO:        'bg-[#C4DFE8] text-[#1b3a57]',
-    ADMINISTRATIVO: 'bg-[#e8e8e8] text-[#4a6a84]',
+    REFERENTE:      'bg-blue-700 text-white',
+    COORDINADOR:    'bg-blue-600 text-white',
+    ABOGADO:        'bg-blue-50 text-blue-700 border border-blue-200',
+    ADMINISTRATIVO: 'bg-gray-100 text-gray-700',
   }
   const labels: Record<RolSistema, string> = {
     REFERENTE:      'Referente',
@@ -73,7 +42,7 @@ export function RolBadge({ rol }: { rol: RolSistema }) {
     ADMINISTRATIVO: 'Administrativo',
   }
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${config[rol]}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${config[rol]}`}>
       {labels[rol]}
     </span>
   )

@@ -43,18 +43,18 @@ function WidgetCard({
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl border bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
+      className={`p-4 rounded-lg border bg-white transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-blue-700' : ''
       } ${
-        highlight ? 'border-[#1b3a57] ring-2 ring-[#1b3a57] ring-offset-1' : 'border-[rgba(0,0,0,0.07)]'
+        highlight ? 'border-blue-700 ring-2 ring-blue-700 ring-offset-1' : 'border-gray-200'
       }`}
     >
       {titulo && (
-        <p className="text-[11px] font-semibold text-[#4a6a84] uppercase tracking-wide mb-0.5">
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
           {titulo}
         </p>
       )}
-      {sub && <p className="text-[11px] text-[#7a9ab4] mb-3">{sub}</p>}
+      {sub && <p className="text-[11px] text-gray-400 mb-3">{sub}</p>}
       {children}
     </div>
   )
@@ -78,14 +78,14 @@ function KpiCard({
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl border border-[rgba(0,0,0,0.07)] bg-white border-l-4 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#1b3a57] hover:ring-offset-1' : ''
+      className={`p-4 rounded-lg border border-gray-200 bg-white border-l-4 transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-700 hover:ring-offset-1' : ''
       }`}
       style={{ borderLeftColor: badgeColor ? barColors[badgeColor] : '#e0e6ec' }}
     >
-      <p className="text-[11px] text-[#7a9ab4] uppercase tracking-wide mb-1.5">{label}</p>
-      <p className="text-[24px] font-semibold text-[#1b3a57] leading-none mb-1">{value}</p>
-      {sub && <p className="text-[11px] text-[#7a9ab4]">{sub}</p>}
+      <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-1.5">{label}</p>
+      <p className="text-[24px] font-semibold text-gray-800 leading-none mb-1">{value}</p>
+      {sub && <p className="text-[11px] text-gray-400">{sub}</p>}
     </div>
   )
 }
@@ -97,7 +97,7 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
 
   if (!panel) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-8 text-[#7a9ab4]">
+      <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400">
         <Icon name="timeline" size={40} className="mb-3 opacity-40" />
         <p className="text-sm font-medium mb-1">Sin selección</p>
         <p className="text-[12px]">
@@ -109,22 +109,22 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,0,0,0.07)] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
         <div>
-          <p className="text-[12px] font-semibold text-[#1b3a57]">{panel.titulo}</p>
-          <p className="text-[11px] text-[#7a9ab4]">{panel.expedientes.length} actuaciones</p>
+          <p className="text-[12px] font-semibold text-gray-800">{panel.titulo}</p>
+          <p className="text-[11px] text-gray-400">{panel.expedientes.length} actuaciones</p>
         </div>
         <button
           onClick={onCerrar}
-          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#f0f0f0] transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
         >
-          <Icon name="close" size={16} className="text-[#4a6a84]" />
+          <Icon name="close" size={16} className="text-gray-500" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto divide-y divide-[rgba(0,0,0,0.05)]">
+      <div className="flex-1 overflow-y-auto divide-y divide-gray-200">
         {panel.expedientes.length === 0 ? (
-          <p className="text-[12px] text-[#7a9ab4] text-center py-8">
+          <p className="text-[12px] text-gray-400 text-center py-8">
             Sin actuaciones en este indicador.
           </p>
         ) : (
@@ -132,26 +132,26 @@ function PanelDetalle({ panel, onCerrar }: { panel: Panel | null; onCerrar: () =
             <div
               key={exp.id}
               onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
-              className="px-4 py-3 hover:bg-[#f5f5f5] cursor-pointer transition-colors"
+              className="px-4 py-3 hover:bg-gray-100 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-2 mb-0.5">
                 <span
-                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                  className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
                     exp.area === 'CIVIL'
-                      ? 'bg-[#e6f1fb] text-[#185fa5]'
+                      ? 'bg-blue-50 text-blue-700'
                       : exp.area === 'LABORAL'
-                      ? 'bg-[#e1f5ee] text-[#0f6e56]'
-                      : 'bg-[#eeedfe] text-[#534ab7]'
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-violet-50 text-violet-700'
                   }`}
                 >
                   {exp.area}
                 </span>
-                <span className="text-[11px] text-[#7a9ab4]">{exp.id}</span>
+                <span className="text-[11px] text-gray-400">{exp.id}</span>
               </div>
-              <p className="text-[12px] text-[#1b3a57] font-medium line-clamp-2 mb-0.5">
+              <p className="text-[12px] text-gray-800 font-medium line-clamp-2 mb-0.5">
                 {exp.caratula}
               </p>
-              <p className="text-[11px] text-[#7a9ab4]">
+              <p className="text-[11px] text-gray-400">
                 {exp.estadoProcesal ?? exp.estado}
                 {exp.abogado_id && (() => {
                   const u = getUsuarioById(exp.abogado_id)
@@ -356,7 +356,7 @@ function GaugeUrgencia({ urgentes, total }: { urgentes: number; total: number })
           </PieChart>
         </ResponsiveContainer>
         <p className="text-[22px] font-semibold -mt-6" style={{ color }}>{pct.toFixed(1)}%</p>
-        <p className="text-[11px] text-[#7a9ab4]">{urgentes} urgentes sobre {total} activas</p>
+        <p className="text-[11px] text-gray-400">{urgentes} urgentes sobre {total} activas</p>
       </div>
     </WidgetCard>
   )
@@ -367,7 +367,7 @@ function TablaComplejidad({ setPanelActivo, expedientes }: { setPanelActivo: Set
     <WidgetCard titulo="Complejidad por letrado">
       <table className="w-full text-[12px]">
         <thead>
-          <tr className="text-[10px] text-[#7a9ab4] uppercase">
+          <tr className="text-[10px] text-gray-400 uppercase">
             <th className="text-left pb-2">Letrado</th>
             <th className="text-right pb-2">Urgentes</th>
             <th className="text-right pb-2">Total</th>
@@ -377,16 +377,16 @@ function TablaComplejidad({ setPanelActivo, expedientes }: { setPanelActivo: Set
         <tbody>
           {DATA_COMPLEJIDAD.map(row => {
             const pct = row.total > 0 ? Math.round((row.urgentes / row.total) * 100) : 0
-            const color = pct >= 20 ? 'bg-[#fcebeb] text-[#a32d2d]' : pct >= 10 ? 'bg-[#faeeda] text-[#854f0b]' : 'bg-[#eaf3de] text-[#3b6d11]'
+            const color = pct >= 20 ? 'bg-red-50 text-red-700' : pct >= 10 ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-700'
             return (
               <tr
                 key={row.letrado}
                 onClick={() => setPanelActivo({ titulo: `Complejidad — ${row.letrado}`, expedientes })}
-                className="cursor-pointer hover:bg-[#f5f5f5] transition-colors"
+                className="cursor-pointer hover:bg-gray-100 transition-colors"
               >
-                <td className="py-1.5 text-[#1b3a57] font-medium">{row.letrado}</td>
-                <td className="py-1.5 text-right text-[#4a6a84]">{row.urgentes}</td>
-                <td className="py-1.5 text-right text-[#4a6a84]">{row.total}</td>
+                <td className="py-1.5 text-gray-800 font-medium">{row.letrado}</td>
+                <td className="py-1.5 text-right text-gray-500">{row.urgentes}</td>
+                <td className="py-1.5 text-right text-gray-500">{row.total}</td>
                 <td className="py-1.5 text-right">
                   <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${color}`}>{pct}%</span>
                 </td>
@@ -404,15 +404,15 @@ function HeatMapLugares({ setPanelActivo, expedientes }: { setPanelActivo: SetPa
   const bg = (v: number) => {
     if (v === 0) return 'bg-transparent'
     const intensidad = Math.min(1, v / max)
-    if (intensidad > 0.66) return 'bg-[#2a78d6] text-white'
-    if (intensidad > 0.33) return 'bg-[#85B7EB]'
-    return 'bg-[#e6f1fb]'
+    if (intensidad > 0.66) return 'bg-blue-600 text-white'
+    if (intensidad > 0.33) return 'bg-blue-300'
+    return 'bg-blue-50'
   }
   return (
     <WidgetCard titulo="Top lugares de hechos">
       <table className="w-full text-[12px]">
         <thead>
-          <tr className="text-[10px] text-[#7a9ab4] uppercase">
+          <tr className="text-[10px] text-gray-400 uppercase">
             <th className="text-left pb-2">Estación / Km</th>
             <th className="text-center pb-2">Civil</th>
             <th className="text-center pb-2">Laboral</th>
@@ -429,11 +429,11 @@ function HeatMapLugares({ setPanelActivo, expedientes }: { setPanelActivo: SetPa
                 onClick={() => setPanelActivo({ titulo: `Lugar de hechos — ${row.lugar}`, expedientes })}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <td className="py-1.5 text-[#1b3a57]">{row.lugar}</td>
+                <td className="py-1.5 text-gray-800">{row.lugar}</td>
                 <td className={`text-center py-1.5 rounded ${bg(row.civil)}`}>{row.civil}</td>
                 <td className={`text-center py-1.5 rounded ${bg(row.laboral)}`}>{row.laboral}</td>
                 <td className={`text-center py-1.5 rounded ${bg(row.penal)}`}>{row.penal}</td>
-                <td className="text-right py-1.5 font-semibold text-[#1b3a57]">{total}</td>
+                <td className="text-right py-1.5 font-semibold text-gray-800">{total}</td>
               </tr>
             )
           })}
@@ -636,16 +636,16 @@ function PanelGerencia({
 
 function HeaderPowerBI() {
   return (
-    <div className="flex items-center justify-between pb-4 mb-4 border-b border-[rgba(0,0,0,0.07)]">
+    <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-200">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[rgba(0,0,0,0.08)] text-[11px] text-[#7a9ab4]">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 text-[11px] text-gray-400">
           <div className="w-2 h-2 rounded-full bg-[#F2C811]" />
           Power BI
         </div>
-        <span className="text-[13px] font-semibold text-[#1b3a57]">SIAJ Analytics</span>
-        <span className="text-[11px] text-[#7a9ab4]">Actualizado hace 3 min</span>
+        <span className="text-[13px] font-semibold text-gray-800">SIAJ Analytics</span>
+        <span className="text-[11px] text-gray-400">Actualizado hace 3 min</span>
       </div>
-      <button className="flex items-center gap-1.5 text-[12px] text-[#4a6a84] border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-1.5 hover:bg-[#f5f5f5] transition-colors">
+      <button className="flex items-center gap-1.5 text-[12px] text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
         <Icon name="download" size={14} />
         Exportar
       </button>
@@ -671,11 +671,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full p-6">
+      <h1 className="text-2xl font-semibold text-gray-800 mb-1">Panel de Control</h1>
       <HeaderPowerBI />
 
-      <p className="text-[#4a6a84] text-sm mb-4">
+      <p className="text-gray-500 text-sm mb-4">
         Bienvenido/a,{' '}
-        <span className="font-semibold text-[#1b3a57]">
+        <span className="font-semibold text-gray-800">
           {usuarioActivo?.nombre} {usuarioActivo?.apellido}
         </span>
       </p>
@@ -685,7 +686,7 @@ export default function DashboardPage() {
           <PanelGerencia expedientes={expedientes} setPanelActivo={setPanelActivo} />
         </div>
 
-        <div className="w-80 flex-shrink-0 bg-white rounded-xl border border-[rgba(0,0,0,0.07)] overflow-hidden flex flex-col">
+        <div className="w-80 flex-shrink-0 bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
           <PanelDetalle panel={panelActivo} onCerrar={() => setPanelActivo(null)} />
         </div>
       </div>

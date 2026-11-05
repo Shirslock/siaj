@@ -99,29 +99,29 @@ export default function HomePage() {
   const letrados = letradosDisponibles(usuarioActivo)
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-6 flex flex-col gap-4">
 
       {/* ENCABEZADO */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Principal</h1>
-          <p className="text-sm text-[#4a6a84] mt-1.5">
-            Hola, <span className="font-semibold text-[#1b3a57]">{usuarioActivo?.nombre} {usuarioActivo?.apellido}</span>.{' '}
-            {prefijoScope}<span className="font-semibold text-[#1b3a57]">{n}</span> {sufijoActuacion}.
+          <h1 className="text-xl font-semibold text-gray-800">Principal</h1>
+          <p className="text-sm text-gray-500 mt-1.5">
+            Hola, <span className="font-semibold text-gray-800">{usuarioActivo?.nombre} {usuarioActivo?.apellido}</span>.{' '}
+            {prefijoScope}<span className="font-semibold text-gray-800">{n}</span> {sufijoActuacion}.
           </p>
         </div>
 
         {mostrarToggle && (
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
+            <div className="inline-flex rounded-md border border-gray-300 overflow-hidden shrink-0">
               {opcionesToggle.map(o => (
                 <button
                   key={o.valor}
                   onClick={() => { setScopeBase(o.valor); setPorLetrado(false) }}
-                  className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
+                  className={`px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
                     !porLetrado && scopeBase === o.valor
-                      ? 'bg-[#2a78d6] text-white shadow-sm'
-                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                      ? 'bg-blue-700 text-white'
+                      : 'border-l border-gray-300 first:border-l-0 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {o.label}
@@ -129,10 +129,10 @@ export default function HomePage() {
               ))}
               <button
                 onClick={() => setPorLetrado(true)}
-                className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
+                className={`px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
                   porLetrado
-                    ? 'bg-[#2a78d6] text-white shadow-sm'
-                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                    ? 'bg-blue-700 text-white'
+                    : 'border-l border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 Por letrado
@@ -156,7 +156,7 @@ export default function HomePage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard
           icono="kpi_causas" label="Causas judiciales activas" valor={causasActivasCount} tono="azul"
           onClick={() => irABandeja('clase=causa')}
@@ -180,13 +180,15 @@ export default function HomePage() {
       </div>
 
       {/* CUERPO */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
         {/* Izquierda: vencimientos y tareas */}
-        <WidgetVencimientos items={vencimientos} />
+        <div className="lg:col-span-2">
+          <WidgetVencimientos items={vencimientos} />
+        </div>
 
         {/* Derecha: audiencias, distribuciones y cerradas */}
-        <div className="space-y-5">
+        <div className="space-y-4">
           <WidgetAudiencias items={audiencias} />
 
           <WidgetCard titulo="Por rol" sub="Distribución de causas activas.">
@@ -195,7 +197,7 @@ export default function HomePage() {
 
           <WidgetCard titulo="Por estado procesal" sub="Distribución de actuaciones activas.">
             {filasPorEstado.length === 0 ? (
-              <p className="text-[12px] text-[#7a9ab4] text-center py-4">Sin actuaciones activas.</p>
+              <p className="text-[12px] text-gray-400 text-center py-4">Sin actuaciones activas.</p>
             ) : (
               <BarrasDistribucion filas={filasPorEstado} />
             )}

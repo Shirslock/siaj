@@ -7,6 +7,7 @@ interface ModalProps {
   open: boolean
   onClose: () => void
   titulo: string
+  subtitulo?: ReactNode
   children: ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl'
   footer?: ReactNode
@@ -19,7 +20,9 @@ const SIZE_MAP = {
   xl: 'max-w-4xl',
 }
 
-export function Modal({ open, onClose, titulo, children, size = 'md', footer }: ModalProps) {
+// Patrón de modal del PRD (siaj-design-system-letrado.md §4): overlay negro/40, panel rounded-xl
+// shadow-xl, header con borde gris-100, footer con Cancelar (secundario) + acción (azul-700).
+export function Modal({ open, onClose, titulo, subtitulo, children, size = 'md', footer }: ModalProps) {
   return (
     <Transition appear show={open} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -27,10 +30,10 @@ export function Modal({ open, onClose, titulo, children, size = 'md', footer }: 
         {/* Overlay */}
         <TransitionChild
           as={Fragment}
-          enter="ease-out duration-200"
+          enter="ease-out duration-150"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-150"
+          leave="ease-in duration-100"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
@@ -42,37 +45,41 @@ export function Modal({ open, onClose, titulo, children, size = 'md', footer }: 
           <div className="flex min-h-full items-center justify-center p-4">
             <TransitionChild
               as={Fragment}
-              enter="ease-out duration-200"
-              enterFrom="opacity-0 scale-95 translate-y-1"
-              enterTo="opacity-100 scale-100 translate-y-0"
-              leave="ease-in duration-150"
-              leaveFrom="opacity-100 scale-100 translate-y-0"
-              leaveTo="opacity-0 scale-95 translate-y-1"
+              enter="ease-out duration-150"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-100"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
             >
               <DialogPanel
-                className={`w-full ${SIZE_MAP[size]} transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all flex flex-col max-h-[90vh]`}
+                className={`w-full ${SIZE_MAP[size]} overflow-hidden rounded-xl bg-white shadow-xl flex flex-col max-h-[90vh]`}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,0,0,0.08)] flex-shrink-0">
-                  <DialogTitle as="h2" className="font-headline font-semibold text-lg text-[#1b3a57]">
-                    {titulo}
-                  </DialogTitle>
+                <div className="px-6 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+                  <div>
+                    <DialogTitle as="h2" className="text-base font-semibold text-gray-800">
+                      {titulo}
+                    </DialogTitle>
+                    {subtitulo && <div className="text-sm text-gray-400 mt-0.5">{subtitulo}</div>}
+                  </div>
                   <button
                     onClick={onClose}
-                    className="p-1.5 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Cerrar"
                   >
                     <Icon name="close" size={20} />
                   </button>
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto px-6 py-5">
+                <div className="flex-1 overflow-y-auto px-6 py-4">
                   {children}
                 </div>
 
                 {/* Footer */}
                 {footer && (
-                  <div className="flex-shrink-0 px-6 py-4 border-t border-[rgba(0,0,0,0.08)] flex items-center justify-end gap-3 bg-[#f5f5f5]">
+                  <div className="flex-shrink-0 flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
                     {footer}
                   </div>
                 )}

@@ -14,17 +14,18 @@ interface ButtonProps {
   children: ReactNode
 }
 
+// PRD (siaj-design-system.md §3): primario azul-700 / secundario borde gris-300, rounded-md, sin sombra.
 const VARIANT_CLASSES = {
-  primary:   'bg-[#1b3a57] hover:bg-[#2a5278] text-white shadow-sm',
-  secondary: 'bg-white border border-[rgba(0,0,0,0.2)] text-[#1b3a57] hover:bg-[#f0f0f0]',
-  ghost:     'text-[#1b3a57] hover:bg-[#E5E5E5]',
-  danger:    'bg-[#b91c1c] hover:bg-[#991b1b] text-white',
+  primary:   'bg-blue-700 hover:bg-blue-800 text-white',
+  secondary: 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
+  ghost:     'text-gray-600 hover:bg-gray-100',
+  danger:    'bg-red-600 hover:bg-red-700 text-white',
 }
 
 const SIZE_CLASSES = {
   sm: 'px-3 py-1.5 text-xs',
   md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  lg: 'px-5 py-2.5 text-sm',
 }
 
 export function Button({
@@ -47,8 +48,8 @@ export function Button({
       onClick={onClick}
       disabled={isDisabled}
       className={`
-        inline-flex items-center justify-center gap-2 rounded-lg font-medium
-        transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#C4DFE8]/50
+        inline-flex items-center justify-center gap-1.5 rounded-md
+        transition-colors focus:outline-none
         ${VARIANT_CLASSES[variant]}
         ${SIZE_CLASSES[size]}
         ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -56,14 +57,14 @@ export function Button({
       `}
     >
       {loading && (
-        <Icon name="refresh" className="animate-spin" size={18} />
+        <Icon name="refresh" className="animate-spin" size={16} />
       )}
       {!loading && icon && (
-        <Icon name={icon} size={18} />
+        <Icon name={icon} size={16} />
       )}
       {children}
       {iconRight && (
-        <Icon name={iconRight} size={18} />
+        <Icon name={iconRight} size={16} />
       )}
     </button>
   )
