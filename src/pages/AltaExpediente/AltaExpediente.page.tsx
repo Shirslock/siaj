@@ -43,6 +43,7 @@ const CANAL_INFO: Record<Canal, string> = {
   OTROS:    'Canal Otros: Carta Suceso SAE, mails internos u otros documentos no GDE.',
 }
 
+// PRD: Canal y Área son listas desplegables ("Seleccioná…").
 function SegmentedSelector<T extends string>({
   options, value, onChange, disabled,
 }: {
@@ -52,23 +53,17 @@ function SegmentedSelector<T extends string>({
   disabled?: boolean
 }) {
   return (
-    <div className={`flex rounded-lg bg-gray-100 p-1 gap-0.5 ${disabled ? 'opacity-60' : ''}`}>
+    <select
+      className="field-input"
+      value={value}
+      disabled={disabled}
+      onChange={e => { if (e.target.value) onChange(e.target.value as T) }}
+    >
+      <option value="">Seleccioná...</option>
       {options.map(o => (
-        <button
-          key={o.id}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(o.id)}
-          className={`flex-1 py-2 px-3 rounded-md text-sm transition-all ${
-            value === o.id
-              ? 'bg-white shadow-sm font-semibold text-gray-800'
-              : 'font-medium text-gray-500 hover:text-gray-800'
-          } ${disabled ? 'cursor-not-allowed' : ''}`}
-        >
-          {o.label}
-        </button>
+        <option key={o.id} value={o.id}>{o.label}</option>
       ))}
-    </div>
+    </select>
   )
 }
 
@@ -126,43 +121,21 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
   const showSections = !!tipo
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
 
       {/* HEADER */}
-      <div className="flex items-start justify-between">
-        <div>
-          <nav className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-            <button
-              className="hover:text-gray-800 transition-colors"
-              onClick={() => navigate(rutaVolver)}
-            >
-              {modoAbogadoPenal ? 'Actuaciones' : 'Mesa SACO'}
-            </button>
-            <span>›</span>
-            <span className="text-gray-800">
-              {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nueva Actuación'}
-            </span>
-          </nav>
-          <h1 className="font-headline font-semibold text-3xl text-gray-800">
-            {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nueva Actuación'}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Completá los datos según el canal y tipo de gestión.
-          </p>
-        </div>
-        <Button variant="ghost" onClick={() => navigate(rutaVolver)}>
-          Cancelar
-        </Button>
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          {modoAbogadoPenal ? 'Nueva Actuación Penal' : 'Nuevo Ingreso de Actuación'}
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Completá los datos según el canal y tipo de gestión.
+        </p>
       </div>
 
       {/* SECCIÓN 1 — Origen y Tipo de Gestión */}
-      <div className="bg-white shadow-card rounded-lg p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="w-7 h-7 rounded-full bg-blue-100 text-gray-800 text-sm font-semibold flex items-center justify-center shrink-0">
-            1
-          </span>
-          <h2 className="font-headline font-semibold text-lg text-gray-800">Origen y Tipo de Gestión</h2>
-        </div>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2">Origen y Tipo de Gestión</h2>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-5">
           {/* Col 1 — Canal de Ingreso */}
@@ -235,13 +208,8 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
       {showSections && (
         <>
           {/* SECCIÓN ◈ — Datos de Recepción */}
-          <div className="bg-white shadow-card rounded-lg p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-gray-100 text-gray-500 text-sm font-semibold flex items-center justify-center shrink-0">
-                ◈
-              </span>
-              <h2 className="font-headline font-semibold text-lg text-gray-800">Datos de Recepción</h2>
-            </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2">Datos de Recepción</h2>
 
             <FormularioDinamico
               campos={camposComunes}
@@ -255,17 +223,12 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           </div>
 
           {/* SECCIÓN 2 — Detalles del Expediente */}
-          <div className="bg-white shadow-card rounded-lg p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-blue-100 text-gray-800 text-sm font-semibold flex items-center justify-center shrink-0">
-                2
-              </span>
-              <div>
-                <h2 className="font-headline font-semibold text-lg text-gray-800">Detalles de la Actuación</h2>
-                {tipoSeleccionado && (
-                  <p className="text-xs text-gray-500">{tipoSeleccionado.label}</p>
-                )}
-              </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+            <div className="border-b border-gray-200 pb-2">
+              <h2 className="text-lg font-semibold text-gray-700">Detalles de la Actuación</h2>
+              {tipoSeleccionado && (
+                <p className="text-xs text-gray-500 mt-0.5">{tipoSeleccionado.label}</p>
+              )}
             </div>
 
             {camposTipo.length === 0 ? (
@@ -283,13 +246,8 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           </div>
 
           {/* SECCIÓN 3 — Asignación de Letrado */}
-          <div className="bg-white shadow-card rounded-lg p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="w-7 h-7 rounded-full bg-blue-100 text-gray-800 text-sm font-semibold flex items-center justify-center shrink-0">
-                3
-              </span>
-              <h2 className="font-headline font-semibold text-lg text-gray-800">Asignación de Letrado</h2>
-            </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2">Asignación de Letrado</h2>
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
@@ -361,20 +319,15 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           </div>
 
           {/* SECCIÓN 4 — Documento GDE */}
-          <div className="bg-white shadow-card rounded-lg p-8">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="w-7 h-7 rounded-full bg-blue-100 text-gray-800 text-sm font-semibold flex items-center justify-center shrink-0">
-                4
-              </span>
-              <h2 className="font-headline font-semibold text-lg text-gray-800">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2">
                 Documento GDE <span className="text-red-700 text-base">*</span>
               </h2>
-            </div>
-            <p className="text-sm text-gray-500 mb-5 ml-10">Adjuntá el PDF de la actuación GDE.</p>
+            <p className="text-sm text-gray-500">Adjuntá el PDF del Expediente Electrónico (GDE). Es obligatorio para poder derivar.</p>
 
             {!archivo ? (
               <div
-                className="border-2 border-dashed border-gray-200 rounded-lg p-10 text-center bg-gray-100 hover:bg-gray-100 cursor-pointer group transition-all"
+                className="flex flex-col items-center justify-center w-full rounded-xl border-2 border-dashed cursor-pointer transition-colors py-10 px-4 border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50 group text-center"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
@@ -387,7 +340,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
                 <p className="text-sm font-medium text-gray-500">
                   Arrastrá el PDF aquí o hacé click para seleccionar
                 </p>
-                <p className="text-xs text-gray-400 mt-1">Solo PDF — máximo 10 MB</p>
+                <p className="text-xs text-gray-400 mt-1">Solo PDF · Máx. 20 MB</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -415,12 +368,12 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
           </div>
 
           {/* BOTONES DE ACCIÓN */}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => navigate(rutaVolver)}>
+          <div className="flex justify-end gap-3 pb-8">
+            <Button variant="secondary" onClick={() => navigate(rutaVolver)}>
               Cancelar
             </Button>
-            <Button variant="primary" icon="task_alt" onClick={() => { if (validate()) setModalRevision(true) }}>
-              Revisar y Derivar
+            <Button variant="primary" onClick={() => { if (validate()) setModalRevision(true) }}>
+              Revisar y enviar
             </Button>
           </div>
         </>

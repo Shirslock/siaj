@@ -1340,7 +1340,8 @@ export function TimelineTab({ exp }: Props) {
       <Modal
         open={modalNuevaActividad}
         onClose={cerrarModal}
-        titulo="Nueva actividad"
+        titulo="Nueva Actividad"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="md"
         footer={
           <>
@@ -1553,6 +1554,7 @@ export function TimelineTab({ exp }: Props) {
         open={!!replyTarget}
         onClose={() => { setReplyTarget(null); limpiarFormReply() }}
         titulo="Agregar comentario"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="sm"
         footer={
           <>
@@ -1629,6 +1631,7 @@ export function TimelineTab({ exp }: Props) {
         open={!!editTarget}
         onClose={() => setEditTarget(null)}
         titulo="Editar actividad"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="md"
         footer={
           <>

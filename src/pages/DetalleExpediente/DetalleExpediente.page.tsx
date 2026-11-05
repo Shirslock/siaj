@@ -1060,6 +1060,7 @@ export default function DetalleExpedientePage() {
         open={accion === 'estado'}
         onClose={() => setAccion(null)}
         titulo="Cambiar estado"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span><span className="block text-xs mt-1">Estado actual: <span className="font-semibold text-gray-600">{labelEstado(exp)}</span></span></>}
         size="sm"
         footer={
           <>
@@ -1410,6 +1411,7 @@ export default function DetalleExpedientePage() {
         open={accion === 'causa'}
         onClose={() => setAccion(null)}
         titulo="Agrupar a causa"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="sm"
         footer={
           <>

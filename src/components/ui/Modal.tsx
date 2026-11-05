@@ -7,7 +7,7 @@ interface ModalProps {
   open: boolean
   onClose: () => void
   titulo: string
-  subtitulo?: string
+  subtitulo?: ReactNode
   children: ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl'
   footer?: ReactNode
@@ -61,7 +61,7 @@ export function Modal({ open, onClose, titulo, subtitulo, children, size = 'md',
                     <DialogTitle as="h2" className="text-base font-semibold text-gray-800">
                       {titulo}
                     </DialogTitle>
-                    {subtitulo && <p className="text-sm text-gray-400 mt-0.5">{subtitulo}</p>}
+                    {subtitulo && <div className="text-sm text-gray-400 mt-0.5">{subtitulo}</div>}
                   </div>
                   <button
                     onClick={onClose}
