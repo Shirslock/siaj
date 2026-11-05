@@ -95,49 +95,56 @@ export function IntervinientesTab({ exp }: Props) {
 
   return (
     <>
-      <div className="space-y-3">
-        <div className="flex justify-end">
+      <section className="bg-white border border-gray-200 rounded-lg p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-700">Intervinientes</h2>
           <button
             onClick={() => setModalAbierto(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity shadow-sm"
+            className="flex items-center gap-1 text-xs bg-blue-700 text-white rounded-md px-2.5 py-1.5 hover:bg-blue-800 transition-colors"
           >
-            <Icon name="person_add" size={18} />
+            <Icon name="person_add" size={14} />
             Agregar interviniente
           </button>
         </div>
 
         {exp.intervinientes.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-card p-10 text-center text-gray-500 text-sm">
-            No hay intervinientes registrados.
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-400 mb-3">Sin intervinientes registrados.</p>
+            <button
+              onClick={() => setModalAbierto(true)}
+              className="border border-gray-300 text-xs rounded-md px-3 py-1.5 text-blue-600 hover:bg-gray-50"
+            >
+              + Agregar el primero
+            </button>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-card overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
+                <tr>
                   {['Nombre', 'Rol', 'Documento', 'Letrado', 'Contacto', ''].map(col => (
-                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                    <th key={col} className="text-left pb-2 pr-3 text-xs font-semibold uppercase text-gray-500 whitespace-nowrap">
                       {col}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/30">
+              <tbody className="divide-y divide-gray-100">
                 {exp.intervinientes.map(int => (
-                  <tr key={int.id} className="hover:bg-gray-100 transition-colors">
-                    <td className="py-3 px-4">
+                  <tr key={int.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-2.5 pr-3">
                       <p className="text-gray-800 font-medium">{int.nombre}</p>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="text-xs font-semibold bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">
+                    <td className="py-2.5 pr-3">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
                         {ROL_LABEL[int.rol_procesal] ?? int.rol_procesal}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-xs text-gray-500">
+                    <td className="py-2.5 pr-3 text-xs text-gray-500">
                       <span>{DOC_LABEL[int.tipo_documento] ?? int.tipo_documento}</span>
                       <span className="font-mono ml-1">{int.numero_documento}</span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 pr-3">
                       <span className="text-xs text-gray-500">
                         {int.representado_por
                           ? int.representado_por
@@ -145,12 +152,12 @@ export function IntervinientesTab({ exp }: Props) {
                         }
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-xs text-gray-500 space-y-0.5">
+                    <td className="py-2.5 pr-3 text-xs text-gray-500 space-y-0.5">
                       {int.contacto_email     && <p>{int.contacto_email}</p>}
                       {int.contacto_telefono  && <p>{int.contacto_telefono}</p>}
                       {int.contacto_domicilio && <p className="truncate max-w-[180px]">{int.contacto_domicilio}</p>}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setVerDetalle(int)}
@@ -181,7 +188,7 @@ export function IntervinientesTab({ exp }: Props) {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       <AgregarIntervinienteModal
         expedienteId={exp.id}
@@ -199,14 +206,14 @@ export function IntervinientesTab({ exp }: Props) {
           <>
             <button
               onClick={cerrarModalEdicion}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+              className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarEdicion}
               disabled={!formNombre.apellido.trim() || !formNombre.nombre.trim() || !form.numero_documento.trim()}
-              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-4 py-2 text-sm rounded-md bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Guardar cambios
             </button>
@@ -270,7 +277,7 @@ export function IntervinientesTab({ exp }: Props) {
         titulo="Detalle del interviniente"
         size="lg"
         footer={
-          <button onClick={() => setVerDetalle(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
+          <button onClick={() => setVerDetalle(null)} className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50">
             Cerrar
           </button>
         }
@@ -304,7 +311,7 @@ export function IntervinientesTab({ exp }: Props) {
         size="sm"
         footer={
           <>
-            <button onClick={() => setConfirmarEliminar(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
+            <button onClick={() => setConfirmarEliminar(null)} className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50">
               Cancelar
             </button>
             <button

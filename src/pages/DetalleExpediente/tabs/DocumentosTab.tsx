@@ -67,49 +67,48 @@ function SortableDocRow({
     <tr
       ref={setNodeRef}
       style={style}
-      className={`border-b border-gray-200 last:border-0 bg-white${isDragging ? ' shadow-lg' : ''}`}
+      className={`border-b border-gray-100 last:border-0 bg-white${isDragging ? ' shadow-lg' : ''}`}
     >
-      <td className="w-8 pl-3 py-3">
+      <td className="w-8 py-2.5 pr-2 select-none">
         <button
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors touch-none flex items-center justify-center"
+          aria-label="Reordenar"
         >
           <Icon name="drag_indicator" size={16} />
         </button>
       </td>
-      <td className="py-3 px-3">
+      <td className="py-2.5 pr-3">
         <div className="flex items-center gap-2">
-          <Icon name={doc.icon} size={18} className={doc.color} />
-          <span className="text-sm text-gray-800 font-medium">{doc.nombre}</span>
+          <Icon name={doc.icon} size={20} className={doc.tipo === 'PDF' ? 'text-red-500' : doc.color} />
+          <span className="text-sm text-gray-800">{doc.nombre}</span>
         </div>
       </td>
-      <td className="py-3 px-3">
-        <span className="text-[10px] font-semibold font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-500">
+      <td className="py-2.5 pr-3">
+        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+          doc.tipo === 'PDF' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+        }`}>
           {doc.tipo}
         </span>
       </td>
-      <td className="py-3 px-3 text-xs text-gray-500 whitespace-nowrap">
-        {formatFecha(doc.fecha)}
-      </td>
-      <td className="py-3 px-3 text-xs text-gray-500 whitespace-nowrap">
-        {doc.size}
-      </td>
-      <td className="py-3 px-3">
-        <div className="flex items-center gap-1">
+      <td className="py-2.5 pr-3 text-sm text-gray-600 whitespace-nowrap">{doc.size}</td>
+      <td className="py-2.5 pr-3 text-xs text-gray-400 whitespace-nowrap">{formatFecha(doc.fecha)}</td>
+      <td className="py-2.5">
+        <div className="flex items-center gap-2 justify-end">
           <button
             disabled
             title="Descarga no disponible en esta versión"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 cursor-not-allowed opacity-40"
+            className="text-gray-400 cursor-not-allowed opacity-60"
           >
-            <Icon name="download" size={15} />
+            <Icon name="download" size={16} />
           </button>
           <button
             onClick={onEliminar}
             title="Eliminar"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-red-100 hover:text-red-700 transition-colors"
+            className="text-gray-400 hover:text-red-600 transition-colors"
           >
-            <Icon name="delete" size={15} />
+            <Icon name="delete" size={16} />
           </button>
         </div>
       </td>
@@ -139,14 +138,17 @@ export function DocumentosTab({ exp }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
+    <section className="bg-white border border-gray-200 rounded-lg p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-gray-700">
+          Documentos <span className="ml-1 text-sm font-normal text-gray-400">({exp.documentos.length})</span>
+        </h2>
         <button
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity shadow-sm"
+          className="flex items-center gap-1 text-xs bg-blue-700 text-white rounded-md px-2.5 py-1.5 hover:bg-blue-800 transition-colors"
           onClick={() => document.getElementById('doc-upload')?.click()}
         >
-          <Icon name="upload_file" size={18} />
-          Subir documentos
+          <Icon name="upload_file" size={14} />
+          Subir documento
         </button>
         <input
           id="doc-upload"
@@ -181,11 +183,11 @@ export function DocumentosTab({ exp }: Props) {
       </div>
 
       {exp.documentos.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-card p-10 text-center text-gray-500 text-sm">
+        <div className="text-center text-sm text-gray-400 py-8">
           No hay documentos adjuntos.
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -193,10 +195,10 @@ export function DocumentosTab({ exp }: Props) {
           >
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
+                <tr>
                   <th className="w-8" />
-                  {['Documento', 'Tipo', 'Fecha', 'Tamaño', ''].map(col => (
-                    <th key={col} className="text-left py-2.5 px-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                  {['Archivo', 'Tipo', 'Tamaño', 'Subido', ''].map(col => (
+                    <th key={col} className="text-left pb-2 pr-3 text-xs font-semibold uppercase text-gray-500 whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -229,7 +231,7 @@ export function DocumentosTab({ exp }: Props) {
           <>
             <button
               onClick={() => setConfirmarEliminar(null)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+              className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               Cancelar
             </button>
@@ -239,7 +241,7 @@ export function DocumentosTab({ exp }: Props) {
                 eliminarDocumento(exp.id, confirmarEliminar)
                 setConfirmarEliminar(null)
               }}
-              className="px-5 py-2 rounded-lg text-sm font-semibold bg-red-700 text-white hover:opacity-90 transition-opacity"
+              className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700"
             >
               Eliminar
             </button>
@@ -259,6 +261,6 @@ export function DocumentosTab({ exp }: Props) {
           </div>
         )}
       </Modal>
-    </div>
+    </section>
   )
 }

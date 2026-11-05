@@ -152,7 +152,7 @@ function CampoInput({
 }) {
   return (
     <div className={campo.full ? 'col-span-2' : ''}>
-      <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1">
+      <label className="block text-xs font-medium text-gray-600 mb-0.5">
         {campo.label}
       </label>
       {campo.type === 'textarea' ? (
@@ -254,7 +254,7 @@ function PanelDetalleRegistro({
 
           {/* Estado */}
           <div>
-            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Estado</label>
+            <label className="block text-xs font-medium text-gray-600 mb-0.5">Estado</label>
             <div className="flex gap-1.5">
               {(['en_curso', 'cumplido', 'no_procedente'] as EstadoActividadPenal[]).map(val => (
                 <button
@@ -275,7 +275,7 @@ function PanelDetalleRegistro({
           {/* Resultado SI/NO */}
           {subAct?.tipo === 'SI_NO' && (
             <div>
-              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
+              <label className="block text-xs font-medium text-gray-600 mb-0.5">Resultado</label>
               <div className="flex gap-2">
                 {(['SI', 'NO'] as ResultadoBinario[]).filter(Boolean).map(r => (
                   <button
@@ -295,7 +295,7 @@ function PanelDetalleRegistro({
           {/* Resultado ACUERDO */}
           {subAct?.tipo === 'ACUERDO' && (
             <div>
-              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
+              <label className="block text-xs font-medium text-gray-600 mb-0.5">Resultado</label>
               <div className="flex gap-2">
                 {([
                   { val: 'HAY_ACUERDO' as ResultadoAcuerdo, label: 'Hay Acuerdo' },
@@ -339,7 +339,7 @@ function PanelDetalleRegistro({
 
           {/* Observaciones */}
           <div>
-            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Observaciones</label>
+            <label className="block text-xs font-medium text-gray-600 mb-0.5">Observaciones</label>
             <textarea
               className="field-input resize-none w-full text-xs"
               style={{ minHeight: 64 }}
@@ -351,7 +351,7 @@ function PanelDetalleRegistro({
 
           {/* Fecha */}
           <div>
-            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Fecha</label>
+            <label className="block text-xs font-medium text-gray-600 mb-0.5">Fecha</label>
             <input
               type="date"
               className="field-input w-full text-xs"
@@ -1135,7 +1135,8 @@ export function TimelinePenal({ exp }: Props) {
       <Modal
         open={modalCambiarEstado}
         onClose={() => { setModalCambiarEstado(false); setEtapaDestino(null) }}
-        titulo="Cambiar estado de la actuación"
+        titulo="Cambiar estado"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="sm"
         footer={
           <>
@@ -1183,6 +1184,7 @@ export function TimelinePenal({ exp }: Props) {
         open={modalNueva}
         onClose={closeModalNueva}
         titulo="Nueva Actividad"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="lg"
         footer={
           tabNueva === 'procesales' ? (
@@ -1250,7 +1252,7 @@ export function TimelinePenal({ exp }: Props) {
             onClick={() => { setTabNueva('procesales'); setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tabNueva === 'procesales'
-                ? 'border-blue-700 text-gray-800 font-semibold'
+                ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -1260,7 +1262,7 @@ export function TimelinePenal({ exp }: Props) {
             onClick={() => { setTabNueva('genericas'); setFormAct(BLANK_ACT) }}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tabNueva === 'genericas'
-                ? 'border-blue-700 text-gray-800 font-semibold'
+                ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -1270,7 +1272,7 @@ export function TimelinePenal({ exp }: Props) {
             onClick={() => setTabNueva('solicitud')}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tabNueva === 'solicitud'
-                ? 'border-blue-700 text-gray-800 font-semibold'
+                ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -1282,27 +1284,18 @@ export function TimelinePenal({ exp }: Props) {
         {tabNueva === 'procesales' && (
           !subActSeleccionada ? (
             <div>
-              <p className="text-xs text-gray-500 mb-3">
-                Etapa: <strong>{etapaActual?.label}</strong> — Seleccioná la actividad que ocurrió
-              </p>
               <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                 {subActDisponibles.map(sa => (
                   <button
                     key={sa.id}
                     onClick={() => setSubActSeleccionada(sa)}
-                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all hover:border-blue-700 hover:bg-blue-50 ${
-                      sa.finalizaCausa
-                        ? 'border-l-4 border-l-[#d97706] border-gray-200'
-                        : sa.avanzaEtapa
-                        ? 'border-l-4 border-l-[#1b3a57] border-gray-200'
-                        : 'border-gray-200'
-                    }`}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 transition-colors hover:bg-gray-50"
                   >
                     <div className="flex items-start gap-2">
                       {sa.finalizaCausa && <Icon name="warning"       size={14} className="text-amber-700 mt-0.5 flex-shrink-0" />}
                       {sa.avanzaEtapa  && <Icon name="arrow_forward"  size={14} className="text-gray-800 mt-0.5 flex-shrink-0" />}
                       <div>
-                        <p className="text-sm font-semibold text-gray-800">{sa.numero} {sa.nombre}</p>
+                        <p className="text-sm font-medium text-gray-800">{sa.numero} {sa.nombre}</p>
                         {sa.finalizaCausa && <p className="text-[10px] text-amber-700 mt-0.5">Si queda firme → finaliza la causa</p>}
                         {sa.avanzaEtapa  && <p className="text-[10px] text-gray-800 mt-0.5">Si queda firme → avanza a siguiente etapa</p>}
                       </div>
@@ -1321,29 +1314,29 @@ export function TimelinePenal({ exp }: Props) {
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => { setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
-                  className="p-1 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
+                  className="p-1 rounded text-gray-500 hover:text-gray-800 transition-colors"
                 >
                   <Icon name="arrow_back" size={16} />
                 </button>
-                <p className="text-sm font-semibold text-gray-800">
+                <p className="text-sm font-medium text-gray-700">
                   {subActSeleccionada.numero} {subActSeleccionada.nombre}
                 </p>
               </div>
 
               {subActSeleccionada.tipo === 'SI_NO' && (
                 <div className="mb-4">
-                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Resultado</label>
                   <div className="flex gap-2">
                     {(['SI', 'NO'] as ResultadoBinario[]).filter(Boolean).map(r => (
                       <button
                         key={r!}
                         onClick={() => setResultadoModal(r)}
-                        className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                        className={`flex-1 py-2 rounded text-xs font-medium border transition-colors ${
                           resultadoModal === r
-                            ? 'bg-blue-700 border-blue-700 text-white'
-                            : 'border-gray-300 text-gray-500 hover:bg-gray-100'
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
                         }`}
-                      >{r}</button>
+                      >{r === 'SI' ? 'Sí' : 'No'}</button>
                     ))}
                   </div>
                 </div>
@@ -1351,7 +1344,7 @@ export function TimelinePenal({ exp }: Props) {
 
               {subActSeleccionada.tipo === 'ACUERDO' && (
                 <div className="mb-4">
-                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Resultado</label>
                   <div className="flex gap-2">
                     {([
                       { val: 'HAY_ACUERDO' as ResultadoAcuerdo,    label: 'Hay Acuerdo' },
@@ -1360,10 +1353,10 @@ export function TimelinePenal({ exp }: Props) {
                       <button
                         key={r.val!}
                         onClick={() => setResultadoModal(r.val)}
-                        className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                        className={`flex-1 py-2 rounded text-xs font-medium border transition-colors ${
                           resultadoModal === r.val
-                            ? 'bg-blue-700 border-blue-700 text-white'
-                            : 'border-gray-300 text-gray-500 hover:bg-gray-100'
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
                         }`}
                       >{r.label}</button>
                     ))}
@@ -1383,7 +1376,7 @@ export function TimelinePenal({ exp }: Props) {
 
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <div>
-                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Estado</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Estado</label>
                   <div className="flex gap-1">
                     {([
                       ['en_curso',      '⏱ En curso'],
@@ -1393,21 +1386,17 @@ export function TimelinePenal({ exp }: Props) {
                       <button
                         key={val}
                         onClick={() => setEstadoModal(val)}
-                        className={`flex-1 py-1.5 rounded-lg border text-[11px] font-semibold transition-all ${
+                        className={`flex-1 px-2 py-1.5 rounded text-[11px] font-medium border transition-colors ${
                           estadoModal === val
-                            ? val === 'cumplido'
-                              ? 'border-green-500 bg-green-50 text-green-700'
-                              : val === 'en_curso'
-                              ? 'border-blue-700 bg-blue-50 text-gray-800'
-                              : 'border-gray-300 bg-gray-100 text-gray-500'
-                            : 'border-gray-200 text-gray-500 hover:bg-gray-100'
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-blue-300'
                         }`}
                       >{lbl}</button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Fecha</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Fecha</label>
                   <input
                     type="date"
                     className="field-input w-full text-xs"
@@ -1628,6 +1617,7 @@ export function TimelinePenal({ exp }: Props) {
         open={!!replyTarget}
         onClose={() => { setReplyTarget(null); setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' }) }}
         titulo="Agregar comentario"
+        subtitulo={<>Actuación: <span className="font-semibold text-gray-600">{exp.id}</span></>}
         size="sm"
         footer={
           <>

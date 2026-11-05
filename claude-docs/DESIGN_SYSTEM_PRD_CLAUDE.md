@@ -97,3 +97,15 @@ Relevado en el PRD como Penal (actuación `/actuaciones/699`, Carta SAE Suceso; 
 - `labelEstado()` ahora resuelve también los estados penales (`etapasPenales`).
 - **Diferencias que quedan**: Carta SAE tiene 6 etapas en el PRD y 7 en el prototipo (incluye Rechazado); el ciclo de estados por tipo
   es dato de negocio, no se tocó.
+
+## Etapa 2c — Documentos, Intervinientes, Vinculados, modales y Alta (rama `feat/modales-docs-alta-prd`)
+- **Documentos / Intervinientes / Vinculados**: una card `bg-white border border-gray-200 rounded-lg p-5` con título, contador y botón azul
+  `text-xs rounded-md` arriba a la derecha. Documentos: columnas Archivo · Tipo · Tamaño · Subido, chip PDF rojo, handle de arrastre.
+  Intervinientes: estado vacío "Sin intervinientes registrados." + "+ Agregar el primero". Vinculados: tarjetas con N° azul, chips de área,
+  tipo de gestión y relación.
+- **Modales**: `Modal` acepta `subtitulo` (ReactNode). "Actuación: ID" en Cambiar estado (con "Estado actual"), Agrupar a causa, Nueva Actividad,
+  Comentar y Editar; solapas con subrayado azul. El formulario del hito sigue el PRD: Resultado Sí / No, Estado En curso · Cumplido · No proc.
+  (seleccionado en azul), etiquetas `text-xs font-medium`. Se quitó la línea "Etapa: … — Seleccioná la actividad" y el borde de color de las tarjetas de hito.
+- **Alta** (`AltaExpediente.page.tsx`): `max-w-4xl`, título "Nuevo Ingreso de Actuación", secciones sin círculo numerado con `h2 text-lg … border-b`,
+  Canal y Área como listas desplegables ("Seleccioná..."), dropzone del PRD ("Solo PDF · Máx. 20 MB"), botones "Cancelar" / "Revisar y enviar".
+- Pendiente de etapas anteriores: Principal (KPIs cuadrados, paneles, barras) y Boga, Novedades judiciales, Agenda, Licencias, Dashboard, Configuración.
