@@ -7,6 +7,7 @@ import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import { formatFecha } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
+import { labelEstado } from '../../utils/estadoLabel'
 import { ESTADOS_CERRADO } from '../Home/homeShared'
 import type { Expediente, Usuario } from '../../types'
 import Icon from '../../components/ui/Icon'
@@ -116,7 +117,7 @@ export default function MesaSacoPage() {
       case 'area':      return e.area
       case 'caratula':  return e.caratula
       case 'tipo':      return tipoLabel(e.tipo)
-      case 'estado':    return e.estado
+      case 'estado':    return labelEstado(e)
       case 'gde':       return e.numero_ee_gde ?? ''
       case 'letrado': {
         const u = e.abogado_id ? getUsuarioById(e.abogado_id) : undefined
@@ -363,7 +364,7 @@ export default function MesaSacoPage() {
                         <p className="truncate" title={e.caratula}>{e.caratula || <span className="text-gray-400">—</span>}</p>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-left">{tipoLabel(e.tipo)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-left">{e.estado}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-left">{labelEstado(e)}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-left">
                         {e.numero_ee_gde || <span className="text-gray-400">—</span>}
                       </td>

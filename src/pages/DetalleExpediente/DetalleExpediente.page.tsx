@@ -7,7 +7,6 @@ import { useNotificacionesStore } from '../../store/notificaciones.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
 import type { Expediente, Tarea } from '../../types'
 import { useUIStore } from '../../store/ui.store'
-import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, puedeReasignar } from '../../data/usuarios'
@@ -147,7 +146,7 @@ function getRamificaciones(codigoEstado: string, tipoExpediente: string): string
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'datos',          label: 'Datos',           icon: 'info' },
-  { key: 'timeline',       label: 'Línea de Tiempo', icon: 'timeline' },
+  { key: 'timeline',       label: 'Línea de tiempo', icon: 'timeline' },
   { key: 'intervinientes', label: 'Intervinientes',  icon: 'people' },
   { key: 'docs',           label: 'Documentos',      icon: 'folder' },
   { key: 'prevision',      label: 'Previsión',       icon: 'trending_up' },
@@ -844,70 +843,66 @@ export default function DetalleExpedientePage() {
   }
 
   return (
-    <div className="p-6 space-y-5 max-w-screen-xl overflow-hidden">
+    <div className="max-w-4xl mx-auto p-6 space-y-5">
 
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-card p-5">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
-          <Link to="/actuaciones" className="hover:text-gray-800 transition-colors">Actuaciones</Link>
-          <Icon name="chevron_right" size={14} />
-          <span className="text-gray-800">Actuación</span>
-        </div>
+      {/* Header sticky (PRD §8.1) */}
+      <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur -mx-6 px-6 pt-2 pb-3 border-b border-gray-200">
+        <nav className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+          <Link to="/actuaciones" className="hover:text-gray-700">Actuaciones</Link>
+          <Icon name="chevron_right" size={12} />
+          <span className="text-gray-700 font-medium">Actuación</span>
+        </nav>
 
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="font-mono font-semibold text-lg text-gray-800">{exp.id}</span>
-              <AreaBadge area={exp.area} />
-              <EstadoBadge code={exp.estado} label={exp.estado} />
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-semibold text-gray-800">{exp.id}</h1>
+              <span
+                className="px-2.5 py-0.5 rounded text-xs font-medium text-white"
+                style={{ backgroundColor: `var(--color-area-${exp.area.toLowerCase()})` }}
+              >
+                {exp.area}
+              </span>
+              <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{estadoProcesalActual?.label ?? exp.estado}</span>
+              {exp.numero_causa && (
+                <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                  Causa {formatNumeroCausaPjn(exp)}
+                </span>
+              )}
+              {exp.es_urgente && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">
+                  <Icon name="fire" size={12} />
+                  Urgente
+                </span>
+              )}
               {(alerta.activa || alertaTimer.activa) && (() => {
                 const timerVencido = alertaTimer.activa && alertaTimer.diasRestantes !== undefined && alertaTimer.diasRestantes <= 0
                 const esVencido = alerta.estado === 'vencido' || timerVencido
                 if (esVencido) {
                   return (
-                    <div
+                    <span
                       title={alerta.nombreElemento ? `Vencido: ${alerta.nombreElemento}` : 'Plazo vencido'}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 border border-red-300"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700"
                     >
-                      <Icon name="warning" size={11} className="text-red-700" />
-                      <span className="text-[10px] font-semibold text-red-700 uppercase tracking-wide">Vencido</span>
-                    </div>
+                      <Icon name="warning" size={12} />
+                      Vencido
+                    </span>
                   )
                 }
                 return (
-                  <div
+                  <span
                     title={alerta.nombreElemento ? `Por vencer: ${alerta.nombreElemento}${alerta.fechaVencimiento ? ` — vence ${formatFecha(alerta.fechaVencimiento)}` : ''}` : 'Tarea por vencer'}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700"
                   >
-                    <Icon name="schedule" size={11} className="text-amber-700" />
-                    <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Por vencer</span>
-                  </div>
+                    <Icon name="schedule" size={12} />
+                    Por vencer
+                  </span>
                 )
               })()}
-              <button
-                onClick={() => actualizarExpediente(exp.id, { es_urgente: !exp.es_urgente })}
-                title={exp.es_urgente ? 'Marcar como no urgente' : 'Marcar como urgente'}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
-                  exp.es_urgente
-                    ? 'bg-red-100 border-red-300 text-red-700'
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-700'
-                }`}
-              >
-                <Icon name="warning" size={11} className={exp.es_urgente ? 'text-red-700' : 'text-gray-500'} />
-                <span className="text-[10px] font-semibold uppercase tracking-wide">
-                  {exp.es_urgente ? 'Urgente' : 'Marcar urgente'}
-                </span>
-              </button>
-              {exp.numero_causa && (
-                <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-mono">
-                  {formatNumeroCausaPjn(exp)}
-                </span>
-              )}
               {exp.es_querella_iniciada && exp.id_querella_derivada && (
                 <button
                   onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id_querella_derivada!))}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-300 hover:bg-violet-200 transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors"
                 >
                   <Icon name="gavel" size={12} />
                   Ver Querella →
@@ -916,7 +911,7 @@ export default function DetalleExpedientePage() {
               {exp.id_juicio_derivado && (
                 <button
                   onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id_juicio_derivado!))}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-300 hover:bg-violet-200 transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors"
                 >
                   <Icon name="gavel" size={12} />
                   Ver juicio {exp.id_juicio_derivado} →
@@ -925,100 +920,106 @@ export default function DetalleExpedientePage() {
               {exp.antecedente_id && (
                 <button
                   onClick={() => navigate(RUTAS.EXPEDIENTE(exp.antecedente_id!))}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-100 transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors"
                 >
                   <Icon name="account_tree" size={12} />
                   Antecedente {exp.antecedente_id} →
                 </button>
               )}
             </div>
-            <h1 className="font-headline font-semibold text-xl text-gray-800 leading-snug">{exp.caratula}</h1>
-            <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-500 flex-wrap">
-              <span>{tipoLabel}</span>
-              {juzgadoLabel && (
-                <>
-                  <span className="text-gray-400">·</span>
-                  <span>{juzgadoLabel}</span>
-                </>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {exp.caratula ? `${exp.caratula} · ` : ''}{tipoLabel}{juzgadoLabel ? ` · ${juzgadoLabel}` : ''}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => actualizarExpediente(exp.id, { es_urgente: !exp.es_urgente })}
+              title={exp.es_urgente ? 'Quitar la marca de urgente' : 'Marcar como urgente'}
+              className="px-3 py-1.5 text-sm rounded-md border inline-flex items-center gap-1 border-gray-300 text-gray-600 hover:bg-gray-50"
+            >
+              <Icon name="fire" size={14} />
+              {exp.es_urgente ? 'Quitar urgente' : 'Marcar urgente'}
+            </button>
+
+            {/* Menú de acciones (+) */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                className="w-8 h-8 rounded-full bg-blue-700 text-white flex items-center justify-center hover:bg-blue-800"
+                aria-label="Acciones"
+              >
+                <Icon name="add" size={18} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 z-40 mt-1 w-52 bg-white border border-gray-200 rounded-md shadow-lg py-1">
+                  {[
+                    { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
+                    { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
+                    { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
+                    { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
+                    { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' && !exp.id_juicio_derivado },
+                    { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Iniciar Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada,
+                      disabled: querellaBloqueada,
+                      hint: 'Definí el Tipo de Intervención (Datos) para poder iniciar la querella.' },
+                    { key: 'consultar_pjn' as AccionMenu, icon: 'search', label: 'Consultar Novedad PJN', show: !!exp.numero_causa },
+                  ]
+                  .filter(item => item.show)
+                  .map((item: { key: AccionMenu; icon: string; label: string; disabled?: boolean; hint?: string }) => (
+                    <button
+                      key={item.key}
+                      onClick={() => { if (!item.disabled) openAccion(item.key) }}
+                      disabled={item.disabled}
+                      title={item.disabled ? item.hint : undefined}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    >
+                      <Icon name={item.icon} size={16} className="flex-shrink-0" />
+                      <span>
+                        {item.label}
+                        {item.disabled && item.hint && (
+                          <span className="block text-[10px] text-gray-500 leading-snug mt-0.5">{item.hint}</span>
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </div>
-
-          {/* Acción menu */}
-          <div className="relative flex-shrink-0" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(o => !o)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-700 text-white hover:opacity-90 transition-opacity shadow-md"
-            >
-              <Icon name="add" size={18} />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-card-lg z-10 overflow-hidden border border-gray-200">
-                {[
-                  { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
-                  { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
-                  { key: 'desagrupar' as AccionMenu,icon: 'link_off',      label: 'Desagrupar',      show: !!exp.numero_causa },
-                  { key: 'reasignar' as AccionMenu, icon: 'person_search', label: 'Reasignar',       show: puedeReasignar(usuarioActivo) },
-                  { key: 'iniciar_juicio' as AccionMenu, icon: 'gavel', label: 'Iniciar Juicio', show: TIPOS_CON_JUICIO.has(exp.tipo) && (exp.estadoProcesal ?? exp.estado) === 'JUICIO_INICIADO' && !exp.id_juicio_derivado },
-                  { key: 'nueva_querella' as AccionMenu, icon: 'gavel', label: 'Iniciar Querella', show: exp.tipo === 'CARTA_SUCESO' && !exp.es_querella_iniciada,
-                    disabled: querellaBloqueada,
-                    hint: 'Definí el Tipo de Intervención (Datos) para poder iniciar la querella.' },
-                  { key: 'consultar_pjn' as AccionMenu, icon: 'search', label: 'Consultar Novedad PJN', show: !!exp.numero_causa },
-                ]
-                .filter(item => item.show)
-                .map((item: { key: AccionMenu; icon: string; label: string; disabled?: boolean; hint?: string }) => (
-                  <button
-                    key={item.key}
-                    onClick={() => { if (!item.disabled) openAccion(item.key) }}
-                    disabled={item.disabled}
-                    title={item.disabled ? item.hint : undefined}
-                    className="w-full flex items-start gap-2.5 px-4 py-2.5 text-sm text-left text-gray-800 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                  >
-                    <Icon name={item.icon} size={18} />
-                    <span>
-                      {item.label}
-                      {item.disabled && item.hint && (
-                        <span className="block text-[10px] text-gray-500 leading-snug mt-0.5">{item.hint}</span>
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-gray-200 w-full">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
-              tab === t.key
-                ? 'border-blue-700 text-gray-800'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            {t.key === 'asistente'
-              ? <img src={bogaAvatar} alt="Boga" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-              : <Icon name={t.icon} size={16} />
-            }
-            {t.label}
-            {tabCounters[t.key] !== undefined && (
-              <span className="text-xs bg-gray-200 rounded-full px-1.5 py-0.5 text-gray-500">
-                {tabCounters[t.key]}
-              </span>
-            )}
-          </button>
-        ))}
+        {/* Tabs (PRD §8.2) */}
+        <div className="flex gap-1 mt-3 -mb-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                tab === t.key
+                  ? 'border-blue-600 text-blue-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.key === 'asistente' && (
+                <img src={bogaAvatar} alt="Boga" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+              )}
+              {t.label}
+              {tabCounters[t.key] !== undefined && (
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                  tab === t.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {tabCounters[t.key]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Banner: novedades judiciales pendientes — solo aviso, contenido en pestaña.
           El organismo de cada una se distingue con su chip (ver NovedadPjnCard). */}
       {novedadesDeEstaActuacion.length > 0 && tab !== 'novedades_pjn' && (
-        <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between">
+        <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="pjn" size={16} className="text-blue-700" />
             <span className="text-[13px] text-blue-700 font-medium">

@@ -59,3 +59,25 @@ Se abrió `https://siajtest.trenesargentinos.gob.ar/actuaciones/mesa-saco` con C
 - Header: `bg-[#0B2545] p-4 max-h-12`, logo = imagen `logoTrenes.svg` (`w-44 h-6`, invertida a blanco). El avatar (`profile.svg`, 30px) ya se replicó como SVG inline (`PerfilIcon` en `Topbar.tsx`), aproximado a partir de la captura porque el archivo no se pudo leer.
   El prototipo usa un wordmark de texto y las iniciales; para igualarlo haría falta copiar el SVG del logo (pendiente de OK).
 - El resto de las páginas (p-6/p-8 propios) llevan ahora 16px extra por el `main.p-4`: se normaliza en las etapas 2 y 3.
+
+## Etapa 2a — Detalle (2026-11-05)
+Relevado en el PRD como Penal (actuación `/actuaciones/699`, Carta SAE Suceso; se la pasó a *Procede* y se registró el hito
+3.1 ¿Hay delito? = Sí / Cumplido para ver cómo queda). Hecho en el prototipo:
+- **Detalle** (`DetalleExpediente.page.tsx`): `max-w-4xl mx-auto p-6`, header sticky con migas, h1 con el N°, chips
+  (área, estado con su **nombre** y no el código, causa, urgente, vencido/por vencer), botón "Marcar urgente" y "+" con menú
+  (`w-52`), tabs con contador (activo azul). Las pestañas propias del prototipo (Novedades judiciales, Boga) se conservan.
+  Helper nuevo `utils/estadoLabel.ts` (`labelEstado`): también se usa en las bandejas.
+- **Datos** (`DatosTab.tsx`): dos cards como el PRD ("Datos de la Actuación" y "Detalle — {tipo}"), grilla de 3 columnas,
+  `dt` en mayúsculas gris, link "Editar" azul en el header de la card; la lógica de edición no cambió.
+- **Pendiente de esta etapa:** Línea de tiempo, Documentos, Intervinientes, Vinculados, modales del Letrado y Alta.
+
+### Lo que hay que tener en cuenta para la Línea de tiempo (diferencias de modelo)
+- El PRD agrupa en **acordeón por etapa** (una por estado, la más reciente arriba; la actual con `bg-blue-50`, punto azul y chip
+  ACTUAL; adentro "Ingresó desde X · por USUARIO" y los eventos). El prototipo muestra un **feed plano**; las actividades ya
+  traen `estadoExpediente`, así que agrupar es viable.
+- Stepper del PRD: círculo `w-9 h-9`; completado verde con ✓, actual azul con `ring-4 ring-blue-100`, pendiente gris;
+  conector `h-0.5`. El prototipo Penal tiene además el paso "Rechazado" (rojo), que el PRD no muestra.
+- Filtros del PRD en Penal: Todo · Sistema (n) · Procesales (n) · Genéricas (n) + Exportar + "Nueva Actividad" (azul).
+- Hito registrado: círculo violeta con ✓, "3.1 — ¿Hay delito?", chips etapa (gris) · Cumplido (verde) · Sí (verde) · responsable,
+  fecha y link "Editar". Nueva Actividad > Procesales lista los hitos de la etapa; al elegir uno: Resultado Sí/No, Resolución
+  (dropzone), Fecha, Organismo Judicial, Estado (En curso / Cumplido / No proc.), Fecha vencimiento; botones Volver / Registrar.

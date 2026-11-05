@@ -16,6 +16,7 @@ import { formatFecha } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { RUTAS } from '../../utils/routing'
 import { getAlertaExpediente, getAlertaTimer, type EstadoAlerta } from '../../utils/alertas'
+import { labelEstado } from '../../utils/estadoLabel'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -462,7 +463,7 @@ export default function BandejaAbogadoPage() {
           </td>
         )}
         {/* Estado */}
-        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{exp.estado}</td>
+        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{labelEstado(exp)}</td>
         {/* Recepción */}
         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{formatFecha(exp.fecha_recepcion)}</td>
         {/* Menú */}
@@ -707,7 +708,7 @@ export default function BandejaAbogadoPage() {
                             </span>
                           </td>
                           {mostrarColumnaLetrado && <td className="px-4 py-3" />}
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{principal.estado}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{labelEstado(principal)}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{formatFecha(principal.fecha_recepcion)}</td>
                           <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                             <button

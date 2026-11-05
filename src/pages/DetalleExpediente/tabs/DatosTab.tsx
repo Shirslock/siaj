@@ -6,7 +6,6 @@ import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEA
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../../data/juzgadosPJN'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, limpiarMontos, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../../utils/format'
-import { EstadoBadge, AreaBadge } from '../../../components/ui/Badge'
 import Icon from '../../../components/ui/Icon'
 import { useConfiguracionStore } from '../../../store/configuracion.store'
 import { opcionesDeCampo } from '../../../components/expedientes/FormularioDinamico'
@@ -67,16 +66,18 @@ interface RowProps {
   value: React.ReactNode
   edit: boolean
   input?: React.ReactNode
+  full?: boolean
 }
 
-function FieldRow({ label, value, edit, input }: RowProps) {
+// PRD §8.3: <dt> en mayúsculas gris chico y <dd> en gris oscuro, dentro de una grilla de 3 columnas.
+function FieldRow({ label, value, edit, input, full }: RowProps) {
   return (
-    <div className="py-3 flex gap-6 items-start border-b border-gray-200 last:border-0">
-      <dt className="w-48 flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-500 pt-0.5">
+    <div className={full ? 'col-span-2 md:col-span-3' : ''}>
+      <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
         {label}
       </dt>
-      <dd className="flex-1 text-sm text-gray-800">
-        {edit && input ? input : (value ?? <span className="text-gray-500">—</span>)}
+      <dd className="mt-0.5 text-sm text-gray-800 break-words">
+        {edit && input ? input : (value || <span className="text-gray-400">—</span>)}
       </dd>
     </div>
   )
@@ -84,14 +85,8 @@ function FieldRow({ label, value, edit, input }: RowProps) {
 
 function Seccion({ titulo }: { titulo: string }) {
   return (
-    <div className="pt-6 pb-2 first:pt-0">
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-4 rounded-full bg-blue-700 flex-shrink-0" />
-        <p className="text-xs font-semibold tracking-tight text-gray-800">
-          {titulo}
-        </p>
-        <div className="flex-1 h-px bg-gray-100" />
-      </div>
+    <div className="col-span-2 md:col-span-3 pt-2 border-t border-gray-100">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{titulo}</p>
     </div>
   )
 }
@@ -410,191 +405,175 @@ export function DatosTab({ exp }: Props) {
     )
   }
 
+  const CANAL_LABEL: Record<string, string> = { EE_GDE: 'EE GDE', MEMO_GDE: 'Memo GDE', OTROS: 'Otros' }
+  const canal = (exp as unknown as { canal?: string }).canal
+
+  // Botones de edición del header de la card (PRD letrado §3)
+  const accionesEdicion = !edit ? (
+    <button
+      onClick={startEdit}
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
+    >
+      <Icon name="edit" size={16} />
+      Editar
+    </button>
+  ) : (
+    <div className="flex gap-2">
+      <button
+        onClick={() => setEdit(false)}
+        className="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50"
+      >
+        Cancelar
+      </button>
+      <button
+        onClick={save}
+        className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      >
+        Guardar
+      </button>
+    </div>
+  )
+
   return (
-    <div className="bg-white rounded-lg shadow-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-gray-800">Datos de la actuación</p>
-        {!edit ? (
-          <button
-            onClick={startEdit}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors"
-          >
-            <Icon name="edit" size={16} />
-            Editar
-          </button>
-        ) : (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setEdit(false)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={save}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity"
-            >
-              <Icon name="save" size={16} />
-              Guardar
-            </button>
-          </div>
-        )}
-      </div>
+    <div className="space-y-5">
 
-      <dl>
+      {/* ── Card 1: Datos de la Actuación ── */}
+      <section className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-700 pb-2">
+          <h2 className="text-base font-semibold text-gray-700">Datos de la Actuación</h2>
+          {accionesEdicion}
+        </div>
 
-        {/* ── SECCIÓN 1: Expediente ── */}
-        <Seccion titulo="Actuación" />
-        <FieldRow label="N° Interno" edit={false}
-          value={<span className="font-mono font-semibold text-gray-800">{exp.id}</span>}
-        />
-        <FieldRow label="Tipo de Gestión" edit={false}
-          value={tipoLabel}
-        />
-        <FieldRow label="Área" edit={false}
-          value={<AreaBadge area={exp.area} />}
-        />
-        <FieldRow label="Estado" edit={false}
-          value={<EstadoBadge code={exp.estado} label={exp.estado} />}
-        />
-        <FieldRow label="Letrado Asignado" edit={false}
-          value={abogado ? getNombreCompleto(abogado) : '—'}
-        />
-        <FieldRow label="Fecha de Recepción" edit={false}
-          value={formatFecha(exp.fecha_recepcion)}
-        />
-        {TIPOS_FINALIZACION_LIBRE.has(exp.tipo) && (
-          <FieldRow label="Causal de finalización" edit={false}
-            value={
-              <input
-                type="text"
-                disabled
-                readOnly
-                className="field-input w-full bg-gray-100 text-gray-500 cursor-not-allowed"
-                value={exp.causal_finalizacion ?? 'Se completa automáticamente al finalizar la actuación'}
+        <dl className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <FieldRow
+            label="N° EE / Memo"
+            edit={edit}
+            value={exp.numero_ee_gde}
+            input={
+              <input type="text"
+                className="field-input w-full text-sm"
+                value={(draftTop['numero_ee_gde'] as string) ?? ''}
+                onChange={e => setTop('numero_ee_gde', e.target.value)}
               />
             }
           />
-        )}
-
-        {/* ── SECCIÓN 2: Datos de Recepción ── */}
-        <Seccion titulo="Datos de Recepción" />
-        <FieldRow
-          label="N° EE / Memo GDE"
-          edit={edit}
-          value={<span className="font-mono">{exp.numero_ee_gde}</span>}
-          input={
-            <input type="text"
-              className="field-input w-full text-sm font-mono"
-              value={(draftTop['numero_ee_gde'] as string) ?? ''}
-              onChange={e => setTop('numero_ee_gde', e.target.value)}
+          <FieldRow label="Fecha recepción" edit={false} value={formatFecha(exp.fecha_recepcion)} />
+          <FieldRow label="Canal" edit={false} value={canal ? (CANAL_LABEL[canal] ?? canal) : undefined} />
+          <FieldRow label="Tipo de gestión" edit={false} value={tipoLabel} />
+          <FieldRow
+            label={edit ? 'Intervención *' : 'Intervención'}
+            edit={edit}
+            value={String(exp.campos_mesa['mesa_tipo_intervencion'] ?? '') || undefined}
+            input={
+              <select
+                className="field-input w-full text-sm"
+                value={(draftMesa['mesa_tipo_intervencion'] as string) ?? ''}
+                onChange={e => setDraftMesa(p =>
+                  ({ ...p, mesa_tipo_intervencion: e.target.value }))}
+              >
+                <option value="">— Sin especificar —</option>
+                {(exp.area === 'PENAL'
+                  ? ['Denunciante', 'Actuación de Oficio', 'Sin Intervención']
+                  : ['Actora', 'Demandada', 'Sin Intervención']
+                ).map(o => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
+            }
+          />
+          <FieldRow
+            label="Oficio judicial"
+            edit={edit}
+            value={valorDisplay(
+              { id: 'mesa_oficio_judicial', label: '', type: 'text' },
+              exp.campos_mesa['mesa_oficio_judicial'],
+              monedas
+            )}
+            input={
+              <input type="text"
+                className="field-input w-full text-sm"
+                value={(draftMesa['mesa_oficio_judicial'] as string) ?? ''}
+                onChange={e => setDraftMesa(p =>
+                  ({ ...p, mesa_oficio_judicial: e.target.value }))}
+              />
+            }
+          />
+          <FieldRow label="Letrado asignado" edit={false} value={abogado ? getNombreCompleto(abogado) : undefined} />
+          {TIPOS_FINALIZACION_LIBRE.has(exp.tipo) && (
+            <FieldRow label="Causal de finalización" edit={false}
+              value={exp.causal_finalizacion ?? 'Se completa automáticamente al finalizar la actuación'}
             />
-          }
-        />
-        <FieldRow
-          label="Oficio Judicial"
-          edit={edit}
-          value={valorDisplay(
-            { id: 'mesa_oficio_judicial', label: '', type: 'text' },
-            exp.campos_mesa['mesa_oficio_judicial'],
-            monedas
           )}
-          input={
-            <input type="text"
-              className="field-input w-full text-sm"
-              value={(draftMesa['mesa_oficio_judicial'] as string) ?? ''}
-              onChange={e => setDraftMesa(p =>
-                ({ ...p, mesa_oficio_judicial: e.target.value }))}
-            />
-          }
-        />
-        <FieldRow
-          label={edit ? 'Tipo de Intervención *' : 'Tipo de Intervención'}
-          edit={edit}
-          value={String(exp.campos_mesa['mesa_tipo_intervencion'] ?? '—')}
-          input={
-            <select
-              className="field-input w-full text-sm"
-              value={(draftMesa['mesa_tipo_intervencion'] as string) ?? ''}
-              onChange={e => setDraftMesa(p =>
-                ({ ...p, mesa_tipo_intervencion: e.target.value }))}
-            >
-              <option value="">Seleccionar…</option>
-              {(exp.area === 'PENAL'
-                ? ['Denunciante', 'Actuación de Oficio', 'Sin Intervención']
-                : ['Actora', 'Demandada', 'Sin Intervención']
-              ).map(o => (
-                <option key={o} value={o}>{o}</option>
-              ))}
-            </select>
-          }
-        />
-        <FieldRow
-          label="Comentarios"
-          edit={edit}
-          value={String(exp.campos_mesa['mesa_comentarios'] ?? '—')}
-          input={
-            <textarea
-              className="field-input resize-y w-full text-sm"
-              style={{ minHeight: 64 }}
-              value={(draftMesa['mesa_comentarios'] as string) ?? ''}
-              onChange={e => setDraftMesa(p =>
-                ({ ...p, mesa_comentarios: e.target.value }))}
-            />
-          }
-        />
+          <FieldRow
+            full
+            label="Comentarios"
+            edit={edit}
+            value={String(exp.campos_mesa['mesa_comentarios'] ?? '') || undefined}
+            input={
+              <textarea
+                className="field-input resize-y w-full text-sm"
+                style={{ minHeight: 64 }}
+                value={(draftMesa['mesa_comentarios'] as string) ?? ''}
+                onChange={e => setDraftMesa(p =>
+                  ({ ...p, mesa_comentarios: e.target.value }))}
+              />
+            }
+          />
+        </dl>
+      </section>
 
-        {/* ── SECCIÓN 3: Mesa SACO ── */}
-        {camposMesa.length > 0 && (
-          <>
-            <Seccion titulo="Mesa SACO" />
+      {/* ── Card 2: Detalle — {tipo} ── */}
+      {(camposMesa.length > 0 || camposAbogado.length > 0) && (
+        <section className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+          <h2 className="text-base font-semibold text-gray-700 border-b border-gray-700 pb-2">
+            Detalle — {tipoLabel}
+          </h2>
+
+          <dl className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {camposMesa.map(campo => (
               <FieldRow
                 key={campo.id}
+                full={campo.full || campo.type === 'textarea'}
                 label={campo.label}
                 edit={edit}
                 value={valorDisplay(campo, exp.campos_mesa[campo.id], monedas, exp.campos_mesa)}
                 input={renderCampoInput(campo, draftMesa, setDraftMesa, camposMesa)}
               />
             ))}
-          </>
-        )}
 
-        {/* ── SECCIÓN 4: Letrado/a ── */}
-        {camposAbogado.length > 0 && (
-          <>
-            <Seccion titulo="Letrado/a" />
-
-            {/* Datos de Contacto — siempre primero */}
-            <FieldRow
-              label="Datos de Contacto"
-              edit={edit}
-              value={String(exp.campos_abogado['abg_datos_contacto'] ?? '—')}
-              input={
-                <input type="text"
-                  className="field-input w-full text-sm"
-                  placeholder="Teléfono, Mail, Dirección, Contacto"
-                  value={(draftAbogado['abg_datos_contacto'] as string) ?? ''}
-                  onChange={e => setDraftAbogado(p =>
-                    ({ ...p, abg_datos_contacto: e.target.value }))}
+            {camposAbogado.length > 0 && (
+              <>
+                <Seccion titulo="Letrado/a" />
+                <FieldRow
+                  full
+                  label="Datos de Contacto"
+                  edit={edit}
+                  value={String(exp.campos_abogado['abg_datos_contacto'] ?? '') || undefined}
+                  input={
+                    <input type="text"
+                      className="field-input w-full text-sm"
+                      placeholder="Teléfono, Mail, Dirección, Contacto"
+                      value={(draftAbogado['abg_datos_contacto'] as string) ?? ''}
+                      onChange={e => setDraftAbogado(p =>
+                        ({ ...p, abg_datos_contacto: e.target.value }))}
+                    />
+                  }
                 />
-              }
-            />
-
-            {/* Campos abogado del tipo */}
-            {camposAbogado.map(campo => (
-              <FieldRow
-                key={campo.id}
-                label={campo.label}
-                edit={edit}
-                value={valorDisplay(campo, exp.campos_abogado[campo.id], monedas, exp.campos_abogado)}
-                input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
-              />
-            ))}
-          </>
-        )}
-
-      </dl>
+                {camposAbogado.map(campo => (
+                  <FieldRow
+                    key={campo.id}
+                    full={campo.full || campo.type === 'textarea'}
+                    label={campo.label}
+                    edit={edit}
+                    value={valorDisplay(campo, exp.campos_abogado[campo.id], monedas, exp.campos_abogado)}
+                    input={renderCampoInput(campo, draftAbogado, setDraftAbogado, camposAbogado)}
+                  />
+                ))}
+              </>
+            )}
+          </dl>
+        </section>
+      )}
     </div>
   )
 }
