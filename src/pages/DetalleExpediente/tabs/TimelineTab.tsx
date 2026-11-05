@@ -18,6 +18,8 @@ import { useNotificacionesStore } from '../../../store/notificaciones.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
 import { AdjuntosInput } from '../../../components/ui/AdjuntosInput'
+import { StepperPRD, type PasoStepper } from '../../../components/timeline/StepperPRD'
+import { EtapasAcordeon, type EtapaTL } from '../../../components/timeline/EtapasAcordeon'
 import { aAdjuntoRef, adjuntosDeActividad } from '../../../utils/validarAdjuntos'
 
 interface Props { exp: Expediente }
@@ -67,120 +69,122 @@ function ProcesalStepper({ exp }: { exp: Expediente }) {
   const estados = todosEstados.filter(e => e.codigo !== 'ASIGNADO')
   const idxActual = estados.findIndex(e => e.codigo === estadoCodigo)
 
-  if (estados.length <= 1) return null
+  const pasos: PasoStepper[] = estados.map((estado, idx) => ({
+    key: estado.codigo,
+    label: estado.label,
+    estado: idx === idxActual ? 'current' : idx < idxActual ? 'done' : 'pending',
+  }))
 
-  return (
-    <div className="bg-white rounded-lg shadow-card px-16 py-4 mb-4">
-      <div className="flex items-center gap-0">
-        {estados.map((estado, idx) => {
-          const isPast    = idx < idxActual
-          const isCurrent = idx === idxActual
-          const isFuture  = idx > idxActual
-          const isLast    = idx === estados.length - 1
-
-          return (
-            <div key={estado.codigo} className="flex items-center flex-1 min-w-0">
-              {/* Nodo */}
-              <div className="flex flex-col items-center flex-shrink-0">
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all ${
-                    isCurrent
-                      ? 'bg-blue-700 border-blue-700 text-white shadow-md'
-                      : isPast
-                      ? 'bg-blue-100 border-blue-400 text-gray-800'
-                      : 'bg-gray-100 border-gray-200 text-gray-500'
-                  }`}
-                >
-                  {isPast
-                    ? <Icon name="check" size={16} />
-                    : <span className="text-xs">{idx + 1}</span>
-                  }
-                </div>
-                <span className={`mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[80px] truncate ${
-                  isCurrent ? 'text-gray-800' : isFuture ? 'text-gray-500' : 'text-blue-700'
-                }`}>
-                  {estado.label}
-                </span>
-              </div>
-              {/* Línea conectora */}
-              {!isLast && (
-                <div className="flex-1 h-px mx-2 mb-4 relative">
-                  <div className="absolute inset-0 bg-gray-100 rounded-full" />
-                  {isPast && (
-                    <div className="absolute inset-0 bg-blue-100 rounded-full" />
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
+  return <StepperPRD pasos={pasos} pendienteDeInicio={(exp.estadoProcesal ?? 'INICIO') === 'ASIGNADO'} />
 }
 
-// ── Ítem de tarea en el feed ─────────────────────────────────────────────────
+// ── Tareas de una etapa (PRD §8.4 c) ─────────────────────────────────────────
 
-function TareaFeedItem({
-  tarea,
-  numero,
-  estadoLabel: _estadoLabel,
-  onClick,
-  isSelected,
+function TareasEtapa({
+  tareas,
+  soloLectura = false,
+  seleccionadaId,
+  onSelect,
+  puedeAvanzar = false,
 }: {
-  tarea: Tarea
-  numero: number
-  estadoLabel: string
-  onClick?: () => void
-  isSelected: boolean
+  tareas: Tarea[]
+  soloLectura?: boolean
+  seleccionadaId?: string
+  onSelect?: (t: Tarea) => void
+  puedeAvanzar?: boolean
 }) {
-  const urg = calcularUrgencia(tarea.fechaVencimiento)
+  const [mostrarTodas, setMostrarTodas] = useState(false)
+  const total = tareas.length
+  const completadas = tareas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length
+  const pct = total > 0 ? Math.round((completadas / total) * 100) : 0
+  const visibles = mostrarTodas ? tareas : tareas.slice(0, 8)
 
-  const estadoConfig = {
-    cumplido:       { icon: 'check_circle', color: 'text-green-600', bg: 'bg-green-50',  badge: 'bg-green-100 text-green-700',   label: 'Cumplido' },
-    en_curso:       { icon: 'schedule',     color: 'text-amber-500', bg: 'bg-amber-50',  badge: 'bg-amber-100 text-amber-700',   label: 'En curso' },
-    no_procedente:  { icon: 'block',        color: 'text-gray-400',   bg: 'bg-gray-100', badge: 'bg-gray-100 text-gray-500', label: 'No proc.' },
-    sin_estado:     { icon: 'radio_button_unchecked', color: 'text-gray-400', bg: '', badge: '', label: '' },
-  }[tarea.estado]
+  if (total === 0) {
+    return (
+      <p className="text-center text-xs text-gray-400 py-3 border-b border-gray-100">
+        Este estado no requiere tareas.
+      </p>
+    )
+  }
 
   return (
-    <div
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-200 transition-all hover:bg-gray-100 ${
-        isSelected ? 'bg-blue-50 border-l-2 border-l-[#1b3a57]' : 'border-l-2 border-l-transparent'
-      }`}
-    >
-      {/* Número */}
-      <span className="text-[10px] font-semibold text-gray-500 w-5 flex-shrink-0 text-right">{String(numero).padStart(2,'0')}</span>
-
-      {/* Ícono estado */}
-      <Icon name={estadoConfig.icon} size={18} className={`flex-shrink-0 ${estadoConfig.color}`} />
-
-      {/* Nombre */}
-      <p className="text-xs text-gray-800 flex-1 truncate">{tarea.nombre}</p>
-
-      {/* Urgencia / Vencido */}
-      {tarea.fechaVencimiento && urg === 'rojo' && tarea.estado !== 'cumplido' && tarea.estado !== 'no_procedente' && (
-        <span className="flex items-center gap-1 text-[9px] font-semibold text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
-          <Icon name="warning" size={10} />
-          Vencido
-        </span>
-      )}
-      {tarea.fechaVencimiento && urg !== 'rojo' && (
-        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-          urg === 'ambar' ? 'bg-amber-500' : 'bg-green-500'
-        }`} />
+    <div className="px-4 py-3 border-b border-gray-100">
+      {soloLectura && (
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-xs font-medium text-amber-700">
+          <Icon name="lock" size={14} className="flex-shrink-0" />
+          Estado con retroceso activo — solo lectura. Podés agregar actividades genéricas.
+        </div>
       )}
 
-      {/* Badge estado */}
-      {tarea.estado !== 'sin_estado' && (
-        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${estadoConfig.badge}`}>
-          {estadoConfig.label}
-        </span>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-xs text-gray-500">{completadas}/{total}</span>
+        <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+          <div className="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-xs text-gray-500">{pct}%</span>
+      </div>
+
+      <ul>
+        {visibles.map((t, idx) => {
+          const urg = calcularUrgencia(t.fechaVencimiento)
+          const hecha = t.estado === 'cumplido'
+          const clickeable = !!onSelect && !soloLectura
+          return (
+            <li
+              key={t.id}
+              onClick={clickeable ? () => onSelect!(t) : undefined}
+              className={`flex items-center gap-2.5 py-2 px-2 -mx-2 rounded transition-colors ${
+                clickeable ? 'cursor-pointer hover:bg-gray-50' : ''
+              } ${seleccionadaId === t.id ? 'bg-blue-50' : ''}`}
+            >
+              <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                hecha ? 'bg-green-100 text-green-600'
+                : t.estado === 'en_curso' ? 'bg-amber-100 text-amber-600'
+                : t.estado === 'no_procedente' ? 'bg-gray-100 text-gray-400'
+                : 'border-2 border-gray-300'
+              }`}>
+                {hecha && <Icon name="check" size={12} />}
+                {t.estado === 'en_curso' && <Icon name="schedule" size={12} />}
+                {t.estado === 'no_procedente' && <Icon name="block" size={12} />}
+              </span>
+              <span className={`text-sm flex-1 ${t.estado === 'no_procedente' ? 'text-gray-400' : 'text-gray-800'}`}>
+                {String(idx + 1).padStart(2, '0')}. {t.nombre}
+              </span>
+              {t.fechaVencimiento && urg === 'rojo' && t.estado !== 'cumplido' && t.estado !== 'no_procedente' && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 flex-shrink-0">
+                  <Icon name="warning" size={11} />
+                  VENCIDA
+                </span>
+              )}
+              {t.estado !== 'sin_estado' && (
+                <span className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  hecha ? 'bg-green-100 text-green-700'
+                  : t.estado === 'en_curso' ? 'bg-amber-100 text-amber-700'
+                  : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {hecha ? 'Cumplido' : t.estado === 'en_curso' ? 'En curso' : 'No proc.'}
+                </span>
+              )}
+              {clickeable && <Icon name="chevron_right" size={14} className="text-gray-400 flex-shrink-0" />}
+            </li>
+          )
+        })}
+      </ul>
+
+      {!mostrarTodas && total > 8 && (
+        <button
+          className="mt-1 text-xs text-gray-500 hover:text-gray-800"
+          onClick={() => setMostrarTodas(true)}
+        >
+          + {total - 8} tareas más...
+        </button>
       )}
 
-      {/* Chevron */}
-      <Icon name="chevron_right" className="flex-shrink-0" size={14} />
+      {puedeAvanzar && (
+        <div className="mt-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+          ✓ Ya podés pasar de Estado
+        </div>
+      )}
     </div>
   )
 }
@@ -488,388 +492,6 @@ function TareaDetailPanel({
   )
 }
 
-// ── Entrada del feed (actividad genérica o de sistema) ───────────────────────
-
-function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, onToggleSnapshot, tareasHistoricas = [] }: {
-  act: Actividad
-  idx: number
-  isLast: boolean
-  hijas?: Actividad[]
-  snapshotOpen?: boolean
-  onToggleSnapshot?: () => void
-  tareasHistoricas?: Tarea[]
-}) {
-  const iconMap: Record<string, string> = {
-    RECEPCION:      'inbox',
-    CONTESTACION:   'reply',
-    PRESENTACION:   'upload_file',
-    AUDIENCIA:      'gavel',
-    PERICIA:        'science',
-    TRASLADO:       'send',
-    NOTIFICACION:   'notifications',
-    MOVIMIENTO:     'swap_horiz',
-    NOTA_RESPUESTA: 'edit_note',
-    RECURSO_INCIDENTE: 'gavel',
-    DILIGENCIAMIENTO: 'forward',
-    OTRO:           'more_horiz',
-  }
-  const isSistema = act.tipo === 'MOVIMIENTO' && !!act.estadoExpediente &&
-    (act.titulo.startsWith('Cambio de estado') || act.titulo.startsWith('Retroceso de estado'))
-  const esSolicitud = act.id?.startsWith('SOL_') || act.titulo.startsWith('Solicitud:')
-  const iconoActividad = isSistema ? 'swap_horiz' : esSolicitud ? 'task' : (iconMap[act.tipo] ?? 'radio_button_unchecked')
-
-  return (
-    <div className="flex flex-col mb-3">
-      <div className="flex gap-3">
-        {/* Timeline dot */}
-        <div className="flex flex-col items-center flex-shrink-0 mt-1">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-            isSistema ? 'bg-blue-100 border border-blue-200' : 'bg-gray-100 border border-gray-200'
-          }`}>
-            <Icon name={iconoActividad} size={14} className={isSistema ? 'text-gray-800' : 'text-gray-500'} />
-          </div>
-          {!isLast && <div className="w-px flex-1 bg-gray-100 mt-1" />}
-        </div>
-
-        {/* Card */}
-        <div className={`flex-1 rounded-lg border p-3.5 mb-3 ${
-          isSistema
-            ? 'bg-blue-50 border-blue-200'
-            : 'bg-white border-gray-200 shadow-card'
-        }`}>
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold text-gray-800 leading-snug">{act.titulo}</p>
-              {act.es_solicitud && act.tipo === 'NOTA_RESPUESTA' && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-50 text-green-700">
-                  <Icon name="check" size={9} />
-                  RESPUESTA
-                </span>
-              )}
-              {act.es_solicitud && act.tipo !== 'NOTA_RESPUESTA' && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-violet-50 text-violet-700">
-                  <Icon name="task" size={9} />
-                  SOLICITUD
-                </span>
-              )}
-              {act.origen_pjn && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700">
-                  <Icon name="refresh" size={9} />
-                  PJN
-                </span>
-              )}
-              {act.escrito_estado === 'GENERADO' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
-                  Pendiente de aprobación externa
-                </span>
-              )}
-              {act.escrito_estado === 'APROBADO_CARGADO' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
-                  Aprobado y cargado
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <p className="text-[10px] text-gray-500 whitespace-nowrap">{formatFecha(act.fecha)}</p>
-              {isSistema && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-gray-800">
-                  Sistema
-                </span>
-              )}
-              {isSistema && tareasHistoricas.length > 0 && (
-                <button
-                  onClick={onToggleSnapshot}
-                  className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-2.5 py-1.5 transition-colors mt-1"
-                >
-                  <Icon name="checklist" size={14} />
-                  {tareasHistoricas.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHistoricas.length} tareas
-                  <Icon name={snapshotOpen ? 'unfold_less' : 'unfold_more'} size={12} />
-                </button>
-              )}
-            </div>
-          </div>
-          {act.descripcion && (
-            <p className="text-xs text-gray-500">{act.descripcion}</p>
-          )}
-          {(act.doc_gde || adjuntosDeActividad(act).length > 0) && (
-            <div className="flex flex-wrap gap-3 mt-1.5">
-              {act.doc_gde && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-gray-800">
-                  <Icon name="description" size={14} />
-                  {act.doc_gde}
-                </span>
-              )}
-              {adjuntosDeActividad(act).map((adj, i) => (
-                <a
-                  key={`${adj.nombre}-${i}`}
-                  href="#"
-                  onClick={e => e.preventDefault()}
-                  title="Descarga no disponible en esta versión"
-                  className="group inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-800 transition-colors"
-                >
-                  <Icon name="attach_file" size={14} />
-                  {adj.nombre}
-                  <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
-                </a>
-              ))}
-            </div>
-          )}
-          {act.fecha_vencimiento && (
-            <div className="flex flex-wrap items-center gap-2 mt-1.5">
-              {act.estado === 'COMPLETADA' ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-                  <Icon name="check_circle" size={12} />
-                  Vencimiento cumplido · {formatFecha(act.fecha_vencimiento)}
-                </span>
-              ) : (
-                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  act.fecha_vencimiento <= HOY ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'
-                }`}>
-                  <Icon name="clock" size={12} />
-                  {act.fecha_vencimiento < HOY ? 'Venció' : act.fecha_vencimiento === HOY ? 'Vence hoy' : 'Vence'} · {formatFecha(act.fecha_vencimiento)}
-                </span>
-              )}
-            </div>
-          )}
-          {act.subitems && act.subitems.length > 0 && (
-            <div className="mt-2 pl-3 border-l-2 border-gray-200 space-y-1">
-              {act.subitems.map((sub, si) => (
-                <div key={si}>
-                  <p className="text-xs font-medium text-gray-800">{sub.titulo}</p>
-                  {sub.descripcion && <p className="text-[10px] text-gray-500">{sub.descripcion}</p>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Panel tareas históricas — solo lectura */}
-      {isSistema && tareasHistoricas.length > 0 && snapshotOpen && (
-        <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 mb-3 ml-10">
-          <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-200">
-            {(() => {
-              const matchEstado = act.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
-              const labelEstadoAnterior = matchEstado?.[1]?.trim() ?? 'estado anterior'
-              return (
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  TAREAS DEL ESTADO: {labelEstadoAnterior.toUpperCase()}
-                </span>
-              )
-            })()}
-            <span className="text-[10px] text-gray-400 ml-auto italic">No se pueden modificar</span>
-          </div>
-
-          {tareasHistoricas.map(tarea => {
-            const dimmed = tarea.estado === 'sin_estado'
-            return (
-              <div key={tarea.id} className={`flex items-start gap-3 px-4 py-2 border-b border-gray-200 last:border-0 ${dimmed ? 'opacity-40' : ''}`}>
-                {/* Ícono estado */}
-                <div className="flex-shrink-0 mt-0.5">
-                  {tarea.estado === 'cumplido' && (
-                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                      <span className="text-green-600 text-[10px]">✓</span>
-                    </div>
-                  )}
-                  {tarea.estado === 'no_procedente' && (
-                    <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px]">⊘</div>
-                  )}
-                  {tarea.estado === 'en_curso' && (
-                    <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Icon name="schedule" size={10} className="text-gray-800" />
-                    </div>
-                  )}
-                  {tarea.estado === 'sin_estado' && (
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                  )}
-                </div>
-
-                {/* Nombre + observaciones inline */}
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[11px] font-medium ${
-                    tarea.estado === 'cumplido'       ? 'line-through text-gray-400'
-                    : tarea.estado === 'no_procedente' ? 'text-gray-400'
-                    : 'text-gray-800'
-                  }`}>{tarea.nombre}</p>
-                  {tarea.observaciones && (
-                    <p className="text-[10px] text-gray-400 mt-0.5 italic">{tarea.observaciones}</p>
-                  )}
-                </div>
-
-                {/* Chip estado */}
-                {tarea.estado !== 'sin_estado' && (
-                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${
-                    tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
-                    : tarea.estado === 'en_curso' ? 'bg-blue-100 text-gray-800'
-                    : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
-                  </span>
-                )}
-
-                {/* Fecha */}
-                {tarea.fecha && (
-                  <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tarea.fecha}</span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Actividades hijas indentadas */}
-      {hijas.length > 0 && (
-        <div className="ml-10 mt-1 space-y-1.5">
-          {hijas.map((hija, hi) => (
-            <div key={hija.id ?? hi} className="flex gap-3 pl-4 border-l-2 border-blue-200 ml-3">
-              <div className="flex flex-col items-center flex-shrink-0 mt-1">
-                <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
-                  <Icon name="subdirectory_arrow_right" size={12} className="text-gray-500" />
-                </div>
-              </div>
-              <div className="flex-1 rounded-lg border border-gray-200 bg-white shadow-card p-3 mb-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-gray-800 leading-snug">{hija.titulo}</p>
-                  <p className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0">{formatFecha(hija.fecha)}</p>
-                </div>
-                {hija.descripcion && (
-                  <p className="text-xs text-gray-500 mt-0.5">{hija.descripcion}</p>
-                )}
-                {(hija.doc_gde || hija.adjunto_nombre) && (
-                  <div className="flex flex-wrap gap-3 mt-1.5">
-                    {hija.doc_gde && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-gray-800">
-                        <Icon name="description" size={14} />
-                        {hija.doc_gde}
-                      </span>
-                    )}
-                    {hija.adjunto_nombre && (
-                      <a
-                        href="#"
-                        onClick={e => e.preventDefault()}
-                        title="Descarga no disponible en esta versión"
-                        className="group inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-800 transition-colors"
-                      >
-                        <Icon name="attach_file" size={14} />
-                        {hija.adjunto_nombre}
-                        <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Bloque de tareas del estado actual ───────────────────────────────────────
-
-function TareasBlock({
-  exp,
-  tareas,
-  estadoProcesal,
-  completadas,
-  total,
-  soloLectura = false,
-  tareaSeleccionada,
-  setTareaSeleccionada,
-}: {
-  exp: Expediente
-  tareas: Tarea[]
-  estadoProcesal: NonNullable<ReturnType<typeof getEstadoProcesal>>
-  completadas: number
-  total: number
-  soloLectura?: boolean
-  tareaSeleccionada: Tarea | null
-  setTareaSeleccionada: (t: Tarea) => void
-}) {
-  const [mostrarTodas, setMostrarTodas] = useState(false)
-  const siguienteEstado = estadoProcesal.siguiente
-    ? getEstadoProcesal(exp.tipo, estadoProcesal.siguiente)
-    : undefined
-  const puedeAvanzar = (total === 0 || completadas === total) && !!siguienteEstado
-  const progresoPct = total > 0 ? Math.round((completadas / total) * 100) : 0
-  const tareasVisibles = mostrarTodas ? tareas : tareas.slice(0, 8)
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4 shadow-card">
-      {/* Header bloque tareas */}
-      <div className="px-5 py-3 flex items-center gap-3 bg-gray-100 border-b border-gray-200">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
-              Estado actual:
-            </span>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
-              progresoPct === 100 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-gray-800'
-            }`}>
-              {estadoProcesal.label.toUpperCase()}
-            </span>
-          </div>
-          <span className="text-xs text-gray-500">{completadas}/{total} tareas</span>
-          {/* Barra de progreso */}
-          <div className="flex-1 bg-gray-100 h-1.5 rounded-full max-w-[100px]">
-            <div
-              className={`h-1.5 rounded-full transition-all ${progresoPct === 100 ? 'bg-green-500' : 'bg-blue-700'}`}
-              style={{ width: `${progresoPct}%` }}
-            />
-          </div>
-          <span className="text-[10px] font-semibold text-gray-500">{progresoPct}%</span>
-        </div>
-
-        {puedeAvanzar && (
-          <p className="text-[10px] text-green-700 font-semibold flex items-center gap-1 flex-shrink-0">
-             <Icon name="check_circle" size={12} />
-            Listo para avanzar al siguiente estado
-          </p>
-        )}
-      </div>
-
-      {/* Banner solo lectura */}
-      {soloLectura && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-100 border-b border-amber-200">
-          <Icon name="lock" size={14} className="text-amber-700 flex-shrink-0" />
-          <p className="text-xs text-amber-700 font-medium">
-            Estado con retroceso activo — solo lectura. Podés agregar actividades genéricas.
-          </p>
-        </div>
-      )}
-
-      {/* Lista tareas */}
-      {tareas.length === 0 ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-xs text-gray-500 italic">Este estado no requiere tareas. Podés avanzar directamente.</p>
-        </div>
-      ) : (
-        <>
-          {tareasVisibles.map((tarea, idx) => (
-            <TareaFeedItem
-              key={tarea.id}
-              tarea={tarea}
-              numero={idx + 1}
-              estadoLabel={estadoProcesal.label}
-              onClick={soloLectura ? undefined : () => setTareaSeleccionada(tarea)}
-              isSelected={!soloLectura && tareaSeleccionada?.id === tarea.id}
-            />
-          ))}
-          {!mostrarTodas && tareas.length > 8 && (
-            <button
-              className="w-full px-5 py-2.5 text-[11px] text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors text-left"
-              onClick={() => setMostrarTodas(true)}
-            >
-              + {tareas.length - 8} tareas más...
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  )
-}
-
 // ── Lista de replies ─────────────────────────────────────────────────────────
 
 function ReplyList({ replies }: { replies: Reply[] }) {
@@ -968,8 +590,6 @@ export function TimelineTab({ exp }: Props) {
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
   const [menuExport, setMenuExport] = useState(false)
-  const [snapshotsExpandidos, setSnapshotsExpandidos] = useState<Set<number>>(new Set())
-  const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
   const [replyTarget, setReplyTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
   const [formReply, setFormReply] = useState({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' })
   const [editTarget, setEditTarget] = useState<{ act: Actividad; globalIdx: number } | null>(null)
@@ -1118,20 +738,6 @@ export function TimelineTab({ exp }: Props) {
     eliminarActividad(exp.id, globalIdx, usuarioActivo?.id ?? '')
     toast.success('Actividad eliminada. Registro de auditoría generado.')
   }
-
-  const toggleEstado = (idx: number) =>
-    setEstadosExpandidos(prev => {
-      const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
-      return next
-    })
-
-  const toggleSnapshot = (idx: number) =>
-    setSnapshotsExpandidos(prev => {
-      const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
-      return next
-    })
 
   const estadoCodigo = exp.estadoProcesal ?? 'INICIO'
   const estadoProcesal = getEstadoProcesal(exp.tipo, estadoCodigo)
@@ -1360,6 +966,214 @@ export function TimelineTab({ exp }: Props) {
     return () => document.removeEventListener('click', handler)
   }, [menuActividad])
 
+  // ── Etapas (acordeón del PRD) ───────────────────────
+  const nombreDe = (id?: string) => {
+    const u = id ? getUsuarioById(id) : undefined
+    return u ? getNombreCompleto(u) : undefined
+  }
+
+  const TIPO_LABEL_ACT: Record<string, string> = Object.fromEntries(TIPOS.map(t => [t.value, t.label]))
+
+  function renderEventoCL(a: Actividad) {
+    const adjuntos = adjuntosDeActividad(a)
+    return (
+      <div>
+        <div className="flex items-start gap-2.5 py-3 -mx-2 px-2 rounded hover:bg-gray-50 transition-colors">
+          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mt-0.5">
+            <Icon name="notes" size={12} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700">
+                {TIPO_LABEL_ACT[a.tipo] ?? a.tipo}
+              </span>
+              {a.es_solicitud && a.tipo === 'NOTA_RESPUESTA' && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700">Respuesta</span>
+              )}
+              {a.es_solicitud && a.tipo !== 'NOTA_RESPUESTA' && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">Solicitud</span>
+              )}
+              {a.es_movimiento_impulsorio && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">Impulsorio</span>
+              )}
+            </div>
+            <p className="text-sm font-semibold text-gray-800">{a.titulo}</p>
+            {a.descripcion && <p className="text-xs text-gray-500">{a.descripcion}</p>}
+            {(a.doc_gde || adjuntos.length > 0) && (
+              <div className="flex flex-wrap gap-3 mt-1">
+                {a.doc_gde && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-gray-700">
+                    <Icon name="description" size={12} />{a.doc_gde}
+                  </span>
+                )}
+                {adjuntos.map((adj, i) => (
+                  <span key={`${adj.nombre}-${i}`} className="inline-flex items-center gap-1 text-[10px] text-gray-500">
+                    <Icon name="attach_file" size={12} />{adj.nombre}
+                  </span>
+                ))}
+              </div>
+            )}
+            {a.fecha_vencimiento && (
+              <div className="mt-1.5">
+                {a.estado === 'COMPLETADA' ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                    <Icon name="check_circle" size={12} />
+                    Vencimiento cumplido · {formatFecha(a.fecha_vencimiento)}
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    a.fecha_vencimiento <= HOY ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    <Icon name="clock" size={12} />
+                    {a.fecha_vencimiento < HOY ? 'Venció' : a.fecha_vencimiento === HOY ? 'Vence hoy' : 'Vence'} · {formatFecha(a.fecha_vencimiento)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-gray-400 whitespace-nowrap">{formatFecha(a.fecha)}</span>
+        </div>
+        {esLetrado && !a.es_solicitud && (
+          <div className="ml-7 pb-2 flex items-center gap-3">
+            <button
+              onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition-colors"
+            >
+              <Icon name="reply" size={13} />
+              Comentar
+            </button>
+            {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
+              <button
+                onClick={e => {
+                  e.stopPropagation()
+                  const r = e.currentTarget.getBoundingClientRect()
+                  setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
+                }}
+                className="p-0.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <Icon name="more_vert" size={14} />
+              </button>
+            )}
+          </div>
+        )}
+        {(a.replies ?? []).length > 0 && (
+          <div className="ml-7 mb-2 space-y-1.5">
+            <ReplyList replies={a.replies ?? []} />
+          </div>
+        )}
+        <LogAuditoriaList log={a.log ?? []} />
+      </div>
+    )
+  }
+
+  function renderRecepcionCL(a: Actividad) {
+    return (
+      <div className="flex items-start gap-2.5 py-3">
+        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-50 border border-gray-200 text-gray-400 flex items-center justify-center mt-0.5">
+          <Icon name="swap_horiz" size={12} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-gray-800 font-medium leading-snug">{a.titulo}</p>
+          {a.descripcion && <p className="text-xs text-gray-500">{a.descripcion}</p>}
+          {a.doc_gde && (
+            <p className="text-[10px] font-mono text-gray-700 mt-1 flex items-center gap-1">
+              <Icon name="attach_file" size={12} />{a.doc_gde}
+            </p>
+          )}
+        </div>
+        <span className="text-xs text-gray-400 whitespace-nowrap">{formatFecha(a.fecha)}</span>
+      </div>
+    )
+  }
+
+  // El orden de exp.timeline es cronológico: lo posterior a una transición de estado ocurrió en
+  // el estado al que esa transición ingresó.
+  const etapasCL: EtapaTL[] = (() => {
+    const sinRecep = sorted.filter(a => a.tipo !== 'RECEPCION')
+    const recepcion = sorted.find(a => a.tipo === 'RECEPCION')
+    const idxT = sinRecep.map((a, i) => ({ a, i })).filter(({ a }) => esMovimientoSistema(a)).map(({ i }) => i)
+    const q = busqueda.trim().toLowerCase()
+    const mostrarEventos = filtroTab === 'todo' || filtroTab === 'actividades'
+    const mostrarTareas  = filtroTab === 'todo' || filtroTab === 'tareas'
+    const pasa = (a: Actividad) => {
+      if (!mostrarEventos || esMovimientoSistema(a)) return false
+      if (q && !(a.titulo.toLowerCase().includes(q) || a.descripcion?.toLowerCase().includes(q))) return false
+      return true
+    }
+    const entre = (desde: number, hasta: number) => sinRecep.slice(desde, hasta).filter(pasa).reverse()
+    const parse = (a: Actividad) => {
+      const m = a.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) → (.+)/)
+      return { anterior: m?.[1]?.trim() ?? '', nueva: m?.[2]?.trim() ?? a.estadoExpediente ?? '' }
+    }
+    const esAsignado = (label: string) => /asignad/i.test(label)
+    const recepcionNodo = recepcion && mostrarEventos && (!q || (recepcion.titulo + (recepcion.descripcion ?? '')).toLowerCase().includes(q))
+      ? [renderRecepcionCL(recepcion)] : []
+
+    const tareasActual = mostrarTareas && !esEstadoInicial && estadoProcesal ? (
+      <TareasEtapa
+        tareas={tareas}
+        soloLectura={estadoFueAvanzado}
+        seleccionadaId={tareaSeleccionada?.id}
+        onSelect={t => { setTareaSeleccionada(t); setCambiosLocales({}) }}
+        puedeAvanzar={(total === 0 || completadas === total) && !!estadoProcesal.siguiente}
+      />
+    ) : undefined
+
+    if (idxT.length === 0) {
+      return [{
+        key: 'actual',
+        label: estadoProcesal?.label ?? estadoCodigo,
+        actual: true,
+        fecha: sorted.length ? sorted[0].fecha : HOY,
+        extra: tareasActual,
+        eventos: [...entre(0, sinRecep.length).map(renderEventoCL), ...recepcionNodo],
+        vacio: esEstadoInicial ? 'Actuación pendiente de inicio.' : undefined,
+      }]
+    }
+
+    const etapas: EtapaTL[] = []
+    for (let j = idxT.length - 1; j >= 0; j--) {
+      const T = sinRecep[idxT[j]]
+      const sig = j + 1 < idxT.length ? sinRecep[idxT[j + 1]] : undefined
+      const { anterior } = parse(T)
+      const fin = sig ? idxT[j + 1] : sinRecep.length
+      let nodos = entre(idxT[j] + 1, fin).map(renderEventoCL)
+      if (j === 0 && esAsignado(anterior)) {
+        nodos = [...nodos, ...entre(0, idxT[0]).map(renderEventoCL), ...recepcionNodo]
+      }
+      etapas.push({
+        key: `et-${j}`,
+        label: parse(T).nueva,
+        actual: !sig,
+        fecha: T.fecha,
+        ingreso: !sig ? { label: anterior, por: nombreDe(T.creado_por) } : undefined,
+        salida: sig ? { label: parse(sig).nueva, por: nombreDe(sig.creado_por) } : undefined,
+        extra: !sig
+          ? tareasActual
+          : (mostrarTareas
+              ? (() => {
+                  const hist = getTareasHistoricas(sig)
+                  return hist.length > 0 ? <TareasEtapa tareas={hist} soloLectura={false} /> : undefined
+                })()
+              : undefined),
+        eventos: nodos,
+      })
+    }
+    const primera = sinRecep[idxT[0]]
+    if (!esAsignado(parse(primera).anterior)) {
+      const pre = entre(0, idxT[0])
+      etapas.push({
+        key: 'et-pre',
+        label: parse(primera).anterior,
+        actual: false,
+        fecha: sinRecep[0]?.fecha ?? primera.fecha,
+        salida: { label: parse(primera).nueva, por: nombreDe(primera.creado_por) },
+        eventos: [...pre.map(renderEventoCL), ...recepcionNodo],
+      })
+    }
+    return etapas
+  })()
+
   const FILTRO_TABS: { key: FiltroTab; label: string; count?: number }[] = [
     { key: 'todo',        label: 'Todo' },
     { key: 'sistema',     label: 'Sistema',     count: cntSistema },
@@ -1368,7 +1182,7 @@ export function TimelineTab({ exp }: Props) {
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
 
       {/* ── Stepper procesal ── */}
       <ProcesalStepper exp={exp} />
@@ -1384,379 +1198,96 @@ export function TimelineTab({ exp }: Props) {
         </div>
       )}
 
-      {/* ── Header: título + filtros + acción ── */}
-      <div className="bg-white rounded-lg shadow-card px-5 py-3">
-        <div className="flex items-center justify-between gap-3">
-          {/* Título y contadores */}
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-gray-800">Ciclo de Vida — Actividades</p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-gray-800 font-semibold">
-              {completadas} de {total + sorted.length} completadas
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-
-            {/* Tabs filtro */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-              {FILTRO_TABS.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFiltroTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
-                    filtroTab === tab.key
-                      ? 'bg-white shadow-sm text-gray-800'
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
-                >
-                  {tab.label}
-                  {tab.count !== undefined && tab.count > 0 && (
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                      filtroTab === tab.key
-                        ? 'bg-blue-700 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Botón exportar */}
-            <div className="relative" onClick={e => e.stopPropagation()}>
-              <button
-                onClick={() => setMenuExport(v => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg bg-white text-gray-800 hover:bg-gray-100 transition-colors"
-              >
-                <Icon name="download" size={14} />
-                Exportar
-                <Icon name="chevron_right" size={12} className={menuExport ? 'rotate-90 transition-transform' : 'transition-transform'} />
-              </button>
-
-              {menuExport && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-card-lg z-50 py-1 min-w-[160px]">
-                  <button
-                    onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
-                  >
-                    <Icon name="description" size={16} className="text-green-700" />
-                    Descargar Excel
-                  </button>
-                  <button
-                    onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, tituloDoc, subtituloDoc); setMenuExport(false) }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-800 hover:bg-gray-100 transition-colors"
-                  >
-                    <Icon name="picture_as_pdf" size={16} className="text-red-700" />
-                    Descargar PDF
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Botón nueva actividad */}
-            <button
-              onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
-              disabled={yaCargoEnDesarchivado}
-              title={yaCargoEnDesarchivado ? 'Ya se registró una actividad en Desarchivado. Volvé a archivo para continuar.' : undefined}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Icon name="add" size={16} />
-              Nueva Actividad
-            </button>
-          </div>
-        </div>
-
-        {/* Buscador */}
-        <div className="relative mt-3">
-          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-          <input
-            className="field-input pl-9 w-full text-sm"
-            placeholder="Buscar actividad..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* ── Layout principal: feed + panel lateral ── */}
+      {/* ── Ciclo de Vida — Actividades (PRD letrado §6) ── */}
       <div className="flex gap-5 items-start">
+        <div className="flex-1 min-w-0">
+          <div className="bg-white border border-gray-200 rounded-lg p-5">
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-gray-700">Ciclo de Vida — Actividades</h2>
+                {total > 0 && !esEstadoInicial && (
+                  <span className="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                    {completadas} de {total} completadas
+                  </span>
+                )}
+              </div>
 
-        {/* ── Columna izquierda: feed ── */}
-        <div className="flex-1 min-w-0 space-y-0">
-
-          {/* Bloque tareas (tab todo o tareas) */}
-          {(filtroTab === 'todo' || filtroTab === 'tareas') && !esEstadoInicial && estadoProcesal && (
-            <TareasBlock
-              exp={exp}
-              tareas={tareas}
-              estadoProcesal={estadoProcesal}
-              completadas={completadas}
-              total={total}
-              soloLectura={estadoFueAvanzado}
-              tareaSeleccionada={tareaSeleccionada}
-              setTareaSeleccionada={(t) => {
-                if (estadoFueAvanzado) return
-                setTareaSeleccionada(t)
-                setCambiosLocales({})
-              }}
-            />
-          )}
-
-          {/* Feed colapsable por estado */}
-          {filtroTab !== 'tareas' && (
-            <div className="mb-4 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-card">
-              {gruposFeed.grupos.map((grupo, gi) => {
-                const { sistema, tareasHist, actividades } = grupo
-                const expandido = estadosExpandidos.has(gi)
-                const snapshotOpen = sistema ? snapshotsExpandidos.has(gi) : false
-
-                if (!sistema) {
-                  // Período actual — actividades sin agrupar
-                  if (actividades.length === 0 && !esEstadoInicial) return null
-                  return (
-                    <div key={`actual-${gi}`}>
-                      {esEstadoInicial && (
-                        <div className="p-6 text-center">
-                          <Icon name="inbox" className="block mb-2 mx-auto" size={32} />
-                          <p className="text-sm font-semibold text-gray-800 mb-1">Actuación pendiente de inicio</p>
-                          <p className="text-xs text-gray-500">Usá <strong>Acciones → Cambiar estado</strong> para comenzar.</p>
-                        </div>
-                      )}
-                      {actividades.map((a, ai) => (
-                        <div key={a.id ?? ai}>
-                          <ActividadFeedItem
-                            act={a}
-                            idx={ai}
-                            isLast={ai === actividades.length - 1}
-                            hijas={[]}
-                            snapshotOpen={false}
-                            onToggleSnapshot={() => {}}
-                            tareasHistoricas={[]}
-                          />
-                          {esLetrado && !a.es_solicitud && (
-                            <div className="pl-14 pb-2 -mt-2 flex items-center gap-2">
-                              <button
-                                onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-800 transition-colors font-medium"
-                              >
-                                <Icon name="reply" size={13} />
-                                Comentar
-                              </button>
-                              {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    const r = e.currentTarget.getBoundingClientRect()
-                                    setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
-                                  }}
-                                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-                                >
-                                  <Icon name="more_vert" size={14} />
-                                </button>
-                              )}
-                            </div>
-                          )}
-                          <ReplyList replies={a.replies ?? []} />
-                          <LogAuditoriaList log={a.log ?? []} />
-                        </div>
-                      ))}
-                    </div>
-                  )
-                }
-
-                // Entrada de cambio de estado — colapsable
-                return (
-                  <div key={sistema.id ?? gi} className="border-t border-gray-200 first:border-t-0">
-                    {/* Cabecera colapsable */}
-                    <div
-                      onClick={() => toggleEstado(gi)}
-                      className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+                  {FILTRO_TABS.map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setFiltroTab(tab.key)}
+                      className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-r border-gray-200 last:border-r-0 transition-colors ${
+                        filtroTab === tab.key ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon name={expandido ? 'expand_less' : 'expand_more'} size={16} className="text-gray-800" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800">{sistema.titulo}</p>
-                        {sistema.descripcion && <p className="text-xs text-gray-500">{sistema.descripcion}</p>}
-                        {tareasHist.length > 0 && (
-                          <button
-                            onClick={e => { e.stopPropagation(); toggleSnapshot(gi) }}
-                            className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-2.5 py-1 transition-colors mt-1.5"
-                          >
-                            <Icon name="checklist" size={14} />
-                            {tareasHist.filter(t => t.estado === 'cumplido' || t.estado === 'no_procedente').length} / {tareasHist.length} tareas
-                            <Icon name={snapshotOpen ? 'unfold_less' : 'unfold_more'} size={12} />
-                          </button>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-gray-400 flex-shrink-0 mt-1">{formatFecha(sistema.fecha)}</span>
+                      {tab.label}
+                      {tab.count !== undefined && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{tab.count}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Exportar */}
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => setMenuExport(v => !v)}
+                    className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50 transition-colors whitespace-nowrap"
+                  >
+                    <Icon name="download" size={14} />
+                    Exportar
+                  </button>
+                  {menuExport && (
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1">
+                      <button
+                        onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Icon name="description" size={16} className="text-green-700" />
+                        Descargar Excel
+                      </button>
+                      <button
+                        onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, tituloDoc, subtituloDoc); setMenuExport(false) }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Icon name="picture_as_pdf" size={16} className="text-red-700" />
+                        Descargar PDF
+                      </button>
                     </div>
-
-                    {/* Snapshot tareas */}
-                    {snapshotOpen && tareasHist.length > 0 && (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 mb-3 ml-10">
-                        <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-200">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                            {(() => {
-                              const match = sistema.titulo.match(/(?:Cambio|Retroceso) de estado: (.+) →/)
-                              const label = match?.[1]?.trim() ?? 'estado anterior'
-                              return `TAREAS DEL ESTADO: ${label.toUpperCase()}`
-                            })()}
-                          </span>
-                          <span className="text-[10px] text-gray-400 ml-auto italic">No se pueden modificar</span>
-                        </div>
-                        {tareasHist.map(tarea => {
-                          const dimmed = tarea.estado === 'sin_estado'
-                          return (
-                            <div key={tarea.id} className={`flex items-start gap-3 px-4 py-2 border-b border-gray-200 last:border-0 ${dimmed ? 'opacity-40' : ''}`}>
-                              <div className="flex-shrink-0 mt-0.5">
-                                {tarea.estado === 'cumplido' && (
-                                  <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                                    <span className="text-green-600 text-[10px]">✓</span>
-                                  </div>
-                                )}
-                                {tarea.estado === 'no_procedente' && (
-                                  <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px]">⊘</div>
-                                )}
-                                {tarea.estado === 'en_curso' && (
-                                  <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <Icon name="schedule" size={10} className="text-gray-800" />
-                                  </div>
-                                )}
-                                {tarea.estado === 'sin_estado' && (
-                                  <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                                )}
-                              </div>
-                              <p className={`text-xs flex-1 ${
-                                tarea.estado === 'cumplido' ? 'line-through text-gray-400'
-                                : tarea.estado === 'no_procedente' ? 'text-gray-400'
-                                : 'text-gray-800'
-                              }`}>
-                                {tarea.nombre}
-                              </p>
-                              {tarea.estado !== 'sin_estado' && (
-                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                                  tarea.estado === 'cumplido' ? 'bg-green-100 text-green-700'
-                                  : tarea.estado === 'en_curso' ? 'bg-blue-100 text-gray-800'
-                                  : 'bg-gray-100 text-gray-500'
-                                }`}>
-                                  {tarea.estado === 'cumplido' ? 'Cumplido' : tarea.estado === 'en_curso' ? 'En curso' : 'No proc.'}
-                                </span>
-                              )}
-                              {tarea.observaciones && (
-                                <p className="text-[10px] text-gray-400 mt-0.5 italic w-full pl-7">{tarea.observaciones}</p>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {/* Actividades del período */}
-                    {expandido && (
-                      <div className="border-t border-gray-200 bg-gray-50">
-                        {actividades.length === 0 ? (
-                          <p className="px-16 py-3 text-xs text-gray-400 italic">Sin actividades en este período.</p>
-                        ) : (
-                          actividades.map((a, ai) => (
-                            <div key={a.id ?? ai}>
-                              <div className="flex items-start gap-3 px-5 py-3 border-b border-gray-200 last:border-0 ml-10">
-                                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                  <Icon name="description" size={14} className="text-gray-500" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="text-sm text-gray-800 font-medium">{a.titulo}</p>
-                                    {a.es_solicitud && a.tipo === 'NOTA_RESPUESTA' && (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-50 text-green-700">
-                                        <Icon name="check" size={9} />
-                                        RESPUESTA
-                                      </span>
-                                    )}
-                                    {a.es_solicitud && a.tipo !== 'NOTA_RESPUESTA' && (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-violet-50 text-violet-700">
-                                        <Icon name="task" size={9} />
-                                        SOLICITUD
-                                      </span>
-                                    )}
-                                  </div>
-                                  {a.descripcion && <p className="text-xs text-gray-500">{a.descripcion}</p>}
-                                  {(a.doc_gde || adjuntosDeActividad(a).length > 0) && (
-                                    <div className="flex flex-wrap gap-3 mt-1">
-                                      {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-gray-800"><Icon name="description" size={12} />{a.doc_gde}</span>}
-                                      {adjuntosDeActividad(a).map((adj, i) => <span key={`${adj.nombre}-${i}`} className="inline-flex items-center gap-1 text-[10px] text-gray-500"><Icon name="attach_file" size={12} />{adj.nombre}</span>)}
-                                    </div>
-                                  )}
-                                  {esLetrado && !a.es_solicitud && (
-                                    <div className="flex items-center gap-2 mt-1.5">
-                                      <button
-                                        onClick={() => setReplyTarget({ act: a, globalIdx: globalIdxDe(a) })}
-                                        className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-800 transition-colors font-medium"
-                                      >
-                                        <Icon name="reply" size={13} />
-                                        Comentar
-                                      </button>
-                                      {a.tipo !== 'RECEPCION' && !esMovimientoSistema(a) && (
-                                        <button
-                                          onClick={e => {
-                                            e.stopPropagation()
-                                            const r = e.currentTarget.getBoundingClientRect()
-                                            setMenuActividad({ act: a, globalIdx: globalIdxDe(a), x: r.left, y: r.bottom + 4 })
-                                          }}
-                                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-                                        >
-                                          <Icon name="more_vert" size={14} />
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                                <span className="text-[11px] text-gray-400 flex-shrink-0">{formatFecha(a.fecha)}</span>
-                              </div>
-                              {(a.replies ?? []).length > 0 && (
-                                <div className="ml-20 mr-5 mb-2 space-y-1.5">
-                                  <ReplyList replies={a.replies ?? []} />
-                                </div>
-                              )}
-                              <LogAuditoriaList log={a.log ?? []} />
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-              {!esEstadoInicial && gruposFeed.grupos.every(g => !g.sistema && g.actividades.length === 0) && !gruposFeed.entradaRecepcion && (
-                <div className="p-8 text-center text-gray-500 text-sm">
-                  No hay actividades que coincidan.
+                  )}
                 </div>
-              )}
-              {/* Entrada de recepción — siempre visible al final */}
-              {gruposFeed.entradaRecepcion && (
-                <div className="flex items-start gap-3 px-5 py-3.5 border-t border-gray-200">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Icon name="inbox" size={16} className="text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800">{gruposFeed.entradaRecepcion.titulo}</p>
-                    {gruposFeed.entradaRecepcion.descripcion && (
-                      <p className="text-xs text-gray-500">{gruposFeed.entradaRecepcion.descripcion}</p>
-                    )}
-                    {gruposFeed.entradaRecepcion.doc_gde && (
-                      <p className="text-[10px] font-mono text-gray-800 mt-1 flex items-center gap-1">
-                        <Icon name="attach_file" size={12} />
-                        {gruposFeed.entradaRecepcion.doc_gde}
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(gruposFeed.entradaRecepcion.fecha)}</span>
-                </div>
-              )}
+
+                <button
+                  onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
+                  disabled={yaCargoEnDesarchivado}
+                  title={yaCargoEnDesarchivado ? 'Ya se registró una actividad en Desarchivado. Volvé a archivo para continuar.' : undefined}
+                  className="flex items-center gap-1 text-xs bg-blue-700 text-white rounded-md px-2.5 py-1.5 hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Icon name="add" size={14} />
+                  Nueva Actividad
+                </button>
+              </div>
             </div>
-          )}
 
+            {/* Buscador */}
+            <div className="relative mb-4">
+              <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Buscar actividad..."
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+              />
+            </div>
+
+            <EtapasAcordeon
+              key={etapasCL.map(e => e.key).join('|')}
+              etapas={etapasCL}
+              vacio="No hay actividades que coincidan."
+            />
+          </div>
         </div>
 
         {/* ── Panel lateral tarea ── */}

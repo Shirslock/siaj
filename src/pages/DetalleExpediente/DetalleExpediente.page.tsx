@@ -30,6 +30,7 @@ import { formatFecha, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { RUTAS } from '../../utils/routing'
+import { labelEstado } from '../../utils/estadoLabel'
 import { NovedadesPjnTab }  from './tabs/NovedadesPjnTab'
 
 type Tab = 'datos' | 'vinculos' | 'intervinientes' | 'timeline' | 'docs' | 'prevision' | 'asistente' | 'novedades_pjn'
@@ -863,7 +864,7 @@ export default function DetalleExpedientePage() {
               >
                 {exp.area}
               </span>
-              <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{estadoProcesalActual?.label ?? exp.estado}</span>
+              <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{labelEstado(exp)}</span>
               {exp.numero_causa && (
                 <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                   Causa {formatNumeroCausaPjn(exp)}
