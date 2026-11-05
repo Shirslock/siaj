@@ -119,5 +119,5 @@ Relevado en el PRD como Penal (actuación `/actuaciones/699`, Carta SAE Suceso; 
   Licencias, Solicitudes y Causa pasaron a `text-2xl`; se quitó `max-w-screen-xl` (el PRD usa todo el ancho). Configuración y Boga ajustaron su alto al
   nuevo layout (`100vh - 80px`: header 48 + `main p-4`).
 - **Estado de la alineación**: todas las pantallas usan ya los tokens del PRD. Lo que no existe en el PRD (Boga, Novedades, Agenda, Licencias, Dashboard,
-  Configuración, selector de usuario demo) se resolvió con el mismo sistema. Pendiente opcional: el logo del header (imagen `logoTrenes.svg` del PRD) y
+  Configuración, selector de usuario demo) se resolvió con el mismo sistema. El logo del header ya es el `logoTrenes.svg` original del PRD (`src/assets/logoTrenes.svg`, idéntico byte a byte). Pendiente opcional:
   revisar con el PRD los estados vacíos y el panel de Avisos.
