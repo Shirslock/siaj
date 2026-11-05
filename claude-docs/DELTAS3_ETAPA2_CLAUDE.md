@@ -293,3 +293,9 @@ implementó en esta rama.
   El fondo del overlay vuelve a oscurecerse (`bg-black/40`), como indica el delta. Implementado en `src/components/layout/Sidebar.tsx`.
 - Documentado como Delta 23 (Parte A) en `docs/Deltas3_Etapa2/SIAJ_Deltas3_Etapa2.docx`, con 1 captura pendiente. El docx cubre los deltas 1–23.
 - Los ratios de contraste del delta (15,39 / 10,36 / 11,44) son del documento fuente; no se recalcularon.
+
+## Delta 24 — Principal: tarjetas de indicadores más compactas (2026-11-05, rama `feat/delta-sidebar`)
+- Pedido de Cristian ("ocupan mucho espacio"): las 5 KpiCard dejan de ser cuadradas (`aspect-square`, ~255 px) y pasan a ~105 px de alto:
+  `px-3 py-3 gap-1.5`, círculo `w-8 h-8` (ícono 16), número `text-xl`. Sin cambios en etiqueta, grilla ni tarjeta destacada (navy). Es un ajuste
+  propio del prototipo: el PRD las tiene cuadradas. `src/pages/Home/homeShared.tsx` (`KpiCard`).
+- Documentado como Delta 24 (Parte A) en el docx, con 1 captura pendiente. El docx cubre los deltas 1–24.
