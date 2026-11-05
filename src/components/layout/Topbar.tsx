@@ -4,7 +4,7 @@ import { useUIStore } from '../../store/ui.store'
 import { useNotificacionesStore } from '../../store/notificaciones.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { useExpedientesStore } from '../../store/expedientes.store'
-import { getNombreCompleto, USUARIOS } from '../../data/usuarios'
+import { USUARIOS } from '../../data/usuarios'
 import { filtrarNovedadesPorRol } from '../../utils/pjnVisibilidad'
 import type { RolSistema, Notificacion } from '../../types'
 import Icon from '../ui/Icon'
@@ -21,11 +21,6 @@ const ROL_LABEL: Record<RolSistema, string> = {
   ADMINISTRATIVO: 'Administrativo',
 }
 
-interface TopbarProps {
-  titulo: string
-  subtitulo?: string
-}
-
 function fechaRelativa(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const min  = Math.floor(diff / 60000)
@@ -38,12 +33,23 @@ function fechaRelativa(iso: string): string {
   return `Hace ${dias} días`
 }
 
-export function Topbar({ titulo, subtitulo }: TopbarProps) {
+// Avatar del PRD (profile.svg, 30px): círculo con aro claro y silueta de persona.
+function PerfilIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" role="img" aria-label="perfil" className="flex-shrink-0">
+      <circle cx="15" cy="15" r="14" fill="#12365F" stroke="#E6EEF7" strokeWidth="1.5" />
+      <circle cx="15" cy="11.5" r="4.5" fill="#B7D3EA" />
+      <path d="M6.5 24.2c.8-4.1 4.3-6.6 8.5-6.6s7.7 2.5 8.5 6.6a13.5 13.5 0 0 1-17 0Z" fill="#B7D3EA" />
+    </svg>
+  )
+}
+
+export function Topbar() {
   const navigate = useNavigate()
   const panelRef = useRef<HTMLDivElement>(null)
   const [panelAbierto, setPanelAbierto] = useState(false)
 
-  const { sidebarCollapsed, usuarioActivo, busquedaGlobal, setBusquedaGlobal } = useUIStore()
+  const { toggleSidebar, usuarioActivo, busquedaGlobal, setBusquedaGlobal } = useUIStore()
   const { notificaciones, marcarLeida, marcarTodasLeidas, descartar } =
     useNotificacionesStore()
   const { novedades: novedadesPjn, descartarNovedad } = usePjnStore()
@@ -168,29 +174,25 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
     return () => document.removeEventListener('mousedown', handler)
   }, [panelAbierto])
 
-  const initials = usuarioActivo
-    ? `${usuarioActivo.apellido.charAt(0)}${usuarioActivo.nombre.charAt(0)}`
-    : '?'
-
   return (
-    <header
-      className={`fixed top-0 right-0 h-16 bg-[var(--color-header-bg)] z-50 flex items-center justify-between px-6 transition-all duration-200 ${
-        sidebarCollapsed ? 'left-16' : 'left-64'
-      }`}
-    >
-      {/* Título */}
-      <div>
-        <h1 className="font-headline font-bold text-lg text-white leading-tight">
-          {titulo}
-        </h1>
-        {subtitulo && (
-          <p className="text-sm text-white opacity-70 leading-tight">{subtitulo}</p>
-        )}
+    <header className="bg-[#0B2545] text-white px-4 h-12 flex items-center justify-between gap-4 shadow-md sticky top-0 z-10 flex-shrink-0">
+      {/* Hamburguesa + logo (PRD §2) */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <button
+          onClick={toggleSidebar}
+          className="p-1 hover:opacity-75 transition-opacity"
+          aria-label="Menú"
+        >
+          <Icon name="menu" size={24} className="text-white" />
+        </button>
+        <span className="text-sm font-semibold tracking-wide uppercase whitespace-nowrap hidden sm:block">
+          Trenes Argentinos <span className="font-normal opacity-80">Operaciones</span>
+        </span>
       </div>
 
-      {/* Buscador global */}
-      <div ref={dropdownRef} className="relative flex-1 max-w-md mx-8">
-        <div className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 rounded-xl px-3 py-2 transition-all duration-200 focus-within:bg-white/25 focus-within:border-white/50">
+      {/* Buscador global (se mantiene del prototipo) */}
+      <div ref={dropdownRef} className="relative flex-1 max-w-md">
+        <div className="flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 rounded-md px-3 py-1 transition-colors focus-within:bg-white/20 focus-within:border-white/40">
           <Icon name="search" size={15} className="text-white/60 flex-shrink-0" />
           <input
             type="text"
@@ -213,9 +215,9 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
         </div>
 
         {dropdownAbierto && (
-          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-[rgba(0,0,0,0.08)] max-h-[70vh] overflow-y-auto z-50">
+          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-lg shadow-xl border border-gray-200 max-h-[70vh] overflow-y-auto z-50">
             {!hayResultados ? (
-              <p className="p-4 text-[13px] text-[#7a9ab4] text-center">
+              <p className="p-4 text-[13px] text-gray-400 text-center">
                 No se encontraron resultados para "{queryDebounced}".
               </p>
             ) : (
@@ -262,46 +264,40 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
       </div>
 
       {/* Usuario + notificaciones */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 flex-shrink-0">
         {usuarioActivo && (
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-white leading-tight">
-                {getNombreCompleto(usuarioActivo)}
-              </p>
-              <p className="text-xs text-[#C4DFE8] leading-tight">
-                {ROL_LABEL[usuarioActivo.rolSistema]}
-              </p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {initials}
-            </div>
+          <div className="order-2 relative flex items-center cursor-pointer" title={ROL_LABEL[usuarioActivo.rolSistema]}>
+            <span className="px-2 text-white hidden sm:block">
+              Hola, {usuarioActivo.nombre} {usuarioActivo.apellido}
+            </span>
+            <PerfilIcon />
           </div>
         )}
 
         {/* Campana */}
-        <div ref={panelRef} className="relative">
+        <div ref={panelRef} className="order-1 relative">
           <button
             onClick={() => setPanelAbierto(p => !p)}
-            className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            className="relative p-1 hover:opacity-75 transition-opacity"
+            aria-label="Notificaciones"
           >
-            <Icon name="notifications_none" size={22} className="text-white" />
+            <Icon name="notifications_none" size={24} className="text-white" />
             {noLeidas.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#b91c1c] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
                 {noLeidas.length > 9 ? '9+' : noLeidas.length}
               </span>
             )}
           </button>
 
           {panelAbierto && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-lg border border-black/10 overflow-hidden z-50">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-black/10 overflow-hidden z-50">
 
               {/* Header */}
               <div className="px-4 py-3 flex items-center justify-between border-b border-black/8">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-[#1b3a57]">Notificaciones</p>
+                  <p className="text-sm font-semibold text-gray-800">Notificaciones</p>
                   {noLeidas.length > 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#b91c1c] text-white">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-700 text-white">
                       {noLeidas.length} nuevas
                     </span>
                   )}
@@ -309,7 +305,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                 {noLeidas.length > 0 && (
                   <button
                     onClick={() => usuarioActivo && marcarTodasLeidas(usuarioActivo.id)}
-                    className="text-[11px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                    className="text-[11px] font-semibold text-gray-500 hover:text-gray-800 transition-colors"
                   >
                     Marcar todas como leídas
                   </button>
@@ -320,8 +316,8 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               <div className="max-h-80 overflow-y-auto">
                 {misNotifs.length === 0 ? (
                   <div className="px-4 py-8 text-center">
-                    <Icon name="notifications_none" size={28} className="text-[#7a9ab4] mx-auto mb-2 block" />
-                    <p className="text-sm text-[#4a6a84]">Sin notificaciones</p>
+                    <Icon name="notifications_none" size={28} className="text-gray-400 mx-auto mb-2 block" />
+                    <p className="text-sm text-gray-500">Sin notificaciones</p>
                   </div>
                 ) : (
                   misNotifs.map(notif => {
@@ -332,12 +328,12 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                       key={notif.id}
                       className={`relative group px-4 py-3 border-b border-black/5 last:border-0 transition-colors ${
                         !notif.leida
-                          ? 'bg-[#f0f6ff] hover:bg-[#e8f0ff]'
-                          : 'bg-white hover:bg-[#f9f9f9]'
+                          ? 'bg-blue-50 hover:bg-blue-50'
+                          : 'bg-white hover:bg-gray-50'
                       }`}
                     >
                       {!notif.leida && (
-                        <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#1b3a57]" />
+                        <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-700" />
                       )}
 
                       <div
@@ -349,34 +345,34 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                         }}
                       >
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${
+                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase ${
                             esPjn
-                              ? 'bg-[#e6f1fb] text-[#185fa5]'
+                              ? 'bg-blue-50 text-blue-700'
                               : esJuicio
-                                ? 'bg-[#e8def8] text-[#5b3a9a]'
+                                ? 'bg-violet-100 text-violet-700'
                                 : notif.tipo === 'REASIGNACION'
-                                  ? 'bg-[#fef3c7] text-[#d97706]'
-                                  : 'bg-[#C4DFE8] text-[#1b3a57]'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-blue-100 text-gray-800'
                           }`}>
                             {esPjn ? 'Novedad PJN' : esJuicio ? 'Juicio iniciado' : notif.tipo === 'REASIGNACION' ? 'Reasignación' : 'Asignación'}
                           </span>
-                          <span className="text-[11px] text-[#4a6a84] truncate">
+                          <span className="text-[11px] text-gray-500 truncate">
                             {notif.tipoGestion}
                           </span>
                         </div>
 
-                        <p className="text-[11px] font-bold font-mono text-[#1b3a57]">
+                        <p className="text-[11px] font-semibold font-mono text-gray-800">
                           {notif.expedienteId}
                           {notif.numeroCausa && (
-                            <span className="font-normal text-[#4a6a84] ml-1.5">· {notif.numeroCausa}</span>
+                            <span className="font-normal text-gray-500 ml-1.5">· {notif.numeroCausa}</span>
                           )}
                         </p>
 
-                        <p className="text-xs text-[#1b3a57] line-clamp-2 mt-0.5">
+                        <p className="text-xs text-gray-800 line-clamp-2 mt-0.5">
                           {esPjn ? notif.titulo : esJuicio ? (notif.descripcion ?? notif.caratula) : notif.caratula}
                         </p>
 
-                        <p className="text-[10px] text-[#7a9ab4] mt-1">
+                        <p className="text-[10px] text-gray-400 mt-1">
                           {fechaRelativa(notif.fecha)}
                         </p>
                       </div>
@@ -390,7 +386,7 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
                             descartar(notif.id)
                           }
                         }}
-                        className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded-md text-[#7a9ab4] opacity-0 group-hover:opacity-100 hover:bg-[#e8e8e8] hover:text-[#1b3a57] transition-all"
+                        className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded-md text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-800 transition-all"
                       >
                         <Icon name="close" size={12} />
                       </button>
@@ -400,8 +396,8 @@ export function Topbar({ titulo, subtitulo }: TopbarProps) {
               </div>
 
               {misNotifs.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-black/6 bg-[#f9f9f9] text-center">
-                  <p className="text-[10px] text-[#7a9ab4]">
+                <div className="px-4 py-2.5 border-t border-black/6 bg-gray-50 text-center">
+                  <p className="text-[10px] text-gray-400">
                     Las notificaciones leídas se eliminan automáticamente a los 30 días
                   </p>
                 </div>
@@ -429,8 +425,8 @@ function GrupoResultados({
   const hayMas = items.length > 5
 
   return (
-    <div className="border-b border-[rgba(0,0,0,0.06)] last:border-0">
-      <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-wide text-[#7a9ab4]">
+    <div className="border-b border-gray-200 last:border-0">
+      <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
         {titulo}
       </p>
       {visibles.map(r => (
@@ -440,14 +436,14 @@ function GrupoResultados({
         verTodosHref ? (
           <button
             onClick={() => navigate(verTodosHref)}
-            className="w-full text-left px-3 py-2 text-[12px] font-semibold text-[#1b3a57] hover:bg-[#f5f5f5]"
+            className="w-full text-left px-3 py-2 text-[12px] font-semibold text-gray-800 hover:bg-gray-100"
           >
             Ver todos los resultados de {titulo} →
           </button>
         ) : (
           <button
             onClick={onExpandir}
-            className="w-full text-left px-3 py-2 text-[12px] font-semibold text-[#1b3a57] hover:bg-[#f5f5f5]"
+            className="w-full text-left px-3 py-2 text-[12px] font-semibold text-gray-800 hover:bg-gray-100"
           >
             Ver todos los resultados de {titulo} ({items.length}) →
           </button>
@@ -467,10 +463,10 @@ function ItemResultado({ r, onClick }: { r: ResultadoBusqueda; onClick: () => vo
         return (
           <>
             <div className="flex items-center gap-2">
-              <span className="text-[12px] font-semibold text-[#1b3a57]">{exp.id}</span>
+              <span className="text-[12px] font-semibold text-gray-800">{exp.id}</span>
               <AreaBadge area={exp.area} />
             </div>
-            <p className="text-[11px] text-[#4a6a84] truncate">
+            <p className="text-[11px] text-gray-500 truncate">
               {exp.caratula || 'Sin carátula'}
             </p>
           </>
@@ -480,8 +476,8 @@ function ItemResultado({ r, onClick }: { r: ResultadoBusqueda; onClick: () => vo
         const { int, numero_expediente } = r.payload
         return (
           <>
-            <p className="text-[12px] font-semibold text-[#1b3a57]">{int.nombre}</p>
-            <p className="text-[11px] text-[#4a6a84]">
+            <p className="text-[12px] font-semibold text-gray-800">{int.nombre}</p>
+            <p className="text-[11px] text-gray-500">
               {int.rol_procesal} — en {numero_expediente}
             </p>
           </>
@@ -491,10 +487,10 @@ function ItemResultado({ r, onClick }: { r: ResultadoBusqueda; onClick: () => vo
         const { doc, numero_expediente } = r.payload
         return (
           <div className="flex items-center gap-2">
-            <Icon name={doc.icon || 'description'} size={14} className={doc.color ?? 'text-[#4a6a84]'} />
+            <Icon name={doc.icon || 'description'} size={14} className={doc.color ?? 'text-gray-500'} />
             <div>
-              <p className="text-[12px] font-semibold text-[#1b3a57] truncate">{doc.nombre}</p>
-              <p className="text-[11px] text-[#4a6a84]">en {numero_expediente}</p>
+              <p className="text-[12px] font-semibold text-gray-800 truncate">{doc.nombre}</p>
+              <p className="text-[11px] text-gray-500">en {numero_expediente}</p>
             </div>
           </div>
         )
@@ -503,7 +499,7 @@ function ItemResultado({ r, onClick }: { r: ResultadoBusqueda; onClick: () => vo
         const u = r.payload.user
         return (
           <div className="flex items-center justify-between">
-            <p className="text-[12px] font-semibold text-[#1b3a57]">
+            <p className="text-[12px] font-semibold text-gray-800">
               {u.apellido}, {u.nombre}
             </p>
             <RolBadge rol={u.rolSistema} />
@@ -520,7 +516,7 @@ function ItemResultado({ r, onClick }: { r: ResultadoBusqueda; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-3 py-2 hover:bg-[#f5f5f5] transition-colors"
+      className="w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors"
     >
       {contenido}
     </button>

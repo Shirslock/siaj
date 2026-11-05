@@ -3,9 +3,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { useUIStore } from '../../store/ui.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { useExpedientesStore } from '../../store/expedientes.store'
-import { ROL_ACCESOS, getNombreCompleto, mapRol } from '../../data/usuarios'
+import { ROL_ACCESOS, mapRol } from '../../data/usuarios'
 import { filtrarNovedadesPorRol, filtrarAlertasActuacionesPorRol } from '../../utils/pjnVisibilidad'
-import type { RolSistema } from '../../types'
 import { UserSwitcher } from './UserSwitcher'
 import Icon from '../ui/Icon'
 
@@ -22,26 +21,14 @@ const NAV_ITEMS: { key: string; icon: string; label: string; ruta: string }[] = 
   { key: 'configuracion',  icon: 'settings',        label: 'Configuración',          ruta: '/configuracion' },
 ]
 
-const AVATAR_COLORS: Record<RolSistema, string> = {
-  REFERENTE:      'bg-[#1b3a57] text-white',
-  COORDINADOR:    'bg-[#2a5278] text-white',
-  ABOGADO:        'bg-[#4a6a84] text-white',
-  ADMINISTRATIVO: 'bg-[#7a9ab4] text-white',
-}
-
-const ROL_LABEL: Record<RolSistema, string> = {
-  REFERENTE:      'Referente',
-  COORDINADOR:    'Coordinador',
-  ABOGADO:        'Abogado/a',
-  ADMINISTRATIVO: 'Administrativo',
-}
-
 interface SidebarProps {
   activePage: string
 }
 
+// PRD (siaj-design-system.md §2): aside fijo off-canvas, fondo #E5E5E5, links de texto con
+// hover azul y el activo en azul-700 semibold. Se abre desde la hamburguesa del header.
 export function Sidebar({ activePage }: SidebarProps) {
-  const { usuarioActivo, sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { usuarioActivo, sidebarOpen, closeSidebar } = useUIStore()
   const { novedades, actuacionesSinCargar } = usePjnStore()
   const { expedientes } = useExpedientesStore()
   const [showSwitcher, setShowSwitcher] = useState(false)
@@ -65,116 +52,62 @@ export function Sidebar({ activePage }: SidebarProps) {
   const isActive = (item: { key: string; ruta: string }) =>
     activePage === item.key || location.pathname === item.ruta
 
-  const initials = usuarioActivo
-    ? `${usuarioActivo.apellido.charAt(0)}${usuarioActivo.nombre.charAt(0)}`
-    : '?'
-
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen bg-[#E5E5E5] flex flex-col z-40 transition-all duration-200 overflow-hidden ${
-        sidebarCollapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 h-16 flex-shrink-0 bg-[#1b3a57]">
-        {!sidebarCollapsed && (
-          <div className="border-l-[3px] border-white pl-2.5">
-            <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">TRENES</p>
-            <p className="font-headline font-black text-white text-[13px] leading-tight tracking-tight">ARGENTINOS</p>
-          </div>
-        )}
-        <button
-          onClick={toggleSidebar}
-          className={`p-2 rounded-lg text-white/70 hover:bg-white/15 transition-colors ${
-            sidebarCollapsed ? 'mx-auto' : ''
-          }`}
-          title={sidebarCollapsed ? 'Expandir' : 'Contraer'}
-        >
-          <Icon name={sidebarCollapsed ? 'menu' : 'menu_open'} size={22} />
-        </button>
-      </div>
+    <>
+      {/* Cierra el menú al hacer clic afuera */}
+      {sidebarOpen && <div className="fixed inset-0 z-40" onClick={closeSidebar} />}
 
-      {/* Usuario activo */}
-      {usuarioActivo && (
-        <div className={`flex items-center gap-3 px-3 py-3 border-b border-black/10 flex-shrink-0 ${
-          sidebarCollapsed ? 'justify-center' : ''
-        }`}>
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${AVATAR_COLORS[usuarioActivo.rolSistema]}`}>
-            {initials}
-          </div>
-          {!sidebarCollapsed && (
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#1b3a57] truncate leading-tight">
-                {getNombreCompleto(usuarioActivo)}
-              </p>
-              <p className="text-[10px] text-[#4a6a84] truncate">
-                {ROL_LABEL[usuarioActivo.rolSistema]}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <aside
+        className={`bg-[#E5E5E5] text-[#1b3a57] w-64 h-full flex flex-col transition-transform duration-300 overflow-y-auto overflow-x-hidden py-6 fixed top-0 left-0 z-50 shadow-xl ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <p className="px-4 pb-4 text-lg font-semibold text-[#1b3a57]">SIAJ</p>
 
-      {/* Navegación */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {visibleItems.map(item => {
-          const active = isActive(item)
-          return (
-            <Link
-              key={item.key}
-              to={item.ruta}
-              title={sidebarCollapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg mb-0.5 transition-colors group ${
-                active
-                  ? 'bg-[#C4DFE8] text-[#1b3a57] border-l-2 border-[#1b3a57]'
-                  : 'text-[#1b3a57] hover:bg-[#d8d8d8] border-l-2 border-transparent'
-              } ${sidebarCollapsed ? 'justify-center' : ''}`}
-            >
-              <span className="relative flex-shrink-0">
-                <Icon name={item.icon} size={22} />
-                {item.key === 'novedades_judiciales' && novedadesPendientes > 0 && sidebarCollapsed && (
-                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-[#b91c1c] text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 leading-none">
-                    {novedadesPendientes > 9 ? '9+' : novedadesPendientes}
-                  </span>
-                )}
-              </span>
-              {!sidebarCollapsed && (
-                <span className={`text-sm truncate flex-1 flex items-center justify-between gap-2 ${active ? 'font-semibold' : 'font-medium'}`}>
+        <nav className="flex flex-col gap-3 px-4 flex-1">
+          {visibleItems.map(item => {
+            const active = isActive(item)
+            return (
+              <Link
+                key={item.key}
+                to={item.ruta}
+                onClick={closeSidebar}
+                className={`flex items-center gap-3 transition-colors text-sm hover:text-blue-700 ${
+                  active ? 'text-blue-700 font-semibold' : 'text-[#1b3a57]'
+                }`}
+              >
+                <Icon name={item.icon} size={20} />
+                <span className="flex-1 flex items-center justify-between gap-2 truncate">
                   {item.label}
                   {item.key === 'novedades_judiciales' && novedadesPendientes > 0 && (
-                    <span className="min-w-[18px] h-[18px] bg-[#b91c1c] text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
+                    <span className="bg-red-500 text-white text-xs rounded-full min-w-4 h-4 px-1 flex items-center justify-center">
                       {novedadesPendientes > 9 ? '9+' : novedadesPendientes}
                     </span>
                   )}
                 </span>
-              )}
-            </Link>
-          )
-        })}
-      </nav>
+              </Link>
+            )
+          })}
+        </nav>
 
-      {/* Footer — cambiar usuario */}
-      <div className="relative flex-shrink-0 border-t border-black/10">
-        {showSwitcher && (
-          <UserSwitcher
-            onClose={() => setShowSwitcher(false)}
-            triggerRef={switcherButtonRef}
-          />
-        )}
-        <button
-          ref={switcherButtonRef}
-          onClick={() => setShowSwitcher(v => !v)}
-          title="Cambiar usuario"
-          className={`w-full flex items-center gap-3 px-4 py-3 text-[#1b3a57] hover:bg-[#d8d8d8] transition-colors ${
-            sidebarCollapsed ? 'justify-center' : ''
-          }`}
-        >
-          <Icon name="swap_horiz" className="flex-shrink-0" size={22} />
-          {!sidebarCollapsed && (
-            <span className="text-sm font-medium">Cambiar usuario</span>
+        {/* Herramienta de la demo: cambiar de usuario (no existe en el PRD) */}
+        <div className="relative px-4 pt-4 mt-4 border-t border-black/10">
+          {showSwitcher && (
+            <UserSwitcher
+              onClose={() => setShowSwitcher(false)}
+              triggerRef={switcherButtonRef}
+            />
           )}
-        </button>
-      </div>
-    </aside>
+          <button
+            ref={switcherButtonRef}
+            onClick={() => setShowSwitcher(v => !v)}
+            className="flex items-center gap-3 text-sm text-[#1b3a57] hover:text-blue-700 transition-colors"
+          >
+            <Icon name="swap_horiz" size={20} />
+            Cambiar usuario
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }

@@ -101,16 +101,16 @@ export function AsistenteTab({ exp }: Props) {
           <button
             type="button"
             onClick={() => setMostrarHistorial(v => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[rgba(0,0,0,0.08)] text-xs font-medium text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-800 hover:bg-gray-100 transition-colors"
           >
             <Icon name="history" size={14} />
             Historial{conversaciones.length > 0 ? ` (${conversaciones.length})` : ''}
           </button>
 
           {mostrarHistorial && (
-            <div className="absolute left-0 mt-1 w-72 max-h-80 overflow-y-auto bg-white rounded-xl shadow-card-lg border border-[rgba(0,0,0,0.08)] z-10">
+            <div className="absolute left-0 mt-1 w-72 max-h-80 overflow-y-auto bg-white rounded-lg shadow-card-lg border border-gray-200 z-10">
               {conversaciones.length === 0 ? (
-                <p className="text-xs text-[#7a9ab4] text-center px-3 py-4">
+                <p className="text-xs text-gray-400 text-center px-3 py-4">
                   Todavía no hay conversaciones guardadas de esta actuación.
                 </p>
               ) : (
@@ -118,21 +118,21 @@ export function AsistenteTab({ exp }: Props) {
                   <div
                     key={c.id}
                     className={`group flex items-center gap-1 px-3 py-2 cursor-pointer transition-colors ${
-                      c.id === conversacionActivaId ? 'bg-[#e6f1fb]' : 'hover:bg-[#f5f5f5]'
+                      c.id === conversacionActivaId ? 'bg-blue-50' : 'hover:bg-gray-100'
                     }`}
                     onClick={() => abrirConversacion(c.id)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-[#1b3a57] truncate">{c.titulo}</p>
-                      <p className="text-[10px] text-[#7a9ab4]">{formatFechaHora(c.fechaActualizacion)}</p>
+                      <p className="text-xs font-medium text-gray-800 truncate">{c.titulo}</p>
+                      <p className="text-[10px] text-gray-400">{formatFechaHora(c.fechaActualizacion)}</p>
                     </div>
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); handleEliminar(c.id) }}
                       title="Borrar conversación"
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[rgba(0,0,0,0.06)] transition-opacity flex-shrink-0"
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 transition-opacity flex-shrink-0"
                     >
-                      <Icon name="delete" size={13} className="text-[#b91c1c]" />
+                      <Icon name="delete" size={13} className="text-red-700" />
                     </button>
                   </div>
                 ))
@@ -144,7 +144,7 @@ export function AsistenteTab({ exp }: Props) {
         <button
           type="button"
           onClick={nuevaConversacion}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[rgba(0,0,0,0.08)] text-xs font-medium text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-800 hover:bg-gray-100 transition-colors"
         >
           <Icon name="add" size={14} />
           Nueva conversación

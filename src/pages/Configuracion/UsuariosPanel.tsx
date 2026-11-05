@@ -33,12 +33,12 @@ const ROL_BD_LABEL: Record<string, string> = Object.fromEntries(
 )
 
 const ROL_BD_BADGE: Record<string, string> = {
-  abogado:             'bg-[#e8f0ff] text-[#1b3a57]',
-  abogada:             'bg-[#e8f0ff] text-[#1b3a57]',
+  abogado:             'bg-blue-50 text-gray-800',
+  abogada:             'bg-blue-50 text-gray-800',
   asistente_jurídico:  'bg-amber-100 text-amber-700',
-  abogado_coordinador: 'bg-[#d4e6f1] text-[#1b3a57]',
-  gerente:             'bg-[#1b3a57] text-white',
-  adm_mesa:            'bg-[#e8e8e8] text-[#4a6a84]',
+  abogado_coordinador: 'bg-blue-100 text-gray-800',
+  gerente:             'bg-blue-700 text-white',
+  adm_mesa:            'bg-gray-100 text-gray-500',
 }
 
 const AREA_BADGES: Record<string, string> = {
@@ -130,43 +130,43 @@ export function UsuariosPanel() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">Abogados / Usuarios</h2>
+        <h2 className="text-lg font-semibold text-gray-800">Abogados / Usuarios</h2>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#9a9a9a]">{usuarios.length} usuarios</span>
+          <span className="text-xs text-gray-400">{usuarios.length} usuarios</span>
           <button
             onClick={() => { setAltaAbierta(true); setEditando(null); setForm(BLANK_FORM) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity"
           >
             <Icon name="add" size={16} /> Nuevo
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+            <tr className="border-b border-gray-200">
               {['Nombre', 'Rol', 'Área/s', 'Mail', 'Matrícula', 'Secuencia / Línea', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">{c}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+          <tbody className="divide-y divide-gray-200">
             {usuarios.map(u => {
               const matriculas = (u as any).matriculas as Partial<Record<JurisdiccionMatricula, DatosMatricula>> | undefined
               const activo     = (u as any).activo ?? true
               return (
-                <tr key={u.id} className="hover:bg-[#f8f8f8]">
+                <tr key={u.id} className="hover:bg-gray-50">
 
                   {/* Nombre */}
                   <td className="py-2.5 px-4">
-                    <p className="text-[#1b3a57] font-semibold text-sm">{u.apellido}, {u.nombre}</p>
-                    <p className="text-[10px] text-[#9a9a9a] font-mono">{u.id}</p>
+                    <p className="text-gray-800 font-semibold text-sm">{u.apellido}, {u.nombre}</p>
+                    <p className="text-[10px] text-gray-400 font-mono">{u.id}</p>
                   </td>
 
                   {/* Rol */}
                   <td className="py-2.5 px-4">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROL_BD_BADGE[u.rolBD] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROL_BD_BADGE[u.rolBD] ?? 'bg-gray-100 text-gray-500'}`}>
                       {ROL_BD_LABEL[u.rolBD] ?? u.rolBD}
                     </span>
                   </td>
@@ -175,60 +175,60 @@ export function UsuariosPanel() {
                   <td className="py-2.5 px-4">
                     <div className="flex flex-wrap gap-1">
                       {u.areas.map(a => (
-                        <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
+                        <span key={a} className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-gray-100 text-gray-500'}`}>{a}</span>
                       ))}
-                      {u.areas.length === 0 && <span className="text-[#c0c0c0] text-xs">—</span>}
+                      {u.areas.length === 0 && <span className="text-gray-300 text-xs">—</span>}
                     </div>
                   </td>
 
                   {/* Mail */}
                   <td className="py-2.5 px-4">
-                    <span className="text-xs text-[#4a6a84]">{(u as any).email ?? '—'}</span>
+                    <span className="text-xs text-gray-500">{(u as any).email ?? '—'}</span>
                   </td>
 
                   {/* Matrícula */}
                   <td className="py-2.5 px-4">
                     {matriculas && Object.keys(matriculas).length > 0
                       ? Object.entries(matriculas).map(([jur, mat]) => (
-                          <div key={jur} className="text-[10px] text-[#1b3a57]">
-                            <span className="font-bold text-[#4a6a84]">
+                          <div key={jur} className="text-[10px] text-gray-800">
+                            <span className="font-semibold text-gray-500">
                               {JURISDICCIONES.find(j => j.value === jur)?.label ?? jur}:
                             </span>{' '}
                             <span className="font-mono">T° {mat.tomo} F° {mat.folio}</span>
                           </div>
                         ))
-                      : <span className="text-[#c0c0c0] text-xs">—</span>}
+                      : <span className="text-gray-300 text-xs">—</span>}
                   </td>
 
                   {/* Secuencia / Línea */}
                   <td className="py-2.5 px-4">
                     {u.lineasPenal && u.lineasPenal.length > 0 ? (
-                      <span className="text-[10px] text-[#4a6a84]">
+                      <span className="text-[10px] text-gray-500">
                         {u.lineasPenal.length} línea{u.lineasPenal.length !== 1 ? 's' : ''}
                       </span>
                     ) : u.fifoOrder && Object.keys(u.fifoOrder).length > 0 ? (
                       <div className="space-y-0.5">
                         {Object.entries(u.fifoOrder).map(([area, pos]) => (
-                          <div key={area} className="text-[10px] font-mono text-[#1b3a57]">
-                            <span className="text-[#4a6a84]">{area}</span> #{pos}
+                          <div key={area} className="text-[10px] font-mono text-gray-800">
+                            <span className="text-gray-500">{area}</span> #{pos}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-[#c0c0c0] text-xs">—</span>
+                      <span className="text-gray-300 text-xs">—</span>
                     )}
                   </td>
 
                   {/* Acciones */}
                   <td className="py-2.5 px-4">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activo ? 'bg-green-100 text-green-700' : 'bg-[#e8e8e8] text-[#9a9a9a]'}`}>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
                         {activo ? 'Activo' : 'Inactivo'}
                       </span>
                       <button
                         onClick={() => abrirEditar(u)}
                         title="Editar"
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-blue-50 hover:text-gray-800 transition-colors"
                       >
                         <Icon name="edit" size={14} />
                       </button>
@@ -250,13 +250,13 @@ export function UsuariosPanel() {
         size="md"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrar} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={cerrar}
               disabled={!form.apellido.trim() || !form.nombre.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar cambios
             </button>
@@ -298,7 +298,7 @@ export function UsuariosPanel() {
               {AREAS.map(a => (
                 <label key={a} className="flex items-center gap-1.5 cursor-pointer select-none">
                   <input type="checkbox" className="rounded" checked={form.areas.includes(a)} onChange={() => toggleArea(a)} />
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${AREA_BADGES[a]}`}>{a}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${AREA_BADGES[a]}`}>{a}</span>
                 </label>
               ))}
             </div>
@@ -310,9 +310,9 @@ export function UsuariosPanel() {
             <div className="space-y-2">
               {JURISDICCIONES.map(({ value: jur, label }) => (
                 <div key={jur} className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-28 flex-shrink-0">{label}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 w-28 flex-shrink-0">{label}</span>
                   <div className="flex items-center gap-1.5 flex-1">
-                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">T°</span>
+                    <span className="text-[11px] font-semibold text-gray-400 flex-shrink-0">T°</span>
                     <input
                       type="text"
                       className="field-input w-full font-mono text-sm"
@@ -322,7 +322,7 @@ export function UsuariosPanel() {
                     />
                   </div>
                   <div className="flex items-center gap-1.5 flex-1">
-                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">F°</span>
+                    <span className="text-[11px] font-semibold text-gray-400 flex-shrink-0">F°</span>
                     <input
                       type="text"
                       className="field-input w-full font-mono text-sm"
@@ -343,7 +343,7 @@ export function UsuariosPanel() {
               <div className="space-y-2">
                 {(['CIVIL', 'LABORAL'] as const).filter(a => form.areas.includes(a)).map(a => (
                   <div key={a} className="flex items-center gap-3">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded flex-shrink-0 ${AREA_BADGES[a]}`}>{a}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded flex-shrink-0 ${AREA_BADGES[a]}`}>{a}</span>
                     <input
                       type="number"
                       min={1}
@@ -358,7 +358,7 @@ export function UsuariosPanel() {
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-[#9a9a9a] mt-1">Orden de asignación automática</p>
+              <p className="text-[11px] text-gray-400 mt-1">Orden de asignación automática</p>
             </div>
           )}
 
@@ -370,7 +370,7 @@ export function UsuariosPanel() {
                 {LINEAS_FERROVIARIAS.map(l => (
                   <label key={l.id} className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input type="checkbox" className="rounded" checked={form.lineasPenal.includes(l.id)} onChange={() => toggleLinea(l.id)} />
-                    <span className="text-xs text-[#1b3a57]">{l.label}</span>
+                    <span className="text-xs text-gray-800">{l.label}</span>
                   </label>
                 ))}
               </div>
@@ -378,12 +378,12 @@ export function UsuariosPanel() {
           )}
 
           {/* Estado activo — al final */}
-          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+          <div className="pt-2 border-t border-gray-200">
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -391,8 +391,8 @@ export function UsuariosPanel() {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Usuario activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los usuarios inactivos no pueden acceder al sistema</p>
+                <p className="text-sm font-medium text-gray-800">Usuario activo</p>
+                <p className="text-[11px] text-gray-500">Los usuarios inactivos no pueden acceder al sistema</p>
               </div>
             </label>
           </div>
@@ -410,14 +410,14 @@ export function UsuariosPanel() {
           <>
             <button
               onClick={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={() => { setAltaAbierta(false); setForm(BLANK_FORM) }}
               disabled={!form.apellido.trim() || !form.nombre.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Dar de alta
             </button>
@@ -451,7 +451,7 @@ export function UsuariosPanel() {
               {AREAS.map(a => (
                 <label key={a} className="flex items-center gap-1.5 cursor-pointer select-none">
                   <input type="checkbox" className="rounded" checked={form.areas.includes(a)} onChange={() => toggleArea(a)} />
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${AREA_BADGES[a]}`}>{a}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${AREA_BADGES[a]}`}>{a}</span>
                 </label>
               ))}
             </div>
@@ -461,9 +461,9 @@ export function UsuariosPanel() {
             <div className="space-y-2">
               {JURISDICCIONES.map(({ value: jur, label }) => (
                 <div key={jur} className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-28 flex-shrink-0">{label}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 w-28 flex-shrink-0">{label}</span>
                   <div className="flex items-center gap-1.5 flex-1">
-                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">T°</span>
+                    <span className="text-[11px] font-semibold text-gray-400 flex-shrink-0">T°</span>
                     <input
                       type="text"
                       className="field-input w-full font-mono text-sm"
@@ -473,7 +473,7 @@ export function UsuariosPanel() {
                     />
                   </div>
                   <div className="flex items-center gap-1.5 flex-1">
-                    <span className="text-[11px] font-semibold text-[#9a9a9a] flex-shrink-0">F°</span>
+                    <span className="text-[11px] font-semibold text-gray-400 flex-shrink-0">F°</span>
                     <input
                       type="text"
                       className="field-input w-full font-mono text-sm"
@@ -492,7 +492,7 @@ export function UsuariosPanel() {
               <div className="space-y-2">
                 {(['CIVIL', 'LABORAL'] as const).filter(a => form.areas.includes(a)).map(a => (
                   <div key={a} className="flex items-center gap-3">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded flex-shrink-0 ${AREA_BADGES[a]}`}>{a}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded flex-shrink-0 ${AREA_BADGES[a]}`}>{a}</span>
                     <input
                       type="number" min={1}
                       className="field-input w-24 font-mono"
@@ -506,7 +506,7 @@ export function UsuariosPanel() {
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-[#9a9a9a] mt-1">Orden de asignación automática</p>
+              <p className="text-[11px] text-gray-400 mt-1">Orden de asignación automática</p>
             </div>
           )}
           {tienePenal && (
@@ -516,18 +516,18 @@ export function UsuariosPanel() {
                 {LINEAS_FERROVIARIAS.map(l => (
                   <label key={l.id} className="flex items-center gap-1.5 cursor-pointer select-none">
                     <input type="checkbox" className="rounded" checked={form.lineasPenal.includes(l.id)} onChange={() => toggleLinea(l.id)} />
-                    <span className="text-xs text-[#1b3a57]">{l.label}</span>
+                    <span className="text-xs text-gray-800">{l.label}</span>
                   </label>
                 ))}
               </div>
             </div>
           )}
-          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+          <div className="pt-2 border-t border-gray-200">
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -535,8 +535,8 @@ export function UsuariosPanel() {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Usuario activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los usuarios inactivos no pueden acceder al sistema</p>
+                <p className="text-sm font-medium text-gray-800">Usuario activo</p>
+                <p className="text-[11px] text-gray-500">Los usuarios inactivos no pueden acceder al sistema</p>
               </div>
             </label>
           </div>

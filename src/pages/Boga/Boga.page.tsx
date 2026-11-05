@@ -85,12 +85,12 @@ export default function BogaPage() {
   return (
     <div className="p-6 h-[calc(100vh-4rem)] flex flex-col">
       <div className="flex gap-4 flex-1 min-h-0">
-        <aside className="w-72 flex-shrink-0 bg-white rounded-2xl shadow-card flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-[rgba(0,0,0,0.08)] flex-shrink-0">
+        <aside className="w-72 flex-shrink-0 bg-white rounded-lg shadow-card flex flex-col overflow-hidden">
+          <div className="p-3 border-b border-gray-200 flex-shrink-0">
             <button
               type="button"
               onClick={nuevaConversacion}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1b3a57] text-white text-sm font-medium hover:bg-[#234a6e] transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-700 text-white text-sm font-medium hover:bg-blue-800 transition-colors"
             >
               <Icon name="add" size={16} className="text-white" />
               Nueva conversación
@@ -99,7 +99,7 @@ export default function BogaPage() {
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {conversaciones.length === 0 && (
-              <p className="text-xs text-[#7a9ab4] text-center px-3 py-6">
+              <p className="text-xs text-gray-400 text-center px-3 py-6">
                 Todavía no tenés conversaciones guardadas con Boga.
               </p>
             )}
@@ -107,21 +107,21 @@ export default function BogaPage() {
               <div
                 key={c.id}
                 className={`group flex items-center gap-1 rounded-lg px-2 py-2 cursor-pointer transition-colors ${
-                  c.id === conversacionActivaId ? 'bg-[#e6f1fb]' : 'hover:bg-[#f5f5f5]'
+                  c.id === conversacionActivaId ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
                 onClick={() => setConversacionActivaId(c.id)}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#1b3a57] truncate">{c.titulo}</p>
-                  <p className="text-[10px] text-[#7a9ab4]">{formatFechaHora(c.fechaActualizacion)}</p>
+                  <p className="text-[13px] font-medium text-gray-800 truncate">{c.titulo}</p>
+                  <p className="text-[10px] text-gray-400">{formatFechaHora(c.fechaActualizacion)}</p>
                 </div>
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); handleEliminar(c.id) }}
                   title="Borrar conversación"
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[rgba(0,0,0,0.06)] transition-opacity flex-shrink-0"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 transition-opacity flex-shrink-0"
                 >
-                  <Icon name="delete" size={14} className="text-[#b91c1c]" />
+                  <Icon name="delete" size={14} className="text-red-700" />
                 </button>
               </div>
             ))}

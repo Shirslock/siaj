@@ -8,7 +8,7 @@ import { construirFilasBandejaExport, exportarBandejaExcel } from '../../utils/e
 import { TIPOS_GESTION, esTipoDocumental } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
-import { AreaBadge, EstadoBadge } from '../../components/ui/Badge'
+import { AreaBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
@@ -16,6 +16,7 @@ import { formatFecha } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { RUTAS } from '../../utils/routing'
 import { getAlertaExpediente, getAlertaTimer, type EstadoAlerta } from '../../utils/alertas'
+import { labelEstado } from '../../utils/estadoLabel'
 import type { Area, Expediente, TipoGestion } from '../../types'
 import Icon from '../../components/ui/Icon'
 import { toast } from 'react-toastify'
@@ -54,8 +55,8 @@ function construirItems(exps: Expediente[]): ItemBandeja[] {
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
 const filterInputCls =
-  'w-full px-2 py-1.5 text-xs border border-[rgba(0,0,0,0.15)] rounded-md bg-white ' +
-  'text-[#1b3a57] placeholder-[#a0b0bc] focus:outline-none focus:border-[#1b3a57]'
+  'w-full text-sm py-1 px-2 rounded-md border border-gray-300 bg-white ' +
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -296,11 +297,11 @@ export default function BandejaAbogadoPage() {
     return (
       <div
         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 50 }}
-        className="bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg py-1 min-w-[160px]"
+        className="bg-white border border-gray-200 rounded-md shadow-lg py-1 w-48"
         onClick={e => e.stopPropagation()}
       >
         <button
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { navigate(RUTAS.EXPEDIENTE(exp.id)); setMenuAbierto(null) }}
         >
           <Icon name="open_in_new" size={16} />
@@ -308,9 +309,9 @@ export default function BandejaAbogadoPage() {
         </button>
         {puedeReasignar(usuarioActivo) && (
           <>
-            <div className="my-1 border-t border-[rgba(0,0,0,0.06)]" />
+            <div className="my-1 border-t border-gray-200" />
             <button
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
               onClick={() => {
                 setModalReasignar(exp)
                 setNuevoAbogadoId(exp.abogado_id ?? '')
@@ -324,7 +325,7 @@ export default function BandejaAbogadoPage() {
         )}
         {sinCausa ? (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
             onClick={() => { setModalAgrupar(exp.id); setMenuAbierto(null) }}
           >
             <Icon name="folder_open" size={16} />
@@ -332,7 +333,7 @@ export default function BandejaAbogadoPage() {
           </button>
         ) : (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
             onClick={() => { setExpADesagrupar(exp); setMenuAbierto(null) }}
           >
             <Icon name="link_off" size={16} />
@@ -341,7 +342,7 @@ export default function BandejaAbogadoPage() {
         )}
         {!!exp.numero_causa && (
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-[#e8e8e8] transition-colors cursor-pointer"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
             onClick={() => { setModalConsultarPjn(exp); setMenuAbierto(null) }}
           >
             <Icon name="search" size={16} />
@@ -363,46 +364,36 @@ export default function BandejaAbogadoPage() {
     return (
       <tr
         key={exp.id}
-        className={`animate-slide-down border-l-4 ${
-          exp.es_principal
-            ? 'border-emerald-400/60 bg-green-50/60'
-            : tieneCausa
-              ? 'border-[rgba(27,58,87,0.10)]'
-              : 'border-transparent'
-        }`}
-        style={exp.es_principal ? {} : { background: '#fafcfd' }}
+        className="hover:bg-gray-50 transition-colors"
       >
         {/* Connector */}
-        <td className="w-10 py-3 px-2 relative">
+        <td className="w-10 px-4 py-3 relative">
           {tieneCausa ? (
             <div className="relative min-h-[56px]">
-              <div className={`absolute left-3 w-px bg-[rgba(0,0,0,0.08)] ${isLast ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} />
-              <div className="absolute left-3 top-1/2 w-3 h-px bg-[rgba(0,0,0,0.08)]" />
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
+              <div className={`absolute left-3 w-px bg-gray-200 ${isLast ? 'top-0 h-1/2' : 'top-0 bottom-0'}`} />
+              <div className="absolute left-3 top-1/2 w-3 h-px bg-gray-200" />
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10 text-gray-400">
                 <Icon name="description" size={16} />
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-center">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#f0f7f8] text-[#4a6a84]">
+              <div className="flex items-center justify-center text-gray-400">
                 <Icon name="description" size={18} />
               </div>
             </div>
           )}
         </td>
         {/* N° + badges */}
-        <td className="py-3 pl-2 pr-3">
-          <p className="font-mono text-xs font-bold text-[#1b3a57]">{exp.id}</p>
+        <td className="px-4 py-3 whitespace-nowrap">
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="font-medium text-blue-700">{exp.id}</span>
+            {exp.es_principal && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-600 text-white">Principal</span>
+            )}
+          </span>
           {isSuelto && (
-            <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-[#4a6a84]">
-              <Icon name="folder_off" size={11} />
-              Sin causa
-            </span>
-          )}
-          {exp.es_principal && (
-            <span className="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 w-fit bg-green-100 text-green-700 border border-green-200/60">
-              Principal · PJN
-            </span>
+            <span className="block text-xs text-gray-400 italic">Sin causa</span>
           )}
           {(() => {
             const alertaTareas = getAlertaExpediente(exp.id, tareasMap, exp.timeline)
@@ -420,10 +411,10 @@ export default function BandejaAbogadoPage() {
                 ? `Vencido: ${alertaTareas.nombreElemento}`
                 : 'Plazo vencido'
               return (
-                <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5] cursor-default">
-                  <Icon name="warning" size={10} className="text-[#b91c1c]" />
-                  <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Vencido</span>
-                </div>
+                <span title={tooltip} className="flex items-center gap-1 text-[10px] font-semibold text-red-600 cursor-default">
+                  <Icon name="warning" size={12} className="shrink-0" />
+                  VENCIDO
+                </span>
               )
             }
             const tooltip = alertaTimer.activa
@@ -432,24 +423,22 @@ export default function BandejaAbogadoPage() {
                 ? `Por vencer: ${alertaTareas.nombreElemento}${alertaTareas.fechaVencimiento ? ` — ${formatFecha(alertaTareas.fechaVencimiento)}` : ''}`
                 : 'Tarea por vencer'
             return (
-              <div title={tooltip} className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a] cursor-default">
-                <Icon name="schedule" size={10} className="text-[#d97706]" />
-                <span className="text-[9px] font-black text-[#d97706] uppercase tracking-wide">
-                  Por vencer{alertaTimer.activa && alertaTimer.diasRestantes !== undefined ? ` · ${alertaTimer.diasRestantes}d` : ''}
-                </span>
-              </div>
+              <span title={tooltip} className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 cursor-default">
+                <Icon name="schedule" size={12} className="shrink-0" />
+                POR VENCER{alertaTimer.activa && alertaTimer.diasRestantes !== undefined ? ` · ${alertaTimer.diasRestantes}d` : ''}
+              </span>
             )
           })()}
           {exp.es_urgente && (
-            <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]">
-              <Icon name="warning" size={10} className="text-[#b91c1c]" />
-              <span className="text-[9px] font-black text-[#b91c1c] uppercase tracking-wide">Urgente</span>
-            </div>
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+              <Icon name="warning" size={12} className="shrink-0" />
+              URGENTE
+            </span>
           )}
           {expedientesConNovedadPjn.has(exp.id) && (
             <span
               title="Novedades detectadas por PJN"
-              className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-[#e6f1fb] text-[#185fa5] text-[9px] font-bold"
+              className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold"
             >
               <Icon name="refresh" size={9} />
               PJN
@@ -457,36 +446,30 @@ export default function BandejaAbogadoPage() {
           )}
         </td>
         {/* Carátula */}
-        <td className="py-3 px-3 max-w-xs">
-          <p className="text-sm font-semibold text-[#1b3a57] line-clamp-2">{exp.caratula}</p>
+        <td className="px-4 py-3 max-w-xs">
+          <p className="text-sm text-gray-900 line-clamp-2">{exp.caratula}</p>
           {exp.numero_causa && (
-            <p className="font-mono text-[10px] text-[#4a6a84] mt-0.5">{formatNumeroCausaPjn(exp)}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{formatNumeroCausaPjn(exp)}</p>
           )}
         </td>
         {/* Área */}
-        <td className="py-3 px-3"><AreaBadge area={exp.area} /></td>
+        <td className="px-4 py-3"><AreaBadge area={exp.area} /></td>
         {/* Tipo */}
-        <td className="py-3 px-3">
-          <span className="text-xs text-[#4a6a84]">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</span>
-        </td>
+        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</td>
         {/* Letrado (condicional) */}
         {mostrarColumnaLetrado && (
-          <td className="py-3 px-3">
-            <span className="text-xs text-[#4a6a84]">
-              {letrado ? getNombreCompleto(letrado) : '—'}
-            </span>
+          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+            {letrado ? getNombreCompleto(letrado) : <span className="text-gray-400">—</span>}
           </td>
         )}
         {/* Estado */}
-        <td className="py-3 px-3"><EstadoBadge code={exp.estado} label={exp.estado} /></td>
+        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{labelEstado(exp)}</td>
         {/* Recepción */}
-        <td className="py-3 px-3 whitespace-nowrap">
-          <span className="text-xs text-[#4a6a84]">{formatFecha(exp.fecha_recepcion)}</span>
-        </td>
+        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{formatFecha(exp.fecha_recepcion)}</td>
         {/* Menú */}
-        <td className="py-3 px-3 text-center">
+        <td className="px-4 py-3 text-center">
           <button
-            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#e8e8e8] text-[#4a6a84] transition-colors cursor-pointer"
+            className="p-1 rounded hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer"
             onClick={e => abrirMenu(e, exp.id)}
           >
             <Icon name="more_vert" size={18} />
@@ -502,147 +485,133 @@ export default function BandejaAbogadoPage() {
   const colSpanTotal = mostrarColumnaLetrado ? 9 : 8
 
   return (
-    <div className="p-6 space-y-4 max-w-screen-xl">
+    <div className="p-6 space-y-4">
 
-      {/* HEADER */}
-      <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
+      {/* HEADER: título a la izquierda, acciones a la derecha (PRD) */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Actuaciones</h1>
-          <p className="text-sm text-[#4a6a84] mt-1">
-            Hola, {usuarioActivo?.nombre ?? ''}. Gestionando{' '}
-            <span className="font-semibold text-[#1b3a57]">{activosCount}</span>{' '}
-            actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
+          <h1 className="text-2xl font-semibold text-gray-800">Actuaciones</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Gestionando {activosCount} actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap justify-end self-start">
-          <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={expandAll} className="flex items-center gap-1 text-[10px] font-bold text-[#1b3a57] hover:opacity-80 transition-opacity">
-              <Icon name="unfold_more" size={14} />
-              Expandir todo
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button onClick={collapseAll} className="flex items-center gap-1 text-[10px] font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors">
-              <Icon name="unfold_less" size={14} />
-              Colapsar
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
+
+      {/* BARRA DE ACCIONES */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {esAbogadoPenal(usuarioActivo) && (
+          <button
+            onClick={() => navigate(RUTAS.NUEVA_ACTUACION_PENAL)}
+            className="px-4 py-2 text-sm bg-blue-700 text-white rounded-md hover:bg-blue-800 inline-flex items-center gap-1"
+          >
+            <Icon name="add" size={16} />
+            Nueva Actuación
+          </button>
+        )}
+
+        <div className="inline-flex">
+          {(['activos', 'archivados'] as const).map(val => (
             <button
-              onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
-              className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
-                filtros.soloUrgentes
-                  ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
-                  : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
+              key={val}
+              onClick={() => setTabEstado(val)}
+              className={`px-4 py-1.5 text-sm font-medium border transition-colors ${
+                val === 'activos' ? 'rounded-l-md' : 'rounded-r-md -ml-px'
+              } ${
+                tabEstado === val
+                  ? 'bg-blue-700 text-white border-blue-700'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <Icon name="warning" size={14} className={filtros.soloUrgentes ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
-              Urgentes
+              {val === 'activos' ? 'Activos' : 'Archivados'}
             </button>
-            <button
-              onClick={() => setFiltros(p => ({ ...p, soloAlerta: !p.soloAlerta }))}
-              className={`flex items-center gap-1.5 text-xs font-bold transition-colors px-3 py-1.5 rounded-lg border ${
-                filtros.soloAlerta
-                  ? 'bg-[#fef3c7] border-[#fde68a] text-[#d97706]'
-                  : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:text-[#1b3a57]'
-              }`}
-            >
-              <Icon name="schedule" size={14} className={filtros.soloAlerta ? 'text-[#d97706]' : 'text-[#4a6a84]'} />
-              Por vencer
-              {contadorAlerta > 0 && (
-                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                  filtros.soloAlerta ? 'bg-[#fde68a] text-[#d97706]' : 'bg-[#e8e8e8] text-[#4a6a84]'
-                }`}>
-                  {contadorAlerta}
-                </span>
-              )}
-            </button>
-            <span className="text-[rgba(0,0,0,0.35)] text-xs">·</span>
-            <button
-              onClick={limpiarFiltros}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
-            >
-              <Icon name="filter_alt_off" size={14} />
-              Limpiar filtros
-            </button>
-            <button
-              onClick={handleExportarExcel}
-              disabled={items.length === 0}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors disabled:opacity-40 disabled:pointer-events-none"
-            >
-              <Icon name="download" size={14} />
-              Exportar Excel
-            </button>
-          </div>
-
-          <div className="h-5 w-px bg-[rgba(0,0,0,0.12)]" />
-
-          <div className="flex gap-1 bg-[#f5f5f5] rounded-xl p-1">
-            {(['activos', 'archivados'] as const).map(val => (
-              <button
-                key={val}
-                onClick={() => setTabEstado(val)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
-                  tabEstado === val
-                    ? 'bg-white text-[#1b3a57] shadow-sm'
-                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
-                }`}
-              >
-                {val === 'activos' ? 'Activos' : 'Archivados'}
-              </button>
-            ))}
-          </div>
-          {esAbogadoPenal(usuarioActivo) && (
-            <button
-              onClick={() => navigate(RUTAS.NUEVA_ACTUACION_PENAL)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#1b3a57] text-white rounded-xl text-sm font-bold hover:bg-[#2a5278] transition-colors flex-shrink-0"
-            >
-              <Icon name="add" size={16} />
-              Nueva Actuación
-            </button>
-          )}
+          ))}
         </div>
+
+        <button onClick={expandAll} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50">
+          <Icon name="unfold_more" size={14} />
+          Expandir todo
+        </button>
+        <button onClick={collapseAll} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50">
+          <Icon name="unfold_less" size={14} />
+          Colapsar todo
+        </button>
+        <button
+          onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
+          className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            filtros.soloUrgentes
+              ? 'border-red-300 bg-red-50 text-red-700'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Icon name="fire" size={14} />
+          Urgentes
+        </button>
+        <button
+          onClick={() => setFiltros(p => ({ ...p, soloAlerta: !p.soloAlerta }))}
+          className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            filtros.soloAlerta
+              ? 'border-amber-300 bg-amber-50 text-amber-700'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Icon name="warning" size={14} />
+          Por vencer
+          {contadorAlerta > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+              {contadorAlerta}
+            </span>
+          )}
+        </button>
+        <button onClick={limpiarFiltros} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50">
+          <Icon name="close" size={14} />
+          Limpiar filtros
+        </button>
+        <button
+          onClick={handleExportarExcel}
+          disabled={items.length === 0}
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Icon name="download" size={14} />
+          Exportar Excel
+        </button>
+      </div>
       </div>
 
       {/* TABLA */}
       {poolBase.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-card p-12 text-center">
+        <div className="bg-white rounded-lg shadow-card p-12 text-center">
           <Icon name="inbox" size={48} />
-          <p className="mt-4 text-[#4a6a84] text-sm">No tenés expedientes asignados.</p>
+          <p className="mt-4 text-gray-500 text-sm">No tenés expedientes asignados.</p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-xl border border-[rgba(0,0,0,0.08)]">
-          <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.08)]">
-            <span className="text-xs text-[#4a6a84] font-medium">
-              {expedientesFiltrados.length} elemento{expedientesFiltrados.length !== 1 ? 's' : ''}
-            </span>
-          </div>
+        <div className="bg-white border border-black/20 rounded-xl shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[780px]">
+            <table className="min-w-full divide-y divide-gray-200 min-w-[780px]">
               <thead>
                 {/* Fila 1: labels */}
-                <tr className="border-b border-[rgba(0,0,0,0.08)] bg-[#f9f9f9]">
-                  <th className="w-10 px-3 py-2.5" />
-                  <th className="w-40 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">N° Causa / Exp.</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Carátula</th>
-                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Área</th>
-                  <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Tipo</th>
+                <tr className="bg-gray-50">
+                  <th className="w-10 px-4 py-3 border-b border-gray-200" />
+                  <th className="w-52 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">N° Causa / Exp.</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Carátula</th>
+                  <th className="w-32 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Área</th>
+                  <th className="w-36 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Tipo</th>
                   {mostrarColumnaLetrado && (
-                    <th className="w-36 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Letrado</th>
+                    <th className="w-36 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Letrado</th>
                   )}
-                  <th className="w-28 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Estado</th>
-                  <th className="w-24 px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">Recepción</th>
-                  <th className="w-16 px-3 py-2.5" />
+                  <th className="w-28 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Estado</th>
+                  <th className="w-24 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Recepción</th>
+                  <th className="w-16 px-4 py-3 border-b border-gray-200" />
                 </tr>
 
                 {/* Fila 2: inputs de filtro */}
-                <tr className="border-b-2 border-[rgba(0,0,0,0.10)] bg-[#f5f5f5]">
-                  <th className="px-2 py-1.5" />
-                  <th className="px-2 py-1.5">
+                <tr className="bg-gray-100">
+                  <th className="px-4 py-2" />
+                  <th className="px-4 py-2">
                     <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
                   </th>
-                  <th className="px-2 py-1.5">
+                  <th className="px-4 py-2">
                     <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
                   </th>
-                  <th className="px-2 py-1.5">
+                  <th className="px-4 py-2">
                     <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
                       <option value="">Todas</option>
                       <option value="CIVIL">Civil</option>
@@ -650,13 +619,13 @@ export default function BandejaAbogadoPage() {
                       <option value="PENAL">Penal</option>
                     </select>
                   </th>
-                  <th className="px-2 py-1.5">
+                  <th className="px-4 py-2">
                     <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} className={filterInputCls}>
                       <option value="">Todos</option>
                       {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
                     </select>
                   </th>
-                  <th className="px-2 py-1.5">
+                  <th className="px-4 py-2">
                     <select value={filtros.letrado} onChange={e => setFiltro('letrado', e.target.value)} className={filterInputCls}>
                       <option value="">Todos</option>
                       <option value={usuarioActivo?.id ?? ''} style={{ fontWeight: 'bold' }}>★ Mis actuaciones</option>
@@ -669,25 +638,25 @@ export default function BandejaAbogadoPage() {
                       }
                     </select>
                   </th>
-                  <th className="px-2 py-1.5">
+                  <th className="px-4 py-2">
                     <select value={filtros.estado} onChange={e => setFiltro('estado', e.target.value)} className={filterInputCls}>
                       <option value="">Todos</option>
                       {estadosUnicos.map(est => <option key={est} value={est}>{est}</option>)}
                     </select>
                   </th>
-                  <th className="px-2 py-1.5">
+                  <th className="px-4 py-2">
                     <div className="flex items-center gap-1">
                       <input type="date" value={filtros.fechaDesde} onChange={e => setFiltro('fechaDesde', e.target.value)} className={filterInputCls} />
                       <input type="date" value={filtros.fechaHasta} onChange={e => setFiltro('fechaHasta', e.target.value)} className={filterInputCls} />
                     </div>
                   </th>
-                  <th className="px-2 py-1.5" />
+                  <th className="px-4 py-2" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/20">
+              <tbody className="divide-y divide-gray-200 bg-white">
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={colSpanTotal} className="py-16 text-center text-[#4a6a84] text-sm">
+                    <td colSpan={colSpanTotal} className="py-16 text-center text-gray-500 text-sm">
                       <Icon name="search_off" className="block mb-3" size={40} />
                       Sin resultados para los filtros aplicados.
                     </td>
@@ -703,54 +672,48 @@ export default function BandejaAbogadoPage() {
                     return (
                       <Fragment key={numeroCausa}>
                         <tr
-                          className="bg-[#f0f0f0] border-l-4 border-[rgba(27,58,87,0.40)] hover:border-[#1b3a57] cursor-pointer transition-colors"
+                          className="bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
                           onClick={() => setExpandedCausas(prev => {
                             const next = new Set(prev)
                             next.has(numeroCausa) ? next.delete(numeroCausa) : next.add(numeroCausa)
                             return next
                           })}
                         >
-                          <td className="w-10 py-3 px-2 text-center">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center mx-auto transition-all ${
-                              isExpanded ? 'bg-[#1b3a57] text-white' : 'bg-[#C4DFE8] text-[#1b3a57]'
-                            }`}>
-                              <Icon name="chevron_right" size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                          <td className="w-10 px-4 py-3 text-center">
+                            <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-900 text-white hover:bg-blue-800 mx-auto">
+                              <Icon name="chevron_right" size={14} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                             </div>
                           </td>
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-1.5">
-                              <Icon name="folder" size={14} className="text-[#1b3a57]" />
-                              <span className="font-mono text-xs font-bold text-[#1b3a57]">{formatNumeroCausaPjn(principal)}</span>
+                              <Icon name="folder" size={16} className="text-blue-900" />
+                              <span className="font-medium text-gray-800 whitespace-nowrap">{formatNumeroCausaPjn(principal)}</span>
                             </div>
-                            <p className="text-[10px] text-[#4a6a84] mt-0.5">
+                            <p className="text-xs text-gray-400 mt-0.5">
                               {exps.length} actuación{exps.length !== 1 ? 'es' : ''} agrupada{exps.length !== 1 ? 's' : ''}
                             </p>
                           </td>
-                          <td className="py-3 px-3 max-w-[280px]">
-                            <p className="text-sm text-[#1b3a57] line-clamp-2">{principal.caratula}</p>
+                          <td className="px-4 py-3 max-w-[280px]">
+                            <p className="text-sm text-gray-900 line-clamp-2">{principal.caratula}</p>
                           </td>
-                          <td className="py-3 px-3">
+                          <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
                               {areasBadges.map(a => <AreaBadge key={a} area={a} />)}
                             </div>
                           </td>
-                          <td className="py-3 px-3">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-[rgba(27,58,87,0.10)] text-[#1b3a57]">
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 whitespace-nowrap">
                               <Icon name="link" size={11} />
                               Causa judicial
                             </span>
                           </td>
-                          {mostrarColumnaLetrado && <td className="py-3 px-3" />}
-                          <td className="py-3 px-3">
-                            <EstadoBadge code={principal.estado} label={principal.estado} />
-                          </td>
-                          <td className="py-3 px-3 whitespace-nowrap">
-                            <span className="text-xs text-[#4a6a84]">{formatFecha(principal.fecha_recepcion)}</span>
-                          </td>
-                          <td className="py-3 px-3 text-center" onClick={e => e.stopPropagation()}>
+                          {mostrarColumnaLetrado && <td className="px-4 py-3" />}
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{labelEstado(principal)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{formatFecha(principal.fecha_recepcion)}</td>
+                          <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
                             <button
                               onClick={() => navigate(RUTAS.CAUSA(numeroCausa))}
-                              className="text-[11px] font-bold text-[#1b3a57] hover:underline whitespace-nowrap cursor-pointer"
+                              className="text-sm text-blue-700 hover:underline whitespace-nowrap cursor-pointer"
                             >
                               Ver todo
                             </button>
@@ -772,6 +735,10 @@ export default function BandejaAbogadoPage() {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="px-4 py-3 border-t border-gray-200 text-sm text-gray-600">
+            Mostrando {expedientesFiltrados.length === 0 ? 0 : 1}–{expedientesFiltrados.length} de{' '}
+            <span className="font-semibold">{expedientesFiltrados.length}</span>
           </div>
         </div>
       )}
@@ -799,11 +766,11 @@ export default function BandejaAbogadoPage() {
           />
         </FormField>
         {causasExistentes.length > 0 && (
-          <div className="mt-1 border border-[rgba(0,0,0,0.12)] rounded-lg bg-white shadow-sm max-h-32 overflow-y-auto">
+          <div className="mt-1 border border-gray-200 rounded-lg bg-white shadow-sm max-h-32 overflow-y-auto">
             {causasExistentes.map(nc => (
               <button
                 key={nc}
-                className="w-full text-left px-3 py-2 text-sm font-mono text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors"
+                className="w-full text-left px-3 py-2 text-sm font-mono text-gray-800 hover:bg-gray-100 transition-colors"
                 onClick={() => setInputCausa(nc)}
               >
                 {nc}
@@ -842,9 +809,9 @@ export default function BandejaAbogadoPage() {
         }
       >
         <div className="space-y-3 py-1">
-          <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs font-bold font-mono text-[#1b3a57]">{modalReasignar?.id}</p>
-            <p className="text-xs text-[#4a6a84] line-clamp-2">{modalReasignar?.caratula}</p>
+          <div className="bg-gray-100 rounded-lg px-4 py-3 space-y-1">
+            <p className="text-xs font-semibold font-mono text-gray-800">{modalReasignar?.id}</p>
+            <p className="text-xs text-gray-500 line-clamp-2">{modalReasignar?.caratula}</p>
           </div>
           <div>
             <label className="field-label">Letrado asignado</label>
@@ -883,18 +850,18 @@ export default function BandejaAbogadoPage() {
         }
       >
         <div className="space-y-3 py-1">
-          <p className="text-sm text-[#1b3a57]">¿Confirmás que querés desagrupar esta actuación de la causa?</p>
-          <div className="bg-[#f5f5f5] rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs font-bold text-[#1b3a57] font-mono">{expADesagrupar?.id}</p>
-            <p className="text-xs text-[#4a6a84] line-clamp-2">{expADesagrupar?.caratula}</p>
+          <p className="text-sm text-gray-800">¿Confirmás que querés desagrupar esta actuación de la causa?</p>
+          <div className="bg-gray-100 rounded-lg px-4 py-3 space-y-1">
+            <p className="text-xs font-semibold text-gray-800 font-mono">{expADesagrupar?.id}</p>
+            <p className="text-xs text-gray-500 line-clamp-2">{expADesagrupar?.caratula}</p>
             {expADesagrupar?.numero_causa && (
-              <p className="text-[11px] text-[#7a9ab4] flex items-center gap-1 mt-1">
+              <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-1">
                 <Icon name="folder" size={12} />
                 Causa: {formatNumeroCausaPjn(expADesagrupar)}
               </p>
             )}
           </div>
-          <p className="text-xs text-[#7a9ab4]">
+          <p className="text-xs text-gray-400">
             La actuación pasará a estar sin causa asignada. Esta acción se puede revertir agrupándola nuevamente.
           </p>
         </div>

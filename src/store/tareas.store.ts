@@ -374,7 +374,7 @@ export const useSolicitudesStore = create<SolicitudesState>((set) => ({
           fecha:  respuesta.fecha ?? HOY,
           size:   a.size,
           icon:   'attach_file',
-          color:  'text-[#4a6a84]',
+          color:  'text-gray-500',
         })
       })
 

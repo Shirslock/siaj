@@ -30,24 +30,24 @@ const CHISTE_2 = 'Mentira, ahí te doy la respuesta:'
 // clases y colores que ya usa el resto de SIAJ.
 const MARKDOWN_COMPONENTS: Components = {
   p:          ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-  h1:         ({ children }) => <h1 className="text-[15px] font-bold text-[#1b3a57] mt-2 mb-1">{children}</h1>,
-  h2:         ({ children }) => <h2 className="text-[14px] font-bold text-[#1b3a57] mt-2 mb-1">{children}</h2>,
-  h3:         ({ children }) => <h3 className="text-[13px] font-semibold text-[#1b3a57] mt-2 mb-1">{children}</h3>,
-  strong:     ({ children }) => <strong className="font-semibold text-[#1b3a57]">{children}</strong>,
+  h1:         ({ children }) => <h1 className="text-[15px] font-semibold text-gray-800 mt-2 mb-1">{children}</h1>,
+  h2:         ({ children }) => <h2 className="text-[14px] font-semibold text-gray-800 mt-2 mb-1">{children}</h2>,
+  h3:         ({ children }) => <h3 className="text-[13px] font-semibold text-gray-800 mt-2 mb-1">{children}</h3>,
+  strong:     ({ children }) => <strong className="font-semibold text-gray-800">{children}</strong>,
   em:         ({ children }) => <em className="italic">{children}</em>,
   ul:         ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-0.5">{children}</ul>,
   ol:         ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-0.5">{children}</ol>,
   li:         ({ children }) => <li>{children}</li>,
-  a:          ({ children, href }) => <a href={href} target="_blank" rel="noreferrer" className="text-[#185fa5] underline">{children}</a>,
-  code:       ({ children }) => <code className="bg-[#e8e8e8] rounded px-1 py-0.5 text-[12px] font-mono">{children}</code>,
-  blockquote: ({ children }) => <blockquote className="border-l-2 border-[#B5D4F4] pl-2 italic text-[#4a6a84]">{children}</blockquote>,
+  a:          ({ children, href }) => <a href={href} target="_blank" rel="noreferrer" className="text-blue-700 underline">{children}</a>,
+  code:       ({ children }) => <code className="bg-gray-100 rounded px-1 py-0.5 text-[12px] font-mono">{children}</code>,
+  blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-200 pl-2 italic text-gray-500">{children}</blockquote>,
   table:      ({ children }) => (
     <div className="overflow-x-auto mb-2">
       <table className="text-[12px] border-collapse">{children}</table>
     </div>
   ),
-  th:         ({ children }) => <th className="bg-[#f5f5f5] border border-[rgba(0,0,0,0.12)] px-2 py-1 text-left font-semibold text-[#1b3a57]">{children}</th>,
-  td:         ({ children }) => <td className="border border-[rgba(0,0,0,0.12)] px-2 py-1">{children}</td>,
+  th:         ({ children }) => <th className="bg-gray-100 border border-gray-200 px-2 py-1 text-left font-semibold text-gray-800">{children}</th>,
+  td:         ({ children }) => <td className="border border-gray-200 px-2 py-1">{children}</td>,
 }
 
 export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, incluirChiste = true, mensajesIniciales, onMensajesChange }: Props) {
@@ -158,14 +158,14 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
   }
 
   return (
-    <div className="h-full flex flex-col rounded-2xl border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white">
-      <div className="px-4 py-3 border-b border-[rgba(0,0,0,0.08)] bg-[#f5f5f5] flex items-center gap-2 flex-shrink-0">
+    <div className="h-full flex flex-col rounded-lg border border-gray-200 overflow-hidden bg-white">
+      <div className="px-4 py-3 border-b border-gray-200 bg-gray-100 flex items-center gap-2 flex-shrink-0">
         <img
           src={bogaAvatar}
           alt="Boga"
-          className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-[rgba(0,0,0,0.08)]"
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-200"
         />
-        <span className="text-[13px] font-semibold text-[#1b3a57]">
+        <span className="text-[13px] font-semibold text-gray-800">
           {titulo}
         </span>
       </div>
@@ -173,8 +173,8 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
       {agentDisabled ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="p-6 text-center">
-            <Icon name="info" size={24} className="text-[#7a9ab4] mx-auto mb-2" />
-            <p className="text-sm text-[#4a6a84]">
+            <Icon name="info" size={24} className="text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">
               El asistente IA está desactivado temporalmente.
             </p>
           </div>
@@ -195,10 +195,10 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
                   />
                 )}
                 <div
-                  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                  className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                     m.role === 'user'
-                      ? 'bg-[#1b3a57] text-white whitespace-pre-wrap'
-                      : 'bg-[#f0f4f7] text-[#1b3a57]'
+                      ? 'bg-blue-700 text-white whitespace-pre-wrap'
+                      : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {m.role === 'assistant' ? (
@@ -217,20 +217,20 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
             {chisteEnCurso && (
               <>
                 <div className="flex items-end gap-2 justify-end">
-                  <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap bg-[#1b3a57] text-white">
+                  <div className="max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-blue-700 text-white">
                     {chisteEnCurso.pregunta}
                   </div>
                 </div>
                 <div className="flex items-end gap-2 justify-start">
                   <img src={bogaAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                  <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap bg-[#f0f4f7] text-[#1b3a57]">
+                  <div className="max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-gray-100 text-gray-800">
                     {CHISTE_1}
                   </div>
                 </div>
                 {chisteEnCurso.fase === 2 && (
                   <div className="flex items-end gap-2 justify-start">
                     <img src={bogaAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                    <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap bg-[#f0f4f7] text-[#1b3a57]">
+                    <div className="max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap bg-gray-100 text-gray-800">
                       {CHISTE_2}
                     </div>
                   </div>
@@ -245,14 +245,14 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
                   alt=""
                   className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                 />
-                <div className="max-w-[80%] rounded-xl px-3 py-2 text-sm bg-[#f0f4f7] text-[#7a9ab4]">
+                <div className="max-w-[80%] rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400">
                   Escribiendo…
                 </div>
               </div>
             )}
             {error && !agentDisabled && (
               <div className="flex justify-center">
-                <p className="text-xs text-[#b91c1c] text-center">
+                <p className="text-xs text-red-700 text-center">
                   Ocurrió un error al consultar al asistente. Probá de nuevo.
                 </p>
               </div>
@@ -260,14 +260,14 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
           </div>
 
           {esPrimeraPregunta && !chisteActivo && preguntasSugeridas.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 px-3 pt-2 border-t border-[rgba(0,0,0,0.08)] flex-shrink-0">
+            <div className="flex flex-wrap gap-1.5 px-3 pt-2 border-t border-gray-200 flex-shrink-0">
               {preguntasSugeridas.map(pregunta => (
                 <button
                   key={pregunta}
                   type="button"
                   onClick={() => enviarPregunta(pregunta)}
                   disabled={isLoading}
-                  className="px-2.5 py-1 rounded-full border border-[#B5D4F4] bg-[#e6f1fb] text-[11px] text-[#185fa5] hover:bg-[#d6e9fa] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-[11px] text-blue-700 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {pregunta}
                 </button>
@@ -278,34 +278,34 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
           {(archivoAdjunto || leyendoArchivo || errorArchivo) && (
             <div className="px-3 pt-2 flex-shrink-0">
               {leyendoArchivo && (
-                <div className="flex items-center gap-1.5 text-xs text-[#7a9ab4]">
+                <div className="flex items-center gap-1.5 text-xs text-gray-400">
                   <Icon name="refresh" size={13} className="animate-spin" />
                   Leyendo archivo…
                 </div>
               )}
               {archivoAdjunto && !leyendoArchivo && (
-                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border border-[#B5D4F4] bg-[#e6f1fb] text-[11px] text-[#185fa5] max-w-full">
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border border-blue-200 bg-blue-50 text-[11px] text-blue-700 max-w-full">
                   <Icon name="attach_file" size={13} className="flex-shrink-0" />
                   <span className="truncate">{archivoAdjunto.nombre}</span>
                   <button
                     type="button"
                     onClick={quitarArchivoAdjunto}
                     title="Quitar archivo"
-                    className="flex-shrink-0 hover:text-[#b91c1c]"
+                    className="flex-shrink-0 hover:text-red-700"
                   >
                     <Icon name="close" size={13} />
                   </button>
                 </div>
               )}
               {errorArchivo && (
-                <p className="text-xs text-[#b91c1c] mt-1">{errorArchivo}</p>
+                <p className="text-xs text-red-700 mt-1">{errorArchivo}</p>
               )}
             </div>
           )}
 
           <form
             onSubmit={handleSubmit}
-            className={`flex items-center gap-2 px-3 py-3 flex-shrink-0 ${esPrimeraPregunta && !chisteActivo && preguntasSugeridas.length > 0 ? '' : 'border-t border-[rgba(0,0,0,0.08)]'}`}
+            className={`flex items-center gap-2 px-3 py-3 flex-shrink-0 ${esPrimeraPregunta && !chisteActivo && preguntasSugeridas.length > 0 ? '' : 'border-t border-gray-200'}`}
           >
             <input
               ref={fileInputRef}
@@ -319,7 +319,7 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading || chisteActivo || leyendoArchivo}
               title="Adjuntar archivo (PDF o Word)"
-              className="p-2 rounded-lg border border-[rgba(0,0,0,0.08)] text-[#1b3a57] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f5f5f5] transition-colors flex-shrink-0"
+              className="p-2 rounded-lg border border-gray-200 text-gray-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors flex-shrink-0"
             >
               <Icon name="attach_file" size={16} />
             </button>
@@ -334,7 +334,7 @@ export function BogaChat({ titulo, saludoInicial, contexto, preguntasSugeridas, 
             <button
               type="submit"
               disabled={isLoading || chisteActivo || leyendoArchivo || !input.trim()}
-              className="p-2 rounded-lg bg-[#1b3a57] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#234a6e] transition-colors flex-shrink-0"
+              className="p-2 rounded-lg bg-blue-700 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-800 transition-colors flex-shrink-0"
               title="Enviar"
             >
               <Icon name="send" size={16} className="text-white" />
