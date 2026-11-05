@@ -8,7 +8,8 @@ import { RUTAS } from '../../utils/routing'
 import { formatFecha } from '../../utils/format'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import Icon from '../../components/ui/Icon'
-import type { Area, Expediente, Tarea } from '../../types'
+import { USUARIOS } from '../../data/usuarios'
+import type { Area, Expediente, Tarea, Usuario } from '../../types'
 
 // Lógica/cálculos y componentes de la pantalla Principal (ver Home.page.tsx).
 
@@ -381,23 +382,35 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
 
 // COORDINADOR y REFERENTE (Gerente) entran a Principal con alcance ampliado además
 // del Dashboard; ABOGADO mantiene el comportamiento original con scope fijo 'MIAS'.
-export type Scope = 'MIAS' | 'AREA' | 'TODO'
+export type Scope = 'MIAS' | 'AREA' | 'TODO' | 'LETRADO'
+
+// Letrados que el usuario puede elegir en "Por letrado": el COORDINADOR ve los de sus áreas;
+// el REFERENTE (Gerente) ve todos. Orden alfabético por apellido.
+export function letradosDisponibles(usuario: Usuario | null | undefined): Usuario[] {
+  if (!usuario) return []
+  const misAreas = usuario.areas ?? []
+  return USUARIOS.filter(u =>
+    u.rolSistema === 'ABOGADO' &&
+    (usuario.rolSistema === 'REFERENTE' || misAreas.some(a => u.areas.includes(a)))
+  ).sort((a, b) => a.apellido.localeCompare(b.apellido))
+}
 
 // ── Datos de la pantalla ────────────────────────────────────────────────────────
 
-export function useHomeData(scope: Scope = 'MIAS') {
+export function useHomeData(scope: Scope = 'MIAS', letradoId = '') {
   const { expedientes, tareasMap } = useExpedientesStore()
   const { usuarioActivo } = useUIStore()
   const navigate = useNavigate()
 
   const misExpedientes = useMemo(() => {
     if (scope === 'TODO') return expedientes
+    if (scope === 'LETRADO') return expedientes.filter(e => e.abogado_id === letradoId)
     if (scope === 'AREA') {
       const misAreas = usuarioActivo?.areas ?? []
       return expedientes.filter(e => misAreas.includes(e.area as Area))
     }
     return expedientes.filter(e => e.abogado_id === usuarioActivo?.id)
-  }, [expedientes, usuarioActivo, scope])
+  }, [expedientes, usuarioActivo, scope, letradoId])
 
   const misActivos = useMemo(() =>
     misExpedientes.filter(e => !ESTADOS_CERRADO.includes(e.estado)),

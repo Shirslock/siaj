@@ -280,3 +280,8 @@ implementó en esta rama.
 2. Filas del Excel que parecen sub-títulos (ver Delta 8).
 3. Tareas de los 6 tipos A/B que el Excel no cubre.
 4. Si "Actuación de Oficio" debe tener barra propia en Principal → "Por rol".
+
+## Delta 22 — Principal: filtro "Por letrado" (2026-11-05, rama `feat/principal-por-letrado`)
+- Coordinador y Gerente: tercer segmento "Por letrado" junto a Mías / Mi área (o Todo), con desplegable de letrados
+  (Coordinador: los que comparten alguna de sus áreas; Gerente: todos). Detalle técnico en `src/pages/Home/Home_CLAUDE.md`.
+- Documentado como Delta 22 (Parte A) en el docx; 2 capturas pendientes. El docx ya cubre los deltas 1–22.
