@@ -1,8 +1,9 @@
 import type { CampoFormulario, FormularioSubtipo } from '../types'
+import { TIPOS_HECHO_DEMANDA_DELTA9 } from './catalogos'
 
 export const CAMPOS_COMUNES_MESA: CampoFormulario[] = [
   { id:'mesa_oficio_judicial',   label:'N° OJ',                  type:'text',     placeholder:'N° OJ' },
-  { id:'mesa_tipo_intervencion', label:'Tipo de Intervención',   type:'select',   options:['Actora','Demandada','Sin Intervención'] },
+  { id:'mesa_tipo_intervencion', label:'Tipo de Intervención',   type:'select',   options:['Actora','Demandada','Sin Intervención'], required:true },
   { id:'mesa_comentarios',       label:'Comentarios',            type:'textarea', full:true },
 ]
 
@@ -378,7 +379,8 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'estado_tramite',     label:'Estado',                     type:'select', options:['INGRESADO','EN TRAMITACIÓN','AUDIENCIA PACTADA','SENTENCIA','APELACIÓN','FIRME','ARCHIVADO'] },
       { id:'fecha_contestacion', label:'Fecha Contestación Demanda', type:'date' },
       { id:'monto_acuerdo',      label:'Monto del Acuerdo',          type:'money_multi' },
-      { id:'abg_tipo_hecho',     label:'Tipo de hecho',              type:'text' },
+      // Delta 9B — opciones desde Configuración → Tipo Hecho Demanda Civil
+      { id:'abg_tipo_hecho',     label:'Tipo de hecho',              type:'select', catalogo:'tiposHechoDemandaCivil', options:TIPOS_HECHO_DEMANDA_DELTA9 },
       { id:'abg_fecha_hecho',    label:'Fecha del hecho',            type:'date' },
       { id:'abg_lugar_hecho',    label:'Lugar del hecho',            type:'text',   full:true },
       { id:'abg_linea',          label:'Línea ferroviaria',          type:'linea' },
@@ -409,7 +411,8 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
       { id:'tope_convenio',      label:'Tope Convenio',              type:'select', options:['SI','NO','VIZZOTI'] },
       { id:'fecha_contestacion', label:'Fecha Contestación Demanda', type:'date' },
       { id:'monto_acuerdo',      label:'Monto del Acuerdo',          type:'money_multi' },
-      { id:'abg_tipo_hecho',     label:'Tipo de hecho',              type:'select', options:['DOBLE INDEMNIZACIÓN','INEXISTENCIA DE VÍNCULO LABORAL','DESAFUERO','CONSIGNACIÓN LABORAL','EMPLEADO FERROBAIRES'] },
+      // Delta 9B — opciones desde Configuración → Tipo Hecho Demanda Laboral
+      { id:'abg_tipo_hecho',     label:'Tipo de hecho',              type:'select', catalogo:'tiposHechoDemandaLaboral', options:TIPOS_HECHO_DEMANDA_DELTA9 },
       { id:'abg_fecha_hecho',    label:'Fecha del hecho',            type:'date' },
       { id:'abg_lugar_hecho',    label:'Lugar del hecho',            type:'text',   full:true },
       { id:'abg_linea',          label:'Línea ferroviaria',          type:'linea' },
@@ -465,8 +468,15 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
   },
 }
 
+// Las demandas de parte actora (derivadas de "Iniciar Juicio", Delta 13) usan el
+// mismo formulario que la demanda de su fuero.
+const ALIAS_FORMULARIO: Record<string, string> = {
+  DEMANDA_CIVIL_ACTORA:   'DEMANDA_CIVIL',
+  DEMANDA_LABORAL_ACTORA: 'DEMANDA_LABORAL',
+}
+
 export function getCamposFormulario(tipo: string, etapa: 'mesa' | 'abogado', area?: string): CampoFormulario[] {
-  const form = FORMULARIOS[tipo]
+  const form = FORMULARIOS[ALIAS_FORMULARIO[tipo] ?? tipo]
   if (!form) return []
   if (tipo === 'OFICIO' && area === 'PENAL' && form.variante_penal) {
     return form.variante_penal[etapa]

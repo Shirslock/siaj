@@ -15,7 +15,7 @@ import type { Area, Canal, TipoGestion } from '../../types'
 import { toast } from 'react-toastify'
 
 const TIPOS_PENAL_ABOGADO = new Set([
-  'QUERELLA', 'DEFENSA_PENAL', 'CARTA_SUCESO', 'OFICIO', 'PEDIDO_CAUSA_PENAL',
+  'QUERELLA', 'DEFENSA_PENAL', 'CARTA_SUCESO', 'OFICIO',
 ])
 
 export function useAltaForm(modoAbogadoPenal = false) {
@@ -32,6 +32,8 @@ export function useAltaForm(modoAbogadoPenal = false) {
 
   const tiposFiltrados = useMemo(
     () => TIPOS_GESTION.filter(t =>
+      t.activo !== false &&   // Delta 14 — tipos desactivados no se ofrecen al alta
+      !t.soloDesdeJuicio &&   // Delta 13 — los derivados solo nacen de "Iniciar Juicio"
       !!area &&
       t.areas.includes(area as Area) &&
       (canal ? t.canales.includes(canal as Canal) : true) &&
@@ -90,6 +92,11 @@ export function useAltaForm(modoAbogadoPenal = false) {
     if (!((camposMesa['numero_ee_gde'] as string | undefined ?? '').trim())) {
       errs['numero_ee_gde'] = 'El N° EE/Memo GDE es obligatorio.'
     }
+    // Delta 1 — Tipo de Intervención obligatorio.
+    if (!String(camposMesa['mesa_tipo_intervencion'] ?? '').trim()) {
+      errs['mesa_tipo_intervencion'] = 'El Tipo de Intervención es obligatorio.'
+    }
+    if (Object.keys(errs).length > 0) toast.error(Object.values(errs).join(' '))
     setErrors(errs)
     return Object.keys(errs).length === 0
   }

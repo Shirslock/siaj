@@ -1,6 +1,6 @@
 # CLAUDE.md — SIAJ Frontend
 # Sistema Integral de Asuntos Jurídicos — SOFSA / Trenes Argentinos
-# Rama activa: feat/asistente-ia-chat (desde develop)
+# Rama activa: feat/deltas3-etapa2-pendientes (desde develop)
 
 > Fuente de verdad para Claude Code. Leer completo antes de escribir código.
 > Cada subcarpeta tiene su propio CLAUDE.md con documentación específica.
@@ -167,7 +167,8 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 
 ## 7. Reglas de negocio — inamovibles
 
-- **Único campo obligatorio al alta:** N° EE/Memo GDE. Todos los demás opcionales.
+- **Campos obligatorios al alta:** N° EE/Memo GDE y **Tipo de Intervención** (Delta 1 — también obligatorio al guardar en DatosTab). Todos los demás opcionales. Penal: Denunciante · Actuación de Oficio · Sin Intervención.
+- **Deltas 3 (Etapa 2):** estado de implementación y decisiones de los 14 deltas en `claude-docs/DELTAS3_ETAPA2_CLAUDE.md` — leerlo antes de tocar estados, tareas, Iniciar Juicio o catálogos.
 - **SS = "Sin Siniestro"** en el campo N° Causa.
 - **Numeración:** C-0001/2026 (Civil), L-0001/2026 (Laboral), P-0001/2026 (Penal). Incremental por área, reinicia en 0001 cada año.
 - **Asignación Civil/Laboral:** FIFO secuencial por área (ver `usuarios.ts → fifoOrder`).
@@ -187,7 +188,10 @@ Las rutas `/bandeja/abogado` y `/bandeja/area` siguen activas como aliases con `
 - **Recurso de Queja — ELIMINADO:** el sistema de trámite paralelo (flag `queja_en_tramite`, checklist `TAREAS_RECURSO_QUEJA`, acción `toggleQuejaEnTramite`, bloque visual en REF/EJECUCION_SENTENCIA) fue dado de baja por completo — decisión de negocio. Ya no existe en el código. `REF.siguiente` sigue apuntando directo a `EJECUCION_SENTENCIA`, sin ningún trámite asociado.
 - **Cambio de estado Penal:** navegación libre entre etapas. Sin bloqueo por hitos. RECHAZADO es rama alternativa desde ACEPTADO.
 - **Tipo de Intervención afecta tareas:** Actora y Demandada tienen conjuntos de tareas distintos para el mismo tipo de gestión y estado procesal.
-- **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'` y el tipo está en `TIPOS_CON_JUICIO`. Ver Sección 13. Para la mayoría de los tipos **parchea el expediente actual** (no crea uno nuevo); **LANZAMIENTO es la excepción** — crea un expediente `LANZAMIENTO_JUDICIALIZADO` nuevo, mismo patrón que "Nueva Querella" (ver Sección 13).
+- **Iniciar Juicio:** botón visible SOLO cuando `estadoProcesal === 'JUICIO_INICIADO'`, el tipo está en `TIPOS_CON_JUICIO` y todavía no tiene `id_juicio_derivado`. **Siempre crea una actuación nueva (derivada)** para los 7 tipos (Delta 13) — el antecedente queda separado y pasa a FINALIZADO en cascada cuando se finaliza la derivada. Ver Sección 13.
+- **DESARCHIVADO (C/L y Penal):** desde un estado terminal se puede "Desarchivar actuación" → sub-estado DESARCHIVADO, se carga UNA actividad genérica y se vuelve con "Volver a archivo" (C/L: al estado guardado en `estado_previo_desarchivo`). Ver `claude-docs/DELTAS3_ETAPA2_CLAUDE.md`.
+- **Iniciar Querella bloqueado** si la Carta SAE no tiene Tipo de Intervención o es "Sin Intervención" (Delta 7).
+- **Tipos `soloDesdeJuicio`** (LANZAMIENTO_JUDICIALIZADO, DEMANDA_CIVIL_ACTORA, DEMANDA_LABORAL_ACTORA) y tipos con `activo: false` (PEDIDO_CAUSA_PENAL, Delta 14) no se ofrecen en el Alta.
 - **Timer Iniciar Juicio:** 3 meses calendario desde la fecha de creación del documento nuevo. Alerta a los 75 días (2,5 meses). El timer se resetea con cada movimiento impulsorio registrado.
 - **Movimiento impulsorio:** checkbox en modal de Nueva Actividad Genérica. Solo visible en documentos generados por Iniciar Juicio (Demanda parte actora y Lanzamiento judicializado).
 - **`es_principal` nunca sin `numero_causa`:** el badge "Principal · PJN" exige un número de causa REAL — nunca puede quedar `true` si `numero_causa` es `null`/vacío. En los flujos que crean un expediente nuevo agrupado a una causa (`confirmarNuevaQuerella`, `confirmarIniciarJuicio` rama Lanzamiento) se calcula `tieneCausaReal = !!(campo del modal || exp.numero_causa)`, **sin contar el fallback a `exp.id`** (ese fallback es solo un sentinela de agrupación cuando no hay causa real todavía, no una causa verdadera) — y ese booleano es el que se asigna a `es_principal`, no `true` hardcodeado.
@@ -218,7 +222,7 @@ El timeline del expediente tiene DOS capas:
 - Viven en `exp.timeline[]`
 - Soportan replies: texto + PDF adjunto opcional
 - Tipo `RECURSO_INCIDENTE` ("Interposición de Recurso"): una opción más del select de Tipo, sin lógica adicional — no toca `estadoProcesal`. Aplica a cualquier estado de los 4 ciclos de Demanda Civil/Laboral.
-- Tipo `DILIGENCIAMIENTO` ("Diligenciamiento"): confirmado por negocio para registrar el envío de cédulas hasta contar con un módulo de diligenciamientos separado (MATRIZ SACO sección 2.5). Igual patrón que `RECURSO_INCIDENTE` — opción más del select en `TimelineTab.tsx` (`TIPOS` + `iconMap: 'forward'`), sin lógica adicional. **Solo en `TimelineTab.tsx`** (Civil/Laboral) — `TimelinePenal.tsx` tiene su propia lista `TIPOS` más corta que tampoco incluye `RECURSO_INCIDENTE`, no se tocó.
+- Tipo `DILIGENCIAMIENTO` ("Diligenciamiento"): confirmado por negocio para registrar el envío de cédulas hasta contar con un módulo de diligenciamientos separado (MATRIZ SACO sección 2.5). Igual patrón que `RECURSO_INCIDENTE` — opción más del select, sin lógica adicional. Está en `TimelineTab.tsx` (Civil/Laboral) **y en `TimelinePenal.tsx`** (Delta 6B, junto con `RECURSO_INCIDENTE`).
 
 **Penal — Hitos procesales:**
 - No hay tareas obligatorias. El abogado registra hitos cuando ocurren en la causa.
@@ -336,36 +340,30 @@ Lo que deben adaptar:
 
 **Recurso de Queja fue dado de baja por completo** (no solo como nodo de la cadena) — decisión de negocio. `REF.siguiente` apunta directo a `EJECUCION_SENTENCIA`, sin ningún trámite paralelo asociado.
 
-### LANZAMIENTO_JUDICIALIZADO — reconstrucción MATRIZ SACO (split Operativo/Comercial)
-Ciclo propio de 11 estados, con split por `campos_mesa.mesa_tipo_lanzamiento` ('Operativo' | 'Comercial') y bifurcación por vulnerabilidad en `CONSTATACION_JUDICIAL`:
+### LANZAMIENTO_JUDICIALIZADO — 11 estados (Delta 5) con split Operativo/Comercial
+Tareas cargadas desde `docs/SIAJ_Estados_Tareas_v2.xlsx` (Delta 8). Split por `campos_mesa.mesa_tipo_lanzamiento` ('Operativo' | 'Comercial') y bifurcación por vulnerabilidad en `CONSTATACION_JUDICIAL`:
 
-Circuito completo (Operativo, con personas vulnerables):
+Circuito completo (Operativo):
 ```
-ASIGNADO → INICIO → CONSTATACION_JUDICIAL
-  → TRASLADO_DEFENSOR_OFICIAL → TRABA_LITIS → SENTENCIA_LANZAMIENTO
+ASIGNADO → INICIO → CONSTATACION_JUDICIAL → [TRABA_LITIS] → SENTENCIA_LANZAMIENTO
   → APELACION_LANZ → SENTENCIA_CAMARA → REF_LANZ → SENTENCIA_FIRME
   → MANDAMIENTO_LIBRADO → LANZAMIENTO_EFECTIVIZADO → TERMINADO (esArchivado, label "Finalizado")
 ```
+`TRASLADO_DEFENSOR_OFICIAL` **ya no existe** (no figuraba en el Delta 5): el traslado al Defensor Oficial es una tarea de Constatación Judicial.
 
-Circuito Comercial (salto directo, ignora Constatación Judicial y toda instancia recursiva):
+Bifurcación desde `CONSTATACION_JUDICIAL` (`RAMIFICACIONES_POR_CODIGO`, labels de opción en `LABEL_RAMA`):
+```
+CONSTATACION_JUDICIAL → SENTENCIA_LANZAMIENTO  ('Sin personas vulnerables → Sentencia de Lanzamiento')
+                       | TRABA_LITIS            ('Con personas vulnerables → Traba de Litis')
+```
+
+Circuito Comercial (salto directo — no figura en los deltas, pendiente de confirmar con negocio):
 ```
 INICIO → SENTENCIA_LANZAMIENTO → MANDAMIENTO_LIBRADO → LANZAMIENTO_EFECTIVIZADO → TERMINADO
 ```
-Resuelto por `getSiguienteLanzamiento(codigoActual, tipoLanzamiento)` + `SALTOS_LANZAMIENTO_COMERCIAL` en `DetalleExpediente.page.tsx`, con prioridad **salto Comercial > ramificación genérica > siguiente lineal** en el cálculo de "Avanzar" del modal (y en el preselect de `openAccion('estado')`). Los estados que el circuito Comercial salta (`CONSTATACION_JUDICIAL`, `TRASLADO_DEFENSOR_OFICIAL`, `TRABA_LITIS`, `APELACION_LANZ`, `SENTENCIA_CAMARA`, `REF_LANZ`, `SENTENCIA_FIRME`) quedan disponibles solo por excepción vía Retroceder/Avanzar manual (motivo obligatorio).
+Resuelto por `getSiguienteLanzamiento(codigoActual, tipoLanzamiento)` + `SALTOS_LANZAMIENTO_COMERCIAL` en `DetalleExpediente.page.tsx`, con prioridad **salto Comercial > ramificación genérica > siguiente lineal**.
 
-Bifurcación desde `CONSTATACION_JUDICIAL` (vía `RAMIFICACIONES_POR_CODIGO`, igual mecanismo que ALEGATO/APELACION):
-```
-CONSTATACION_JUDICIAL → SENTENCIA_LANZAMIENTO ('Sentencia de Lanzamiento (sin vulnerables — directo)')
-                       | TRASLADO_DEFENSOR_OFICIAL ('Traslado a Defensor Oficial (con vulnerables)')
-```
-
-Terminal propio: `TERMINADO` (no `FINALIZADO` como los 4 ciclos de Demanda — mismo label "Finalizado"
-en la UI). `grupoCausal: 'LANZAMIENTO'` en **todos** los nodos, con catálogo propio en
-`causalesFinalizacion.ts` (`CAUSALES_FINALIZACION.LANZAMIENTO` = Desistimiento / Acuerdo de entrega /
-Otro — no comparte causales con Demanda Civil/Laboral). `TIPOS_FINALIZACION_LIBRE` incluye
-`LANZAMIENTO_JUDICIALIZADO`; el código del terminal por tipo se resuelve con
-`getCodigoFinalizado(tipo)` / `CODIGO_FINALIZADO_POR_TIPO` (reemplazó los literales `'FINALIZADO'`
-hardcodeados del prompt anterior — necesario porque este ciclo usa `'TERMINADO'`).
+Terminal propio: `TERMINADO` (mismo label "Finalizado"). `grupoCausal: 'LANZAMIENTO'` en todos los nodos, catálogo propio en `causalesFinalizacion.ts` (Desistimiento / Acuerdo de entrega / Otro). `TIPOS_FINALIZACION_LIBRE` incluye `LANZAMIENTO_JUDICIALIZADO`; el terminal por tipo sale de `getCodigoFinalizado(tipo)`.
 
 ### Ramificación genérica en el modal de cambio de estado — `getRamificaciones`
 `DetalleExpediente.page.tsx` resuelve las opciones del optgroup "Avanzar" con
@@ -379,11 +377,12 @@ código es igual en los 4 ciclos de Demanda:
 RAMIFICACIONES_POR_CODIGO: {
   ALEGATO:                ['SENTENCIA_1_FAV', 'SENTENCIA_1_DESFAV'],
   APELACION:               ['SENTENCIA_2_FAV', 'SENTENCIA_2_DESFAV'],
-  CONSTATACION_JUDICIAL:   ['SENTENCIA_LANZAMIENTO', 'TRASLADO_DEFENSOR_OFICIAL'],
+  CONSTATACION_JUDICIAL:   ['SENTENCIA_LANZAMIENTO', 'TRABA_LITIS'],
 }
 
 // EN_ANALISIS es la excepción — su ramificación SÍ depende del tipo (ciclo A vs ciclo B)
 getRamificaciones('EN_ANALISIS', tipo)  // → según TIPOS_EN_ANALISIS_CICLO_A / _CICLO_B
+// JUICIO_INICIADO de un tipo antecedente → ['DEVUELTO_SECTOR_REQUIRENTE'] (archivar a mano, Delta 13)
 getRamificaciones('ALEGATO', tipo)      // → RAMIFICACIONES_POR_CODIGO['ALEGATO'], cualquier tipo
 ```
 
@@ -391,12 +390,14 @@ Si un estado no ramifica, `getRamificaciones` devuelve `[]` y el modal cae al fa
 (`siguienteEstadoProcesal`, derivado de `EstadoProcesal.siguiente`).
 
 Labels de las opciones ramificadas: `'Sentencia 1° Instancia — Favorable/Desfavorable'`,
-`'Sentencia 2° Instancia — Favorable/Desfavorable'` (los 4 ciclos MATRIZ SACO de Demanda);
-`'Sentencia de Lanzamiento (sin vulnerables — directo)'` / `'Traslado a Defensor Oficial (con
-vulnerables)'` para `CONSTATACION_JUDICIAL` en LANZAMIENTO_JUDICIALIZADO.
+`'Sentencia 2° Instancia — Favorable/Desfavorable'` (los 4 ciclos MATRIZ SACO de Demanda —
+ambas ramas convergen: 1° instancia → APELACION, 2° instancia → REF);
+`LABEL_RAMA` para `CONSTATACION_JUDICIAL` en LANZAMIENTO_JUDICIALIZADO (ver arriba).
 
 ### Tipos con bifurcación desde EN_ANALISIS (Ciclo A — con acuerdo extrajudicial)
-Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `ACUERDO_EXTRAJUDICIAL` | `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`
+Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `ACUERDO_EXTRAJUDICIAL` | `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`.
+`ACUERDO_EXTRAJUDICIAL → FINALIZADO` (avance lineal, decisión de negocio 2026-11-03). `FINALIZADO` también se alcanza en cascada desde la derivada de Iniciar Juicio (Delta 13).
+ASIGNADO no tiene tareas: las de análisis viven en EN_ANALISIS (Delta 8). DEVUELTO tiene 4 tareas en los 7 tipos A/B.
 
 Tipos: COBRO_CANON, RECLAMO_CONTRAT, RECUPERO, EJECUCION_GAR, LANZAMIENTO
 
@@ -404,6 +405,12 @@ Tipos: COBRO_CANON, RECLAMO_CONTRAT, RECUPERO, EJECUCION_GAR, LANZAMIENTO
 Estados: `ASIGNADO → EN_ANALISIS` → (bifurcación) → `JUICIO_INICIADO` | `DEVUELTO_SECTOR_REQUIRENTE`
 
 Tipos: CONSIGNACION, DESAFUERO
+
+### Mediaciones / SECLO — ciclo Acuerdo / No acuerdo (`Estados_PRD.xlsx`)
+`ASIGNADO → EN_ANALISIS → [SOLICITUD_INFORMACION] → CUMPLIDO_ACUERDO | CUMPLIDO_SIN_ACUERDO` (ambos finales). Bifurcación en `getRamificaciones` vía `TIPOS_CICLO_ACUERDO`. Sin tareas. Ver `claude-docs/DELTAS3_ETAPA2_CLAUDE.md`.
+
+### Defensa Civil — Asume / No asume representación (`Estados_PRD.xlsx`)
+`ASIGNADO → EN_ANALISIS → ASUME_REPRESENTACION → FINALIZADO | NO_ASUME_REPRESENTACION` (final). Bifurcación en `getRamificaciones`. Sin tareas.
 
 ### "Finalizado" siempre disponible
 `TIPOS_FINALIZACION_LIBRE` = `DEMANDA_CIVIL`, `DEMANDA_LABORAL`, `DEMANDA_CIVIL_ACTORA`,
@@ -421,28 +428,15 @@ LANZAMIENTO_JUDICIALIZADO) y registra la actividad con la causal en la descripci
 - `EN_ANALISIS` tiene `siguiente: undefined` — no es flujo lineal
 - Cuando `getRamificaciones(codigoActual, tipo).length > 0` el optgroup "Avanzar" muestra las opciones ramificadas en vez del único siguiente lineal
 
-### Flujo "Iniciar Juicio"
-1. Avanzar a `JUICIO_INICIADO` → toast informativo
-2. Botón "Iniciar Juicio" en menú + se activa
-3. `getTipoDocumentoNuevo(tipo)` devuelve el tipo del documento a crear:
+### Flujo "Iniciar Juicio" (Delta 13 — siempre crea una actuación derivada)
+1. Avanzar a `JUICIO_INICIADO` → toast informativo; se habilita "Iniciar Juicio" en el menú +.
+2. `MAPA_INICIAR_JUICIO` (`utils/iniciarJuicio.ts`) define el tipo de la actuación nueva:
    - COBRO_CANON / RECLAMO_CONTRAT / RECUPERO / EJECUCION_GAR → `DEMANDA_CIVIL_ACTORA`
-   - LANZAMIENTO → `LANZAMIENTO_JUDICIALIZADO`
+   - LANZAMIENTO → `LANZAMIENTO_JUDICIALIZADO` (exige `tipo_lanzamiento`)
    - CONSIGNACION / DESAFUERO → `DEMANDA_LABORAL_ACTORA`
-4. El documento nuevo activa timer de 3 meses. Ver Sección 7 — Timer Iniciar Juicio.
-5. **Comportamiento según tipo origen, en `confirmarIniciarJuicio()`:**
-   - COBRO_CANON / RECLAMO_CONTRAT / RECUPERO / EJECUCION_GAR / CONSIGNACION / DESAFUERO:
-     **parchea el expediente actual** — `campos_mesa.mesa_*`, `es_juicio_iniciado`,
-     `fecha_inicio_juicio`. No crea nada nuevo. `exp.tipo` no cambia.
-   - **LANZAMIENTO (única excepción):** crea un expediente **nuevo**
-     (`id: C-LJ###### / L-LJ######` según área) con `tipo: 'LANZAMIENTO_JUDICIALIZADO'`,
-     `estado`/`estadoProcesal: 'ASIGNADO'`, mismo patrón que `confirmarNuevaQuerella`
-     (`agregarExpediente` + patch del origen con `es_juicio_iniciado`, `es_principal: false`,
-     `numero_causa`). Requiere el campo `mesa_tipo_lanzamiento` (Operativo/Comercial, ver
-     arriba) — el modal bloquea "Confirmar Inicio" sin ese campo si el tipo origen es
-     LANZAMIENTO. `es_principal` del expediente nuevo usa `tieneCausaReal` (Sección 7), no
-     `true` hardcodeado. Navega automáticamente al expediente nuevo tras confirmar.
-   - Campos `mesa_ubicacion`/`mesa_linea` (existían en `formJuicio` pero no se volcaban a
-     `campos_mesa`) están mapeados en ambos caminos desde esta reconstrucción.
+3. `confirmarIniciarJuicio()` **siempre crea una actuación nueva** (`C|L-DA######` / `C-LJ######`) en ASIGNADO, con todos los `campos_mesa` del modal, `antecedente_id`, `es_juicio_iniciado` + `fecha_inicio_juicio` (el timer de 3 meses corre en la derivada) y vínculo `ANTECEDENTE`. El origen queda con `es_juicio_iniciado`, `id_juicio_derivado`, `es_principal: false`, causa común y vínculo `JUDICIALIZADO`. `es_principal` de la derivada = `tieneCausaReal`. Navega a la nueva.
+4. Al **finalizar la derivada** (`confirmarCausal`) el antecedente pasa en cascada a `FINALIZADO` (estado agregado a los 7 ciclos A/B, solo alcanzable así), salvo que ya estuviera archivado. Si el antecedente tiene tareas sin resolver → modal blando "Tareas pendientes" (Volver / Continuar igual). Misma advertencia al archivar un antecedente (EN_ANALISIS/JUICIO_INICIADO → DEVUELTO).
+5. Detalle completo en `claude-docs/DELTAS3_ETAPA2_CLAUDE.md`.
 
 ### Ciclos Penales
 - `getEtapasPenales(tipo)` (`src/data/etapasPenales.ts`) **ignora el parámetro `tipo`** y devuelve siempre el mismo ciclo (`ETAPAS_QUERELLA`) para **todos** los tipos del área PENAL — QUERELLA, DEFENSA_PENAL y CARTA_SUCESO (Carta SAE) incluidos. No hay un ciclo separado por tipo pese al nombre de la función.

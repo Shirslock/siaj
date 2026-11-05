@@ -120,6 +120,7 @@ export const DATOS_SOLO_LECTURA: Record<string, { id: string; label: string }[]>
     { id: 'TI_001', label: 'Actora' },
     { id: 'TI_002', label: 'Demandada' },
     { id: 'TI_003', label: 'Denunciante' },
+    { id: 'TI_005', label: 'Actuación de Oficio' },
     { id: 'TI_004', label: 'Sin Intervención' },
   ],
 }

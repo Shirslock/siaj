@@ -3,8 +3,9 @@ import { useUIStore } from '../../store/ui.store'
 import { RUTAS } from '../../utils/routing'
 import {
   KpiCard, WidgetCard, WidgetVencimientos, WidgetCerradas, WidgetAudiencias,
-  BarrasDistribucion, useHomeData, type FilaBarra, type Scope,
+  BarrasDistribucion, useHomeData, letradosDisponibles, type FilaBarra, type Scope,
 } from './homeShared'
+import { getNombreCompleto, getUsuarioById } from '../../data/usuarios'
 
 // Pantalla Principal.
 // Home de ABOGADO (scope fijo "Mías") y, con alcance ampliado, de COORDINADOR ("Mías"/"Mi
@@ -23,18 +24,24 @@ const SCOPE_DEFAULT: Record<string, Scope> = {
 export default function HomePage() {
   const { usuarioActivo: usuarioParaDefault } = useUIStore()
   const rolSistema = usuarioParaDefault?.rolSistema ?? 'ABOGADO'
-  const [scope, setScope] = useState<Scope>(() => SCOPE_DEFAULT[rolSistema] ?? 'MIAS')
+  // scopeBase = Mías / Mi área / Todo. "Por letrado" es un cuarto modo (porLetrado) que, hasta
+  // elegir a alguien, deja el tablero con el alcance anterior.
+  const [scopeBase, setScopeBase] = useState<Scope>(() => SCOPE_DEFAULT[rolSistema] ?? 'MIAS')
+  const [porLetrado, setPorLetrado] = useState(false)
+  const [letradoId, setLetradoId] = useState('')
+  const scope: Scope = porLetrado && letradoId ? 'LETRADO' : scopeBase
 
   const {
     usuarioActivo, navigate, misActivos, vencimientos,
     causasActivasCount, documentosActivosCount, asignadoCount, intervencion,
     urgentesCount, estadosActivos, audiencias, cerradasCount,
-  } = useHomeData(scope)
+  } = useHomeData(scope, letradoId)
 
   // Filtro de alcance que se agrega a cada deep-link hacia la Bandeja, además del filtro
   // propio de cada KPI/fila — así el número del indicador coincide con el resultado.
   const qsAlcance = (() => {
     if (scope === 'MIAS') return `letrado=${encodeURIComponent(usuarioActivo?.id ?? '')}`
+    if (scope === 'LETRADO') return `letrado=${encodeURIComponent(letradoId)}`
     if (scope === 'AREA') {
       const areas = usuarioActivo?.areas ?? []
       return `area=${areas.length === 1 ? encodeURIComponent(areas[0]) : ''}`
@@ -78,7 +85,8 @@ export default function HomePage() {
   const plural = n !== 1
   const sufijoActuacion = `actuación${plural ? 'es' : ''} activa${plural ? 's' : ''}`
   const prefijoScope =
-    scope === 'AREA' ? `Área ${(usuarioActivo?.areas ?? []).join(', ')}: `
+    scope === 'LETRADO' ? `Letrado ${getNombreCompleto(getUsuarioById(letradoId)!)}: `
+    : scope === 'AREA' ? `Área ${(usuarioActivo?.areas ?? []).join(', ')}: `
     : scope === 'TODO' ? 'Sistema: '
     : 'Gestionando '
 
@@ -87,6 +95,8 @@ export default function HomePage() {
     rolSistema === 'COORDINADOR'
       ? [{ valor: 'MIAS', label: 'Mías' }, { valor: 'AREA', label: 'Mi área' }]
       : [{ valor: 'MIAS', label: 'Mías' }, { valor: 'TODO', label: 'Todo' }]
+
+  const letrados = letradosDisponibles(usuarioActivo)
 
   return (
     <div className="p-8 space-y-5">
@@ -102,20 +112,45 @@ export default function HomePage() {
         </div>
 
         {mostrarToggle && (
-          <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
-            {opcionesToggle.map(o => (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
+              {opcionesToggle.map(o => (
+                <button
+                  key={o.valor}
+                  onClick={() => { setScopeBase(o.valor); setPorLetrado(false) }}
+                  className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
+                    !porLetrado && scopeBase === o.valor
+                      ? 'bg-[#2a78d6] text-white shadow-sm'
+                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
               <button
-                key={o.valor}
-                onClick={() => setScope(o.valor)}
+                onClick={() => setPorLetrado(true)}
                 className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
-                  scope === o.valor
+                  porLetrado
                     ? 'bg-[#2a78d6] text-white shadow-sm'
                     : 'text-[#4a6a84] hover:text-[#1b3a57]'
                 }`}
               >
-                {o.label}
+                Por letrado
               </button>
-            ))}
+            </div>
+            {porLetrado && (
+              <select
+                value={letradoId}
+                onChange={e => setLetradoId(e.target.value)}
+                aria-label="Letrado"
+                className="field-input text-[12px] py-1.5 min-w-[220px]"
+              >
+                <option value="">Elegir letrado…</option>
+                {letrados.map(u => (
+                  <option key={u.id} value={u.id}>{getNombreCompleto(u)}</option>
+                ))}
+              </select>
+            )}
           </div>
         )}
       </div>

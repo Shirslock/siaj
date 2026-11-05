@@ -249,6 +249,9 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
               onChange={setCampoMesa}
               area={area}
             />
+            {errors['mesa_tipo_intervencion'] && (
+              <p className="text-xs text-[#b91c1c] mt-2">{errors['mesa_tipo_intervencion']}</p>
+            )}
           </div>
 
           {/* SECCIÓN 2 — Detalles del Expediente */}

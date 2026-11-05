@@ -493,14 +493,39 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     intervinientes: [], documentos: [], vinculos: [],
   },
   {
-    id: 'C-0524/2026', area: 'CIVIL' as Area, tipo: 'PEDIDO_CAUSA_PENAL' as TipoGestion,
-    estado: 'INICIO', estadoProcesal: 'INICIO',
-    caratula: 'PEDIDO DE CAUSA PENAL — Antecedentes por descarrilamiento en Km 32 — Línea Sarmiento',
-    numero_ee_gde: 'EX-2026-01205-APN-DGJYA', numero_causa: 'IPP 8.441/2026',
-    abogado_id: 'UR_004', fecha_recepcion: addDays(-5), es_principal: false, es_urgente: false,
-    campos_mesa: { mesa_tipo_intervencion: 'Sin Intervención', mesa_organismo: 'Fiscalía Nacional en lo Criminal y Correccional N° 7' },
+    // MEDIACION en En Análisis — para probar la bifurcación Cumplido (acuerdo) / (no acuerdo).
+    id: 'C-0526/2026', area: 'CIVIL' as Area, tipo: 'MEDIACION' as TipoGestion,
+    estado: 'EN_ANALISIS', estadoProcesal: 'EN_ANALISIS',
+    caratula: 'MEDIACIÓN PRIVADA — GARCÍA, Rubén c/ SOFSA S.A. — Daños por caída en andén',
+    numero_ee_gde: 'EX-2026-01207-APN-DGJYA', numero_causa: null,
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-6), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Demandada', mesa_tipo_mediacion: 'Privada', mesa_requirente: 'GARCÍA, Rubén', mesa_requerido: 'SOFSA S.A.', mesa_fecha_audiencia: addDays(12) },
     campos_abogado: {},
-    timeline: [{ id: 'C0524_REC_01', expediente_id: 'C-0524/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Pedido recibido y asignado', descripcion: 'Pedido de causa penal recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-5), activo: true, subitems: [], estadoExpediente: 'INICIO', creado_por: 'UR_028' }],
+    timeline: [{ id: 'C0526_REC_01', expediente_id: 'C-0526/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Mediación recibida y asignada', descripcion: 'Notificación de mediación recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-6), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    // SECLO en Solicitud de Información — desde acá solo queda elegir el resultado.
+    id: 'L-0527/2026', area: 'LABORAL' as Area, tipo: 'SECLO' as TipoGestion,
+    estado: 'SOLICITUD_INFORMACION', estadoProcesal: 'SOLICITUD_INFORMACION',
+    caratula: 'SECLO — ACOSTA, Daniel c/ SOFSA S.A. — Diferencias salariales',
+    numero_ee_gde: 'EX-2026-01208-APN-DGJYA', numero_causa: null,
+    abogado_id: 'UR_012', fecha_recepcion: addDays(-10), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Demandada', mesa_requirente: 'ACOSTA, Daniel', mesa_requerido: 'SOFSA S.A.', mesa_objeto_reclamo: 'Reclamo por diferencias salariales y horas extra.' },
+    campos_abogado: {},
+    timeline: [{ id: 'L0527_REC_01', expediente_id: 'L-0527/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'SECLO recibido y asignado', descripcion: 'Citación SECLO recibida por Mesa SACO y asignada al letrado.', fecha: addDays(-10), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' }],
+    intervinientes: [], documentos: [], vinculos: [],
+  },
+  {
+    // DEFENSA_CIVIL en En Análisis — para probar Asume / No asume representación.
+    id: 'C-0528/2026', area: 'CIVIL' as Area, tipo: 'DEFENSA_CIVIL' as TipoGestion,
+    estado: 'EN_ANALISIS', estadoProcesal: 'EN_ANALISIS',
+    caratula: 'DEFENSA CIVIL — RÍOS, Marcela c/ MOLINA, Hugo (dependiente SOFSA) s/ Daños y perjuicios',
+    numero_ee_gde: 'EX-2026-01209-APN-DGJYA', numero_causa: null,
+    abogado_id: 'UR_004', fecha_recepcion: addDays(-4), es_principal: false, es_urgente: false,
+    campos_mesa: { mesa_tipo_intervencion: 'Demandada', mesa_caratula: 'RÍOS, Marcela c/ MOLINA, Hugo s/ Daños y perjuicios', mesa_datos_dependientes: 'MOLINA, Hugo — Conductor, Línea Roca — Legajo 30412' },
+    campos_abogado: {},
+    timeline: [{ id: 'C0528_REC_01', expediente_id: 'C-0528/2026', tipo: 'RECEPCION' as TipoActividad, titulo: 'Pedido de defensa recibido y asignado', descripcion: 'Pedido de defensa de un dependiente recibido por Mesa SACO y asignado al letrado.', fecha: addDays(-4), activo: true, subitems: [], estadoExpediente: 'ASIGNADO', creado_por: 'UR_028' }],
     intervinientes: [], documentos: [], vinculos: [],
   },
   {
@@ -517,8 +542,10 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
   },
 
   // ── P-0100/2026 — OFICIO (variante penal) — EN ANÁLISIS ──
-  // Ejemplo para probar el multiselect abg_tipo_solicitud con
-  // sub-formularios en modal (10 tipos, uno completo y uno pendiente).
+  // Delta 10: solo tiene N° de IPP → el agrupador de causa es la IPP. Para probar
+  // el renombrado automático, completar "N° de Causa" en Datos.
+  // Delta 2B/6C: las solicitudes penales ya no son un campo de Datos; viven en el
+  // timeline como actividades (una completa y una "Sin completar").
   {
     id: 'P-0100/2026',
     area: 'PENAL' as Area,
@@ -533,8 +560,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     es_principal: false,
     es_urgente: false,
     campos_mesa: {
-      mesa_num_causa:      'IPP-2026-00845',
-      mesa_num_sumario:    'SUM-2026-0077',
+      mesa_tipo_intervencion: 'Denunciante',
       mesa_num_ipp:        'IPP-2026-00845',
       mesa_caratula:       'N.N. S/ APEDREO CON LESIONES — LÍNEA SARMIENTO',
       mesa_fiscalia:       'FIS_001',
@@ -549,27 +575,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
       abg_damnificado:    'Empresa de Ferrocarriles S.A.',
       abg_imputado:       'N.N.',
       abg_tipo_hecho:     ['APEDREO CON LESIONES'],
-      abg_tipo_solicitud: ['Citaciones a Testimonial', 'Solicitud de Averiguación de Paradero (Búsqueda de Personas)'],
       abg_num_siniestro:  'SIN-2026-0845',
-      abg_solicitudes_detalle: {
-        'Citaciones a Testimonial': {
-          campos: {
-            citado_nombre:      'Gómez, Laura',
-            citado_legajo:      '48210',
-            citado_funcion:     'Guarda',
-            fecha_citacion:     addDays(10),
-            horario_citacion:   '09:30',
-            tipo_celebracion:   'Presencial',
-            lugar_celebracion:  'UFI La Plata — Sala 3',
-            area_interviniente: 'Legales SOFSA',
-            fecha_cumplimiento: '',
-            asistencia_rito:    'SI',
-          },
-          archivos: {},
-        },
-        // "Solicitud de Averiguación de Paradero" queda sin completar
-        // a propósito, para verificar el badge "Sin completar".
-      },
     },
     timeline: [
       {
@@ -584,6 +590,42 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
         estadoExpediente: 'EN ANÁLISIS',
         doc_gde: 'EX-2026-00845-APN-DGJYA',
         creado_por: 'UR_028',
+      },
+      {
+        id: 'P0100_SOL_01',
+        expediente_id: 'P-0100/2026',
+        tipo: 'CITACION_TESTIMONIAL' as TipoActividad,
+        titulo: 'Citación a testimonial — Gómez, Laura',
+        descripcion: 'Citación de la guarda Gómez como testigo en la UFI La Plata.',
+        fecha: addDays(-3),
+        activo: false,
+        subitems: [],
+        creado_por: 'UR_019',
+        solicitud_penal_campos: {
+          citado_nombre:      'Gómez, Laura',
+          citado_legajo:      '48210',
+          citado_funcion:     'Guarda',
+          fecha_citacion:     addDays(10),
+          horario_citacion:   '09:30',
+          tipo_celebracion:   'Presencial',
+          lugar_celebracion:  'UFI La Plata — Sala 3',
+          area_interviniente: 'Legales SOFSA',
+          fecha_cumplimiento: addDays(10),
+          asistencia_rito:    'SI',
+        },
+      },
+      {
+        // Sin completar a propósito, para verificar el badge "Sin completar".
+        id: 'P0100_SOL_02',
+        expediente_id: 'P-0100/2026',
+        tipo: 'SOLICITUD_AVERIGUACION_PARADERO' as TipoActividad,
+        titulo: 'Averiguación de paradero — imputado N.N.',
+        descripcion: 'Pedido de la UFI para ubicar al imputado.',
+        fecha: addDays(-2),
+        activo: false,
+        subitems: [],
+        creado_por: 'UR_019',
+        solicitud_penal_campos: { tipo_requerimiento: 'Información' },
       },
     ],
     intervinientes: [
@@ -608,7 +650,8 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     es_principal: false,
     es_urgente: false,
     es_querella_iniciada: false,
-    campos_mesa: {},
+    // Delta 7: con intervención definida, "Iniciar Querella" está habilitado.
+    campos_mesa: { mesa_tipo_intervencion: 'Denunciante' },
     campos_abogado: {
       abg_documental:    'Completo',
       numero_sae:        'SAE-2026-001122',
@@ -809,11 +852,13 @@ export const ESTADOS_POR_TIPO: Record<string, string[]> = {
   DEMANDA_CIVIL:    ['INGRESADO', 'EN TRAMITACIÓN', 'AUDIENCIA PACTADA', 'SENTENCIA', 'APELACIÓN', 'FIRME', 'ARCHIVADO'],
   DEMANDA_LABORAL:  ['INGRESADO', 'EN TRAMITACIÓN', 'AUDIENCIA PACTADA', 'SENTENCIA', 'APELACIÓN', 'FIRME', 'ARCHIVADO'],
   OFICIO:           ['RECIBIDO', 'EN ANÁLISIS', 'RESPONDIDO', 'ARCHIVADO'],
-  MEDIACION:        ['PENDIENTE', 'ACUERDO', 'FRACASÓ', 'CONTINÚA', 'ARCHIVADA'],
-  SECLO:            ['PENDIENTE', 'ACUERDO', 'SIN ACUERDO', 'ARCHIVADO'],
+  // Mediaciones / SECLO tienen ciclo propio en estadosProcesales.ts (fallback)
+  MEDIACION:        ['ASIGNADO', 'EN_ANALISIS', 'SOLICITUD_INFORMACION', 'CUMPLIDO_ACUERDO', 'CUMPLIDO_SIN_ACUERDO'],
+  SECLO:            ['ASIGNADO', 'EN_ANALISIS', 'SOLICITUD_INFORMACION', 'CUMPLIDO_ACUERDO', 'CUMPLIDO_SIN_ACUERDO'],
   CARTA_DOC:        ['RECIBIDA', 'EN ANÁLISIS', 'RESPONDIDA', 'ARCHIVADA'],
   QUERELLA:         ['INSTRUCCIÓN', 'ELEVADA A JUICIO', 'JUICIO ORAL', 'SENTENCIA', 'ARCHIVADA'],
-  DEFENSA_CIVIL:    ['INGRESADO', 'EN TRÁMITE', 'AUDIENCIA FIJADA', 'SENTENCIA', 'APELACIÓN', 'FIRME', 'ARCHIVADO'],
+  // Defensa Civil tiene ciclo propio en estadosProcesales.ts (fallback)
+  DEFENSA_CIVIL:    ['ASIGNADO', 'EN_ANALISIS', 'ASUME_REPRESENTACION', 'NO_ASUME_REPRESENTACION', 'FINALIZADO'],
   DEFENSA_PENAL:    ['INSTRUCCIÓN', 'ELEVADA A JUICIO', 'SOBRESEÍDO', 'SENTENCIA', 'ARCHIVADA'],
   DESAFUERO:        ['INGRESADO', 'EN TRÁMITE', 'APROBADO', 'DENEGADO', 'ARCHIVADO'],
   COBRO_CANON:      ['INGRESADO', 'EN TRÁMITE', 'COBRADO', 'PARCIALMENTE COBRADO', 'ARCHIVADO'],
@@ -821,5 +866,6 @@ export const ESTADOS_POR_TIPO: Record<string, string[]> = {
   EJECUCION_GAR:    ['INICIADA', 'EN TRÁMITE', 'COBRADA', 'RECHAZADA', 'ARCHIVADA'],
   OTRAS:            ['INGRESADO', 'EN TRÁMITE', 'RESUELTO', 'ARCHIVADO'],
   LANZAMIENTO:               ['RECEPCIONADO', 'EN_ANALISIS', 'ACUERDO_EXTRAJUDICIAL', 'DEVUELTO_SECTOR_REQUIRENTE', 'JUICIO_INICIADO'],
-  LANZAMIENTO_JUDICIALIZADO: ['INICIO', 'CONSTATACION_JUDICIAL', 'SENTENCIA_LANZAMIENTO', 'MANDAMIENTO_LIBRADO', 'LANZAMIENTO_EFECTIVIZADO', 'TERMINADO'],
+  // Delta 5B — 11 estados (fallback; el ciclo real está en estadosProcesales.ts)
+  LANZAMIENTO_JUDICIALIZADO: ['INICIO', 'CONSTATACION_JUDICIAL', 'TRABA_LITIS', 'SENTENCIA_LANZAMIENTO', 'APELACION_LANZ', 'SENTENCIA_CAMARA', 'REF_LANZ', 'SENTENCIA_FIRME', 'MANDAMIENTO_LIBRADO', 'LANZAMIENTO_EFECTIVIZADO', 'TERMINADO'],
 }

@@ -8,7 +8,7 @@ import {
   COMISARIAS, TIPOS_HECHO_PENAL,
   TIPOS_HECHO_DESAFUERO, SANCIONES,
   ROLES_INTERVINIENTE, TIPOS_DOC_INTERVINIENTE,
-  MONEDAS_INICIAL,
+  MONEDAS_INICIAL, TIPOS_HECHO_DEMANDA_DELTA9,
 } from '../data/catalogos'
 import { USUARIOS } from '../data/usuarios'
 import type { CatalogoItem, CatalogoItemExtended, MonedaItem, TipoGestionItem } from '../types'
@@ -78,6 +78,7 @@ export const useConfiguracionStore = create<ConfiguracionState>((set) => ({
     { id: 'THC_003', label: 'COBRO DE SUMAS DE DINERO' },
     { id: 'THC_004', label: 'AMPARO' },
     { id: 'THC_005', label: 'OTROS' },
+    ...TIPOS_HECHO_DEMANDA_DELTA9.map((label, i) => ({ id: `THC_${String(6 + i).padStart(3, '0')}`, label })),
   ],
   tiposHechoDemandaLaboral: [
     { id: 'THL_001', label: 'DESPIDO' },
@@ -85,6 +86,7 @@ export const useConfiguracionStore = create<ConfiguracionState>((set) => ({
     { id: 'THL_003', label: 'ENFERMEDAD PROFESIONAL' },
     { id: 'THL_004', label: 'DIFERENCIAS SALARIALES' },
     { id: 'THL_005', label: 'OTROS' },
+    ...TIPOS_HECHO_DEMANDA_DELTA9.map((label, i) => ({ id: `THL_${String(6 + i).padStart(3, '0')}`, label })),
   ],
   tiposHechoCartaSuceso: [
     { id: 'THX_001', label: 'APEDREO' },

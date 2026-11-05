@@ -17,6 +17,8 @@ import { useSolicitudesStore, PERSONAS_POR_AREA } from '../../../store/tareas.st
 import { useNotificacionesStore } from '../../../store/notificaciones.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { GenerarEscritoModal } from '../../../components/escritos/GenerarEscritoModal'
+import { AdjuntosInput } from '../../../components/ui/AdjuntosInput'
+import { aAdjuntoRef, adjuntosDeActividad } from '../../../utils/validarAdjuntos'
 
 interface Props { exp: Expediente }
 
@@ -54,7 +56,11 @@ type FiltroTab = 'todo' | 'sistema' | 'actividades' | 'tareas'
 // ── Stepper de estados procesales ───────────────────────────────────────────
 
 function ProcesalStepper({ exp }: { exp: Expediente }) {
-  const estadoCodigo = exp.estadoProcesal ?? 'INICIO'
+  // En DESARCHIVADO (sub-estado fuera del ciclo) el stepper sigue marcando el
+  // estado terminal del que salió la actuación.
+  const estadoCodigo = exp.estadoProcesal === 'DESARCHIVADO'
+    ? (exp.estado_previo_desarchivo ?? 'INICIO')
+    : (exp.estadoProcesal ?? 'INICIO')
   const todosEstados = getEstadosProcesales(exp.tipo)
 
   // Filtrar ASIGNADO del stepper visual, empezar desde INICIO
@@ -196,6 +202,13 @@ function TareaDetailPanel({
   onGuardar: () => void
   onCerrar: () => void
 }) {
+  // Adjuntos múltiples de la tarea: los ya guardados + los que se sumen en esta edición.
+  const [archivosNuevos, setArchivosNuevos] = useState<File[]>([])
+  useEffect(() => { setArchivosNuevos([]) }, [tarea.id])
+  function cambiarArchivosNuevos(files: File[]) {
+    setArchivosNuevos(files)
+    setCambiosLocales(p => ({ ...p, adjuntos: [...(tarea.adjuntos ?? []), ...files.map(aAdjuntoRef)] }))
+  }
   const estadoLocal = cambiosLocales.estado ?? tarea.estado ?? 'sin_estado'
   const urgenciaLocal = calcularUrgencia(
     cambiosLocales.fechaVencimiento !== undefined
@@ -437,13 +450,20 @@ function TareaDetailPanel({
           {/* Adjunto */}
           <div>
             <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">
-              Adjunto
+              Adjuntos
             </label>
-            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
-              <Icon name="attach_file" size={18} />
-              <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57] transition-colors">Adjuntar archivo</span>
-              <input type="file" className="hidden" />
-            </label>
+            {(tarea.adjuntos ?? []).length > 0 && (
+              <div className="space-y-1 mb-1.5">
+                {(tarea.adjuntos ?? []).map((a, i) => (
+                  <div key={`${a.nombre}-${i}`} className="flex items-center gap-2 text-[11px] text-[#4a6a84]">
+                    <Icon name="attach_file" size={13} />
+                    <span className="truncate flex-1">{a.nombre}</span>
+                    <span className="text-[10px]">{a.size}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <AdjuntosInput archivos={archivosNuevos} onChange={cambiarArchivosNuevos} compacto />
           </div>
         </div>
 
@@ -571,7 +591,7 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
           {act.descripcion && (
             <p className="text-xs text-[#4a6a84]">{act.descripcion}</p>
           )}
-          {(act.doc_gde || act.adjunto_nombre) && (
+          {(act.doc_gde || adjuntosDeActividad(act).length > 0) && (
             <div className="flex flex-wrap gap-3 mt-1.5">
               {act.doc_gde && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]">
@@ -579,17 +599,35 @@ function ActividadFeedItem({ act, idx: _idx, isLast, hijas = [], snapshotOpen, o
                   {act.doc_gde}
                 </span>
               )}
-              {act.adjunto_nombre && (
+              {adjuntosDeActividad(act).map((adj, i) => (
                 <a
+                  key={`${adj.nombre}-${i}`}
                   href="#"
                   onClick={e => e.preventDefault()}
                   title="Descarga no disponible en esta versión"
                   className="group inline-flex items-center gap-1 text-[10px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
                 >
                   <Icon name="attach_file" size={14} />
-                  {act.adjunto_nombre}
+                  {adj.nombre}
                   <Icon name="download" size={12} className="opacity-0 group-hover:opacity-60 transition-opacity ml-0.5" />
                 </a>
+              ))}
+            </div>
+          )}
+          {act.fecha_vencimiento && (
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              {act.estado === 'COMPLETADA' ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#166534]">
+                  <Icon name="check_circle" size={12} />
+                  Vencimiento cumplido · {formatFecha(act.fecha_vencimiento)}
+                </span>
+              ) : (
+                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  act.fecha_vencimiento <= HOY ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#fef3c7] text-[#92400e]'
+                }`}>
+                  <Icon name="clock" size={12} />
+                  {act.fecha_vencimiento < HOY ? 'Venció' : act.fecha_vencimiento === HOY ? 'Vence hoy' : 'Vence'} · {formatFecha(act.fecha_vencimiento)}
+                </span>
               )}
             </div>
           )}
@@ -925,7 +963,7 @@ export function TimelineTab({ exp }: Props) {
   const [cambiosLocales, setCambiosLocales] = useState<Partial<Tarea>>({})
   const [modalNuevaActividad, setModalNuevaActividad] = useState(false)
   const [formAct, setFormAct] = useState(BLANK_ACT)
-  const [adjuntoNuevaAct, setAdjuntoNuevaAct] = useState<File | null>(null)
+  const [adjuntosNuevaAct, setAdjuntosNuevaAct] = useState<File[]>([])
   const [esImpulsorio, setEsImpulsorio] = useState(false)
   const [filtroTab, setFiltroTab] = useState<FiltroTab>('todo')
   const [busqueda, setBusqueda] = useState('')
@@ -1068,6 +1106,13 @@ export function TimelineTab({ exp }: Props) {
     setEditTarget(null)
   }
 
+  // El vencimiento ya se cumplió: la actividad queda con su registro pero deja de alertar
+  // (Home, Bandeja, campana) y en la Agenda figura como cumplida.
+  function marcarVencimientoCumplido(globalIdx: number) {
+    editarActividad(exp.id, globalIdx, { estado: 'COMPLETADA' }, usuarioActivo?.id ?? '')
+    toast.success('Vencimiento marcado como cumplido.')
+  }
+
   function confirmarEliminacion(globalIdx: number) {
     if (!confirm('¿Eliminás esta actividad? Quedará un registro de auditoría.')) return
     eliminarActividad(exp.id, globalIdx, usuarioActivo?.id ?? '')
@@ -1174,6 +1219,12 @@ export function TimelineTab({ exp }: Props) {
     return { grupos: result.reverse(), entradaRecepcion }
   }, [sorted])
 
+  // Delta 3 / 4B — en DESARCHIVADO se admite UNA actividad genérica (lo cargado
+  // desde el último cambio de estado, que es el que llevó a Desarchivado);
+  // después hay que volver a archivo desde Cambiar estado.
+  const enDesarchivado = (exp.estadoProcesal ?? exp.estado) === 'DESARCHIVADO'
+  const yaCargoEnDesarchivado = enDesarchivado && (gruposFeed.grupos[0]?.actividades.length ?? 0) > 0
+
   // Contadores para tabs
   const cntSistema     = sorted.filter(a => a.tipo === 'MOVIMIENTO' && !!a.estadoExpediente).length
   const cntActividades = sorted.filter(a => !(a.tipo === 'MOVIMIENTO' && !!a.estadoExpediente)).length
@@ -1242,7 +1293,7 @@ export function TimelineTab({ exp }: Props) {
       descripcion: formAct.descripcion,
       fecha: formAct.fecha,
       doc_gde: formAct.doc_gde.trim() || null,
-      adjunto_nombre: adjuntoNuevaAct?.name ?? null,
+      ...(adjuntosNuevaAct.length > 0 ? { adjuntos: adjuntosNuevaAct.map(aAdjuntoRef) } : {}),
       subitems: [],
       activo: false,
       creado_por: usuarioActivo?.id,
@@ -1261,7 +1312,7 @@ export function TimelineTab({ exp }: Props) {
     toast.success('Actividad registrada.')
     cerrarModal()
     setFormAct(BLANK_ACT)
-    setAdjuntoNuevaAct(null)
+    setAdjuntosNuevaAct([])
     setEscritoIdSeleccionado(null)
   }
 
@@ -1321,6 +1372,17 @@ export function TimelineTab({ exp }: Props) {
 
       {/* ── Stepper procesal ── */}
       <ProcesalStepper exp={exp} />
+
+      {enDesarchivado && (
+        <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-2xl">
+          <Icon name="info" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-[#854f0b]">
+            {yaCargoEnDesarchivado
+              ? 'Ya se registró la actividad en Desarchivado. Volvé a archivo desde el botón + → Cambiar estado.'
+              : 'Actuación desarchivada: podés cargar una actividad genérica. Después volvé a archivo desde el botón + → Cambiar estado.'}
+          </p>
+        </div>
+      )}
 
       {/* ── Header: título + filtros + acción ── */}
       <div className="bg-white rounded-2xl shadow-card px-5 py-3">
@@ -1395,7 +1457,9 @@ export function TimelineTab({ exp }: Props) {
             {/* Botón nueva actividad */}
             <button
               onClick={() => { setFormAct(BLANK_ACT); setModalNuevaActividad(true) }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
+              disabled={yaCargoEnDesarchivado}
+              title={yaCargoEnDesarchivado ? 'Ya se registró una actividad en Desarchivado. Volvé a archivo para continuar.' : undefined}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Icon name="add" size={16} />
               Nueva Actividad
@@ -1618,10 +1682,10 @@ export function TimelineTab({ exp }: Props) {
                                     )}
                                   </div>
                                   {a.descripcion && <p className="text-xs text-[#4a6a84]">{a.descripcion}</p>}
-                                  {(a.doc_gde || a.adjunto_nombre) && (
+                                  {(a.doc_gde || adjuntosDeActividad(a).length > 0) && (
                                     <div className="flex flex-wrap gap-3 mt-1">
                                       {a.doc_gde && <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#1b3a57]"><Icon name="description" size={12} />{a.doc_gde}</span>}
-                                      {a.adjunto_nombre && <span className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{a.adjunto_nombre}</span>}
+                                      {adjuntosDeActividad(a).map((adj, i) => <span key={`${adj.nombre}-${i}`} className="inline-flex items-center gap-1 text-[10px] text-[#4a6a84]"><Icon name="attach_file" size={12} />{adj.nombre}</span>)}
                                     </div>
                                   )}
                                   {esLetrado && !a.es_solicitud && (
@@ -1713,7 +1777,7 @@ export function TimelineTab({ exp }: Props) {
         <div
           onClick={e => e.stopPropagation()}
           style={{ position: 'fixed', left: menuActividad.x, top: menuActividad.y }}
-          className="w-36 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
+          className="w-56 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
         >
           <button
             onClick={() => { abrirEdicion(menuActividad.act, menuActividad.globalIdx); setMenuActividad(null) }}
@@ -1722,6 +1786,15 @@ export function TimelineTab({ exp }: Props) {
             <Icon name="edit" size={13} />
             Editar
           </button>
+          {menuActividad.act.fecha_vencimiento && menuActividad.act.estado !== 'COMPLETADA' && (
+            <button
+              onClick={() => { marcarVencimientoCumplido(menuActividad.globalIdx); setMenuActividad(null) }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#166534] hover:bg-[#dcfce7] transition-colors text-left"
+            >
+              <Icon name="check_circle" size={13} />
+              Marcar vencimiento cumplido
+            </button>
+          )}
           <button
             onClick={() => { confirmarEliminacion(menuActividad.globalIdx); setMenuActividad(null) }}
             className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
@@ -1895,33 +1968,11 @@ export function TimelineTab({ exp }: Props) {
             </div>
           )}
           <div>
-            <label className="field-label">Adjunto</label>
-            {adjuntoNuevaAct ? (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[rgba(0,0,0,0.12)] bg-[#f5f5f5]">
-                <Icon name="attach_file" size={18} />
-                <span className="text-xs text-[#1b3a57] flex-1 truncate">{adjuntoNuevaAct.name}</span>
-                <span className="text-[10px] text-[#4a6a84]">{(adjuntoNuevaAct.size / 1024).toFixed(0)} KB</span>
-                <button
-                  onClick={() => setAdjuntoNuevaAct(null)}
-                  className="p-0.5 rounded text-[#4a6a84] hover:text-red-600 transition-colors"
-                >
-                  <Icon name="close" size={14} />
-                </button>
-              </div>
-            ) : (
-              <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgba(0,0,0,0.12)] cursor-pointer hover:border-[rgba(27,58,87,0.50)] hover:bg-[rgba(27,58,87,0.05)] transition-all group">
-                <Icon name="attach_file" size={18} className="text-[#4a6a84] group-hover:text-[#1b3a57]" />
-                <span className="text-xs text-[#4a6a84] group-hover:text-[#1b3a57]">Adjuntar archivo</span>
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={e => setAdjuntoNuevaAct(e.target.files?.[0] ?? null)}
-                />
-              </label>
-            )}
+            <label className="field-label">Adjuntos</label>
+            <AdjuntosInput archivos={adjuntosNuevaAct} onChange={setAdjuntosNuevaAct} />
           </div>
 
-          {exp.es_juicio_iniciado && (
+          {exp.es_juicio_iniciado && !exp.id_juicio_derivado && (
             <div className="pt-3 border-t border-[rgba(0,0,0,0.08)]">
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
@@ -2081,7 +2132,19 @@ export function TimelineTab({ exp }: Props) {
             <input type="text" className="field-input w-full font-mono" placeholder="EX-2026-..." value={formEdit.doc_gde} onChange={e => setFormEdit(p => ({ ...p, doc_gde: e.target.value }))} />
           </div>
           <div>
-            <label className="field-label">Fecha de vencimiento</label>
+            <div className="flex items-center justify-between">
+              <label className="field-label">Fecha de vencimiento</label>
+              {formEdit.fecha_vencimiento && (
+                <button
+                  type="button"
+                  onClick={() => setFormEdit(p => ({ ...p, fecha_vencimiento: '', fecha_aviso: '' }))}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-[#b91c1c] hover:underline"
+                >
+                  <Icon name="close" size={12} />
+                  Quitar vencimiento
+                </button>
+              )}
+            </div>
             <input
               type="date"
               className="field-input w-full"

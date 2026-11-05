@@ -8,6 +8,8 @@ import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
 import { formatFecha } from '../../utils/format'
 import type { Area, Usuario } from '../../types'
 import Icon from '../../components/ui/Icon'
+import { toast } from 'react-toastify'
+import { exportarMesaSacoExcel } from '../../utils/exportBandeja'
 
 const AREA_CELDA: Record<Area, string> = {
   CIVIL:   'bg-[rgba(196,223,232,0.60)] text-[#1b3a57]',
@@ -116,13 +118,29 @@ export default function MesaSacoPage() {
         </div>
 
         {/* Toolbar limpiar */}
-        <div className="flex justify-end px-4 py-2 border-b border-[rgba(0,0,0,0.05)]">
+        <div className="flex justify-end items-center gap-4 px-4 py-2 border-b border-[rgba(0,0,0,0.05)]">
           <button
             onClick={() => setFiltros(FILTROS_INIT)}
             className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
           >
             <Icon name="filter_alt_off" size={14} />
             Limpiar filtros
+          </button>
+          <button
+            onClick={() => {
+              const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+              exportarMesaSacoExcel(
+                expedientesFiltrados,
+                id => (id ? LINEAS_FERROVIARIAS.find(l => l.id === id)?.label ?? '' : ''),
+                `Bandeja_MesaSACO_${hoy}`,
+              )
+              toast.success('Excel exportado.')
+            }}
+            disabled={expedientesFiltrados.length === 0}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#4a6a84] hover:text-[#1b3a57] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+          >
+            <Icon name="download" size={14} />
+            Exportar Excel
           </button>
         </div>
 

@@ -7,12 +7,19 @@ solo cambió el texto de cara al usuario). Es el landing de `ABOGADO`; COORDINAD
 Dashboard, conviven como dos ítems del Sidebar. `"/"` resuelve el destino por rol en `App.tsx`
 (`<RaizPorRol>`), sin cambios.
 
-**Alcance (`scope: 'MIAS' | 'AREA' | 'TODO'`, ver `homeShared.tsx`):** todos los cálculos de
-`useHomeData(scope)` cuelgan de un único set base que varía según el scope, en vez de estar
+**Alcance (`scope: 'MIAS' | 'AREA' | 'TODO' | 'LETRADO'`, ver `homeShared.tsx`):** todos los cálculos de
+`useHomeData(scope, letradoId)` cuelgan de un único set base que varía según el scope, en vez de estar
 hardcodeados a `abogado_id === usuarioActivo.id`:
 - `ABOGADO` → sin toggle, scope fijo `'MIAS'` (comportamiento original, cero cambios).
-- `COORDINADOR` → toggle "Mías" / "Mi área", default `'AREA'`.
-- `REFERENTE` (Gerente) → toggle "Mías" / "Todo", default `'TODO'`.
+- `COORDINADOR` → toggle "Mías" / "Mi área" / "Por letrado", default `'AREA'`.
+- `REFERENTE` (Gerente) → toggle "Mías" / "Todo" / "Por letrado", default `'TODO'`.
+- **"Por letrado"** (`scope: 'LETRADO'`): al elegirlo aparece un desplegable con los letrados
+  (`letradosDisponibles()`: Coordinador → ABOGADO cuyas áreas intersectan las suyas; Gerente → todos),
+  ordenados por apellido. Mientras no se elija a nadie, el tablero conserva el alcance anterior
+  (`scopeBase`); el scope efectivo es `LETRADO` solo con `porLetrado && letradoId`. Filtra por
+  `abogado_id === letradoId` (todas sus actuaciones, aunque alguna sea de otra área). Los deep-links
+  llevan `?letrado=<id>`, así que el número del KPI coincide con la Bandeja. El saludo pasa a
+  "Letrado Apellido, Nombre: N actuaciones activas".
 
 El toggle vive en `Home.page.tsx` (mismo patrón visual que los tabs de `<WidgetVencimientos>`) y
 solo se renderiza para COORDINADOR/REFERENTE. Cada deep-link a la Bandeja agrega, además de su
@@ -172,7 +179,7 @@ Oficio | Sin Intervención`.
 
 ## `useHomeData()` — todo el cálculo en un solo hook
 
-Recibe `scope` (default `'MIAS'`) y devuelve `usuarioActivo`, `navigate`, `scope`, `misExpedientes`, `misActivos`, `vencimientos`,
+Recibe `scope` (default `'MIAS'`) y `letradoId` (solo para `'LETRADO'`) y devuelve `usuarioActivo`, `navigate`, `scope`, `misExpedientes`, `misActivos`, `vencimientos`,
 `causasActivasCount`, `documentosActivosCount`, `asignadoCount`, `intervencion` (`{ actora,
 demandada, denunciante, sinIntervencion }`), `porVencerCount`, `urgentesCount`, `estadosActivos`
 (`{ code, count, label }[]`, ordenado por `count` desc), `audiencias` (`{ exp, titulo, fecha }[]`,

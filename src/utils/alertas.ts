@@ -53,7 +53,8 @@ export function getAlertaExpediente(
 
   // Actividades genéricas con vencimiento
   ;(timeline ?? [])
-    .filter(act => (act as any).fecha_vencimiento)
+    // Un vencimiento marcado como cumplido (estado COMPLETADA) deja de alertar.
+    .filter(act => (act as any).fecha_vencimiento && act.estado !== 'COMPLETADA')
     .forEach(act => elementos.push({
       fecha_vencimiento: (act as any).fecha_vencimiento,
       fecha_aviso:       (act as any).fecha_aviso,
@@ -101,9 +102,11 @@ export interface AlertaTimer {
 }
 
 export function getAlertaTimer(
-  exp: Pick<Expediente, 'es_juicio_iniciado' | 'fecha_inicio_juicio' | 'fecha_ultimo_impulsorio'>
+  exp: Pick<Expediente, 'es_juicio_iniciado' | 'fecha_inicio_juicio' | 'fecha_ultimo_impulsorio' | 'id_juicio_derivado'>
 ): AlertaTimer {
   if (!exp.es_juicio_iniciado) return { activa: false }
+  // Delta 13 — el timer corre en la actuación derivada, no en el antecedente.
+  if (exp.id_juicio_derivado) return { activa: false }
   const fechaBase = exp.fecha_ultimo_impulsorio ?? exp.fecha_inicio_juicio
   if (!fechaBase) return { activa: false }
 
