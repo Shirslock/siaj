@@ -4,16 +4,18 @@ import { USUARIOS } from '../data/usuarios'
 
 interface UIState {
   usuarioActivo: Usuario | null
-  sidebarCollapsed: boolean
+  // PRD: el sidebar está oculto (off-canvas) por defecto y se abre con la hamburguesa del header.
+  sidebarOpen: boolean
   busquedaGlobal: string
   setUsuarioActivo: (id: string) => void
   toggleSidebar: () => void
+  closeSidebar: () => void
   setBusquedaGlobal: (q: string) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
   usuarioActivo: USUARIOS.find(u => u.id === 'UR_018') ?? null,
-  sidebarCollapsed: false,
+  sidebarOpen: false,
   busquedaGlobal: '',
 
   setUsuarioActivo: (id) => {
@@ -24,7 +26,8 @@ export const useUIStore = create<UIState>((set) => ({
     set({ usuarioActivo: usuario })
   },
 
-  toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  toggleSidebar: () => set(s => ({ sidebarOpen: !s.sidebarOpen })),
+  closeSidebar: () => set({ sidebarOpen: false }),
 
   setBusquedaGlobal: (q) => set({ busquedaGlobal: q }),
 }))

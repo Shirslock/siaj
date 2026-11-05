@@ -62,14 +62,14 @@ export function ConsultarNovedadPjnModal({ expediente, open, onClose }: Props) {
     <Modal open={open} onClose={handleClose} titulo="Consultar Novedad PJN" size="md">
       {(etapa === 'form' || etapa === 'cargando') && (
         <div className="space-y-4">
-          <div className="rounded-xl bg-[#f5f5f5] px-4 py-3">
-            <p className="text-xs text-[#4a6a84]">Causa a consultar</p>
-            <p className="text-sm font-bold font-mono text-[#1b3a57]">{expediente.numero_causa}</p>
+          <div className="rounded-lg bg-gray-100 px-4 py-3">
+            <p className="text-xs text-gray-500">Causa a consultar</p>
+            <p className="text-sm font-semibold font-mono text-gray-800">{expediente.numero_causa}</p>
           </div>
 
           {sinCupo ? (
             <>
-              <div className="rounded-xl bg-red-50 border border-red-200/60 px-4 py-3 flex items-start gap-2.5">
+              <div className="rounded-lg bg-red-50 border border-red-200/60 px-4 py-3 flex items-start gap-2.5">
                 <Icon name="error" size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-red-700">
                   Alcanzaste el límite de {MAX_CONSULTAS_DIARIAS} consultas manuales por hoy. Volvé a intentarlo mañana.
@@ -81,12 +81,12 @@ export function ConsultarNovedadPjnModal({ expediente, open, onClose }: Props) {
             </>
           ) : (
             <>
-              <p className="text-xs text-[#4a6a84]">
+              <p className="text-xs text-gray-500">
                 Te quedan {restantes} de {MAX_CONSULTAS_DIARIAS} consultas hoy.
               </p>
 
               <div>
-                <label className="block text-xs font-semibold text-[#4a6a84] mb-1">Usuario PJN</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Usuario PJN</label>
                 <input
                   type="text"
                   className="field-input w-full text-sm"
@@ -98,7 +98,7 @@ export function ConsultarNovedadPjnModal({ expediente, open, onClose }: Props) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#4a6a84] mb-1">Contraseña PJN</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Contraseña PJN</label>
                 <input
                   type="password"
                   className="field-input w-full text-sm"
@@ -136,7 +136,7 @@ export function ConsultarNovedadPjnModal({ expediente, open, onClose }: Props) {
 
       {etapa === 'error' && (
         <div className="space-y-4">
-          <div className="rounded-xl bg-red-50 border border-red-200/60 px-4 py-3 flex items-start gap-2.5">
+          <div className="rounded-lg bg-red-50 border border-red-200/60 px-4 py-3 flex items-start gap-2.5">
             <Icon name="error" size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-red-700">{errorMsg}</p>
           </div>
@@ -151,7 +151,7 @@ export function ConsultarNovedadPjnModal({ expediente, open, onClose }: Props) {
         <div className="space-y-3">
           {resultadosCorrida.length === 0 ? (
             <>
-              <p className="text-sm text-[#4a6a84]">No se encontraron novedades nuevas para esta causa.</p>
+              <p className="text-sm text-gray-500">No se encontraron novedades nuevas para esta causa.</p>
               <div className="flex items-center justify-end gap-2">
                 <Button variant="secondary" size="sm" onClick={() => resetForm(true)}>Volver a intentar</Button>
                 <Button variant="primary" size="sm" onClick={handleClose}>Cerrar</Button>

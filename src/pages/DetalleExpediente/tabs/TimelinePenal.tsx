@@ -101,7 +101,7 @@ function ProcesalStepperPenal({
   if (etapas.length <= 1) return null
 
   return (
-    <div className="bg-white rounded-2xl shadow-card px-8 py-4 mb-4 overflow-x-auto">
+    <div className="bg-white rounded-lg shadow-card px-8 py-4 mb-4 overflow-x-auto">
       <div className="flex items-center gap-0 min-w-max">
         {etapas.map((etapa, idx) => {
           const isPast    = idx < idxActual
@@ -118,15 +118,15 @@ function ProcesalStepperPenal({
                   disabled={!isClickable}
                   title={isClickable ? `Ir a ${etapa.label}` : undefined}
                   className={[
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all',
-                    isClickable ? 'hover:ring-2 hover:ring-[#1b3a57]/30 cursor-pointer' : 'cursor-default',
+                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all',
+                    isClickable ? 'hover:ring-2 hover:ring-blue-700/30 cursor-pointer' : 'cursor-default',
                     isCurrent
-                      ? 'bg-[#1b3a57] border-[#1b3a57] text-white shadow-md'
+                      ? 'bg-blue-700 border-blue-700 text-white shadow-md'
                       : isRechazado
-                      ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
+                      ? 'bg-red-100 border-red-300 text-red-700'
                       : isPast
-                      ? 'bg-[rgba(27,58,87,0.20)] border-[rgba(27,58,87,0.40)] text-[#1b3a57]'
-                      : 'bg-[#e8e8e8] border-[rgba(0,0,0,0.12)] text-[#4a6a84]',
+                      ? 'bg-blue-100 border-blue-400 text-gray-800'
+                      : 'bg-gray-100 border-gray-200 text-gray-500',
                   ].join(' ')}
                 >
                   {isPast && !isRechazado
@@ -138,19 +138,19 @@ function ProcesalStepperPenal({
                 </button>
                 <span className={[
                   'mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[72px] truncate',
-                  isCurrent    ? 'text-[#1b3a57]'
-                  : isRechazado ? 'text-[#b91c1c]'
-                  : isPast     ? 'text-[rgba(27,58,87,0.70)]'
-                  :              'text-[#4a6a84]',
+                  isCurrent    ? 'text-gray-800'
+                  : isRechazado ? 'text-red-700'
+                  : isPast     ? 'text-blue-700'
+                  :              'text-gray-500',
                 ].join(' ')}>
                   {etapa.label}
                 </span>
               </div>
               {!isLast && (
                 <div className="w-8 h-px mx-1 mb-4 relative">
-                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.08)] rounded-full" />
+                  <div className="absolute inset-0 bg-gray-100 rounded-full" />
                   {isPast && !isRechazado && (
-                    <div className="absolute inset-0 bg-[rgba(27,58,87,0.40)] rounded-full" />
+                    <div className="absolute inset-0 bg-blue-100 rounded-full" />
                   )}
                 </div>
               )}
@@ -176,7 +176,7 @@ function CampoUpload({ value, onChange }: { value: string; onChange: (v: string)
   return (
     <div className="space-y-1.5">
       {previos.map((n, i) => (
-        <div key={`${n}-${i}`} className="flex items-center gap-2 text-[11px] text-[#4a6a84]">
+        <div key={`${n}-${i}`} className="flex items-center gap-2 text-[11px] text-gray-500">
           <Icon name="attach_file" size={13} />
           <span className="truncate">{n}</span>
         </div>
@@ -199,7 +199,7 @@ function CampoInput({
 }) {
   return (
     <div className={campo.full ? 'col-span-2' : ''}>
-      <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1">
+      <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1">
         {campo.label}
       </label>
       {campo.type === 'textarea' ? (
@@ -272,25 +272,25 @@ function PanelDetalleRegistro({
   }
 
   const estadoConfig: Record<EstadoActividadPenal, { label: string; activeClass: string }> = {
-    en_curso:      { label: '⏱ En curso',  activeClass: 'border-[#1b3a57] bg-[#f0f6ff] text-[#1b3a57]' },
+    en_curso:      { label: '⏱ En curso',  activeClass: 'border-blue-700 bg-blue-50 text-gray-800' },
     cumplido:      { label: '✓ Cumplido',  activeClass: 'border-green-500 bg-green-50 text-green-700' },
-    no_procedente: { label: '⊘ No proc.',  activeClass: 'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84]' },
-    sin_estado:    { label: 'Sin estado',  activeClass: 'border-[rgba(0,0,0,0.12)] text-[#4a6a84]' },
+    no_procedente: { label: '⊘ No proc.',  activeClass: 'border-gray-300 bg-gray-100 text-gray-500' },
+    sin_estado:    { label: 'Sin estado',  activeClass: 'border-gray-200 text-gray-500' },
   }
 
   return (
     <div className="w-80 flex-shrink-0 sticky top-4 self-start">
-      <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden shadow-card">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-card">
         {/* Header */}
-        <div className="px-4 pt-4 pb-3 border-b border-[rgba(0,0,0,0.06)] bg-[#f0f0f0]">
+        <div className="px-4 pt-4 pb-3 border-b border-gray-200 bg-gray-100">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] mb-1">Detalle</p>
-              <p className="text-sm font-bold text-[#1b3a57] leading-snug">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 mb-1">Detalle</p>
+              <p className="text-sm font-semibold text-gray-800 leading-snug">
                 {registro.numero} {registro.nombre}
               </p>
             </div>
-            <button onClick={onCancelar} className="p-1 rounded-lg text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors flex-shrink-0">
+            <button onClick={onCancelar} className="p-1 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0">
               <Icon name="close" size={16} />
             </button>
           </div>
@@ -301,16 +301,16 @@ function PanelDetalleRegistro({
 
           {/* Estado */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Estado</label>
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Estado</label>
             <div className="flex gap-1.5">
               {(['en_curso', 'cumplido', 'no_procedente'] as EstadoActividadPenal[]).map(val => (
                 <button
                   key={val}
                   onClick={() => setDraft(p => ({ ...p, estado: val }))}
-                  className={`flex-1 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
+                  className={`flex-1 py-1.5 rounded-lg border text-[11px] font-semibold transition-all ${
                     (draft.estado ?? registro.estado) === val
                       ? estadoConfig[val].activeClass
-                      : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                      : 'border-gray-200 text-gray-500 hover:bg-gray-100'
                   }`}
                 >
                   {estadoConfig[val].label}
@@ -322,16 +322,16 @@ function PanelDetalleRegistro({
           {/* Resultado SI/NO */}
           {subAct?.tipo === 'SI_NO' && (
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
+              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
               <div className="flex gap-2">
                 {(['SI', 'NO'] as ResultadoBinario[]).filter(Boolean).map(r => (
                   <button
                     key={r!}
                     onClick={() => setDraft(p => ({ ...p, resultado: r }))}
-                    className={`flex-1 py-2 rounded-xl border text-sm font-bold transition-all ${
+                    className={`flex-1 py-2 rounded-lg border text-sm font-semibold transition-all ${
                       (draft.resultado ?? registro.resultado) === r
-                        ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                        : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        ? 'bg-blue-700 border-blue-700 text-white'
+                        : 'border-gray-300 text-gray-500 hover:bg-gray-100'
                     }`}
                   >{r}</button>
                 ))}
@@ -342,7 +342,7 @@ function PanelDetalleRegistro({
           {/* Resultado ACUERDO */}
           {subAct?.tipo === 'ACUERDO' && (
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
+              <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
               <div className="flex gap-2">
                 {([
                   { val: 'HAY_ACUERDO' as ResultadoAcuerdo, label: 'Hay Acuerdo' },
@@ -351,10 +351,10 @@ function PanelDetalleRegistro({
                   <button
                     key={r.val!}
                     onClick={() => setDraft(p => ({ ...p, resultado: r.val }))}
-                    className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${
+                    className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-all ${
                       (draft.resultado ?? registro.resultado) === r.val
-                        ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                        : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                        ? 'bg-blue-700 border-blue-700 text-white'
+                        : 'border-gray-300 text-gray-500 hover:bg-gray-100'
                     }`}
                   >{r.label}</button>
                 ))}
@@ -374,7 +374,7 @@ function PanelDetalleRegistro({
 
           {/* Aviso sentencia firme */}
           {mostrarAvisoFirme && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
               <Icon name="warning" size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800 leading-snug">
                 {subAct?.finalizaCausa
@@ -386,7 +386,7 @@ function PanelDetalleRegistro({
 
           {/* Observaciones */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Observaciones</label>
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Observaciones</label>
             <textarea
               className="field-input resize-none w-full text-xs"
               style={{ minHeight: 64 }}
@@ -398,7 +398,7 @@ function PanelDetalleRegistro({
 
           {/* Fecha */}
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Fecha</label>
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Fecha</label>
             <input
               type="date"
               className="field-input w-full text-xs"
@@ -409,13 +409,13 @@ function PanelDetalleRegistro({
         </div>
 
         {/* Footer */}
-        <div className="px-4 pb-4 flex gap-2 justify-end border-t border-[rgba(0,0,0,0.06)] pt-3">
-          <button onClick={onCancelar} className="px-3 py-2 rounded-xl text-xs font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+        <div className="px-4 pb-4 flex gap-2 justify-end border-t border-gray-200 pt-3">
+          <button onClick={onCancelar} className="px-3 py-2 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors">
             Cancelar
           </button>
           <button
             onClick={() => onGuardar(draft)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity"
           >
             <Icon name="save" size={14} />
             Guardar
@@ -873,62 +873,62 @@ export function TimelinePenal({ exp }: Props) {
   function renderEntrada(entrada: EntradaHistorial) {
     if (entrada.kind === 'sistema') {
       return (
-        <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Icon name="swap_horiz" size={16} className="text-[#1b3a57]" />
+        <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Icon name="swap_horiz" size={16} className="text-gray-800" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#1b3a57] mb-0.5">
+            <p className="text-sm font-semibold text-gray-800 mb-0.5">
               {entrada.etapaAnteriorLabel} → {entrada.etapaNuevaLabel}
             </p>
-            {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
+            {entrada.descripcion && <p className="text-xs text-gray-500">{entrada.descripcion}</p>}
             {entrada.doc_gde && (
-              <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+              <p className="text-[10px] font-mono text-gray-800 mt-1 flex items-center gap-1">
                 <Icon name="attach_file" size={12} />{entrada.doc_gde}
               </p>
             )}
           </div>
-          <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+          <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
         </div>
       )
     }
     if (entrada.kind === 'generica') {
       return (
         <div>
-          <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-[#f9f9f9] transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#e8e8e8] flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Icon name={entrada.tipo === 'NOTA_RESPUESTA' ? 'check' : entrada.titulo.startsWith('Solicitud:') ? 'task' : 'description'} size={16} className="text-[#4a6a84]" />
+          <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Icon name={entrada.tipo === 'NOTA_RESPUESTA' ? 'check' : entrada.titulo.startsWith('Solicitud:') ? 'task' : 'description'} size={16} className="text-gray-500" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <p className="text-sm font-semibold text-[#1b3a57]">{entrada.titulo}</p>
+                <p className="text-sm font-semibold text-gray-800">{entrada.titulo}</p>
                 {entrada.tipo === 'NOTA_RESPUESTA' && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e1f5ee] text-[#0f6e56]">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-50 text-green-700">
                     <Icon name="check" size={9} />
                     RESPUESTA
                   </span>
                 )}
                 {entrada.tipo !== 'NOTA_RESPUESTA' && entrada.titulo.startsWith('Solicitud:') && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eeedfe] text-[#534ab7]">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-violet-50 text-violet-700">
                     <Icon name="task" size={9} />
                     SOLICITUD
                   </span>
                 )}
                 {TIPO_ACTIVIDAD_SOLICITUD_PENAL[entrada.tipo] && !solicitudEstaCompleta(entrada.tipo, entrada.act.solicitud_penal_campos) && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#faeeda] text-[#854f0b]">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-800">
                     Sin completar
                   </span>
                 )}
                 {entrada.act.origen_pjn && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e6f1fb] text-[#185fa5]">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700">
                     <Icon name="refresh" size={9} />
                     PJN
                   </span>
                 )}
               </div>
-              {entrada.descripcion && <p className="text-xs text-[#4a6a84]">{entrada.descripcion}</p>}
+              {entrada.descripcion && <p className="text-xs text-gray-500">{entrada.descripcion}</p>}
               {entrada.doc_gde && (
-                <p className="text-[10px] font-mono text-[#1b3a57] mt-1 flex items-center gap-1">
+                <p className="text-[10px] font-mono text-gray-800 mt-1 flex items-center gap-1">
                   <Icon name="attach_file" size={12} />{entrada.doc_gde}
                 </p>
               )}
@@ -936,7 +936,7 @@ export function TimelinePenal({ exp }: Props) {
                 <div className="flex items-center gap-2 mt-1.5">
                   <button
                     onClick={() => setReplyTarget({ act: entrada.act, globalIdx: entrada.timelineIdx })}
-                    className="flex items-center gap-1 text-[11px] text-[#4a6a84] hover:text-[#1b3a57] transition-colors font-medium"
+                    className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-800 transition-colors font-medium"
                   >
                     <Icon name="reply" size={13} />
                     Comentar
@@ -948,7 +948,7 @@ export function TimelinePenal({ exp }: Props) {
                         const r = e.currentTarget.getBoundingClientRect()
                         setMenuActividad({ act: entrada.act, globalIdx: entrada.timelineIdx, x: r.left, y: r.bottom + 4 })
                       }}
-                      className="w-6 h-6 flex items-center justify-center rounded text-[#7a9ab4] hover:bg-[#f0f0f0] hover:text-[#1b3a57] transition-colors"
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-800 transition-colors"
                     >
                       <Icon name="more_vert" size={14} />
                     </button>
@@ -956,7 +956,7 @@ export function TimelinePenal({ exp }: Props) {
                 </div>
               )}
             </div>
-            <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+            <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
           </div>
           <ReplyList replies={entrada.act.replies ?? []} />
         </div>
@@ -969,22 +969,22 @@ export function TimelinePenal({ exp }: Props) {
           const reg = registros.find(r => r.numero === entrada.numero && r.etapaCodigo === entrada.etapaCodigo)
           if (reg) { setRegistroSeleccionado(reg); setModalDetalle(true) }
         }}
-        className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+        className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
       >
-        <div className="w-8 h-8 rounded-lg bg-[rgba(27,58,87,0.08)] flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon name="gavel" size={16} className="text-[#1b3a57]" />
+        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Icon name="gavel" size={16} className="text-gray-800" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            <p className="text-sm font-semibold text-[#1b3a57]">{entrada.numero} {entrada.nombre}</p>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
+            <p className="text-sm font-semibold text-gray-800">{entrada.numero} {entrada.nombre}</p>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-gray-800">
               {entrada.etapaLabel}
             </span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
               entrada.estado === 'cumplido'        ? 'bg-green-100 text-green-700'
-              : entrada.estado === 'en_curso'      ? 'bg-[#C4DFE8] text-[#1b3a57]'
-              : entrada.estado === 'no_procedente' ? 'bg-[#e8e8e8] text-[#4a6a84]'
-              : 'bg-[#f5f5f5] text-[#7a9ab4]'
+              : entrada.estado === 'en_curso'      ? 'bg-blue-100 text-gray-800'
+              : entrada.estado === 'no_procedente' ? 'bg-gray-100 text-gray-500'
+              : 'bg-gray-100 text-gray-400'
             }`}>
               {entrada.estado === 'cumplido' ? 'Cumplido'
                 : entrada.estado === 'en_curso' ? 'En curso'
@@ -992,9 +992,9 @@ export function TimelinePenal({ exp }: Props) {
                 : 'Sin estado'}
             </span>
           </div>
-          {entrada.resultado && <p className="text-xs text-[#4a6a84]">Resultado: {entrada.resultado}</p>}
+          {entrada.resultado && <p className="text-xs text-gray-500">Resultado: {entrada.resultado}</p>}
         </div>
-        <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+        <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
       </div>
     )
   }
@@ -1008,19 +1008,19 @@ export function TimelinePenal({ exp }: Props) {
       <ProcesalStepperPenal exp={exp} onEtapaClick={handleEtapaClick} />
 
       {/* Card principal — feed unificado */}
-      <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.10)] overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
 
         {/* Header */}
-        <div className="px-5 py-3.5 flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] flex-wrap gap-3">
+        <div className="px-5 py-3.5 flex items-center justify-between border-b border-gray-200 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <p className="text-sm font-bold text-[#1b3a57]">Ciclo de Vida — Actividades</p>
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[rgba(27,58,87,0.08)] text-[#1b3a57]">
+            <p className="text-sm font-semibold text-gray-800">Ciclo de Vida — Actividades</p>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-gray-800">
               {historialCompleto.length} registros
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Tabs de filtro */}
-            <div className="flex gap-0.5 bg-[#f5f5f5] rounded-lg p-0.5">
+            <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
               {([
                 ['todo',       'Todo',       null],
                 ['sistema',    'Sistema',    countSistema],
@@ -1030,18 +1030,18 @@ export function TimelinePenal({ exp }: Props) {
                 <button
                   key={val}
                   onClick={() => setFiltroHistorial(val)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     filtroHistorial === val
-                      ? 'bg-white text-[#1b3a57] shadow-sm'
-                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                      ? 'bg-white text-gray-800 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-800'
                   }`}
                 >
                   {lbl}
                   {count !== null && count > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                       filtroHistorial === val
-                        ? 'bg-[rgba(27,58,87,0.10)] text-[#1b3a57]'
-                        : 'bg-[#e8e8e8] text-[#4a6a84]'
+                        ? 'bg-blue-50 text-gray-800'
+                        : 'bg-gray-100 text-gray-500'
                     }`}>
                       {count}
                     </span>
@@ -1051,14 +1051,14 @@ export function TimelinePenal({ exp }: Props) {
             </div>
             {/* Botón Nueva Actividad */}
             {yaCargoUnaActividadEnDesarchivado ? (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#fef3c7] border border-[#fde68a] text-[11px] font-bold text-[#d97706]">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-100 border border-amber-200 text-[11px] font-semibold text-amber-700">
                 <Icon name="info" size={14} />
                 Ya se registró una actividad en Desarchivado. Volvé a Archivo para continuar.
               </div>
             ) : (
               <button
                 onClick={() => { setTabNueva(enDesarchivado ? 'genericas' : 'procesales'); setModalNueva(true) }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-[#1b3a57] text-white rounded-xl text-xs font-bold hover:bg-[#2a5278] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-700 text-white rounded-lg text-xs font-semibold hover:bg-blue-800 transition-colors"
               >
                 <Icon name="add" size={14} />
                 Nueva Actividad
@@ -1068,9 +1068,9 @@ export function TimelinePenal({ exp }: Props) {
         </div>
 
         {/* Buscador */}
-        <div className="px-5 py-3 border-b border-[rgba(0,0,0,0.06)]">
+        <div className="px-5 py-3 border-b border-gray-200">
           <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7a9ab4]">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
               <Icon name="search" size={14} />
             </div>
             <input
@@ -1078,12 +1078,12 @@ export function TimelinePenal({ exp }: Props) {
               placeholder="Buscar actividad..."
               value={busquedaHistorial}
               onChange={e => setBusquedaHistorial(e.target.value)}
-              className="w-full pl-8 pr-8 py-2 text-sm border border-[rgba(0,0,0,0.12)] rounded-lg bg-[#f9f9f9] text-[#1b3a57] placeholder-[#7a9ab4] focus:outline-none focus:border-[#1b3a57]"
+              className="w-full pl-8 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-700"
             />
             {busquedaHistorial && (
               <button
                 onClick={() => setBusquedaHistorial('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#7a9ab4] hover:text-[#1b3a57]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-800"
               >
                 <Icon name="close" size={14} />
               </button>
@@ -1094,9 +1094,9 @@ export function TimelinePenal({ exp }: Props) {
         {/* Estado ASIGNADO */}
         {etapaCodigo === 'ASIGNADO' && (
           <div className="px-5 py-10 text-center">
-            <Icon name="inbox" size={32} className="text-[#7a9ab4] mx-auto mb-3 block" />
-            <p className="text-sm font-semibold text-[#1b3a57] mb-1">Actuación pendiente de inicio</p>
-            <p className="text-xs text-[#4a6a84]">
+            <Icon name="inbox" size={32} className="text-gray-400 mx-auto mb-3 block" />
+            <p className="text-sm font-semibold text-gray-800 mb-1">Actuación pendiente de inicio</p>
+            <p className="text-xs text-gray-500">
               Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
             </p>
           </div>
@@ -1106,64 +1106,64 @@ export function TimelinePenal({ exp }: Props) {
         {etapaCodigo !== 'ASIGNADO' && (
           historialFiltrado.length === 0 ? (
             <div className="px-5 py-12 text-center">
-              <Icon name="history" size={28} className="text-[#7a9ab4] mx-auto mb-2 block" />
-              <p className="text-sm text-[#4a6a84]">No hay entradas que coincidan.</p>
+              <Icon name="history" size={28} className="text-gray-400 mx-auto mb-2 block" />
+              <p className="text-sm text-gray-500">No hay entradas que coincidan.</p>
             </div>
           ) : (
-            <div className="divide-y divide-[rgba(0,0,0,0.05)]">
+            <div className="divide-y divide-gray-200">
 
               {/* A) Actividades del período actual (sin grupo) */}
               {gruposHistorial.actividadesActuales.map((entrada, ei) => (
-                <div key={`actual-${ei}`} className="border-b border-[rgba(0,0,0,0.05)] last:border-0">
+                <div key={`actual-${ei}`} className="border-b border-gray-200 last:border-0">
                   {renderEntrada(entrada)}
                 </div>
               ))}
 
               {/* B) Grupos colapsables por cambio de estado */}
               {gruposHistorial.grupos.map((grupo, gi) => (
-                <div key={`grupo-${gi}`} className="border-b border-[rgba(0,0,0,0.05)]">
+                <div key={`grupo-${gi}`} className="border-b border-gray-200">
 
                   {/* Cabecera colapsable */}
                   <div
                     onClick={() => toggleGrupo(gi)}
-                    className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+                    className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-[#C4DFE8] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Icon
                         name={estadosExpandidos.has(gi) ? 'expand_less' : 'expand_more'}
-                        size={16} className="text-[#1b3a57]"
+                        size={16} className="text-gray-800"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <Icon name="swap_horiz" size={14} className="text-[#1b7a8a] flex-shrink-0" />
-                        <p className="text-sm font-semibold text-[#1b3a57] truncate">
+                        <Icon name="swap_horiz" size={14} className="text-teal-700 flex-shrink-0" />
+                        <p className="text-sm font-semibold text-gray-800 truncate">
                           {getTituloEntrada(grupo.sistema)}
                         </p>
                       </div>
                       {getDescripcionEntrada(grupo.sistema) && (
-                        <p className="text-xs text-[#4a6a84]">{getDescripcionEntrada(grupo.sistema)}</p>
+                        <p className="text-xs text-gray-500">{getDescripcionEntrada(grupo.sistema)}</p>
                       )}
                       {grupo.actividades.length > 0 && (
-                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold text-[#4a6a84] bg-[#e8e8e8] px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                           <Icon name="history" size={11} />
                           {grupo.actividades.length}{grupo.actividades.length === 1 ? ' registro' : ' registros'}
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-[#7a9ab4] flex-shrink-0 mt-0.5">
+                    <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">
                       {formatFecha(grupo.sistema.fecha)}
                     </span>
                   </div>
 
                   {/* Actividades del período — colapsables */}
                   {estadosExpandidos.has(gi) && (
-                    <div className="bg-[#fafafa] border-t border-[rgba(0,0,0,0.04)]">
+                    <div className="bg-gray-50 border-t border-gray-200">
                       {grupo.actividades.length === 0 ? (
-                        <p className="px-16 py-3 text-xs text-[#7a9ab4] italic">Sin registros en este período.</p>
+                        <p className="px-16 py-3 text-xs text-gray-400 italic">Sin registros en este período.</p>
                       ) : (
                         grupo.actividades.map((entrada, ai) => (
-                          <div key={`act-${gi}-${ai}`} className="ml-10 border-b border-[rgba(0,0,0,0.04)] last:border-0">
+                          <div key={`act-${gi}-${ai}`} className="ml-10 border-b border-gray-200 last:border-0">
                             {renderEntrada(entrada)}
                           </div>
                         ))
@@ -1175,7 +1175,7 @@ export function TimelinePenal({ exp }: Props) {
 
               {/* C) Entrada de recepción — siempre al final */}
               {gruposHistorial.entradaRecepcion && (
-                <div className="border-t border-[rgba(0,0,0,0.05)]">
+                <div className="border-t border-gray-200">
                   {renderEntrada(gruposHistorial.entradaRecepcion)}
                 </div>
               )}
@@ -1218,13 +1218,13 @@ export function TimelinePenal({ exp }: Props) {
           <>
             <button
               onClick={() => { setModalCambiarEstado(false); setEtapaDestino(null) }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarCambioEstado}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity"
             >
               Confirmar
             </button>
@@ -1233,23 +1233,23 @@ export function TimelinePenal({ exp }: Props) {
       >
         <div className="py-2">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="text-sm font-bold text-[#1b3a57] px-3 py-1.5 bg-[#e8e8e8] rounded-lg">
+            <span className="text-sm font-semibold text-gray-800 px-3 py-1.5 bg-gray-100 rounded-lg">
               {etapaActual?.label ?? etapaCodigo}
             </span>
-            <Icon name="arrow_forward" size={16} className="text-[#4a6a84]" />
-            <span className="text-sm font-bold text-white px-3 py-1.5 bg-[#1b3a57] rounded-lg">
+            <Icon name="arrow_forward" size={16} className="text-gray-500" />
+            <span className="text-sm font-semibold text-white px-3 py-1.5 bg-blue-700 rounded-lg">
               {etapaDestino?.label}
             </span>
           </div>
           {etapaDestino?.codigo === 'RECHAZADO' && (
-            <div className="bg-[#fee2e2] border border-[#fca5a5] rounded-xl p-3 mb-3">
-              <p className="text-xs text-[#991b1b] font-semibold flex items-center gap-2">
+            <div className="bg-red-100 border border-red-300 rounded-lg p-3 mb-3">
+              <p className="text-xs text-red-800 font-semibold flex items-center gap-2">
                 <Icon name="warning" size={14} />
                 Esta acción marca la querella como rechazada.
               </p>
             </div>
           )}
-          <p className="text-xs text-[#4a6a84] text-center">
+          <p className="text-xs text-gray-500 text-center">
             Esta acción quedará registrada en el timeline.
           </p>
         </div>
@@ -1274,14 +1274,14 @@ export function TimelinePenal({ exp }: Props) {
                     closeModalNueva()
                   }
                 }}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 {subActSeleccionada ? 'Volver' : 'Cancelar'}
               </button>
               <button
                 onClick={confirmarRegistro}
                 disabled={!subActSeleccionada}
-                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+                className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 Registrar
               </button>
@@ -1290,14 +1290,14 @@ export function TimelinePenal({ exp }: Props) {
             <>
               <button
                 onClick={closeModalNueva}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={guardarActividadGenerica}
                 disabled={!formAct.titulo.trim()}
-                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+                className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 Guardar
               </button>
@@ -1306,14 +1306,14 @@ export function TimelinePenal({ exp }: Props) {
             <>
               <button
                 onClick={closeModalNueva}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={guardarSolicitudPenal}
                 disabled={!formSolicitud.titulo.trim() || (!formSolicitud.asignado_a.length && !formSolicitud.area_destinataria)}
-                className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+                className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 Crear solicitud
               </button>
@@ -1322,13 +1322,13 @@ export function TimelinePenal({ exp }: Props) {
         }
       >
         {/* Solapas */}
-        <div className="flex gap-0 border-b border-[rgba(0,0,0,0.08)] mb-4 -mx-6 px-6">
+        <div className="flex gap-0 border-b border-gray-200 mb-4 -mx-6 px-6">
           <button
             onClick={() => { setTabNueva('procesales'); setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tabNueva === 'procesales'
-                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
-                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+                ? 'border-blue-700 text-gray-800 font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
             Actividades Procesales
@@ -1337,8 +1337,8 @@ export function TimelinePenal({ exp }: Props) {
             onClick={() => { setTabNueva('genericas'); setFormAct(BLANK_ACT) }}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tabNueva === 'genericas'
-                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
-                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+                ? 'border-blue-700 text-gray-800 font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
             Actividades Genéricas
@@ -1347,8 +1347,8 @@ export function TimelinePenal({ exp }: Props) {
             onClick={() => setTabNueva('solicitud')}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tabNueva === 'solicitud'
-                ? 'border-[#1b3a57] text-[#1b3a57] font-bold'
-                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+                ? 'border-blue-700 text-gray-800 font-semibold'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
             Nueva Solicitud
@@ -1359,7 +1359,7 @@ export function TimelinePenal({ exp }: Props) {
         {tabNueva === 'procesales' && (
           !subActSeleccionada ? (
             <div>
-              <p className="text-xs text-[#4a6a84] mb-3">
+              <p className="text-xs text-gray-500 mb-3">
                 Etapa: <strong>{etapaActual?.label}</strong> — Seleccioná la actividad que ocurrió
               </p>
               <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -1367,27 +1367,27 @@ export function TimelinePenal({ exp }: Props) {
                   <button
                     key={sa.id}
                     onClick={() => setSubActSeleccionada(sa)}
-                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all hover:border-[#1b3a57] hover:bg-[#f0f6ff] ${
+                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all hover:border-blue-700 hover:bg-blue-50 ${
                       sa.finalizaCausa
-                        ? 'border-l-4 border-l-[#d97706] border-[rgba(0,0,0,0.12)]'
+                        ? 'border-l-4 border-l-[#d97706] border-gray-200'
                         : sa.avanzaEtapa
-                        ? 'border-l-4 border-l-[#1b3a57] border-[rgba(0,0,0,0.12)]'
-                        : 'border-[rgba(0,0,0,0.12)]'
+                        ? 'border-l-4 border-l-[#1b3a57] border-gray-200'
+                        : 'border-gray-200'
                     }`}
                   >
                     <div className="flex items-start gap-2">
-                      {sa.finalizaCausa && <Icon name="warning"       size={14} className="text-[#d97706] mt-0.5 flex-shrink-0" />}
-                      {sa.avanzaEtapa  && <Icon name="arrow_forward"  size={14} className="text-[#1b3a57] mt-0.5 flex-shrink-0" />}
+                      {sa.finalizaCausa && <Icon name="warning"       size={14} className="text-amber-700 mt-0.5 flex-shrink-0" />}
+                      {sa.avanzaEtapa  && <Icon name="arrow_forward"  size={14} className="text-gray-800 mt-0.5 flex-shrink-0" />}
                       <div>
-                        <p className="text-sm font-semibold text-[#1b3a57]">{sa.numero} {sa.nombre}</p>
-                        {sa.finalizaCausa && <p className="text-[10px] text-[#d97706] mt-0.5">Si queda firme → finaliza la causa</p>}
-                        {sa.avanzaEtapa  && <p className="text-[10px] text-[#1b3a57] mt-0.5">Si queda firme → avanza a siguiente etapa</p>}
+                        <p className="text-sm font-semibold text-gray-800">{sa.numero} {sa.nombre}</p>
+                        {sa.finalizaCausa && <p className="text-[10px] text-amber-700 mt-0.5">Si queda firme → finaliza la causa</p>}
+                        {sa.avanzaEtapa  && <p className="text-[10px] text-gray-800 mt-0.5">Si queda firme → avanza a siguiente etapa</p>}
                       </div>
                     </div>
                   </button>
                 ))}
                 {subActDisponibles.length === 0 && (
-                  <p className="text-sm text-[#4a6a84] text-center py-8">
+                  <p className="text-sm text-gray-500 text-center py-8">
                     Todas las actividades de esta etapa ya fueron registradas.
                   </p>
                 )}
@@ -1398,27 +1398,27 @@ export function TimelinePenal({ exp }: Props) {
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => { setSubActSeleccionada(null); setResultadoModal(null); setCamposModal({}) }}
-                  className="p-1 rounded-lg text-[#4a6a84] hover:text-[#1b3a57] transition-colors"
+                  className="p-1 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
                 >
                   <Icon name="arrow_back" size={16} />
                 </button>
-                <p className="text-sm font-bold text-[#1b3a57]">
+                <p className="text-sm font-semibold text-gray-800">
                   {subActSeleccionada.numero} {subActSeleccionada.nombre}
                 </p>
               </div>
 
               {subActSeleccionada.tipo === 'SI_NO' && (
                 <div className="mb-4">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
+                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
                   <div className="flex gap-2">
                     {(['SI', 'NO'] as ResultadoBinario[]).filter(Boolean).map(r => (
                       <button
                         key={r!}
                         onClick={() => setResultadoModal(r)}
-                        className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                        className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
                           resultadoModal === r
-                            ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                            : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                            ? 'bg-blue-700 border-blue-700 text-white'
+                            : 'border-gray-300 text-gray-500 hover:bg-gray-100'
                         }`}
                       >{r}</button>
                     ))}
@@ -1428,7 +1428,7 @@ export function TimelinePenal({ exp }: Props) {
 
               {subActSeleccionada.tipo === 'ACUERDO' && (
                 <div className="mb-4">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Resultado</label>
+                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Resultado</label>
                   <div className="flex gap-2">
                     {([
                       { val: 'HAY_ACUERDO' as ResultadoAcuerdo,    label: 'Hay Acuerdo' },
@@ -1437,10 +1437,10 @@ export function TimelinePenal({ exp }: Props) {
                       <button
                         key={r.val!}
                         onClick={() => setResultadoModal(r.val)}
-                        className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                        className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
                           resultadoModal === r.val
-                            ? 'bg-[#1b3a57] border-[#1b3a57] text-white'
-                            : 'border-[rgba(0,0,0,0.15)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                            ? 'bg-blue-700 border-blue-700 text-white'
+                            : 'border-gray-300 text-gray-500 hover:bg-gray-100'
                         }`}
                       >{r.label}</button>
                     ))}
@@ -1460,7 +1460,7 @@ export function TimelinePenal({ exp }: Props) {
 
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Estado</label>
+                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Estado</label>
                   <div className="flex gap-1">
                     {([
                       ['en_curso',      '⏱ En curso'],
@@ -1470,21 +1470,21 @@ export function TimelinePenal({ exp }: Props) {
                       <button
                         key={val}
                         onClick={() => setEstadoModal(val)}
-                        className={`flex-1 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
+                        className={`flex-1 py-1.5 rounded-lg border text-[11px] font-semibold transition-all ${
                           estadoModal === val
                             ? val === 'cumplido'
                               ? 'border-green-500 bg-green-50 text-green-700'
                               : val === 'en_curso'
-                              ? 'border-[#1b3a57] bg-[#f0f6ff] text-[#1b3a57]'
-                              : 'border-[rgba(0,0,0,0.20)] bg-[#e8e8e8] text-[#4a6a84]'
-                            : 'border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:bg-[#f5f5f5]'
+                              ? 'border-blue-700 bg-blue-50 text-gray-800'
+                              : 'border-gray-300 bg-gray-100 text-gray-500'
+                            : 'border-gray-200 text-gray-500 hover:bg-gray-100'
                         }`}
                       >{lbl}</button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-[#4a6a84] block mb-1.5">Fecha</label>
+                  <label className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 block mb-1.5">Fecha</label>
                   <input
                     type="date"
                     className="field-input w-full text-xs"
@@ -1530,7 +1530,7 @@ export function TimelinePenal({ exp }: Props) {
                   type="button"
                   disabled
                   title="Catálogo de escritos Penal — próximamente"
-                  className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[rgba(0,0,0,0.15)] text-[#4a6a84] text-xs font-semibold opacity-50 cursor-not-allowed"
+                  className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-semibold opacity-50 cursor-not-allowed"
                 >
                   <Icon name="article" size={16} />
                   Generar Escrito
@@ -1538,7 +1538,7 @@ export function TimelinePenal({ exp }: Props) {
               )}
             </div>
             <div>
-              <label className="field-label">Título <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Título <span className="text-red-700">*</span></label>
               <input
                 type="text"
                 className="field-input w-full"
@@ -1604,7 +1604,7 @@ export function TimelinePenal({ exp }: Props) {
                   fecha: new Date().toISOString().split('T')[0],
                   size: `${Math.round(file.size / 1024)} KB`,
                   icon: 'attach_file',
-                  color: 'text-[#4a6a84]',
+                  color: 'text-gray-500',
                 })
                 setArchivosSolPenal(p => ({
                   ...p,
@@ -1614,8 +1614,8 @@ export function TimelinePenal({ exp }: Props) {
               }
 
               return (
-                <div className="col-span-2 mt-2 pt-3 border-t border-dashed border-[rgba(0,0,0,0.1)]">
-                  <p className="text-[11px] font-bold text-[#4a6a84] uppercase tracking-wide mb-2">
+                <div className="col-span-2 mt-2 pt-3 border-t border-dashed border-gray-200">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     Datos de la solicitud
                   </p>
                   <div className="grid grid-cols-2 gap-3">
@@ -1647,7 +1647,7 @@ export function TimelinePenal({ exp }: Props) {
                           />
                         )}
                         {c.permiteArchivo && (
-                          <label className="flex items-center gap-1.5 text-[11px] text-[#4a6a84] cursor-pointer mt-1 hover:text-[#1b3a57]">
+                          <label className="flex items-center gap-1.5 text-[11px] text-gray-500 cursor-pointer mt-1 hover:text-gray-800">
                             <Icon name="attach_file" size={13} />
                             Adjuntar archivos
                             <input
@@ -1681,18 +1681,18 @@ export function TimelinePenal({ exp }: Props) {
         <div
           onClick={e => e.stopPropagation()}
           style={{ position: 'fixed', left: menuActividad.x, top: menuActividad.y }}
-          className="w-36 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 z-50"
+          className="w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
         >
           <button
             onClick={() => { abrirEdicionActividad(menuActividad.act, menuActividad.globalIdx); setMenuActividad(null) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#1b3a57] hover:bg-[#f5f5f5] transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-gray-800 hover:bg-gray-100 transition-colors text-left"
           >
             <Icon name="edit" size={13} />
             Editar
           </button>
           <button
             onClick={() => { confirmarEliminacion(menuActividad.globalIdx); setMenuActividad(null) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#b91c1c] hover:bg-[#fee2e2] transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-red-700 hover:bg-red-100 transition-colors text-left"
           >
             <Icon name="delete" size={13} />
             Eliminar
@@ -1710,14 +1710,14 @@ export function TimelinePenal({ exp }: Props) {
           <>
             <button
               onClick={() => { setReplyTarget(null); setFormReply({ texto: '', doc_gde: '', fecha: HOY, fecha_vencimiento: '', fecha_aviso: '' }) }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarReply}
               disabled={!formReply.texto.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar
             </button>
@@ -1726,13 +1726,13 @@ export function TimelinePenal({ exp }: Props) {
       >
         <div className="space-y-3 py-1">
           {replyTarget && (
-            <div className="bg-[#f5f5f5] rounded-xl px-3 py-2 flex items-start gap-2">
-              <Icon name="reply" size={14} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-[#4a6a84] line-clamp-2">{replyTarget.act.titulo}</p>
+            <div className="bg-gray-100 rounded-lg px-3 py-2 flex items-start gap-2">
+              <Icon name="reply" size={14} className="text-gray-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-gray-500 line-clamp-2">{replyTarget.act.titulo}</p>
             </div>
           )}
           <div>
-            <label className="field-label">Comentario <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Comentario <span className="text-red-700">*</span></label>
             <textarea
               className="field-input w-full resize-none"
               style={{ minHeight: 80 }}
@@ -1766,7 +1766,7 @@ export function TimelinePenal({ exp }: Props) {
           {formReply.fecha_vencimiento && (
             <div>
               <label className="field-label">Fecha de aviso (opcional)</label>
-              <p className="text-[10px] text-[#7a9ab4] mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
+              <p className="text-[10px] text-gray-400 mb-1">A partir de qué fecha recibir el aviso de proximidad al vencimiento.</p>
               <input
                 type="date"
                 className="field-input w-full"
@@ -1791,26 +1791,26 @@ function ReplyList({ replies }: { replies: Reply[] }) {
       {replies.map(reply => {
         const autorU = getUsuarioById(reply.autor_id)
         return (
-          <div key={reply.id} className="pl-4 border-l-2 border-[#C4DFE8]">
-            <div className="bg-[#f9f9f9] rounded-xl px-4 py-3">
+          <div key={reply.id} className="pl-4 border-l-2 border-blue-200">
+            <div className="bg-gray-50 rounded-lg px-4 py-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-[#1b3a57]">
+                <span className="text-[11px] font-semibold text-gray-800">
                   {autorU ? getNombreCompleto(autorU) : reply.autor_id}
                 </span>
-                <span className="text-[10px] text-[#7a9ab4]">{formatFecha(reply.fecha)}</span>
+                <span className="text-[10px] text-gray-400">{formatFecha(reply.fecha)}</span>
               </div>
-              <p className="text-xs text-[#1b3a57] whitespace-pre-wrap">{reply.texto}</p>
+              <p className="text-xs text-gray-800 whitespace-pre-wrap">{reply.texto}</p>
               {reply.doc_gde && (
-                <p className="text-[10px] font-mono text-[#1b3a57] mt-1.5 flex items-center gap-1">
+                <p className="text-[10px] font-mono text-gray-800 mt-1.5 flex items-center gap-1">
                   <Icon name="attach_file" size={11} />
                   {reply.doc_gde}
                 </p>
               )}
               {reply.fecha_vencimiento && (
                 <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-[10px] text-[#4a6a84]">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
+                  <span className="text-[10px] text-gray-500">Vence: {formatFecha(reply.fecha_vencimiento)}</span>
                   {reply.fecha_aviso && (
-                    <span className="text-[10px] text-[#d97706]">Aviso: {formatFecha(reply.fecha_aviso)}</span>
+                    <span className="text-[10px] text-amber-700">Aviso: {formatFecha(reply.fecha_aviso)}</span>
                   )}
                 </div>
               )}

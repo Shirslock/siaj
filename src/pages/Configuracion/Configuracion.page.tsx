@@ -30,11 +30,11 @@ export default function ConfiguracionPage() {
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
       {/* Sidebar izquierdo */}
-      <aside className="w-60 flex-shrink-0 bg-white border-r border-[rgba(0,0,0,0.08)] overflow-y-auto">
-        <div className="px-4 py-4 border-b border-[rgba(0,0,0,0.08)]">
+      <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
+        <div className="px-4 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <Icon name="settings" size={18} className="text-[#1b3a57]" />
-            <span className="font-headline font-bold text-[#1b3a57] text-sm">Configuración</span>
+            <Icon name="settings" size={18} className="text-gray-800" />
+            <span className="font-headline font-semibold text-gray-800 text-sm">Configuración</span>
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function ConfiguracionPage() {
               <div key={grupo.id}>
                 <button
                   onClick={() => toggleGrupo(grupo.id)}
-                  className="w-full flex items-center justify-between px-4 py-2 text-[11px] font-black uppercase tracking-widest text-[#4a6a84] hover:bg-[#f5f5f5] transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <Icon name={grupo.icono} size={14} />
@@ -64,15 +64,15 @@ export default function ConfiguracionPage() {
                           onClick={() => !tabla.soloLectura && setTablaActiva(tabla)}
                           className={`w-full flex items-center justify-between px-5 py-1.5 text-sm transition-colors text-left ${
                             activa
-                              ? 'bg-[#C4DFE8] text-[#1b3a57] font-semibold border-l-2 border-[#1b3a57]'
+                              ? 'bg-blue-100 text-gray-800 font-semibold border-l-2 border-blue-700'
                               : tabla.soloLectura
-                                ? 'text-[#b0b0b0] cursor-default pl-[21px]'
-                                : 'text-[#4a6a84] hover:bg-[#f0f0f0] border-l-2 border-transparent'
+                                ? 'text-gray-400 cursor-default pl-[21px]'
+                                : 'text-gray-500 hover:bg-gray-100 border-l-2 border-transparent'
                           }`}
                         >
                           <span className="truncate">{tabla.label}</span>
                           {tabla.soloLectura && (
-                            <Icon name="block" size={12} className="flex-shrink-0 text-[#c0c0c0]" />
+                            <Icon name="block" size={12} className="flex-shrink-0 text-gray-300" />
                           )}
                         </button>
                       )
@@ -86,7 +86,7 @@ export default function ConfiguracionPage() {
       </aside>
 
       {/* Contenido principal */}
-      <main className="flex-1 overflow-y-auto bg-[#f5f5f5] p-6">
+      <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
         {tablaActiva.tipo === 'usuario'
           ? <UsuariosPanel />
           : tablaActiva.tipo === 'integracion'

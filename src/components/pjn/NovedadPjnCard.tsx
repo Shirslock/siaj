@@ -74,8 +74,8 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
   }
 
   return (
-    <div className={`rounded-xl border bg-white p-4 ${
-      selMode && pendiente && selected ? 'border-[#185fa5] ring-1 ring-[#185fa5]' : 'border-[rgba(0,0,0,0.08)]'
+    <div className={`rounded-lg border bg-white p-4 ${
+      selMode && pendiente && selected ? 'border-blue-700 ring-1 ring-blue-700' : 'border-gray-200'
     }`}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-start gap-2.5 min-w-0">
@@ -84,34 +84,34 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
               type="checkbox"
               checked={selected}
               onChange={() => onToggleSelect?.(novedad.id)}
-              className="mt-1.5 w-4 h-4 flex-shrink-0 accent-[#185fa5]"
+              className="mt-1.5 w-4 h-4 flex-shrink-0 accent-blue-700"
             />
           )}
-          <div className="w-8 h-8 rounded-lg bg-[#e6f1fb] flex items-center justify-center flex-shrink-0">
-            <Icon name="description" size={16} className="text-[#185fa5]" />
+          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <Icon name="description" size={16} className="text-blue-700" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-[#185fa5]">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700">
                 {novedad.tipo}
               </p>
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold ${
                 novedad.origen_organismo === 'MEV'
-                  ? 'bg-[#fdf3e3] text-[#b26a00]'
-                  : 'bg-[#e6f1fb] text-[#185fa5]'
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'bg-blue-50 text-blue-700'
               }`}>
                 <Icon name={novedad.origen_organismo === 'MEV' ? 'inbox' : 'refresh'} size={9} />
                 {novedad.origen_organismo}
               </span>
             </div>
-            <p className="text-sm font-semibold text-[#1b3a57]">{novedad.detalle}</p>
+            <p className="text-sm font-semibold text-gray-800">{novedad.detalle}</p>
             {metadata && (
-              <p className="text-xs text-[#7a9ab4] mt-0.5">{metadata}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{metadata}</p>
             )}
             {mostrarActuacion && exp && (
               <button
                 onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
-                className="text-xs font-mono text-[#4a6a84] hover:text-[#1b3a57] hover:underline mt-0.5"
+                className="text-xs font-mono text-gray-500 hover:text-gray-800 hover:underline mt-0.5"
               >
                 {exp.id} — {exp.caratula}
               </button>
@@ -120,22 +120,22 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
         </div>
 
         {!pendiente && (
-          <span className={`flex-shrink-0 text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full ${
+          <span className={`flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${
             novedad.estado === 'aplicada'
               ? 'bg-green-100 text-green-700 border border-green-200/60'
-              : 'bg-[#e5e5e5] text-[#4a6a84] border border-[rgba(0,0,0,0.08)]'
+              : 'bg-gray-200 text-gray-500 border border-gray-200'
           }`}>
             {novedad.estado === 'aplicada' ? 'Aplicada' : 'Descartada'}
           </span>
         )}
         {vencida && (
-          <span className="flex-shrink-0 text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#fdecea] text-[#b91c1c] border border-[#f5c2c0]">
+          <span className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
             Vencida hace {diasDesdeDeteccion(novedad)} días
           </span>
         )}
       </div>
 
-      <p className="text-[11px] text-[#7a9ab4] mb-2">
+      <p className="text-[11px] text-gray-400 mb-2">
         Movimiento del {formatFecha(novedad.fecha_movimiento)} · detectado el {formatFecha(novedad.fecha_deteccion)}
       </p>
 
@@ -144,7 +144,7 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
           href={`${PJN_BASE_URL}${novedad.documento_url}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#185fa5] hover:underline mb-3"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline mb-3"
         >
           <Icon name="open_in_new" size={13} />
           Descargar del PJN
@@ -152,15 +152,15 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
       )}
 
       {novedad.intervinientes_pjn && novedad.intervinientes_pjn.length > 0 && (
-        <div className="mb-3 pt-2 border-t border-[rgba(0,0,0,0.06)] space-y-1.5">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-[#7a9ab4]">
+        <div className="mb-3 pt-2 border-t border-gray-200 space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
             Intervinientes notificados (PJN)
           </p>
           {novedad.intervinientes_pjn.map((p, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 bg-[#f5f5f5] rounded-lg px-3 py-2">
+            <div key={i} className="flex items-center justify-between gap-2 bg-gray-100 rounded-lg px-3 py-2">
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#1b3a57] truncate">{p.nombre}</p>
-                <p className="text-[11px] text-[#7a9ab4] truncate">
+                <p className="text-xs font-semibold text-gray-800 truncate">{p.nombre}</p>
+                <p className="text-[11px] text-gray-400 truncate">
                   {[p.rol, p.tipo_documento && p.numero_documento ? `${p.tipo_documento} ${p.numero_documento}` : p.tipo_documento]
                     .filter(Boolean).join(' · ')}
                 </p>
@@ -191,7 +191,7 @@ export function NovedadPjnCard({ novedad, mostrarActuacion = false, selMode = fa
           </div>
         </>
       ) : (
-        <p className="text-[11px] text-[#7a9ab4]">
+        <p className="text-[11px] text-gray-400">
           {novedad.estado === 'aplicada' ? 'Aplicada' : 'Descartada'} el {formatFecha(novedad.fecha_aplicacion!)}
         </p>
       )}

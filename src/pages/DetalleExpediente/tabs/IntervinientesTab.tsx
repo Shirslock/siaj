@@ -99,7 +99,7 @@ export function IntervinientesTab({ exp }: Props) {
         <div className="flex justify-end">
           <button
             onClick={() => setModalAbierto(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             <Icon name="person_add" size={18} />
             Agregar interviniente
@@ -107,16 +107,16 @@ export function IntervinientesTab({ exp }: Props) {
         </div>
 
         {exp.intervinientes.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-card p-10 text-center text-[#4a6a84] text-sm">
+          <div className="bg-white rounded-lg shadow-card p-10 text-center text-gray-500 text-sm">
             No hay intervinientes registrados.
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+          <div className="bg-white rounded-lg shadow-card overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(0,0,0,0.12)]">
+                <tr className="border-b border-gray-200">
                   {['Nombre', 'Rol', 'Documento', 'Letrado', 'Contacto', ''].map(col => (
-                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84] whitespace-nowrap">
+                    <th key={col} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -124,28 +124,28 @@ export function IntervinientesTab({ exp }: Props) {
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
                 {exp.intervinientes.map(int => (
-                  <tr key={int.id} className="hover:bg-[#f0f0f0] transition-colors">
+                  <tr key={int.id} className="hover:bg-gray-100 transition-colors">
                     <td className="py-3 px-4">
-                      <p className="text-[#1b3a57] font-medium">{int.nombre}</p>
+                      <p className="text-gray-800 font-medium">{int.nombre}</p>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-xs font-bold bg-[#e8e8e8] px-2 py-0.5 rounded-full text-[#4a6a84]">
+                      <span className="text-xs font-semibold bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">
                         {ROL_LABEL[int.rol_procesal] ?? int.rol_procesal}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-xs text-[#4a6a84]">
+                    <td className="py-3 px-4 text-xs text-gray-500">
                       <span>{DOC_LABEL[int.tipo_documento] ?? int.tipo_documento}</span>
                       <span className="font-mono ml-1">{int.numero_documento}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-xs text-[#4a6a84]">
+                      <span className="text-xs text-gray-500">
                         {int.representado_por
                           ? int.representado_por
-                          : <span className="text-[#c0c0c0]">—</span>
+                          : <span className="text-gray-300">—</span>
                         }
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-xs text-[#4a6a84] space-y-0.5">
+                    <td className="py-3 px-4 text-xs text-gray-500 space-y-0.5">
                       {int.contacto_email     && <p>{int.contacto_email}</p>}
                       {int.contacto_telefono  && <p>{int.contacto_telefono}</p>}
                       {int.contacto_domicilio && <p className="truncate max-w-[180px]">{int.contacto_domicilio}</p>}
@@ -155,21 +155,21 @@ export function IntervinientesTab({ exp }: Props) {
                         <button
                           onClick={() => setVerDetalle(int)}
                           title="Ver detalle"
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-blue-50 hover:text-gray-800 transition-colors"
                         >
                           <Icon name="visibility" size={15} />
                         </button>
                         <button
                           onClick={() => setEditando(int)}
                           title="Editar"
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-blue-50 hover:text-gray-800 transition-colors"
                         >
                           <Icon name="edit" size={15} />
                         </button>
                         <button
                           onClick={() => setConfirmarEliminar(int)}
                           title="Eliminar"
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-red-50 hover:text-red-600 transition-colors"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                         >
                           <Icon name="delete" size={15} />
                         </button>
@@ -199,14 +199,14 @@ export function IntervinientesTab({ exp }: Props) {
           <>
             <button
               onClick={cerrarModalEdicion}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={confirmarEdicion}
               disabled={!formNombre.apellido.trim() || !formNombre.nombre.trim() || !form.numero_documento.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar cambios
             </button>
@@ -216,11 +216,11 @@ export function IntervinientesTab({ exp }: Props) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="field-label">Nombre <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Nombre <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full" placeholder="Mario Oscar" value={formNombre.nombre} onChange={e => setFormNombre(p => ({ ...p, nombre: e.target.value }))} />
             </div>
             <div>
-              <label className="field-label">Apellido <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Apellido <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full" placeholder="RODRIGUEZ" value={formNombre.apellido} onChange={e => setFormNombre(p => ({ ...p, apellido: e.target.value }))} />
             </div>
             <div>
@@ -240,7 +240,7 @@ export function IntervinientesTab({ exp }: Props) {
               </select>
             </div>
             <div>
-              <label className="field-label">N° Documento <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">N° Documento <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full font-mono" placeholder="23456789" value={form.numero_documento} onChange={e => setField('numero_documento', e.target.value)} />
             </div>
             <div>
@@ -270,7 +270,7 @@ export function IntervinientesTab({ exp }: Props) {
         titulo="Detalle del interviniente"
         size="lg"
         footer={
-          <button onClick={() => setVerDetalle(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+          <button onClick={() => setVerDetalle(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
             Cerrar
           </button>
         }
@@ -287,9 +287,9 @@ export function IntervinientesTab({ exp }: Props) {
               ['Domicilio', verDetalle.contacto_domicilio],
               ['Observaciones', verDetalle.observaciones],
             ].map(([label, value]) => value ? (
-              <div key={label} className="flex gap-3 py-2 border-b border-[rgba(0,0,0,0.06)] last:border-0">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#4a6a84] w-32 flex-shrink-0 pt-0.5">{label}</span>
-                <span className="text-[#1b3a57]">{value}</span>
+              <div key={label} className="flex gap-3 py-2 border-b border-gray-200 last:border-0">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 w-32 flex-shrink-0 pt-0.5">{label}</span>
+                <span className="text-gray-800">{value}</span>
               </div>
             ) : null)}
           </div>
@@ -304,7 +304,7 @@ export function IntervinientesTab({ exp }: Props) {
         size="sm"
         footer={
           <>
-            <button onClick={() => setConfirmarEliminar(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setConfirmarEliminar(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
@@ -314,7 +314,7 @@ export function IntervinientesTab({ exp }: Props) {
                 toast.success('Interviniente eliminado.')
                 setConfirmarEliminar(null)
               }}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#b91c1c] text-white hover:opacity-90 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-red-700 text-white hover:opacity-90 transition-opacity"
             >
               Eliminar
             </button>
@@ -322,8 +322,8 @@ export function IntervinientesTab({ exp }: Props) {
         }
       >
         {confirmarEliminar && (
-          <p className="text-sm text-[#1b3a57]">
-            ¿Confirmás que querés eliminar a <span className="font-bold">{confirmarEliminar.nombre}</span>? Esta acción no se puede deshacer.
+          <p className="text-sm text-gray-800">
+            ¿Confirmás que querés eliminar a <span className="font-semibold">{confirmarEliminar.nombre}</span>? Esta acción no se puede deshacer.
           </p>
         )}
       </Modal>

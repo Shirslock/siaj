@@ -136,26 +136,26 @@ export default function NovedadesPJNPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Icon name="refresh" size={18} className="text-[#1b3a57]" />
-          <h2 className="text-lg font-bold text-[#1b3a57]">Novedades judiciales</h2>
+          <Icon name="refresh" size={18} className="text-gray-800" />
+          <h2 className="text-lg font-semibold text-gray-800">Novedades judiciales</h2>
           {pendientes.length > 0 && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#185fa5] text-white">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-700 text-white">
               {pendientes.length} pendientes
             </span>
           )}
           {vencidas.length > 0 && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#b91c1c] text-white">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-700 text-white">
               {vencidas.length} vencidas
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-[#e5e5e5] rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-gray-200 rounded-lg p-1">
             <button
               onClick={() => setTabOrganismo('PJN')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                tabOrganismo === 'PJN' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                tabOrganismo === 'PJN' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
               }`}
             >
               PJN
@@ -163,7 +163,7 @@ export default function NovedadesPJNPage() {
             <button
               onClick={() => setTabOrganismo('MEV')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                tabOrganismo === 'MEV' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                tabOrganismo === 'MEV' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
               }`}
             >
               MEV
@@ -179,11 +179,11 @@ export default function NovedadesPJNPage() {
                 </span>
               </Button>
 
-              <div className="flex items-center gap-1 bg-[#e5e5e5] rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-gray-200 rounded-lg p-1">
                 <button
                   onClick={() => setFiltro('pendientes')}
                   className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                    filtro === 'pendientes' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                    filtro === 'pendientes' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
                   }`}
                 >
                   Pendientes
@@ -191,7 +191,7 @@ export default function NovedadesPJNPage() {
                 <button
                   onClick={() => setFiltro('vencidas')}
                   className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                    filtro === 'vencidas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                    filtro === 'vencidas' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
                   }`}
                 >
                   Vencidas
@@ -199,7 +199,7 @@ export default function NovedadesPJNPage() {
                 <button
                   onClick={() => setFiltro('todas')}
                   className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                    filtro === 'todas' ? 'bg-white text-[#1b3a57] shadow-sm' : 'text-[#4a6a84]'
+                    filtro === 'todas' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
                   }`}
                 >
                   Todas
@@ -211,18 +211,18 @@ export default function NovedadesPJNPage() {
       </div>
 
       {tabOrganismo === 'MEV' ? (
-        <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white py-16 text-center">
-          <Icon name="inbox" size={28} className="text-[#7a9ab4] mx-auto mb-2" />
-          <p className="text-sm font-bold text-[#1b3a57]">Próximamente</p>
-          <p className="text-sm text-[#4a6a84] mt-1">
+        <div className="rounded-lg border border-gray-200 bg-white py-16 text-center">
+          <Icon name="inbox" size={28} className="text-gray-400 mx-auto mb-2" />
+          <p className="text-sm font-semibold text-gray-800">Próximamente</p>
+          <p className="text-sm text-gray-500 mt-1">
             Novedades de la Mesa de Entradas Virtual (MEV).
           </p>
         </div>
       ) : (
       <>
       {selMode && seleccionados.size > 0 && (
-        <div className="mb-4 rounded-xl border border-[#185fa5] bg-[#e6f1fb] px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-10">
-          <p className="text-sm font-bold text-[#1b3a57]">
+        <div className="mb-4 rounded-lg border border-blue-700 bg-blue-50 px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-10">
+          <p className="text-sm font-semibold text-gray-800">
             {novedadesSeleccionadas.length} seleccionada{novedadesSeleccionadas.length !== 1 ? 's' : ''}
           </p>
           <div className="flex items-center gap-2">
@@ -241,23 +241,23 @@ export default function NovedadesPJNPage() {
 
       {alertasVisibles.length > 0 && (
         <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#7a9ab4] mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
             Actuaciones en PJN sin cargar en SIAJ ({alertasVisibles.length})
           </p>
           <div className="space-y-3">
             {alertasVisibles.map(a => (
-              <div key={a.id} className="rounded-xl border border-[#f5c2c0] bg-[#fdecea] p-4 flex items-start justify-between gap-3">
+              <div key={a.id} className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
-                    <Icon name="warning" size={16} className="text-[#b91c1c]" />
+                    <Icon name="warning" size={16} className="text-red-700" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#1b3a57] font-mono">{a.numero_causa}</p>
-                    {a.caratula_pjn && <p className="text-sm text-[#1b3a57]">{a.caratula_pjn}</p>}
-                    <p className="text-xs text-[#7a9ab4] mt-0.5">
+                    <p className="text-sm font-semibold text-gray-800 font-mono">{a.numero_causa}</p>
+                    {a.caratula_pjn && <p className="text-sm text-gray-800">{a.caratula_pjn}</p>}
+                    <p className="text-xs text-gray-400 mt-0.5">
                       {[a.juzgado, a.fuero].filter(Boolean).join(' · ')}
                     </p>
-                    <p className="text-[11px] text-[#7a9ab4] mt-0.5">
+                    <p className="text-[11px] text-gray-400 mt-0.5">
                       Detectada el {formatFecha(a.fecha_deteccion)}
                     </p>
                   </div>
@@ -277,15 +277,15 @@ export default function NovedadesPJNPage() {
       )}
 
       {lista.length === 0 ? (
-        <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white py-16 text-center">
-          <Icon name="refresh" size={28} className="text-[#7a9ab4] mx-auto mb-2" />
-          <p className="text-sm text-[#4a6a84]">Sin novedades pendientes de PJN.</p>
+        <div className="rounded-lg border border-gray-200 bg-white py-16 text-center">
+          <Icon name="refresh" size={28} className="text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Sin novedades pendientes de PJN.</p>
         </div>
       ) : (
         <div className="space-y-6">
           {grupos.map(g => (
             <div key={g.key}>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#7a9ab4] mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
                 {g.items.length} {g.items.length === 1 ? 'movimiento detectado' : 'movimientos detectados'} el {formatFecha(g.fecha_deteccion)}
               </p>
               <div className="space-y-3">
@@ -314,11 +314,11 @@ export default function NovedadesPJNPage() {
         size="sm"
       >
         <div className="space-y-3">
-          <p className="text-sm text-[#1b3a57]">
+          <p className="text-sm text-gray-800">
             Vas a aplicar <strong>{novedadesSeleccionadas.length}</strong> novedad{novedadesSeleccionadas.length !== 1 ? 'es' : ''} a{' '}
             <strong>{expedientesImpactados}</strong> expediente{expedientesImpactados !== 1 ? 's' : ''} distinto{expedientesImpactados !== 1 ? 's' : ''}.
           </p>
-          <p className="text-xs text-[#7a9ab4]">
+          <p className="text-xs text-gray-400">
             En modo selección no hay edición individual — cada novedad se aplica con su texto tal cual lo expone el PJN.
           </p>
           <div className="flex items-center justify-end gap-2 pt-1">
@@ -335,7 +335,7 @@ export default function NovedadesPJNPage() {
         size="sm"
       >
         <div className="space-y-3">
-          <p className="text-sm text-[#1b3a57]">
+          <p className="text-sm text-gray-800">
             Vas a descartar <strong>{novedadesSeleccionadas.length}</strong> novedad{novedadesSeleccionadas.length !== 1 ? 'es' : ''} de{' '}
             <strong>{expedientesImpactados}</strong> expediente{expedientesImpactados !== 1 ? 's' : ''} distinto{expedientesImpactados !== 1 ? 's' : ''}.
           </p>

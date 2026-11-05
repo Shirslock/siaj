@@ -24,10 +24,10 @@ export function NovedadesPjnTab({ exp }: Props) {
 
   if (novedadesDeEstaActuacion.length === 0) {
     return (
-      <div className="mt-4 bg-white rounded-2xl shadow-card p-12 text-center">
-        <Icon name="cloud_done" size={36} className="text-[#c0c0c0] mx-auto mb-3" />
-        <p className="text-sm font-medium text-[#7a9ab4]">Sin novedades judiciales pendientes para esta actuación.</p>
-        <p className="text-xs text-[#9a9a9a] mt-1">Las novedades detectadas automáticamente aparecerán aquí.</p>
+      <div className="mt-4 bg-white rounded-lg shadow-card p-12 text-center">
+        <Icon name="cloud_done" size={36} className="text-gray-300 mx-auto mb-3" />
+        <p className="text-sm font-medium text-gray-400">Sin novedades judiciales pendientes para esta actuación.</p>
+        <p className="text-xs text-gray-400 mt-1">Las novedades detectadas automáticamente aparecerán aquí.</p>
       </div>
     )
   }
@@ -36,7 +36,7 @@ export function NovedadesPjnTab({ exp }: Props) {
     <div className="mt-4 space-y-6">
       {grupos.map(items => (
         <div key={items[0].corrida_id}>
-          <p className="text-xs font-bold uppercase tracking-wide text-[#7a9ab4] mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
             {items.length} {items.length === 1 ? 'movimiento detectado' : 'movimientos detectados'} el {formatFecha(items[0].fecha_deteccion)}
           </p>
           <div className="space-y-3">

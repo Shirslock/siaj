@@ -29,15 +29,15 @@ export function PrevisionTab({ exp }: Props) {
 
   function MetricCard({ titulo, valor, subtitulo, highlight }: { titulo: string; valor: string; subtitulo?: string; highlight?: boolean }) {
     return (
-      <div className={`rounded-2xl shadow-card p-5 ${highlight ? 'bg-[#C4DFE8]' : 'bg-white'}`}>
-        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${highlight ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>
+      <div className={`rounded-lg shadow-card p-5 ${highlight ? 'bg-blue-100' : 'bg-white'}`}>
+        <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${highlight ? 'text-gray-800' : 'text-gray-500'}`}>
           {titulo}
         </p>
-        <p className={`text-2xl font-headline font-bold ${highlight ? 'text-[#1b3a57]' : 'text-[#1b3a57]'}`}>
+        <p className={`text-2xl font-headline font-semibold ${highlight ? 'text-gray-800' : 'text-gray-800'}`}>
           {valor}
         </p>
         {subtitulo && (
-          <p className={`text-xs mt-1 ${highlight ? 'text-[#1b3a57]' : 'text-[#4a6a84]'}`}>{subtitulo}</p>
+          <p className={`text-xs mt-1 ${highlight ? 'text-gray-800' : 'text-gray-500'}`}>{subtitulo}</p>
         )}
       </div>
     )
@@ -45,10 +45,10 @@ export function PrevisionTab({ exp }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 mb-1">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 mb-1">
         <Icon name="construction" size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-bold text-amber-800">Pestaña a relevar con el negocio</p>
+          <p className="text-xs font-semibold text-amber-800">Pestaña a relevar con el negocio</p>
           <p className="text-[11px] text-amber-700 mt-0.5">
             Los cálculos, tasas y métricas mostrados son ejemplos ilustrativos. La lógica definitiva deberá confirmarse con el área requirente antes de implementar.
           </p>
@@ -78,24 +78,24 @@ export function PrevisionTab({ exp }: Props) {
       </div>
 
       {!aplicaActualizacion && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#eef4f8] border border-[rgba(0,0,0,0.10)]">
-          <Icon name="info" size={18} className="text-[#1b3a57] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#1b3a57]">
+        <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-gray-100 border border-gray-200">
+          <Icon name="info" size={18} className="text-gray-800 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-gray-800">
             La actualización por índice solo aplica a montos en pesos.
           </p>
         </div>
       )}
 
       {aplicaActualizacion && montoBase > 0 && (
-        <div className="bg-white rounded-2xl shadow-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-[rgba(0,0,0,0.12)]">
-            <p className="text-sm font-semibold text-[#1b3a57]">Evolución estimada</p>
+        <div className="bg-white rounded-lg shadow-card overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200">
+            <p className="text-sm font-semibold text-gray-800">Evolución estimada</p>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[rgba(0,0,0,0.10)]">
+              <tr className="border-b border-gray-200">
                 {['Período', 'Tasa mensual', 'Acumulada', 'Monto estimado'].map(col => (
-                  <th key={col} className="text-left py-2.5 px-4 text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
+                  <th key={col} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                     {col}
                   </th>
                 ))}
@@ -106,11 +106,11 @@ export function PrevisionTab({ exp }: Props) {
                 const factor = 1 + parseFloat(row.acumulada) / 100
                 const montoRow = montoBase * factor
                 return (
-                  <tr key={i} className="hover:bg-[#f0f0f0] transition-colors">
-                    <td className="py-3 px-4 text-xs font-medium text-[#1b3a57]">{row.periodo}</td>
-                    <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.tasa}</td>
-                    <td className="py-3 px-4 text-xs text-[#4a6a84]">{row.acumulada}</td>
-                    <td className="py-3 px-4 text-xs font-mono text-[#1b3a57]">{formatMonto(montoRow, moneda, monedas)}</td>
+                  <tr key={i} className="hover:bg-gray-100 transition-colors">
+                    <td className="py-3 px-4 text-xs font-medium text-gray-800">{row.periodo}</td>
+                    <td className="py-3 px-4 text-xs text-gray-500">{row.tasa}</td>
+                    <td className="py-3 px-4 text-xs text-gray-500">{row.acumulada}</td>
+                    <td className="py-3 px-4 text-xs font-mono text-gray-800">{formatMonto(montoRow, moneda, monedas)}</td>
                   </tr>
                 )
               })}
@@ -119,7 +119,7 @@ export function PrevisionTab({ exp }: Props) {
         </div>
       )}
 
-      <p className="text-[11px] text-[#4a6a84] text-center">
+      <p className="text-[11px] text-gray-500 text-center">
         Integración SIGEJ pendiente — Datos calculados en base a tasa de actualización interna SOFSA.
         Los valores son estimativos y no tienen carácter oficial.
       </p>

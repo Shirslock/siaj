@@ -1,23 +1,8 @@
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useUIStore } from '../../store/ui.store'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { BogaFab } from '../boga/BogaFab'
-
-const PAGE_TITLES: Record<string, string> = {
-  '/home':            'Principal',
-  '/dashboard':       'Panel de Control',
-  '/mesa':            'Mesa SACO',
-  '/mesa/alta':       'Alta de Expediente',
-  '/actuaciones':     'Actuaciones',
-  '/bandeja/abogado': 'Actuaciones',
-  '/bandeja/area':    'Actuaciones',
-  '/agenda':          'Agenda',
-  '/configuracion':   'Configuración del Sistema',
-  '/novedades-judiciales': 'Novedades judiciales',
-  '/boga':            'Chat con Boga',
-}
 
 const PAGE_ACTIVE: Record<string, string> = {
   '/home':            'home',
@@ -33,43 +18,27 @@ const PAGE_ACTIVE: Record<string, string> = {
   '/boga':            'boga',
 }
 
+// Estructura del PRD (siaj-design-system.md §2): contenedor h-screen con sidebar off-canvas,
+// header navy sticky de 48px y <main> con scroll propio.
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { sidebarCollapsed } = useUIStore()
   const { pathname } = useLocation()
 
-  let titulo   = PAGE_TITLES[pathname] ?? 'SIAJ'
   let activePage = PAGE_ACTIVE[pathname] ?? ''
-
-  if (pathname.startsWith('/expediente/')) {
-    titulo     = 'Detalle de Actuación'
-    activePage = 'actuaciones'
-  }
-
-  if (pathname.startsWith('/causa/')) {
-    titulo     = `Causa ${pathname.replace('/causa/', '')}`
-    activePage = 'actuaciones'
-  }
-
-  // si el pathname es exactamente /configuracion, el main se muestra a pantalla completa (sin max-width ni centrado)
-  const esConfiguracion = pathname === '/configuracion'
+  if (pathname.startsWith('/expediente/') || pathname.startsWith('/causa/')) activePage = 'actuaciones'
 
   // dentro del detalle de una actuación ya está la tab "Boga" con contexto específico,
   // y en /boga ya está el chat a pantalla completa — el flotante es redundante en ambos
   const mostrarBogaFab = !pathname.startsWith('/expediente/') && pathname !== '/boga'
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
+    <div className="flex h-screen overflow-hidden bg-[#F4F6F8]">
       <Sidebar activePage={activePage} />
-      <Topbar titulo={titulo} />
-      <main
-        className={`pt-16 transition-all duration-200 ${
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
-        }`}
-      >
-        <div className={esConfiguracion ? 'w-full' : 'max-w-screen-xl mx-auto'}>
+      <div className="flex-1 flex flex-col min-w-0">
+        <Topbar />
+        <main id="app-main" className="flex-1 overflow-auto">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
       {mostrarBogaFab && <BogaFab />}
     </div>
   )

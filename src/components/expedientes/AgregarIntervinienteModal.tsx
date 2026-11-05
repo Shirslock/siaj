@@ -83,14 +83,14 @@ export function AgregarIntervinienteModal({ expedienteId, open, onClose, valores
         <>
           <button
             onClick={cerrar}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={confirmar}
             disabled={!formNombre.apellido.trim() || !formNombre.nombre.trim() || !form.numero_documento.trim()}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+            className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
           >
             Agregar
           </button>
@@ -100,11 +100,11 @@ export function AgregarIntervinienteModal({ expedienteId, open, onClose, valores
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="field-label">Nombre <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Nombre <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full" placeholder="Mario Oscar" value={formNombre.nombre} onChange={e => setFormNombre(p => ({ ...p, nombre: e.target.value }))} />
           </div>
           <div>
-            <label className="field-label">Apellido <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Apellido <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full" placeholder="RODRIGUEZ" value={formNombre.apellido} onChange={e => setFormNombre(p => ({ ...p, apellido: e.target.value }))} />
           </div>
           <div>
@@ -124,7 +124,7 @@ export function AgregarIntervinienteModal({ expedienteId, open, onClose, valores
             </select>
           </div>
           <div>
-            <label className="field-label">N° Documento <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">N° Documento <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full font-mono" placeholder="23456789" value={form.numero_documento} onChange={e => setField('numero_documento', e.target.value)} />
           </div>
           <div>

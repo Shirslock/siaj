@@ -244,11 +244,11 @@ export default function DetalleExpedientePage() {
   if (!exp) {
     return (
       <div className="p-6">
-        <div className="bg-white rounded-2xl shadow-card p-12 text-center">
+        <div className="bg-white rounded-lg shadow-card p-12 text-center">
           <Icon name="search_off" size={48} />
-          <p className="mt-4 text-[#1b3a57] font-medium">Actuación no encontrada</p>
-          <p className="text-sm text-[#4a6a84] mt-1 font-mono">{expId}</p>
-          <Link to="/bandeja/abogado" className="inline-block mt-4 text-sm text-[#1b3a57] hover:underline">
+          <p className="mt-4 text-gray-800 font-medium">Actuación no encontrada</p>
+          <p className="text-sm text-gray-500 mt-1 font-mono">{expId}</p>
+          <Link to="/bandeja/abogado" className="inline-block mt-4 text-sm text-gray-800 hover:underline">
             Volver a la bandeja
           </Link>
         </div>
@@ -847,18 +847,18 @@ export default function DetalleExpedientePage() {
     <div className="p-6 space-y-5 max-w-screen-xl overflow-hidden">
 
       {/* Header */}
-      <div className="bg-white rounded-2xl shadow-card p-5">
+      <div className="bg-white rounded-lg shadow-card p-5">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-[#4a6a84] mb-3">
-          <Link to="/actuaciones" className="hover:text-[#1b3a57] transition-colors">Actuaciones</Link>
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+          <Link to="/actuaciones" className="hover:text-gray-800 transition-colors">Actuaciones</Link>
           <Icon name="chevron_right" size={14} />
-          <span className="text-[#1b3a57]">Actuación</span>
+          <span className="text-gray-800">Actuación</span>
         </div>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="font-mono font-bold text-lg text-[#1b3a57]">{exp.id}</span>
+              <span className="font-mono font-semibold text-lg text-gray-800">{exp.id}</span>
               <AreaBadge area={exp.area} />
               <EstadoBadge code={exp.estado} label={exp.estado} />
               {(alerta.activa || alertaTimer.activa) && (() => {
@@ -868,20 +868,20 @@ export default function DetalleExpedientePage() {
                   return (
                     <div
                       title={alerta.nombreElemento ? `Vencido: ${alerta.nombreElemento}` : 'Plazo vencido'}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fee2e2] border border-[#fca5a5]"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 border border-red-300"
                     >
-                      <Icon name="warning" size={11} className="text-[#b91c1c]" />
-                      <span className="text-[10px] font-black text-[#b91c1c] uppercase tracking-wide">Vencido</span>
+                      <Icon name="warning" size={11} className="text-red-700" />
+                      <span className="text-[10px] font-semibold text-red-700 uppercase tracking-wide">Vencido</span>
                     </div>
                   )
                 }
                 return (
                   <div
                     title={alerta.nombreElemento ? `Por vencer: ${alerta.nombreElemento}${alerta.fechaVencimiento ? ` — vence ${formatFecha(alerta.fechaVencimiento)}` : ''}` : 'Tarea por vencer'}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fef3c7] border border-[#fde68a]"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200"
                   >
-                    <Icon name="schedule" size={11} className="text-[#d97706]" />
-                    <span className="text-[10px] font-black text-[#d97706] uppercase tracking-wide">Por vencer</span>
+                    <Icon name="schedule" size={11} className="text-amber-700" />
+                    <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Por vencer</span>
                   </div>
                 )
               })()}
@@ -890,24 +890,24 @@ export default function DetalleExpedientePage() {
                 title={exp.es_urgente ? 'Marcar como no urgente' : 'Marcar como urgente'}
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
                   exp.es_urgente
-                    ? 'bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]'
-                    : 'bg-white border-[rgba(0,0,0,0.12)] text-[#4a6a84] hover:border-[#fca5a5] hover:text-[#b91c1c]'
+                    ? 'bg-red-100 border-red-300 text-red-700'
+                    : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-700'
                 }`}
               >
-                <Icon name="warning" size={11} className={exp.es_urgente ? 'text-[#b91c1c]' : 'text-[#4a6a84]'} />
-                <span className="text-[10px] font-black uppercase tracking-wide">
+                <Icon name="warning" size={11} className={exp.es_urgente ? 'text-red-700' : 'text-gray-500'} />
+                <span className="text-[10px] font-semibold uppercase tracking-wide">
                   {exp.es_urgente ? 'Urgente' : 'Marcar urgente'}
                 </span>
               </button>
               {exp.numero_causa && (
-                <span className="text-[10px] font-bold bg-[#e8e8e8] text-[#4a6a84] px-2 py-0.5 rounded-full font-mono">
+                <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-mono">
                   {formatNumeroCausaPjn(exp)}
                 </span>
               )}
               {exp.es_querella_iniciada && exp.id_querella_derivada && (
                 <button
                   onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id_querella_derivada!))}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#eeedfe] text-[#534ab7] border border-[#AFA9EC] hover:bg-[#CECBF6] transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-300 hover:bg-violet-200 transition-colors"
                 >
                   <Icon name="gavel" size={12} />
                   Ver Querella →
@@ -916,7 +916,7 @@ export default function DetalleExpedientePage() {
               {exp.id_juicio_derivado && (
                 <button
                   onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id_juicio_derivado!))}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#eeedfe] text-[#534ab7] border border-[#AFA9EC] hover:bg-[#CECBF6] transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-300 hover:bg-violet-200 transition-colors"
                 >
                   <Icon name="gavel" size={12} />
                   Ver juicio {exp.id_juicio_derivado} →
@@ -925,19 +925,19 @@ export default function DetalleExpedientePage() {
               {exp.antecedente_id && (
                 <button
                   onClick={() => navigate(RUTAS.EXPEDIENTE(exp.antecedente_id!))}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#f5f5f5] text-[#4a6a84] border border-[rgba(0,0,0,0.12)] hover:bg-[#e8e8e8] transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-100 transition-colors"
                 >
                   <Icon name="account_tree" size={12} />
                   Antecedente {exp.antecedente_id} →
                 </button>
               )}
             </div>
-            <h1 className="font-headline font-bold text-xl text-[#1b3a57] leading-snug">{exp.caratula}</h1>
-            <div className="flex items-center gap-4 mt-1.5 text-xs text-[#4a6a84] flex-wrap">
+            <h1 className="font-headline font-semibold text-xl text-gray-800 leading-snug">{exp.caratula}</h1>
+            <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-500 flex-wrap">
               <span>{tipoLabel}</span>
               {juzgadoLabel && (
                 <>
-                  <span className="text-[rgba(0,0,0,0.35)]">·</span>
+                  <span className="text-gray-400">·</span>
                   <span>{juzgadoLabel}</span>
                 </>
               )}
@@ -948,12 +948,12 @@ export default function DetalleExpedientePage() {
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(o => !o)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-[#1b3a57] text-white hover:opacity-90 transition-opacity shadow-md"
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-700 text-white hover:opacity-90 transition-opacity shadow-md"
             >
               <Icon name="add" size={18} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-card-lg z-10 overflow-hidden border border-[rgba(0,0,0,0.10)]">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-card-lg z-10 overflow-hidden border border-gray-200">
                 {[
                   { key: 'estado' as AccionMenu,    icon: 'swap_horiz',    label: 'Cambiar estado',  show: true },
                   { key: 'causa' as AccionMenu,     icon: 'link',          label: 'Agrupar a causa', show: !exp.numero_causa },
@@ -972,13 +972,13 @@ export default function DetalleExpedientePage() {
                     onClick={() => { if (!item.disabled) openAccion(item.key) }}
                     disabled={item.disabled}
                     title={item.disabled ? item.hint : undefined}
-                    className="w-full flex items-start gap-2.5 px-4 py-2.5 text-sm text-left text-[#1b3a57] hover:bg-[#e8e8e8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    className="w-full flex items-start gap-2.5 px-4 py-2.5 text-sm text-left text-gray-800 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   >
                     <Icon name={item.icon} size={18} />
                     <span>
                       {item.label}
                       {item.disabled && item.hint && (
-                        <span className="block text-[10px] text-[#4a6a84] leading-snug mt-0.5">{item.hint}</span>
+                        <span className="block text-[10px] text-gray-500 leading-snug mt-0.5">{item.hint}</span>
                       )}
                     </span>
                   </button>
@@ -990,15 +990,15 @@ export default function DetalleExpedientePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-[rgba(0,0,0,0.10)] w-full">
+      <div className="flex gap-0 border-b border-gray-200 w-full">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
               tab === t.key
-                ? 'border-[#1b3a57] text-[#1b3a57]'
-                : 'border-transparent text-[#4a6a84] hover:text-[#1b3a57]'
+                ? 'border-blue-700 text-gray-800'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
             {t.key === 'asistente'
@@ -1007,7 +1007,7 @@ export default function DetalleExpedientePage() {
             }
             {t.label}
             {tabCounters[t.key] !== undefined && (
-              <span className="text-xs bg-[#e0e0e0] rounded-full px-1.5 py-0.5 text-[#4a6a84]">
+              <span className="text-xs bg-gray-200 rounded-full px-1.5 py-0.5 text-gray-500">
                 {tabCounters[t.key]}
               </span>
             )}
@@ -1018,17 +1018,17 @@ export default function DetalleExpedientePage() {
       {/* Banner: novedades judiciales pendientes — solo aviso, contenido en pestaña.
           El organismo de cada una se distingue con su chip (ver NovedadPjnCard). */}
       {novedadesDeEstaActuacion.length > 0 && tab !== 'novedades_pjn' && (
-        <div className="mt-4 p-3 rounded-xl bg-[#e6f1fb] border border-[#B5D4F4] flex items-center justify-between">
+        <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon name="pjn" size={16} className="text-[#185fa5]" />
-            <span className="text-[13px] text-[#185fa5] font-medium">
+            <Icon name="pjn" size={16} className="text-blue-700" />
+            <span className="text-[13px] text-blue-700 font-medium">
               {novedadesDeEstaActuacion.length}
               {novedadesDeEstaActuacion.length === 1 ? ' novedad judicial detectada' : ' novedades judiciales detectadas'}
             </span>
           </div>
           <button
             onClick={() => setTab('novedades_pjn')}
-            className="text-[13px] font-semibold text-[#185fa5] hover:underline flex items-center gap-1"
+            className="text-[13px] font-semibold text-blue-700 hover:underline flex items-center gap-1"
           >
             Revisar
             <Icon name="arrow_forward" size={14} />
@@ -1061,7 +1061,7 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
@@ -1082,7 +1082,7 @@ export default function DetalleExpedientePage() {
                 if (esArchivoBlando(nuevoEstado)) return false
                 return tieneTareasPendientes
               })()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Confirmar
             </button>
@@ -1129,15 +1129,15 @@ export default function DetalleExpedientePage() {
                 onChange={e => setMotivoEstado(e.target.value)}
               />
             </div>
-            <p className="text-xs text-[#4a6a84] italic text-center">
+            <p className="text-xs text-gray-500 italic text-center">
               Esta acción quedará registrada en el timeline.
             </p>
           </div>
         ) : (enDesarchivadoCL || esTerminalCL) ? (
           <div className="space-y-4">
-            <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
-              <Icon name="info" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-[#854f0b]">
+            <div className="flex items-start gap-2 px-4 py-3 bg-amber-100 border border-amber-200 rounded-lg">
+              <Icon name="info" size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800">
                 {enDesarchivadoCL
                   ? 'La actuación está desarchivada. Una vez cargada la actividad, volvé a archivarla.'
                   : 'La actuación está en un estado terminal. Desarchivala para cargar una actividad genérica; después vas a tener que volver a archivarla.'}
@@ -1170,7 +1170,7 @@ export default function DetalleExpedientePage() {
                 onChange={e => setMotivoEstado(e.target.value)}
               />
             </div>
-            <p className="text-xs text-[#4a6a84] italic text-center">
+            <p className="text-xs text-gray-500 italic text-center">
               Esta acción quedará registrada en el timeline.
             </p>
           </div>
@@ -1200,18 +1200,18 @@ export default function DetalleExpedientePage() {
             return (
               <div className="space-y-3">
                 {!esAsignado && !esRetroceso && nuevoEstado !== codigoFinalizado && tieneTareasPendientes && !esArchivoBlando(nuevoEstado) && (
-                  <div className="flex items-start gap-2 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-xl">
-                    <Icon name="warning" size={14} className="text-[#b91c1c] flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-[#b91c1c]">
+                  <div className="flex items-start gap-2 px-4 py-3 bg-red-100 border border-red-300 rounded-lg">
+                    <Icon name="warning" size={14} className="text-red-700 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-700">
                       No podés avanzar al siguiente estado mientras haya tareas en curso.
                       Completá o marcá como "No procedente" todas las tareas del estado actual.
                     </p>
                   </div>
                 )}
                 {esRetroceso && (
-                  <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
-                    <Icon name="warning" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-[#d97706]">
+                  <div className="flex items-start gap-2 px-4 py-3 bg-amber-100 border border-amber-200 rounded-lg">
+                    <Icon name="warning" size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700">
                       Este es un retroceso de estado. Es una operación excepcional — el motivo es
                       obligatorio y quedará registrado en el historial de la actuación.
                     </p>
@@ -1220,9 +1220,9 @@ export default function DetalleExpedientePage() {
                 <div>
                   <label className="field-label">Estado destino</label>
                   {esAsignado ? (
-                    <div className="bg-[#f5f5f5] rounded-xl px-4 py-3">
-                      <p className="text-xs text-[#4a6a84] mb-1">Próximo estado</p>
-                      <p className="text-sm font-bold text-[#1b3a57]">{siguienteEstadoProcesal?.label}</p>
+                    <div className="bg-gray-100 rounded-lg px-4 py-3">
+                      <p className="text-xs text-gray-500 mb-1">Próximo estado</p>
+                      <p className="text-sm font-semibold text-gray-800">{siguienteEstadoProcesal?.label}</p>
                     </div>
                   ) : (
                     <select
@@ -1257,7 +1257,7 @@ export default function DetalleExpedientePage() {
                 </div>
                 <div>
                   <label className="field-label">
-                    Motivo {esRetroceso && <span className="text-[#b91c1c]">*</span>}
+                    Motivo {esRetroceso && <span className="text-red-700">*</span>}
                     {!esRetroceso && ' (opcional)'}
                   </label>
                   <textarea
@@ -1267,7 +1267,7 @@ export default function DetalleExpedientePage() {
                     onChange={e => setMotivoEstado(e.target.value)}
                   />
                 </div>
-                <p className="text-xs text-[#4a6a84] italic text-center">
+                <p className="text-xs text-gray-500 italic text-center">
                   Esta acción quedará registrada en el timeline.
                 </p>
               </div>
@@ -1294,14 +1294,14 @@ export default function DetalleExpedientePage() {
           <>
             <button
               onClick={() => { setModalCausal(false); setCausalSeleccionada(''); setCausalLibre('') }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={() => confirmarCausal()}
               disabled={!causalSeleccionada && !causalLibre.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Confirmar
             </button>
@@ -1313,12 +1313,12 @@ export default function DetalleExpedientePage() {
           const opcionesCausal = getCausalesPorEstado(grupoCausalActual)
           return (
             <div className="space-y-3">
-              <p className="text-xs text-[#4a6a84]">
-                Vas a finalizar la actuación <span className="font-mono font-bold">{exp.id}</span>. Indicá la causal de finalización.
+              <p className="text-xs text-gray-500">
+                Vas a finalizar la actuación <span className="font-mono font-semibold">{exp.id}</span>. Indicá la causal de finalización.
               </p>
               {antecedente && !esEstadoArchivado(antecedente.tipo, antecedente.estadoProcesal ?? antecedente.estado) && (
-                <p className="text-xs text-[#1b3a57] bg-[#f0f7ff] border border-[#C4DFE8] rounded-xl px-3 py-2">
-                  El antecedente <span className="font-mono font-bold">{antecedente.id}</span> también pasará a
+                <p className="text-xs text-gray-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                  El antecedente <span className="font-mono font-semibold">{antecedente.id}</span> también pasará a
                   Finalizado, con la misma causal registrada en su línea de tiempo.
                 </p>
               )}
@@ -1365,7 +1365,7 @@ export default function DetalleExpedientePage() {
                 if (ctx === 'finalizar_derivada') setModalCausal(true)
                 else setAccion('estado')
               }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors"
             >
               Volver
             </button>
@@ -1374,7 +1374,7 @@ export default function DetalleExpedientePage() {
                 if (pendientes?.contexto === 'finalizar_derivada') confirmarCausal(true)
                 else confirmarEstado(true)
               }}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity"
             >
               Continuar igual
             </button>
@@ -1383,18 +1383,18 @@ export default function DetalleExpedientePage() {
       >
         {pendientes && (
           <div className="space-y-3">
-            <div className="flex items-start gap-2 px-4 py-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl">
-              <Icon name="warning" size={14} className="text-[#d97706] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-[#854f0b]">
+            <div className="flex items-start gap-2 px-4 py-3 bg-amber-100 border border-amber-200 rounded-lg">
+              <Icon name="warning" size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800">
                 {pendientes.contexto === 'finalizar_derivada'
-                  ? <>El antecedente <span className="font-mono font-bold">{pendientes.expId}</span> tiene tareas sin resolver en <b>{pendientes.estadoLabel}</b>. Si continuás, se archiva igual con estas tareas pendientes.</>
+                  ? <>El antecedente <span className="font-mono font-semibold">{pendientes.expId}</span> tiene tareas sin resolver en <b>{pendientes.estadoLabel}</b>. Si continuás, se archiva igual con estas tareas pendientes.</>
                   : <>Esta actuación tiene tareas sin resolver en <b>{pendientes.estadoLabel}</b>. Si continuás, se archiva igual con estas tareas pendientes.</>}
               </p>
             </div>
             <ul className="max-h-56 overflow-y-auto space-y-1">
               {pendientes.tareas.map(t => (
-                <li key={t.id} className="flex items-start gap-2 text-xs text-[#1b3a57]">
-                  <Icon name="schedule" size={12} className="text-[#4a6a84] mt-0.5 flex-shrink-0" />
+                <li key={t.id} className="flex items-start gap-2 text-xs text-gray-800">
+                  <Icon name="schedule" size={12} className="text-gray-500 mt-0.5 flex-shrink-0" />
                   {t.nombre}
                 </li>
               ))}
@@ -1411,13 +1411,13 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarCausa}
               disabled={!nuevaCausa.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Agrupar
             </button>
@@ -1446,23 +1446,23 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarDesagrupar}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:opacity-90 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white hover:opacity-90 transition-opacity"
             >
               Desagrupar
             </button>
           </>
         }
       >
-        <p className="text-sm text-[#1b3a57]">
-          Se desvinculará la actuación <span className="font-mono font-bold">{exp.id}</span> de la causa{' '}
-          <span className="font-mono font-bold">{formatNumeroCausaPjn(exp)}</span>.
+        <p className="text-sm text-gray-800">
+          Se desvinculará la actuación <span className="font-mono font-semibold">{exp.id}</span> de la causa{' '}
+          <span className="font-mono font-semibold">{formatNumeroCausaPjn(exp)}</span>.
         </p>
-        <p className="text-xs text-[#4a6a84] mt-2">Esta acción no elimina los datos de la actuación.</p>
+        <p className="text-xs text-gray-500 mt-2">Esta acción no elimina los datos de la actuación.</p>
       </Modal>
 
       {/* Modal: Reasignar */}
@@ -1473,13 +1473,13 @@ export default function DetalleExpedientePage() {
         size="sm"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarReasignar}
               disabled={!nuevoAbogado}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Reasignar
             </button>
@@ -1505,13 +1505,13 @@ export default function DetalleExpedientePage() {
         size="lg"
         footer={
           <>
-            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => setAccion(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarIniciarJuicio}
               disabled={MAPA_INICIAR_JUICIO[exp.tipo] === 'LANZAMIENTO_JUDICIALIZADO' && !formJuicio.tipo_lanzamiento}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               <Icon name="gavel" size={16} />
               Confirmar Inicio
@@ -1521,14 +1521,14 @@ export default function DetalleExpedientePage() {
       >
         <div className="space-y-4">
           {/* Aviso */}
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+          <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200">
             <Icon name="warning" size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-bold text-amber-800">Confirmar inicio de acción judicial</p>
+              <p className="text-xs font-semibold text-amber-800">Confirmar inicio de acción judicial</p>
               <p className="text-[11px] text-amber-700 mt-0.5">
                 Se creará una actuación nueva de tipo{' '}
                 <b>{TIPOS_GESTION.find(t => t.code === MAPA_INICIAR_JUICIO[exp.tipo])?.label ?? MAPA_INICIAR_JUICIO[exp.tipo]}</b>{' '}
-                con estos datos. <span className="font-mono font-bold">{exp.id}</span> queda como antecedente y pasa a
+                con estos datos. <span className="font-mono font-semibold">{exp.id}</span> queda como antecedente y pasa a
                 Finalizado cuando se finalice la nueva actuación.
               </p>
             </div>
@@ -1537,7 +1537,7 @@ export default function DetalleExpedientePage() {
           <div className="grid grid-cols-2 gap-4">
             {/* N° de Causa — siempre */}
             <div>
-              <label className="field-label">N° de Causa <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">N° de Causa <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full font-mono" placeholder="FSM-XXXXX/2026"
                 value={formJuicio.numero_causa}
                 onChange={e => setFormJuicio(p => ({ ...p, numero_causa: e.target.value }))} />
@@ -1572,7 +1572,7 @@ export default function DetalleExpedientePage() {
 
             {/* Abogado de la contraria — siempre */}
             <div>
-              <label className="field-label">Abogado de la Contraria <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Abogado de la Contraria <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full" placeholder="Dr. Apellido, Nombre"
                 value={formJuicio.abogado_contraria}
                 onChange={e => setFormJuicio(p => ({ ...p, abogado_contraria: e.target.value }))} />
@@ -1580,7 +1580,7 @@ export default function DetalleExpedientePage() {
 
             {/* Parte Actora — siempre */}
             <div>
-              <label className="field-label">Parte Actora <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Parte Actora <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full" placeholder="Nombre del actor"
                 value={formJuicio.parte_actora}
                 onChange={e => setFormJuicio(p => ({ ...p, parte_actora: e.target.value }))} />
@@ -1588,7 +1588,7 @@ export default function DetalleExpedientePage() {
 
             {/* Parte Demandada — siempre */}
             <div>
-              <label className="field-label">Parte Demandada <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Parte Demandada <span className="text-red-700">*</span></label>
               <input type="text" className="field-input w-full"
                 value={formJuicio.parte_demandada}
                 onChange={e => setFormJuicio(p => ({ ...p, parte_demandada: e.target.value }))} />
@@ -1604,7 +1604,7 @@ export default function DetalleExpedientePage() {
 
             {/* Fecha de Inicio — siempre */}
             <div>
-              <label className="field-label">Fecha de Inicio <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Fecha de Inicio <span className="text-red-700">*</span></label>
               <input type="date" className="field-input w-full"
                 value={formJuicio.fecha_inicio}
                 onChange={e => setFormJuicio(p => ({ ...p, fecha_inicio: e.target.value }))} />
@@ -1612,7 +1612,7 @@ export default function DetalleExpedientePage() {
 
             {/* Tipo de Juicio — siempre pero opciones según tipo */}
             <div>
-              <label className="field-label">Tipo de Juicio <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Tipo de Juicio <span className="text-red-700">*</span></label>
               <select className="field-input w-full"
                 value={formJuicio.tipo_juicio}
                 onChange={e => setFormJuicio(p => ({ ...p, tipo_juicio: e.target.value }))}>
@@ -1652,7 +1652,7 @@ export default function DetalleExpedientePage() {
             {/* Tipo de lanzamiento — solo si el documento nuevo es LANZAMIENTO_JUDICIALIZADO. Determina el circuito Operativo/Comercial (ver Sección 13). Se completa una única vez, después queda bloqueado en Datos Maestros. */}
             {MAPA_INICIAR_JUICIO[exp.tipo] === 'LANZAMIENTO_JUDICIALIZADO' && (
               <div className="col-span-2">
-                <label className="field-label">Tipo de lanzamiento <span className="text-[#b91c1c]">*</span></label>
+                <label className="field-label">Tipo de lanzamiento <span className="text-red-700">*</span></label>
                 <select className="field-input w-full"
                   value={formJuicio.tipo_lanzamiento}
                   onChange={e => setFormJuicio(p => ({ ...p, tipo_lanzamiento: e.target.value }))}>
@@ -1660,7 +1660,7 @@ export default function DetalleExpedientePage() {
                   <option value="Operativo">Operativo</option>
                   <option value="Comercial">Comercial</option>
                 </select>
-                <p className="text-[10px] text-[#7a9ab4] mt-1">
+                <p className="text-[10px] text-gray-400 mt-1">
                   Determina el circuito de estados a seguir. Una vez guardado, este campo queda bloqueado.
                 </p>
               </div>
@@ -1677,7 +1677,7 @@ export default function DetalleExpedientePage() {
             )}
             {exp.tipo !== 'LANZAMIENTO' && (
               <div className="col-span-2">
-                <label className="field-label">Monto de la Demanda <span className="text-[#b91c1c]">*</span></label>
+                <label className="field-label">Monto de la Demanda <span className="text-red-700">*</span></label>
                 <div className="space-y-2">
                   {formJuicio.montos.map((par, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -1705,7 +1705,7 @@ export default function DetalleExpedientePage() {
                         <button
                           type="button"
                           onClick={() => setFormJuicio(p => ({ ...p, montos: p.montos.filter((_, idx) => idx !== i) }))}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#fee2e2] hover:text-[#b91c1c] transition-colors flex-shrink-0"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-red-100 hover:text-red-700 transition-colors flex-shrink-0"
                         >
                           <Icon name="close" size={14} />
                         </button>
@@ -1719,7 +1719,7 @@ export default function DetalleExpedientePage() {
                         ...p,
                         montos: [...p.montos, { moneda: proximaMonedaLibre(p.montos, monedas) as Moneda, monto: '' }],
                       }))}
-                      className="flex items-center gap-1.5 text-xs font-bold text-[#1b3a57] hover:text-[#2a5278] transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-gray-800 hover:text-blue-800 transition-colors"
                     >
                       <Icon name="add" size={14} />
                       Agregar monto
@@ -1748,12 +1748,12 @@ export default function DetalleExpedientePage() {
         size="md"
         footer={
           <>
-            <button onClick={() => { setAccion(null); setFormQuerella(BLANK_QUERELLA) }} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={() => { setAccion(null); setFormQuerella(BLANK_QUERELLA) }} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={confirmarNuevaQuerella}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 transition-opacity"
             >
               <Icon name="gavel" size={16} />
               Iniciar Querella
@@ -1764,13 +1764,13 @@ export default function DetalleExpedientePage() {
         <div className="space-y-3 py-1">
 
           {/* Info del origen */}
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-[#f0f7ff] border border-[#C4DFE8]">
-            <Icon name="info" size={14} className="text-[#1b7a8a] mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <Icon name="info" size={14} className="text-teal-700 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-[12px] font-semibold text-[#1b3a57] mb-0.5">
+              <p className="text-[12px] font-semibold text-gray-800 mb-0.5">
                 Se creará una nueva actuación de tipo Querella
               </p>
-              <p className="text-[11px] text-[#4a6a84]">
+              <p className="text-[11px] text-gray-500">
                 La Querella quedará vinculada a esta Carta SAE y pasará a ser la actuación principal dentro de la causa.
               </p>
             </div>
@@ -1778,7 +1778,7 @@ export default function DetalleExpedientePage() {
 
           {/* Carátula */}
           <div>
-            <label className="field-label">Carátula <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Carátula <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full" placeholder="SOFSE S.A. C/ NN S/ QUERELLA"
               value={formQuerella.caratula}
               onChange={e => setFormQuerella(p => ({ ...p, caratula: e.target.value }))} />

@@ -17,15 +17,15 @@ interface Props {
 }
 
 const NIVEL_CONFIG: Record<NivelAutomatizacionEscrito, { label: string; bg: string; text: string }> = {
-  AUTOMATICA:        { label: 'Automática',           bg: 'bg-[#dcfce7]', text: 'text-[#15803d]' },
-  ASISTIDA_DATO:      { label: 'Asistida por dato',    bg: 'bg-[#dbeafe]', text: 'text-[#1b3a57]' },
-  ASISTIDA_CRITERIO:  { label: 'Asistida por criterio', bg: 'bg-[#fef3c7]', text: 'text-[#d97706]' },
+  AUTOMATICA:        { label: 'Automática',           bg: 'bg-green-100', text: 'text-green-700' },
+  ASISTIDA_DATO:      { label: 'Asistida por dato',    bg: 'bg-blue-100', text: 'text-gray-800' },
+  ASISTIDA_CRITERIO:  { label: 'Asistida por criterio', bg: 'bg-amber-100', text: 'text-amber-700' },
 }
 
 function NivelBadge({ nivel }: { nivel: NivelAutomatizacionEscrito }) {
   const cfg = NIVEL_CONFIG[nivel]
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide ${cfg.bg} ${cfg.text}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${cfg.bg} ${cfg.text}`}>
       {cfg.label}
     </span>
   )
@@ -137,7 +137,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
               key={grupo}
               type="button"
               onClick={() => { setGrupoSel(grupo); setPaso(2) }}
-              className="p-4 rounded-xl border border-[rgba(0,0,0,0.1)] text-left text-sm font-semibold text-[#1b3a57] hover:bg-[rgba(27,58,87,0.05)] hover:border-[#4a9ab5] transition-colors"
+              className="p-4 rounded-lg border border-gray-200 text-left text-sm font-semibold text-gray-800 hover:bg-blue-50 hover:border-blue-500 transition-colors"
             >
               {grupo}
             </button>
@@ -147,7 +147,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
 
       {paso === 2 && grupoSel && (
         esPenal ? (
-          <div className="p-6 text-center text-sm text-[#4a6a84] bg-[#f5f5f5] rounded-xl">
+          <div className="p-6 text-center text-sm text-gray-500 bg-gray-100 rounded-lg">
             Catálogo de escritos Penal — próximamente
           </div>
         ) : (
@@ -157,14 +157,14 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                 key={escrito.id}
                 type="button"
                 onClick={() => { setEscritoSel(escrito); setPaso(3) }}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-left hover:bg-[rgba(27,58,87,0.05)] hover:border-[#4a9ab5] transition-colors"
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 text-left hover:bg-blue-50 hover:border-blue-500 transition-colors"
               >
-                <span className="text-sm text-[#1b3a57]">{escrito.titulo}</span>
+                <span className="text-sm text-gray-800">{escrito.titulo}</span>
                 <NivelBadge nivel={escrito.nivel} />
               </button>
             ))}
             {getEscritosPorGrupo(grupoSel, exp.area as 'CIVIL' | 'LABORAL').length === 0 && (
-              <p className="text-sm text-[#4a6a84]">No hay escritos para este grupo en el fuero del expediente.</p>
+              <p className="text-sm text-gray-500">No hay escritos para este grupo en el fuero del expediente.</p>
             )}
           </div>
         )
@@ -174,14 +174,14 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Firmante / Matrícula" full required>
             {matriculasArea.length === 0 ? (
-              <p className="text-xs text-[#b91c1c]">
+              <p className="text-xs text-red-700">
                 No hay matrículas cargadas para esta área. Cargarlas en Configuración → Personal.
               </p>
             ) : (
               <select
                 value={datos.matricula_id}
                 onChange={e => handleSeleccionarMatricula(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] focus:outline-none focus:border-[#1b3a57]"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:border-blue-700"
               >
                 <option value="">Seleccionar...</option>
                 {sugerida && (
@@ -209,7 +209,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                 ['PATROCINANTE', 'Patrocinante'],
                 ['DERECHO_PROPIO', 'Por derecho propio'],
               ] as const).map(([value, label]) => (
-                <label key={value} className="flex items-center gap-2 text-sm text-[#1b3a57]">
+                <label key={value} className="flex items-center gap-2 text-sm text-gray-800">
                   <input
                     type="radio"
                     name="caracter"
@@ -228,7 +228,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                 ['ESTADO_NACIONAL', 'Estado Nacional'],
                 ['SOFSE', 'SOFSE'],
               ] as const).map(([value, label]) => (
-                <label key={value} className="flex items-center gap-2 text-sm text-[#1b3a57]">
+                <label key={value} className="flex items-center gap-2 text-sm text-gray-800">
                   <input
                     type="radio"
                     name="representado"
@@ -242,18 +242,18 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
           </FormField>
 
           <FormField label="Carátula">
-            <input readOnly value={exp.caratula} className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.1)] rounded-lg bg-[#f5f5f5] text-[#4a6a84]" />
+            <input readOnly value={exp.caratula} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 text-gray-500" />
           </FormField>
 
           <FormField label="N° Expediente">
-            <input readOnly value={exp.numero_ee_gde} className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.1)] rounded-lg bg-[#f5f5f5] text-[#4a6a84]" />
+            <input readOnly value={exp.numero_ee_gde} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 text-gray-500" />
           </FormField>
 
           <FormField label="Juzgado">
             <input
               value={datos.juzgado ?? ''}
               onChange={e => setDatos(d => ({ ...d, juzgado: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700"
             />
           </FormField>
 
@@ -261,7 +261,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
             <input
               value={datos.secretaria ?? ''}
               onChange={e => setDatos(d => ({ ...d, secretaria: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700"
             />
           </FormField>
 
@@ -271,7 +271,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                 <div className="flex flex-col gap-2">
                   <select
                     onChange={e => handleSeleccionarInterviniente(v.id, v.esDestinatarioCedula, e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] focus:outline-none focus:border-[#1b3a57]"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:border-blue-700"
                   >
                     <option value="">Seleccionar interviniente...</option>
                     {exp.intervinientes.map(i => (
@@ -283,14 +283,14 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                     placeholder="Nombre"
                     value={datos.variables[v.id] ?? ''}
                     onChange={e => handleVariable(v.id, e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700"
                   />
                 </div>
               ) : v.tipo === 'select' ? (
                 <select
                   value={datos.variables[v.id] ?? ''}
                   onChange={e => handleVariable(v.id, e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg bg-white text-[#1b3a57] focus:outline-none focus:border-[#1b3a57]"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:border-blue-700"
                 >
                   <option value="">Seleccionar...</option>
                   {v.opciones?.map(op => <option key={op} value={op}>{op}</option>)}
@@ -299,7 +299,7 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                 <textarea
                   value={datos.variables[v.id] ?? ''}
                   onChange={e => handleVariable(v.id, e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700"
                   rows={3}
                 />
               ) : v.tipo === 'date' ? (
@@ -307,13 +307,13 @@ export function GenerarEscritoModal({ open, onClose, exp, onGenerar }: Props) {
                   type="date"
                   value={datos.variables[v.id] ?? ''}
                   onChange={e => handleVariable(v.id, e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700"
                 />
               ) : (
                 <input
                   value={datos.variables[v.id] ?? ''}
                   onChange={e => handleVariable(v.id, e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.15)] rounded-lg focus:outline-none focus:border-[#1b3a57]"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700"
                 />
               )}
             </FormField>

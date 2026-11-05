@@ -30,11 +30,11 @@ export function WidgetCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="p-5 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white">
+    <div className="p-5 rounded-lg border border-gray-200 bg-white">
       {titulo && (
-        <h2 className="font-headline text-[17px] font-bold text-[#1b3a57] leading-tight">{titulo}</h2>
+        <h2 className="font-headline text-[17px] font-semibold text-gray-800 leading-tight">{titulo}</h2>
       )}
-      {sub && <p className="text-[12px] text-[#7a9ab4] mt-0.5 mb-4">{sub}</p>}
+      {sub && <p className="text-[12px] text-gray-400 mt-0.5 mb-4">{sub}</p>}
       {children}
     </div>
   )
@@ -46,17 +46,17 @@ export function WidgetCard({
 // Los tonos claros solo cambian la cajita del ícono; `destacado` pinta la tarjeta entera
 // (fondo navy de la marca) para que resalte del resto de la fila.
 const TARJETA_CLARA = {
-  tarjeta: 'bg-white border-[rgba(0,0,0,0.07)] hover:border-[#1b3a57]',
-  label: 'text-[#4a6a84]',
-  valor: 'text-[#1b3a57]',
+  tarjeta: 'bg-white border-gray-200 hover:border-blue-700',
+  label: 'text-gray-500',
+  valor: 'text-gray-800',
 }
 const TONOS_KPI = {
-  azul: { ...TARJETA_CLARA, caja: 'bg-[#dbeafe]', icono: 'text-[#2a78d6]' },
-  teal: { ...TARJETA_CLARA, caja: 'bg-[#d3efe8]', icono: 'text-[#129a86]' },
-  rojo: { ...TARJETA_CLARA, caja: 'bg-[#fde4e4]', icono: 'text-[#e34948]' },
+  azul: { ...TARJETA_CLARA, caja: 'bg-blue-100', icono: 'text-blue-600' },
+  teal: { ...TARJETA_CLARA, caja: 'bg-green-100', icono: 'text-green-600' },
+  rojo: { ...TARJETA_CLARA, caja: 'bg-red-100', icono: 'text-red-500' },
   destacado: {
-    tarjeta: 'bg-linear-to-br from-[#1b3a57] to-[#2a5a85] border-[#1b3a57] hover:border-[#2a78d6]',
-    label: 'text-[#cfe0f0]',
+    tarjeta: 'bg-linear-to-br from-blue-700 to-blue-800 border-blue-700 hover:border-blue-600',
+    label: 'text-blue-100',
     valor: 'text-white',
     caja: 'bg-white/15',
     icono: 'text-white',
@@ -76,15 +76,15 @@ export function KpiCard({
   return (
     <div
       onClick={onClick}
-      className={`flex flex-col justify-between gap-4 min-h-[172px] p-5 rounded-2xl border transition-all ${t.tarjeta} ${
+      className={`flex flex-col justify-between gap-4 min-h-[172px] p-5 rounded-lg border transition-all ${t.tarjeta} ${
         onClick ? 'cursor-pointer hover:shadow-md' : ''
       }`}
     >
-      <span className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${t.caja}`}>
+      <span className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${t.caja}`}>
         <Icon name={icono} size={26} className={t.icono} />
       </span>
       <div className="min-w-0">
-        <p className={`text-[38px] font-bold leading-none ${t.valor}`}>{valor}</p>
+        <p className={`text-[38px] font-semibold leading-none ${t.valor}`}>{valor}</p>
         <p className={`text-[14px] leading-snug mt-2 ${t.label}`}>{label}</p>
       </div>
     </div>
@@ -114,14 +114,14 @@ export function BarrasDistribucion({ filas }: { filas: FilaBarra[] }) {
         >
           <span
             title={f.label}
-            className="text-[13px] text-[#1b3a57] flex-1 min-w-0 truncate group-hover:underline"
+            className="text-[13px] text-gray-800 flex-1 min-w-0 truncate group-hover:underline"
           >
             {f.label}
           </span>
-          <span className="text-[13px] font-bold text-[#1b3a57] w-6 text-right flex-shrink-0">
+          <span className="text-[13px] font-semibold text-gray-800 w-6 text-right flex-shrink-0">
             {f.valor}
           </span>
-          <span className="h-2 w-[38%] rounded-full bg-[#dfe9f2] flex-shrink-0 overflow-hidden">
+          <span className="h-2 w-[38%] rounded-full bg-blue-100 flex-shrink-0 overflow-hidden">
             <span
               className="block h-full rounded-full transition-all"
               style={{
@@ -142,15 +142,15 @@ export function WidgetCerradas({ valor, onClick }: { valor: number; onClick?: ()
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:border-[#1b3a57]' : ''
+      className={`flex items-center justify-between gap-4 px-5 py-4 rounded-lg border border-gray-200 bg-white transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-blue-700' : ''
       }`}
     >
       <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-[#4a6a84]">Actuaciones cerradas</p>
-        <p className="text-[11.5px] text-[#7a9ab4] mt-0.5">Total de actuaciones finalizadas.</p>
+        <p className="text-[14px] font-semibold text-gray-500">Actuaciones cerradas</p>
+        <p className="text-[11.5px] text-gray-400 mt-0.5">Total de actuaciones finalizadas.</p>
       </div>
-      <span className="text-[26px] font-bold text-[#1b3a57] leading-none flex-shrink-0">{valor}</span>
+      <span className="text-[26px] font-semibold text-gray-800 leading-none flex-shrink-0">{valor}</span>
     </div>
   )
 }
@@ -181,12 +181,12 @@ export function WidgetAudiencias({ items }: { items: ItemAudiencia[] }) {
             <div
               key={`${a.exp.id}-${i}`}
               onClick={() => navigate(RUTAS.EXPEDIENTE(a.exp.id))}
-              className="flex items-start gap-2.5 px-2 py-2 -mx-2 rounded-lg cursor-pointer hover:bg-[#f7fafc] transition-colors"
+              className="flex items-start gap-2.5 px-2 py-2 -mx-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
             >
-              <Icon name="calendar" size={14} className="text-[#2a78d6] mt-0.5 flex-shrink-0" />
+              <Icon name="calendar" size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#1b3a57] truncate">{a.titulo}</p>
-                <p className="text-[11px] text-[#7a9ab4] truncate">
+                <p className="text-[12.5px] font-semibold text-gray-800 truncate">{a.titulo}</p>
+                <p className="text-[11px] text-gray-400 truncate">
                   {formatFecha(a.fecha)} · {a.exp.id}
                 </p>
               </div>
@@ -256,23 +256,23 @@ function FilaVencimiento({ item }: { item: ItemVencimiento }) {
   return (
     <div
       onClick={() => navigate(RUTAS.EXPEDIENTE(exp.id))}
-      className="grid grid-cols-[minmax(0,1fr)_130px_112px] items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#f7fafc] transition-colors"
+      className="grid grid-cols-[minmax(0,1fr)_130px_112px] items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
     >
       <div className="min-w-0">
-        <p className="text-[13px] font-semibold text-[#1b3a57] truncate">{exp.caratula}</p>
-        <p className="text-[11.5px] text-[#7a9ab4] mt-0.5 truncate">
+        <p className="text-[13px] font-semibold text-gray-800 truncate">{exp.caratula}</p>
+        <p className="text-[11.5px] text-gray-400 mt-0.5 truncate">
           {exp.id}{nombre ? ` · ${nombre}` : ''}
         </p>
       </div>
-      <div className="flex items-center gap-1.5 text-[12px] text-[#4a6a84] whitespace-nowrap">
-        <Icon name="calendar" size={14} className={esVencido ? 'text-[#e34948]' : 'text-[#d97706]'} />
+      <div className="flex items-center gap-1.5 text-[12px] text-gray-500 whitespace-nowrap">
+        <Icon name="calendar" size={14} className={esVencido ? 'text-red-500' : 'text-amber-700'} />
         {fecha ? formatFecha(fecha) : '—'}
       </div>
       <div className="flex justify-end">
-        <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap ${
+        <span className={`text-[10px] font-semibold px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap ${
           esVencido
-            ? 'bg-[#fdeef0] text-[#b3372f]'
-            : 'bg-[#fff4e0] text-[#b26a00]'
+            ? 'bg-red-50 text-red-700'
+            : 'bg-amber-50 text-amber-700'
         }`}>
           {esVencido ? 'Vencido' : 'Por vencer'}
         </span>
@@ -291,14 +291,14 @@ function GrupoVencimientos({
 }) {
   if (items.length === 0) return null
   const cls = tono === 'rojo'
-    ? { fondo: 'bg-[#fdeef0]', icono: 'text-[#c0392b]', texto: 'text-[#b3372f]' }
-    : { fondo: 'bg-[#fff7e6]', icono: 'text-[#d97706]', texto: 'text-[#b26a00]' }
+    ? { fondo: 'bg-red-50', icono: 'text-red-600', texto: 'text-red-700' }
+    : { fondo: 'bg-amber-50', icono: 'text-amber-700', texto: 'text-amber-700' }
 
   return (
     <div>
       <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${cls.fondo}`}>
         <Icon name={icono} size={16} className={cls.icono} />
-        <span className={`text-[13px] font-bold ${cls.texto}`}>
+        <span className={`text-[13px] font-semibold ${cls.texto}`}>
           {titulo} ({items.length})
         </span>
       </div>
@@ -325,27 +325,27 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
     : 'Sin vencimientos activos.'
 
   return (
-    <div className="p-5 rounded-2xl border border-[rgba(0,0,0,0.07)] bg-white">
+    <div className="p-5 rounded-lg border border-gray-200 bg-white">
       {/* Encabezado: título + tabs + buscador */}
       <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h2 className="font-headline text-[19px] font-bold text-[#1b3a57] leading-tight">
+          <h2 className="font-headline text-[19px] font-semibold text-gray-800 leading-tight">
             Vencimientos y tareas
           </h2>
-          <p className="text-[12px] text-[#7a9ab4] mt-0.5">
+          <p className="text-[12px] text-gray-400 mt-0.5">
             Plazos y tareas activas, ordenados por urgencia.
           </p>
         </div>
 
-        <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
           {TABS_VENC.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
                 tab === t.id
-                  ? 'bg-[#2a78d6] text-white shadow-sm'
-                  : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               {t.label}
@@ -356,7 +356,7 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
 
       {/* Grupos */}
       {sinResultados ? (
-        <p className="text-[12px] text-[#7a9ab4] text-center py-10">{mensajeVacio}</p>
+        <p className="text-[12px] text-gray-400 text-center py-10">{mensajeVacio}</p>
       ) : (
         <div className="space-y-5">
           {tab !== 'por_vencer' && (
@@ -370,7 +370,7 @@ export function WidgetVencimientos({ items }: { items: ItemVencimiento[] }) {
 
       <button
         onClick={() => navigate(`${RUTAS.ACTUACIONES}?alerta=1`)}
-        className="mt-5 text-[12px] font-bold text-[#1b3a57] hover:underline cursor-pointer"
+        className="mt-5 text-[12px] font-semibold text-gray-800 hover:underline cursor-pointer"
       >
         Ver todas las actuaciones con alerta →
       </button>

@@ -20,8 +20,8 @@ const TIPOS_ORGANISMO = ['Juzgado', 'Tribunal', 'Fiscalía', 'UFI', 'Comisaría'
 function BadgeActivo({ activo }: { activo?: boolean }) {
   const inactivo = activo === false
   return (
-    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-      inactivo ? 'bg-[#e8e8e8] text-[#9a9a9a]' : 'bg-green-100 text-green-700'
+    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+      inactivo ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'
     }`}>
       {inactivo ? 'Inactivo' : 'Activo'}
     </span>
@@ -35,25 +35,25 @@ function VistaLectura({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
-        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#f0f0f0] px-2 py-0.5 rounded-full">
+        <h2 className="text-lg font-semibold text-gray-800">{tabla.label}</h2>
+        <span className="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
           <Icon name="block" size={12} /> Solo lectura
         </span>
       </div>
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+            <tr className="border-b border-gray-200">
               {['ID', 'Valor'].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">{c}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+          <tbody className="divide-y divide-gray-200">
             {items.map(item => (
-              <tr key={item.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.id}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="py-2.5 px-4 font-mono text-xs text-gray-400">{item.id}</td>
+                <td className="py-2.5 px-4 text-gray-800 font-medium">{item.label}</td>
               </tr>
             ))}
           </tbody>
@@ -111,36 +111,36 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <h2 className="text-lg font-semibold text-gray-800">{tabla.label}</h2>
         <button
           onClick={abrirNuevo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity"
         >
           <Icon name="add" size={16} /> Nuevo
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+            <tr className="border-b border-gray-200">
               {['ID', 'Valor', 'Estado', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">{c}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+          <tbody className="divide-y divide-gray-200">
             {items.map(item => (
-              <tr key={item.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.id}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="py-2.5 px-4 font-mono text-xs text-gray-400">{item.id}</td>
+                <td className="py-2.5 px-4 text-gray-800 font-medium">{item.label}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
                 <td className="py-2.5 px-4">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => abrirEditar(item)}
                       title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-blue-50 hover:text-gray-800 transition-colors"
                     >
                       <Icon name="edit" size={14} />
                     </button>
@@ -159,13 +159,13 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
         size="sm"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrar} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={guardar}
               disabled={!form.label.trim()}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar
             </button>
@@ -186,7 +186,7 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
             </div>
           )}
           <div>
-            <label className="field-label">Valor <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Valor <span className="text-red-700">*</span></label>
             <input
               type="text"
               className="field-input w-full"
@@ -196,7 +196,7 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
           </div>
           {mostrarDias && (
             <div>
-              <label className="field-label">Días <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Días <span className="text-red-700">*</span></label>
               <input
                 type="number"
                 min={1}
@@ -206,12 +206,12 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
               />
             </div>
           )}
-          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+          <div className="pt-2 border-t border-gray-200">
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -219,8 +219,8 @@ function VistaSimple({ tabla }: { tabla: TablaConfig }) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los ítems inactivos no aparecen en los formularios</p>
+                <p className="text-sm font-medium text-gray-800">Activo</p>
+                <p className="text-[11px] text-gray-500">Los ítems inactivos no aparecen en los formularios</p>
               </div>
             </label>
           </div>
@@ -278,37 +278,37 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <h2 className="text-lg font-semibold text-gray-800">{tabla.label}</h2>
         <button
           onClick={abrirNuevo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity"
         >
           <Icon name="add" size={16} /> Nuevo
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+            <tr className="border-b border-gray-200">
               {['Sigla', 'Nombre', 'Símbolo', 'Estado', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">{c}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+          <tbody className="divide-y divide-gray-200">
             {items.map(item => (
-              <tr key={item.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.id}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
-                <td className="py-2.5 px-4 font-mono text-xs text-[#4a6a84]">{item.simbolo}</td>
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="py-2.5 px-4 font-mono text-xs text-gray-400">{item.id}</td>
+                <td className="py-2.5 px-4 text-gray-800 font-medium">{item.label}</td>
+                <td className="py-2.5 px-4 font-mono text-xs text-gray-500">{item.simbolo}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
                 <td className="py-2.5 px-4">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => abrirEditar(item)}
                       title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-blue-50 hover:text-gray-800 transition-colors"
                     >
                       <Icon name="edit" size={14} />
                     </button>
@@ -327,13 +327,13 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
         size="sm"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">
+            <button onClick={cerrar} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
               Cancelar
             </button>
             <button
               onClick={guardar}
               disabled={!form.label.trim() || !form.simbolo.trim() || (!modoEdicion && !form.id.trim())}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               Guardar
             </button>
@@ -343,7 +343,7 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
         <div className="space-y-3">
           {!modoEdicion && (
             <div>
-              <label className="field-label">Sigla (ISO 4217) <span className="text-[#b91c1c]">*</span></label>
+              <label className="field-label">Sigla (ISO 4217) <span className="text-red-700">*</span></label>
               <input
                 type="text"
                 className="field-input w-full font-mono uppercase"
@@ -352,13 +352,13 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
                 value={form.id}
                 onChange={e => setForm(p => ({ ...p, id: e.target.value.toUpperCase() }))}
               />
-              <p className="text-[11px] text-[#4a6a84] mt-1">
+              <p className="text-[11px] text-gray-500 mt-1">
                 Es el valor que queda guardado en los montos — no se puede editar después de creada.
               </p>
             </div>
           )}
           <div>
-            <label className="field-label">Nombre <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Nombre <span className="text-red-700">*</span></label>
             <input
               type="text"
               className="field-input w-full"
@@ -368,7 +368,7 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
             />
           </div>
           <div>
-            <label className="field-label">Símbolo <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Símbolo <span className="text-red-700">*</span></label>
             <input
               type="text"
               className="field-input w-full"
@@ -377,12 +377,12 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
               onChange={e => setForm(p => ({ ...p, simbolo: e.target.value }))}
             />
           </div>
-          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+          <div className="pt-2 border-t border-gray-200">
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -390,8 +390,8 @@ function VistaMoneda({ tabla }: { tabla: TablaConfig }) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Activa</p>
-                <p className="text-[11px] text-[#4a6a84]">
+                <p className="text-sm font-medium text-gray-800">Activa</p>
+                <p className="text-[11px] text-gray-500">
                   Las monedas inactivas no aparecen para elegir en montos nuevos, pero los montos
                   ya cargados con esa moneda se siguen mostrando igual.
                 </p>
@@ -451,37 +451,37 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
+        <h2 className="text-lg font-semibold text-gray-800">{tabla.label}</h2>
         <button
           onClick={abrirNuevo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[#1b3a57] text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-700 text-white hover:opacity-90 transition-opacity"
         >
           <Icon name="add" size={16} /> Nuevo
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+            <tr className="border-b border-gray-200">
               {['Nombre', 'Tipo', 'Provincia', 'Localidad', 'Estado', ''].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">{c}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+          <tbody className="divide-y divide-gray-200">
             {items.map(item => (
-              <tr key={item.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium max-w-[240px]">
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="py-2.5 px-4 text-gray-800 font-medium max-w-[240px]">
                   <p className="truncate">{item.label}</p>
                 </td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84]">{item.tipo ?? '—'}</td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84]">{item.provincia ?? '—'}</td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84]">{item.localidad ?? '—'}</td>
+                <td className="py-2.5 px-4 text-xs text-gray-500">{item.tipo ?? '—'}</td>
+                <td className="py-2.5 px-4 text-xs text-gray-500">{item.provincia ?? '—'}</td>
+                <td className="py-2.5 px-4 text-xs text-gray-500">{item.localidad ?? '—'}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
                 <td className="py-2.5 px-4">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => abrirEditar(item)} title="Editar" className="w-7 h-7 flex items-center justify-center rounded-lg text-[#4a6a84] hover:bg-[#e8f0ff] hover:text-[#1b3a57] transition-colors">
+                    <button onClick={() => abrirEditar(item)} title="Editar" className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-blue-50 hover:text-gray-800 transition-colors">
                       <Icon name="edit" size={14} />
                     </button>
                   </div>
@@ -499,14 +499,14 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
         size="md"
         footer={
           <>
-            <button onClick={cerrar} className="px-4 py-2 rounded-xl text-sm font-medium text-[#4a6a84] hover:bg-[#e8e8e8] transition-colors">Cancelar</button>
-            <button onClick={guardar} disabled={!form.label.trim()} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#1b3a57] text-white hover:opacity-90 disabled:opacity-40 transition-opacity">Guardar</button>
+            <button onClick={cerrar} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">Cancelar</button>
+            <button onClick={guardar} disabled={!form.label.trim()} className="px-5 py-2 rounded-lg text-sm font-semibold bg-blue-700 text-white hover:opacity-90 disabled:opacity-40 transition-opacity">Guardar</button>
           </>
         }
       >
         <div className="space-y-3">
           <div>
-            <label className="field-label">Nombre <span className="text-[#b91c1c]">*</span></label>
+            <label className="field-label">Nombre <span className="text-red-700">*</span></label>
             <input type="text" className="field-input w-full" value={form.label} onChange={e => setForm(p => ({ ...p, label: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -526,12 +526,12 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
               <input type="text" className="field-input w-full" value={form.localidad} onChange={e => setForm(p => ({ ...p, localidad: e.target.value }))} />
             </div>
           </div>
-          <div className="pt-2 border-t border-[rgba(0,0,0,0.06)]">
+          <div className="pt-2 border-t border-gray-200">
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setForm(p => ({ ...p, activo: !p.activo }))}
                 className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 flex items-center px-1 ${
-                  form.activo ? 'bg-[#1b3a57]' : 'bg-[rgba(0,0,0,0.15)]'
+                  form.activo ? 'bg-blue-700' : 'bg-gray-300'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
@@ -539,8 +539,8 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
                 }`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1b3a57]">Activo</p>
-                <p className="text-[11px] text-[#4a6a84]">Los ítems inactivos no aparecen en los formularios</p>
+                <p className="text-sm font-medium text-gray-800">Activo</p>
+                <p className="text-[11px] text-gray-500">Los ítems inactivos no aparecen en los formularios</p>
               </div>
             </label>
           </div>
@@ -559,33 +559,33 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-[#1b3a57]">{tabla.label}</h2>
-        <span className="flex items-center gap-1 text-[11px] text-[#9a9a9a] bg-[#f0f0f0] px-2 py-0.5 rounded-full">
+        <h2 className="text-lg font-semibold text-gray-800">{tabla.label}</h2>
+        <span className="flex items-center gap-1 text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
           <Icon name="block" size={12} /> Solo lectura
         </span>
       </div>
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgba(0,0,0,0.1)]">
+            <tr className="border-b border-gray-200">
               {['Código', 'Label', 'Áreas', 'Canal', 'Estado'].map(c => (
-                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-black uppercase tracking-widest text-[#4a6a84]">{c}</th>
+                <th key={c} className="text-left py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-gray-500">{c}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(0,0,0,0.05)]">
+          <tbody className="divide-y divide-gray-200">
             {items.map(item => (
-              <tr key={item.id} className="hover:bg-[#f8f8f8]">
-                <td className="py-2.5 px-4 font-mono text-xs text-[#9a9a9a]">{item.code}</td>
-                <td className="py-2.5 px-4 text-[#1b3a57] font-medium">{item.label}</td>
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="py-2.5 px-4 font-mono text-xs text-gray-400">{item.code}</td>
+                <td className="py-2.5 px-4 text-gray-800 font-medium">{item.label}</td>
                 <td className="py-2.5 px-4">
                   <div className="flex flex-wrap gap-1">
                     {item.areas.map(a => (
-                      <span key={a} className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-[#e8e8e8] text-[#4a6a84]'}`}>{a}</span>
+                      <span key={a} className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${AREA_BADGES[a] ?? 'bg-gray-100 text-gray-500'}`}>{a}</span>
                     ))}
                   </div>
                 </td>
-                <td className="py-2.5 px-4 text-xs text-[#4a6a84] font-mono">{item.canal}</td>
+                <td className="py-2.5 px-4 text-xs text-gray-500 font-mono">{item.canal}</td>
                 <td className="py-2.5 px-4"><BadgeActivo activo={item.activo} /></td>
               </tr>
             ))}

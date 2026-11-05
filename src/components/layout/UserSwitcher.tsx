@@ -15,10 +15,10 @@ const ROL_LABELS: Record<RolSistema, string> = {
 }
 
 const AVATAR_COLORS: Record<RolSistema, string> = {
-  REFERENTE:      'bg-[#1b3a57] text-white',
-  COORDINADOR:    'bg-[#2a5278] text-white',
-  ABOGADO:        'bg-[#4a6a84] text-white',
-  ADMINISTRATIVO: 'bg-[#7a9ab4] text-white',
+  REFERENTE:      'bg-blue-700 text-white',
+  COORDINADOR:    'bg-blue-800 text-white',
+  ABOGADO:        'bg-gray-500 text-white',
+  ADMINISTRATIVO: 'bg-gray-400 text-white',
 }
 
 interface UserSwitcherProps {
@@ -58,10 +58,10 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
   return (
     <div
       ref={ref}
-      className="fixed bottom-16 left-2 w-72 bg-white border border-[rgba(0,0,0,0.12)] rounded-xl shadow-card-lg z-[200] overflow-hidden max-h-[70vh] flex flex-col"
+      className="fixed bottom-16 left-2 w-72 bg-white border border-gray-200 rounded-lg shadow-card-lg z-[200] overflow-hidden max-h-[70vh] flex flex-col"
     >
-      <div className="px-4 py-3 border-b border-[rgba(0,0,0,0.08)] bg-[#f5f5f5] sticky top-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a6a84]">
+      <div className="px-4 py-3 border-b border-gray-200 bg-gray-100 sticky top-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
           Cambiar usuario — Demo
         </p>
       </div>
@@ -69,7 +69,7 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
       <div className="overflow-y-auto flex-1 min-h-0">
         {grupos.map(({ rol, label, usuarios }) => (
           <div key={rol}>
-            <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-[#7a9ab4]">
+            <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
               {label}
             </p>
             {usuarios.map(u => {
@@ -82,16 +82,16 @@ export function UserSwitcher({ onClose, triggerRef }: UserSwitcherProps) {
                   onClick={() => handleSelect(u.id, `${u.apellido}, ${u.nombre}`)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                     isActive
-                      ? 'bg-[#C4DFE8] text-[#1b3a57]'
-                      : 'hover:bg-[#e8e8e8] text-[#1b3a57]'
+                      ? 'bg-blue-100 text-gray-800'
+                      : 'hover:bg-gray-100 text-gray-800'
                   }`}
                 >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${AVATAR_COLORS[u.rolSistema]}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 ${AVATAR_COLORS[u.rolSistema]}`}>
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{u.apellido}, {u.nombre}</p>
-                    <p className="text-[10px] text-[#4a6a84] truncate">{u.rolBD}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{u.rolBD}</p>
                   </div>
                   {isActive && (
                     <Icon name="check" className="flex-shrink-0" size={18} />

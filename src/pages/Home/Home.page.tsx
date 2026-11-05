@@ -104,24 +104,24 @@ export default function HomePage() {
       {/* ENCABEZADO */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-headline font-extrabold text-3xl text-[#1b3a57]">Principal</h1>
-          <p className="text-sm text-[#4a6a84] mt-1.5">
-            Hola, <span className="font-semibold text-[#1b3a57]">{usuarioActivo?.nombre} {usuarioActivo?.apellido}</span>.{' '}
-            {prefijoScope}<span className="font-semibold text-[#1b3a57]">{n}</span> {sufijoActuacion}.
+          <h1 className="font-headline font-semibold text-3xl text-gray-800">Principal</h1>
+          <p className="text-sm text-gray-500 mt-1.5">
+            Hola, <span className="font-semibold text-gray-800">{usuarioActivo?.nombre} {usuarioActivo?.apellido}</span>.{' '}
+            {prefijoScope}<span className="font-semibold text-gray-800">{n}</span> {sufijoActuacion}.
           </p>
         </div>
 
         {mostrarToggle && (
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1 bg-[#eef2f7] rounded-xl p-1">
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
               {opcionesToggle.map(o => (
                 <button
                   key={o.valor}
                   onClick={() => { setScopeBase(o.valor); setPorLetrado(false) }}
                   className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
                     !porLetrado && scopeBase === o.valor
-                      ? 'bg-[#2a78d6] text-white shadow-sm'
-                      : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-800'
                   }`}
                 >
                   {o.label}
@@ -131,8 +131,8 @@ export default function HomePage() {
                 onClick={() => setPorLetrado(true)}
                 className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
                   porLetrado
-                    ? 'bg-[#2a78d6] text-white shadow-sm'
-                    : 'text-[#4a6a84] hover:text-[#1b3a57]'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
                 Por letrado
@@ -195,7 +195,7 @@ export default function HomePage() {
 
           <WidgetCard titulo="Por estado procesal" sub="Distribución de actuaciones activas.">
             {filasPorEstado.length === 0 ? (
-              <p className="text-[12px] text-[#7a9ab4] text-center py-4">Sin actuaciones activas.</p>
+              <p className="text-[12px] text-gray-400 text-center py-4">Sin actuaciones activas.</p>
             ) : (
               <BarrasDistribucion filas={filasPorEstado} />
             )}
