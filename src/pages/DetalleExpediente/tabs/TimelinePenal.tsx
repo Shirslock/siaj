@@ -22,6 +22,9 @@ import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
 import { toast } from 'react-toastify'
 import { validarAdjuntos } from '../../../utils/validarAdjuntos'
 import { AdjuntosInput } from '../../../components/ui/AdjuntosInput'
+import { StepperPRD, type PasoStepper } from '../../../components/timeline/StepperPRD'
+import { EtapasAcordeon, type EtapaTL } from '../../../components/timeline/EtapasAcordeon'
+import { actividadesToFilas, exportarExcel, exportarPDF } from '../../../utils/exportTimeline'
 import { useSolicitudesStore, PERSONAS_POR_AREA } from '../../../store/tareas.store'
 import { SolicitudForm, BLANK_SOLICITUD } from '../../../components/SolicitudForm'
 import { TIPO_ACTIVIDAD_SOLICITUD_PENAL, getConfigPorTipoActividad, solicitudEstaCompleta } from '../../../data/solicitudesPenales'
@@ -57,7 +60,7 @@ const BLANK_ACT = {
 // ── Tipos del historial unificado ────────────────────
 
 type EntradaHistorial =
-  | { kind: 'sistema';  fecha: string; etapaAnteriorLabel: string; etapaNuevaLabel: string; descripcion: string; doc_gde?: string | null }
+  | { kind: 'sistema';  fecha: string; etapaAnteriorLabel: string; etapaNuevaLabel: string; descripcion: string; doc_gde?: string | null; por?: string }
   | { kind: 'generica'; fecha: string; titulo: string; descripcion: string; tipo: string; doc_gde?: string | null; timelineIdx: number; act: Actividad }
   | { kind: 'procesal'; fecha: string; numero: string; nombre: string; estado: EstadoActividadPenal; etapaLabel: string; etapaCodigo: string; resultado: string | null }
 
@@ -98,68 +101,18 @@ function ProcesalStepperPenal({
   const etapaCodigo = exp.estadoProcesal ?? 'EN_ANALISIS'
   const idxActual   = etapas.findIndex(e => e.codigo === etapaCodigo)
 
-  if (etapas.length <= 1) return null
+  const pasos: PasoStepper[] = etapas.map((etapa, idx) => ({
+    key: etapa.codigo,
+    label: etapa.label,
+    estado: idx === idxActual
+      ? 'current'
+      : etapa.codigo === 'RECHAZADO'
+        ? 'rejected'
+        : idx < idxActual ? 'done' : 'pending',
+    onClick: () => onEtapaClick(etapa),
+  }))
 
-  return (
-    <div className="bg-white rounded-lg shadow-card px-8 py-4 mb-4 overflow-x-auto">
-      <div className="flex items-center gap-0 min-w-max">
-        {etapas.map((etapa, idx) => {
-          const isPast    = idx < idxActual
-          const isCurrent = idx === idxActual
-          const isLast    = idx === etapas.length - 1
-          const isRechazado = etapa.codigo === 'RECHAZADO'
-          const isClickable = !isCurrent
-
-          return (
-            <div key={etapa.codigo} className="flex items-center flex-shrink-0">
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={() => isClickable && onEtapaClick(etapa)}
-                  disabled={!isClickable}
-                  title={isClickable ? `Ir a ${etapa.label}` : undefined}
-                  className={[
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all',
-                    isClickable ? 'hover:ring-2 hover:ring-blue-700/30 cursor-pointer' : 'cursor-default',
-                    isCurrent
-                      ? 'bg-blue-700 border-blue-700 text-white shadow-md'
-                      : isRechazado
-                      ? 'bg-red-100 border-red-300 text-red-700'
-                      : isPast
-                      ? 'bg-blue-100 border-blue-400 text-gray-800'
-                      : 'bg-gray-100 border-gray-200 text-gray-500',
-                  ].join(' ')}
-                >
-                  {isPast && !isRechazado
-                    ? <Icon name="check" size={14} />
-                    : isRechazado
-                    ? <Icon name="close" size={12} />
-                    : <span className="text-[11px]">{idx + 1}</span>
-                  }
-                </button>
-                <span className={[
-                  'mt-1.5 text-[10px] font-semibold text-center whitespace-nowrap max-w-[72px] truncate',
-                  isCurrent    ? 'text-gray-800'
-                  : isRechazado ? 'text-red-700'
-                  : isPast     ? 'text-blue-700'
-                  :              'text-gray-500',
-                ].join(' ')}>
-                  {etapa.label}
-                </span>
-              </div>
-              {!isLast && (
-                <div className="w-8 h-px mx-1 mb-4 relative">
-                  <div className="absolute inset-0 bg-gray-100 rounded-full" />
-                  {isPast && !isRechazado && (
-                    <div className="absolute inset-0 bg-blue-100 rounded-full" />
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
+  return <StepperPRD pasos={pasos} pendienteDeInicio={etapaCodigo === 'ASIGNADO'} />
 }
 
 // ── Campo de archivos (múltiples) de un hito penal ────
@@ -704,6 +657,7 @@ export function TimelinePenal({ exp }: Props) {
       etapaNuevaLabel:    etapaDestino.label,
       doc_gde:       null,
       tareasSnapshot: [],
+      creado_por:    usuarioActivo?.id,
     })
     actualizarEstado(exp.id, etapaDestino.codigo)
     actualizarExpediente(exp.id, { estadoProcesal: etapaDestino.codigo })
@@ -725,14 +679,12 @@ export function TimelinePenal({ exp }: Props) {
   const [filtroHistorial, setFiltroHistorial] =
     useState<'todo' | 'sistema' | 'procesales' | 'genericas'>('todo')
   const [busquedaHistorial, setBusquedaHistorial] = useState('')
-  const [estadosExpandidos, setEstadosExpandidos] = useState<Set<number>>(new Set())
+  const [menuExport, setMenuExport] = useState(false)
 
-  function toggleGrupo(idx: number) {
-    setEstadosExpandidos(prev => {
-      const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
-      return next
-    })
+  // helper para mostrar quién hizo un cambio de estado
+  function nombreDe(id?: string) {
+    const u = id ? getUsuarioById(id) : undefined
+    return u ? getNombreCompleto(u) : undefined
   }
 
   const historialCompleto = useMemo((): EntradaHistorial[] => {
@@ -752,6 +704,7 @@ export function TimelinePenal({ exp }: Props) {
           etapaNuevaLabel:    act.etapaNuevaLabel    ?? parts[1] ?? '',
           descripcion: act.descripcion ?? '',
           doc_gde: act.doc_gde,
+          por: act.creado_por ? (nombreDe(act.creado_por) ?? act.creado_por) : undefined,
           _idx: entradas.length,
         })
       } else {
@@ -868,159 +821,203 @@ export function TimelinePenal({ exp }: Props) {
   const yaCargoUnaActividadEnDesarchivado =
     enDesarchivado && gruposHistorial.actividadesActuales.some(a => a.kind === 'generica')
 
-  // ── Render de una entrada individual ────────────────
+  const RESULTADO_LABEL: Record<string, string> = {
+    SI: 'Sí', NO: 'No', HAY_ACUERDO: 'Hay acuerdo', NO_HAY_ACUERDO: 'No hay acuerdo',
+  }
 
+  // Evento dentro de una etapa (PRD letrado §6.3): círculo violeta + título + chips + fecha.
   function renderEntrada(entrada: EntradaHistorial) {
-    if (entrada.kind === 'sistema') {
-      return (
-        <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Icon name="swap_horiz" size={16} className="text-gray-800" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800 mb-0.5">
-              {entrada.etapaAnteriorLabel} → {entrada.etapaNuevaLabel}
-            </p>
-            {entrada.descripcion && <p className="text-xs text-gray-500">{entrada.descripcion}</p>}
-            {entrada.doc_gde && (
-              <p className="text-[10px] font-mono text-gray-800 mt-1 flex items-center gap-1">
-                <Icon name="attach_file" size={12} />{entrada.doc_gde}
-              </p>
-            )}
-          </div>
-          <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
-        </div>
-      )
-    }
+    if (entrada.kind === 'sistema') return null
+
     if (entrada.kind === 'generica') {
+      const tipoLabel = TIPOS.find(t => t.value === entrada.tipo)?.label ?? entrada.tipo
       return (
         <div>
-          <div className="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Icon name={entrada.tipo === 'NOTA_RESPUESTA' ? 'check' : entrada.titulo.startsWith('Solicitud:') ? 'task' : 'description'} size={16} className="text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <p className="text-sm font-semibold text-gray-800">{entrada.titulo}</p>
+          <div className="flex items-start gap-2.5 py-3 -mx-2 px-2 rounded hover:bg-gray-50 transition-colors">
+            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mt-0.5">
+              <Icon name="notes" size={12} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700">{tipoLabel}</span>
                 {entrada.tipo === 'NOTA_RESPUESTA' && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-50 text-green-700">
-                    <Icon name="check" size={9} />
-                    RESPUESTA
-                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700">Respuesta</span>
                 )}
                 {entrada.tipo !== 'NOTA_RESPUESTA' && entrada.titulo.startsWith('Solicitud:') && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-violet-50 text-violet-700">
-                    <Icon name="task" size={9} />
-                    SOLICITUD
-                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-100 text-violet-700">Solicitud</span>
                 )}
                 {TIPO_ACTIVIDAD_SOLICITUD_PENAL[entrada.tipo] && !solicitudEstaCompleta(entrada.tipo, entrada.act.solicitud_penal_campos) && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-800">
-                    Sin completar
-                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">Sin completar</span>
                 )}
                 {entrada.act.origen_pjn && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700">
-                    <Icon name="refresh" size={9} />
-                    PJN
-                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700">PJN</span>
                 )}
               </div>
+              <p className="text-sm font-semibold text-gray-800">{entrada.titulo}</p>
               {entrada.descripcion && <p className="text-xs text-gray-500">{entrada.descripcion}</p>}
               {entrada.doc_gde && (
-                <p className="text-[10px] font-mono text-gray-800 mt-1 flex items-center gap-1">
+                <p className="text-[10px] font-mono text-gray-700 mt-1 flex items-center gap-1">
                   <Icon name="attach_file" size={12} />{entrada.doc_gde}
                 </p>
               )}
-              {esLetrado && !entrada.act.es_solicitud && (
-                <div className="flex items-center gap-2 mt-1.5">
-                  <button
-                    onClick={() => setReplyTarget({ act: entrada.act, globalIdx: entrada.timelineIdx })}
-                    className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-800 transition-colors font-medium"
-                  >
-                    <Icon name="reply" size={13} />
-                    Comentar
-                  </button>
-                  {entrada.act.tipo !== 'RECEPCION' && !esMovimientoSistema(entrada.act) && (
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        const r = e.currentTarget.getBoundingClientRect()
-                        setMenuActividad({ act: entrada.act, globalIdx: entrada.timelineIdx, x: r.left, y: r.bottom + 4 })
-                      }}
-                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-                    >
-                      <Icon name="more_vert" size={14} />
-                    </button>
-                  )}
-                </div>
+            </div>
+            <span className="text-xs text-gray-400 whitespace-nowrap">{formatFecha(entrada.fecha)}</span>
+          </div>
+          {esLetrado && !entrada.act.es_solicitud && (
+            <div className="ml-7 pb-2 flex items-center gap-3">
+              <button
+                onClick={() => setReplyTarget({ act: entrada.act, globalIdx: entrada.timelineIdx })}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600 transition-colors"
+              >
+                <Icon name="reply" size={13} />
+                Comentar
+              </button>
+              {entrada.act.tipo !== 'RECEPCION' && !esMovimientoSistema(entrada.act) && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    const r = e.currentTarget.getBoundingClientRect()
+                    setMenuActividad({ act: entrada.act, globalIdx: entrada.timelineIdx, x: r.left, y: r.bottom + 4 })
+                  }}
+                  className="p-0.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <Icon name="more_vert" size={14} />
+                </button>
               )}
             </div>
-            <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
-          </div>
+          )}
           <ReplyList replies={entrada.act.replies ?? []} />
         </div>
       )
     }
-    // procesal
+
+    // hito procesal
+    const abrirHito = () => {
+      const reg = registros.find(r => r.numero === entrada.numero && r.etapaCodigo === entrada.etapaCodigo)
+      if (reg) { setRegistroSeleccionado(reg); setModalDetalle(true) }
+    }
     return (
       <div
-        onClick={() => {
-          const reg = registros.find(r => r.numero === entrada.numero && r.etapaCodigo === entrada.etapaCodigo)
-          if (reg) { setRegistroSeleccionado(reg); setModalDetalle(true) }
-        }}
-        className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={abrirHito}
+        className="flex items-start gap-2.5 py-3 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded transition-colors"
       >
-        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon name="gavel" size={16} className="text-gray-800" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            <p className="text-sm font-semibold text-gray-800">{entrada.numero} {entrada.nombre}</p>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-gray-800">
-              {entrada.etapaLabel}
-            </span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mt-0.5">
+          <Icon name="check" size={12} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-gray-800 font-medium leading-snug">{entrada.numero} — {entrada.nombre}</p>
+          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600">{entrada.etapaLabel}</span>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
               entrada.estado === 'cumplido'        ? 'bg-green-100 text-green-700'
-              : entrada.estado === 'en_curso'      ? 'bg-blue-100 text-gray-800'
-              : entrada.estado === 'no_procedente' ? 'bg-gray-100 text-gray-500'
-              : 'bg-gray-100 text-gray-400'
+              : entrada.estado === 'en_curso'      ? 'bg-amber-100 text-amber-700'
+              : 'bg-gray-100 text-gray-600'
             }`}>
               {entrada.estado === 'cumplido' ? 'Cumplido'
                 : entrada.estado === 'en_curso' ? 'En curso'
                 : entrada.estado === 'no_procedente' ? 'No proc.'
                 : 'Sin estado'}
             </span>
+            {entrada.resultado && (
+              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                entrada.resultado === 'NO' || entrada.resultado === 'NO_HAY_ACUERDO'
+                  ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+              }`}>
+                {RESULTADO_LABEL[entrada.resultado] ?? entrada.resultado}
+              </span>
+            )}
           </div>
-          {entrada.resultado && <p className="text-xs text-gray-500">Resultado: {entrada.resultado}</p>}
         </div>
-        <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">{formatFecha(entrada.fecha)}</span>
+        <span className="text-xs text-gray-400 whitespace-nowrap">{formatFecha(entrada.fecha)}</span>
+        <button
+          onClick={e => { e.stopPropagation(); abrirHito() }}
+          className="text-xs text-blue-600 hover:underline flex-shrink-0 mt-0.5 px-1"
+        >
+          Editar
+        </button>
       </div>
     )
   }
 
+  const nombreArchivo = `timeline_${exp.id.replace('/', '-')}_${new Date().toISOString().split('T')[0]}`
+  const getFilasExport = () => actividadesToFilas(exp.timeline.filter(a => !a.eliminado), exp.id, exp.area)
+
+  // ── Etapas (acordeón del PRD) ───────────────────────
+  // historialCompleto viene en orden descendente: lo que está ANTES de una transición de estado
+  // (más nuevo) ocurrió en el estado al que esa transición ingresó.
+  const etapasPenal: EtapaTL[] = (() => {
+    const todas = historialCompleto
+    const idxSist = todas.map((e, i) => ({ e, i })).filter(({ e }) => e.kind === 'sistema').map(({ i }) => i)
+    const sist = idxSist.map(i => todas[i] as Extract<EntradaHistorial, { kind: 'sistema' }>)
+    const q = busquedaHistorial.trim().toLowerCase()
+    const pasaFiltro = (e: EntradaHistorial) => {
+      if (e.kind === 'sistema') return false
+      if (filtroHistorial === 'sistema') return false
+      if (filtroHistorial === 'procesales' && e.kind !== 'procesal') return false
+      if (filtroHistorial === 'genericas' && e.kind !== 'generica') return false
+      if (q && !`${getTituloEntrada(e)} ${getDescripcionEntrada(e)}`.toLowerCase().includes(q)) return false
+      return true
+    }
+    const entre = (desde: number, hasta: number) => todas.slice(desde, hasta).filter(pasaFiltro)
+    const esAsignado = (label: string) => /asignad|recib/i.test(label)
+
+    if (sist.length === 0) {
+      return [{
+        key: 'actual',
+        label: etapaActual?.label ?? etapaCodigo,
+        actual: true,
+        fecha: todas.length ? todas[todas.length - 1].fecha : HOY,
+        eventos: entre(0, todas.length).map(renderEntrada),
+      }]
+    }
+
+    const etapas: EtapaTL[] = sist.map((t, j) => {
+      const ini = j === 0 ? 0 : idxSist[j - 1] + 1
+      let eventos = entre(ini, idxSist[j])
+      // Lo anterior a la primera transición desde "Asignado" pertenece a la etapa más antigua mostrada.
+      if (j === sist.length - 1 && esAsignado(t.etapaAnteriorLabel)) {
+        eventos = [...eventos, ...entre(idxSist[j] + 1, todas.length)]
+      }
+      return {
+        key: `et-${j}`,
+        label: t.etapaNuevaLabel,
+        actual: j === 0,
+        fecha: t.fecha,
+        ingreso: j === 0 ? { label: t.etapaAnteriorLabel, por: t.por } : undefined,
+        salida: j > 0 ? { label: sist[j - 1].etapaNuevaLabel, por: sist[j - 1].por } : undefined,
+        eventos: eventos.map(renderEntrada),
+      }
+    })
+
+    const ultima = sist[sist.length - 1]
+    if (!esAsignado(ultima.etapaAnteriorLabel)) {
+      const pre = entre(idxSist[idxSist.length - 1] + 1, todas.length)
+      etapas.push({
+        key: 'et-pre',
+        label: ultima.etapaAnteriorLabel,
+        actual: false,
+        fecha: pre.length ? pre[pre.length - 1].fecha : ultima.fecha,
+        salida: { label: ultima.etapaNuevaLabel, por: ultima.por },
+        eventos: pre.map(renderEntrada),
+      })
+    }
+    return etapas
+  })()
+
   // ── Render ──────────────────────────────────────────
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
 
-      {/* Stepper clickeable */}
+      {/* Stepper */}
       <ProcesalStepperPenal exp={exp} onEtapaClick={handleEtapaClick} />
 
-      {/* Card principal — feed unificado */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-
-        {/* Header */}
-        <div className="px-5 py-3.5 flex items-center justify-between border-b border-gray-200 flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <p className="text-sm font-semibold text-gray-800">Ciclo de Vida — Actividades</p>
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-gray-800">
-              {historialCompleto.length} registros
-            </span>
-          </div>
+      {/* Card: Ciclo de Vida — Actividades (PRD letrado §6.1) */}
+      <div className="bg-white border border-gray-200 rounded-lg p-5">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <h2 className="text-base font-semibold text-gray-700">Ciclo de Vida — Actividades</h2>
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Tabs de filtro */}
-            <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+            <div className="flex border border-gray-200 rounded-lg overflow-hidden">
               {([
                 ['todo',       'Todo',       null],
                 ['sistema',    'Sistema',    countSistema],
@@ -1030,35 +1027,59 @@ export function TimelinePenal({ exp }: Props) {
                 <button
                   key={val}
                   onClick={() => setFiltroHistorial(val)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                    filtroHistorial === val
-                      ? 'bg-white text-gray-800 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-800'
+                  className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-r border-gray-200 last:border-r-0 transition-colors ${
+                    filtroHistorial === val ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {lbl}
-                  {count !== null && count > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                      filtroHistorial === val
-                        ? 'bg-blue-50 text-gray-800'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {count}
-                    </span>
+                  {count !== null && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{count}</span>
                   )}
                 </button>
               ))}
             </div>
-            {/* Botón Nueva Actividad */}
+
+            {/* Exportar */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuExport(v => !v)}
+                className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <Icon name="download" size={14} />
+                Exportar
+              </button>
+              {menuExport && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuExport(false)} />
+                  <div className="absolute right-0 z-50 mt-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg py-1">
+                    <button
+                      onClick={() => { exportarExcel(getFilasExport(), nombreArchivo); setMenuExport(false) }}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Icon name="description" size={16} className="text-green-700" />
+                      Descargar Excel
+                    </button>
+                    <button
+                      onClick={() => { exportarPDF(getFilasExport(), nombreArchivo, `Timeline — ${exp.id}`, exp.caratula); setMenuExport(false) }}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Icon name="picture_as_pdf" size={16} className="text-red-700" />
+                      Descargar PDF
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             {yaCargoUnaActividadEnDesarchivado ? (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-100 border border-amber-200 text-[11px] font-semibold text-amber-700">
+              <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-amber-50 border border-amber-200 text-xs font-medium text-amber-700">
                 <Icon name="info" size={14} />
                 Ya se registró una actividad en Desarchivado. Volvé a Archivo para continuar.
-              </div>
+              </span>
             ) : (
               <button
                 onClick={() => { setTabNueva(enDesarchivado ? 'genericas' : 'procesales'); setModalNueva(true) }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-700 text-white rounded-lg text-xs font-semibold hover:bg-blue-800 transition-colors"
+                className="flex items-center gap-1 text-xs bg-blue-700 text-white rounded-md px-2.5 py-1.5 hover:bg-blue-800 transition-colors"
               >
                 <Icon name="add" size={14} />
                 Nueva Actividad
@@ -1068,119 +1089,21 @@ export function TimelinePenal({ exp }: Props) {
         </div>
 
         {/* Buscador */}
-        <div className="px-5 py-3 border-b border-gray-200">
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-              <Icon name="search" size={14} />
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar actividad..."
-              value={busquedaHistorial}
-              onChange={e => setBusquedaHistorial(e.target.value)}
-              className="w-full pl-8 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-700"
-            />
-            {busquedaHistorial && (
-              <button
-                onClick={() => setBusquedaHistorial('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-800"
-              >
-                <Icon name="close" size={14} />
-              </button>
-            )}
-          </div>
+        <div className="relative mb-4">
+          <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Buscar actividad..."
+            value={busquedaHistorial}
+            onChange={e => setBusquedaHistorial(e.target.value)}
+            className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
 
-        {/* Estado ASIGNADO */}
-        {etapaCodigo === 'ASIGNADO' && (
-          <div className="px-5 py-10 text-center">
-            <Icon name="inbox" size={32} className="text-gray-400 mx-auto mb-3 block" />
-            <p className="text-sm font-semibold text-gray-800 mb-1">Actuación pendiente de inicio</p>
-            <p className="text-xs text-gray-500">
-              Usá <strong>Acciones → Cambiar estado</strong> para comenzar.
-            </p>
-          </div>
-        )}
-
-        {/* Feed unificado con agrupación colapsable */}
-        {etapaCodigo !== 'ASIGNADO' && (
-          historialFiltrado.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <Icon name="history" size={28} className="text-gray-400 mx-auto mb-2 block" />
-              <p className="text-sm text-gray-500">No hay entradas que coincidan.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-
-              {/* A) Actividades del período actual (sin grupo) */}
-              {gruposHistorial.actividadesActuales.map((entrada, ei) => (
-                <div key={`actual-${ei}`} className="border-b border-gray-200 last:border-0">
-                  {renderEntrada(entrada)}
-                </div>
-              ))}
-
-              {/* B) Grupos colapsables por cambio de estado */}
-              {gruposHistorial.grupos.map((grupo, gi) => (
-                <div key={`grupo-${gi}`} className="border-b border-gray-200">
-
-                  {/* Cabecera colapsable */}
-                  <div
-                    onClick={() => toggleGrupo(gi)}
-                    className="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Icon
-                        name={estadosExpandidos.has(gi) ? 'expand_less' : 'expand_more'}
-                        size={16} className="text-gray-800"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Icon name="swap_horiz" size={14} className="text-teal-700 flex-shrink-0" />
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                          {getTituloEntrada(grupo.sistema)}
-                        </p>
-                      </div>
-                      {getDescripcionEntrada(grupo.sistema) && (
-                        <p className="text-xs text-gray-500">{getDescripcionEntrada(grupo.sistema)}</p>
-                      )}
-                      {grupo.actividades.length > 0 && (
-                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                          <Icon name="history" size={11} />
-                          {grupo.actividades.length}{grupo.actividades.length === 1 ? ' registro' : ' registros'}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0 mt-0.5">
-                      {formatFecha(grupo.sistema.fecha)}
-                    </span>
-                  </div>
-
-                  {/* Actividades del período — colapsables */}
-                  {estadosExpandidos.has(gi) && (
-                    <div className="bg-gray-50 border-t border-gray-200">
-                      {grupo.actividades.length === 0 ? (
-                        <p className="px-16 py-3 text-xs text-gray-400 italic">Sin registros en este período.</p>
-                      ) : (
-                        grupo.actividades.map((entrada, ai) => (
-                          <div key={`act-${gi}-${ai}`} className="ml-10 border-b border-gray-200 last:border-0">
-                            {renderEntrada(entrada)}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* C) Entrada de recepción — siempre al final */}
-              {gruposHistorial.entradaRecepcion && (
-                <div className="border-t border-gray-200">
-                  {renderEntrada(gruposHistorial.entradaRecepcion)}
-                </div>
-              )}
-            </div>
-          )
+        {etapaCodigo === 'ASIGNADO' && historialCompleto.length === 0 ? (
+          <p className="text-center text-sm text-gray-400 py-8">Actuación pendiente de inicio.</p>
+        ) : (
+          <EtapasAcordeon key={etapasPenal.map(e => e.key).join('|')} etapas={etapasPenal} vacio="No hay entradas que coincidan." />
         )}
       </div>
 

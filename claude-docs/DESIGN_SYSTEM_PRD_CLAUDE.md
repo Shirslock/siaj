@@ -81,3 +81,19 @@ Relevado en el PRD como Penal (actuación `/actuaciones/699`, Carta SAE Suceso; 
 - Hito registrado: círculo violeta con ✓, "3.1 — ¿Hay delito?", chips etapa (gris) · Cumplido (verde) · Sí (verde) · responsable,
   fecha y link "Editar". Nueva Actividad > Procesales lista los hitos de la etapa; al elegir uno: Resultado Sí/No, Resolución
   (dropzone), Fecha, Organismo Judicial, Estado (En curso / Cumplido / No proc.), Fecha vencimiento; botones Volver / Registrar.
+
+## Etapa 2b — Línea de tiempo en acordeón por etapa (2026-11-05, rama `feat/timeline-prd`)
+- **Componentes compartidos** (`src/components/timeline/`): `StepperPRD` (completado verde ✓, actual azul con anillo, pendiente gris,
+  "rechazado" rojo; conector `h-0.5`) y `EtapasAcordeon` (una etapa por estado, la más reciente arriba; la actual abierta, `bg-blue-50`,
+  punto azul y chip ACTUAL; adentro "Ingresó desde X · por USUARIO" o "Salió hacia Y · por USUARIO", los eventos o "Sin eventos en este estado.").
+- **Penal** (`TimelinePenal.tsx`): el feed plano pasó a acordeón. Un evento pertenece a la etapa a la que ingresó la transición de estado
+  anterior a él (`historialCompleto` viene en orden descendente). Lo anterior a la primera transición desde "Asignado" va a la etapa más
+  antigua mostrada. Filtros Todo / Sistema / Procesales / Genéricas con contador, Exportar (Excel/PDF) y Nueva Actividad. Los hitos se ven
+  como en el PRD (círculo violeta con ✓, chips etapa · estado · resultado, link Editar). El paso "Rechazado" se conserva en rojo.
+  El cambio de estado ahora guarda `creado_por` (antes Penal no registraba quién).
+- **Civil/Laboral** (`TimelineTab.tsx`): mismo acordeón. Las tareas ahora viven **dentro** de cada etapa (`TareasEtapa`: barra de progreso,
+  lista, banner "Ya podés pasar de Estado"); en las etapas pasadas son el snapshot de solo lectura. Se eliminaron `ActividadFeedItem`,
+  `TareasBlock` y `TareaFeedItem`. El panel lateral de la tarea (`TareaDetailPanel`) sigue a la derecha. Chip "N de M completadas".
+- `labelEstado()` ahora resuelve también los estados penales (`etapasPenales`).
+- **Diferencias que quedan**: Carta SAE tiene 6 etapas en el PRD y 7 en el prototipo (incluye Rechazado); el ciclo de estados por tipo
+  es dato de negocio, no se tocó.
