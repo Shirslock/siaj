@@ -23,8 +23,6 @@ const thCls =
   'px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 text-left ' +
   'cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap'
 
-const CHIP = 'inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors'
-
 const FILTROS_INIT = {
   interno: '', causa: '', area: '', caratula: '', tipo: '', estado: '',
   gde: '', abogado_id: '', fechaDesde: '', fechaHasta: '',
@@ -87,6 +85,7 @@ export default function MesaSacoPage() {
   )
 
   const esCerrado = (e: Expediente) => ESTADOS_CERRADO.includes(e.estado)
+  const activosCount = useMemo(() => expedientes.filter(e => !ESTADOS_CERRADO.includes(e.estado)).length, [expedientes])
   const tieneAlerta = (e: Expediente) =>
     getAlertaExpediente(e.id, tareasMap, e.timeline).activa || getAlertaTimer(e).activa
 
@@ -176,25 +175,23 @@ export default function MesaSacoPage() {
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-4">
 
-      {/* Título */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800">Bandeja SACO</h1>
-        <p className="text-sm text-gray-500 mt-1">Consulta de actuaciones asignadas — vista de solo lectura.</p>
-      </div>
-
-      {/* Barra de acciones */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() => navigate('/mesa/alta')}
-          className="px-4 py-2 text-sm bg-blue-700 text-white rounded-md hover:bg-blue-800 inline-flex items-center gap-1"
-        >
-          <Icon name="add" size={16} />
-          Nueva Actuación
-        </button>
-
-        <div className="inline-flex">
+      {/* Título + acciones (PRD: título a la izquierda, acciones a la derecha) */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Bandeja SACO</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Gestionando {activosCount} actuacion{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={() => navigate('/mesa/alta')}
+            className="px-4 py-2 text-sm bg-blue-700 text-white rounded-md hover:bg-blue-800"
+          >
+            + Nueva Actuación
+          </button>
           {(['activos', 'archivados'] as const).map(val => (
             <button
               key={val}
@@ -210,37 +207,36 @@ export default function MesaSacoPage() {
               {val === 'activos' ? 'Activos' : 'Archivados'}
             </button>
           ))}
+          <button
+            onClick={() => { setSoloUrgentes(v => !v); setPagina(1) }}
+            className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              soloUrgentes ? 'border-red-300 bg-red-50 text-red-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Icon name="fire" size={14} />
+            Urgentes
+          </button>
+          <button
+            disabled
+            title="Disponible cuando se carguen los plazos"
+            className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 opacity-50 cursor-not-allowed`}
+          >
+            <Icon name="warning" size={14} />
+            Por vencer
+          </button>
+          <button onClick={limpiarFiltros} className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50`}>
+            <Icon name="close" size={14} />
+            Limpiar filtros
+          </button>
+          <button
+            onClick={exportar}
+            disabled={total === 0}
+            className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <Icon name="download" size={14} />
+            Exportar Excel
+          </button>
         </div>
-
-        <button
-          onClick={() => { setSoloUrgentes(v => !v); setPagina(1) }}
-          className={`${CHIP} ${
-            soloUrgentes ? 'border-red-300 bg-red-50 text-red-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          <Icon name="warning" size={14} />
-          Urgentes
-        </button>
-        <button
-          disabled
-          title="Disponible cuando se carguen los plazos"
-          className={`${CHIP} border-gray-300 text-gray-600 opacity-50 cursor-not-allowed`}
-        >
-          <Icon name="schedule" size={14} />
-          Por vencer
-        </button>
-        <button onClick={limpiarFiltros} className={`${CHIP} border-gray-300 text-gray-600 hover:bg-gray-50`}>
-          <Icon name="filter_alt_off" size={14} />
-          Limpiar filtros
-        </button>
-        <button
-          onClick={exportar}
-          disabled={total === 0}
-          className={`${CHIP} border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          <Icon name="download" size={14} />
-          Exportar Excel
-        </button>
       </div>
 
       {/* Tabla */}

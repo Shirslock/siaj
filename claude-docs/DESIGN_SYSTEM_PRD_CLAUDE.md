@@ -48,3 +48,14 @@
   y se les aplica el mismo estilo.
 - Paginación solo en Mesa SACO; la bandeja agrupada de Actuaciones muestra "Mostrando 1–N de N" sin paginar.
 - El prototipo no persiste nada: la paginación/filtros son del lado del cliente.
+
+## Verificado contra el PRD real (2026-11-05)
+Se abrió `https://siajtest.trenesargentinos.gob.ar/actuaciones/mesa-saco` con Claude in Chrome y se leyó el HTML.
+- Fila de título: `flex items-start justify-between flex-wrap gap-3`; izquierda `h1 text-2xl font-semibold` + `p text-sm text-gray-500 mt-0.5`
+  ("Gestionando N actuaciones activas"); derecha `flex flex-wrap items-center justify-end gap-2` con **+ Nueva Actuación**,
+  Activos / Archivados (botones pegados), Urgentes (llama), Por vencer (triángulo) y Limpiar filtros (×).
+  El PRD **no** tiene "Exportar Excel" ni "Expandir todo": son del prototipo (Delta 18) y van al final de la barra.
+- Estructura de página: `main.p-4` > `div.p-6.space-y-4`. Ya replicado (`AppLayout` y las dos bandejas).
+- Header: `bg-[#0B2545] p-4 max-h-12`, logo = imagen `logoTrenes.svg` (`w-44 h-6`, invertida a blanco), avatar con ícono de persona.
+  El prototipo usa un wordmark de texto y las iniciales; para igualarlo haría falta copiar el SVG del logo (pendiente de OK).
+- El resto de las páginas (p-6/p-8 propios) llevan ahora 16px extra por el `main.p-4`: se normaliza en las etapas 2 y 3.

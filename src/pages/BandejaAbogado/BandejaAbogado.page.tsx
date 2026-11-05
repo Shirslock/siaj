@@ -484,20 +484,19 @@ export default function BandejaAbogadoPage() {
   const colSpanTotal = mostrarColumnaLetrado ? 9 : 8
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-4">
 
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800">Actuaciones</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Hola, {usuarioActivo?.nombre ?? ''}. Gestionando{' '}
-          <span className="font-semibold text-gray-800">{activosCount}</span>{' '}
-          actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}.
-        </p>
-      </div>
+      {/* HEADER: título a la izquierda, acciones a la derecha (PRD) */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Actuaciones</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Gestionando {activosCount} actuación{activosCount !== 1 ? 'es' : ''} activa{activosCount !== 1 ? 's' : ''}
+          </p>
+        </div>
 
       {/* BARRA DE ACCIONES */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {esAbogadoPenal(usuarioActivo) && (
           <button
             onClick={() => navigate(RUTAS.NUEVA_ACTUACION_PENAL)}
@@ -542,7 +541,7 @@ export default function BandejaAbogadoPage() {
               : 'border-gray-300 text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <Icon name="warning" size={14} />
+          <Icon name="fire" size={14} />
           Urgentes
         </button>
         <button
@@ -553,7 +552,7 @@ export default function BandejaAbogadoPage() {
               : 'border-gray-300 text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <Icon name="schedule" size={14} />
+          <Icon name="warning" size={14} />
           Por vencer
           {contadorAlerta > 0 && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
@@ -562,7 +561,7 @@ export default function BandejaAbogadoPage() {
           )}
         </button>
         <button onClick={limpiarFiltros} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50">
-          <Icon name="filter_alt_off" size={14} />
+          <Icon name="close" size={14} />
           Limpiar filtros
         </button>
         <button
@@ -573,6 +572,7 @@ export default function BandejaAbogadoPage() {
           <Icon name="download" size={14} />
           Exportar Excel
         </button>
+      </div>
       </div>
 
       {/* TABLA */}

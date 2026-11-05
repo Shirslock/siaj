@@ -9,7 +9,7 @@ import {
   DocumentCheckIcon, DocumentIcon, DocumentTextIcon, EllipsisHorizontalIcon, EllipsisVerticalIcon,
   ExclamationCircleIcon, ExclamationTriangleIcon, EyeIcon,
   ChartBarIcon, TableCellsIcon,
-  FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon, FolderPlusIcon,
+  FireIcon, FolderIcon, FolderMinusIcon, FolderOpenIcon, FolderArrowDownIcon, FolderPlusIcon,
   FunnelIcon, InboxIcon, InformationCircleIcon, LinkIcon,
   LinkSlashIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon,
   NoSymbolIcon, PaperClipIcon, PencilSquareIcon, PlusCircleIcon, RectangleGroupIcon,
@@ -103,6 +103,7 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   schedule:              ClockIcon,
   history:               ClockIcon,
   warning:               ExclamationTriangleIcon,
+  fire:                  FireIcon,
   error:                 ExclamationCircleIcon,
 
   // Personas
