@@ -71,6 +71,13 @@ interface Props {
   modoAbogadoPenal?: boolean
 }
 
+// Valor de un campo para el resumen: las listas (Remitente) se muestran separadas por coma.
+function textoCampo(v: unknown): string {
+  if (v === undefined || v === null) return ''
+  if (Array.isArray(v)) return v.map(t => String(t).trim()).filter(Boolean).join(', ')
+  return String(v)
+}
+
 export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) {
   const navigate = useNavigate()
   const { usuarioActivo } = useUIStore()
@@ -476,11 +483,11 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
             <p className="text-sm text-gray-500 italic">Sin datos adicionales.</p>
           ) : (
             CAMPOS_COMUNES_MESA
-              .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '')
+              .filter(c => textoCampo(camposMesa[c.id]) !== '')
               .map(c => (
                 <div key={c.id} className="flex items-start gap-3 py-2 border-b border-gray-200 last:border-0">
                   <dt className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 w-36 flex-shrink-0">{c.label}</dt>
-                  <dd className="text-sm font-semibold text-gray-800 flex-1">{String(camposMesa[c.id])}</dd>
+                  <dd className="text-sm font-semibold text-gray-800 flex-1">{textoCampo(camposMesa[c.id])}</dd>
                 </div>
               ))
           )}
@@ -492,7 +499,7 @@ export default function AltaExpedientePage({ modoAbogadoPenal = false }: Props) 
         <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-2">Campos del tipo</p>
         <dl>
           {tipo && getCamposFormulario(tipo, 'mesa', area || undefined)
-            .filter(c => camposMesa[c.id] !== undefined && camposMesa[c.id] !== '').length === 0 ? (
+            .filter(c => textoCampo(camposMesa[c.id]) !== '').length === 0 ? (
             <p className="text-sm text-gray-500 italic">Sin campos adicionales completados.</p>
           ) : (
             tipo && getCamposFormulario(tipo, 'mesa', area || undefined)

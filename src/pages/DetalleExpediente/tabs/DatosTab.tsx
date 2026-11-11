@@ -5,7 +5,7 @@ import { getCamposFormulario } from '../../../data/formularios'
 import { TIPOS_GESTION, JUZGADOS, TRIBUNALES, FISCALIAS, UFIS, COMISARIAS, LINEAS_FERROVIARIAS } from '../../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../../data/juzgadosPJN'
 import { getNombreCompleto, getUsuarioById } from '../../../data/usuarios'
-import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, limpiarMontos, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../../utils/format'
+import { formatFecha, formatMonto, normalizarMoneda, normalizarMontos, normalizarRemitentes, MAX_REMITENTES, limpiarMontos, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../../utils/format'
 import Icon from '../../../components/ui/Icon'
 import { useConfiguracionStore } from '../../../store/configuracion.store'
 import { opcionesDeCampo } from '../../../components/expedientes/FormularioDinamico'
@@ -42,6 +42,15 @@ function valorDisplay(
     return (
       <div className="flex flex-col gap-0.5">
         {pares.map((p, i) => <span key={i}>{formatMonto(p.monto, p.moneda, monedas)}</span>)}
+      </div>
+    )
+  }
+  if (campo.type === 'text_multi') {
+    const lista = normalizarRemitentes(val)
+    if (lista.length === 0) return '—'
+    return (
+      <div className="flex flex-col gap-0.5">
+        {lista.map((t, i) => <span key={i}>{t}</span>)}
       </div>
     )
   }
@@ -125,6 +134,8 @@ export function DatosTab({ exp }: Props) {
       if (c.type === 'money_multi') {
         limpio[c.id] = limpiarMontos(normalizarMontos(draft[c.id], draft[`${c.id}_moneda`], monedas))
       }
+      // Delta 28 — Remitente: se descartan las filas en blanco y los repetidos.
+      if (c.type === 'text_multi') limpio[c.id] = normalizarRemitentes(draft[c.id])
     })
     return limpio
   }
@@ -331,6 +342,39 @@ export function DatosTab({ exp }: Props) {
               className="flex items-center gap-1.5 text-xs font-semibold text-gray-800 hover:text-blue-800 transition-colors mt-1">
               <Icon name="add" size={14} />
               Agregar monto
+            </button>
+          )}
+        </div>
+      )
+    }
+    if (campo.type === 'text_multi') {
+      const raw = normalizarRemitentes(draft[campo.id], true)
+      const filas = raw.length > 0 ? raw : ['']
+      const commit = (nuevas: string[]) => setDraft(p => ({ ...p, [campo.id]: nuevas }))
+      return (
+        <div className="space-y-2 w-full">
+          {filas.map((txt, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                type="text"
+                className="field-input flex-1 text-sm"
+                value={txt}
+                placeholder={i === 0 ? undefined : 'Otro remitente'}
+                onChange={e => { const n = [...filas]; n[i] = e.target.value; commit(n) }}
+              />
+              {filas.length > 1 && (
+                <button type="button" title="Quitar remitente" onClick={() => commit(filas.filter((_, idx) => idx !== i))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-red-100 hover:text-red-700 transition-colors flex-shrink-0">
+                  <Icon name="close" size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+          {filas.length < MAX_REMITENTES && (
+            <button type="button" onClick={() => commit([...filas, ''])}
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-800 hover:text-blue-800 transition-colors mt-1">
+              <Icon name="add" size={14} />
+              Agregar remitente
             </button>
           )}
         </div>

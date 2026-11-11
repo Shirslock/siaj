@@ -27,6 +27,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     fecha_recepcion: addDays(-18),
     es_principal: false,
     es_urgente: false,
+    cargada_sigej: true, cargada_sigej_por: 'UR_004', cargada_sigej_fecha: addDays(-2),
     campos_mesa: {
       mesa_num_causa:      '61.204/2026',
       mesa_juzgado_fuero:  'CIVIL',
@@ -220,6 +221,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     fecha_recepcion: '2026-06-01',
     es_principal: false,
     es_urgente: false,
+    cargada_sigej: true, cargada_sigej_por: 'UR_004', cargada_sigej_fecha: addDays(-2),
     campos_mesa: {
       numero_memo: 'MEMO-2026-0091',
       area_requirente: 'Gerencia de Infraestructura',
