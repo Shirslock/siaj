@@ -131,6 +131,23 @@ export function proximaMonedaLibre(pares: { moneda: Moneda }[], catalogo: Moneda
   return opcionesMoneda(catalogo).map(o => o.value).find(m => !usadas.has(m))
 }
 
+// Delta 28 — campos text_multi (Remitente): lista de textos. Los datos previos guardaban un
+// único string, que se lee como lista de 1. Por defecto descarta vacíos y repetidos (para
+// mostrar y guardar); con `conservarVacios` deja las filas en blanco tal cual (edición).
+export const MAX_REMITENTES = 10
+
+export function normalizarRemitentes(valor: unknown, conservarVacios = false): string[] {
+  const lista = Array.isArray(valor) ? valor : (valor == null ? [] : [valor])
+  const textos = lista.map(v => String(v ?? ''))
+  if (conservarVacios) return textos
+  const vistos = new Set<string>()
+  return textos.map(t => t.trim()).filter(t => {
+    if (!t || vistos.has(t.toLowerCase())) return false
+    vistos.add(t.toLowerCase())
+    return true
+  })
+}
+
 // Al guardar, una fila agregada y dejada sin importe no debe persistir como "$0" — se descarta.
 export function limpiarMontos(pares: ParMoneda[]): ParMoneda[] {
   return pares.filter(p => p.monto !== 0)
