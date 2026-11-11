@@ -420,19 +420,21 @@ export function useHomeData(scope: Scope = 'MIAS', letradoId = '') {
     misActivos.filter(e => e.estado === 'ASIGNADO').length,
     [misActivos])
 
-  // Las 4 filas de "Por rol" salen del mismo campo (`mesa_tipo_intervencion`). 'Denunciante' es
-  // un valor del ciclo Penal, así que solo se puebla para letrados con actuaciones penales.
-  // 'Actuación de Oficio' (el otro valor penal) queda deliberadamente fuera de la distribución.
+  // Las 5 filas de "Por rol" salen del mismo campo (`mesa_tipo_intervencion`). 'Denunciante' y
+  // 'Actuación de Oficio' son valores del ciclo Penal, así que solo se pueblan para letrados con
+  // actuaciones penales. Al ser un tipo de intervención (Delta 1), 'Actuación de Oficio' tiene
+  // su propia fila: así "Por rol" suma el total de activas.
   const intervencion = useMemo(() => {
-    let actora = 0, demandada = 0, denunciante = 0, sinIntervencion = 0
+    let actora = 0, demandada = 0, denunciante = 0, oficio = 0, sinIntervencion = 0
     misActivos.forEach(e => {
       const valor = String(e.campos_mesa?.['mesa_tipo_intervencion'] ?? '')
       if (valor === 'Actora') actora++
       else if (valor === 'Demandada') demandada++
       else if (valor === 'Denunciante') denunciante++
+      else if (valor === 'Actuación de Oficio') oficio++
       else if (valor === 'Sin Intervención' || valor === '') sinIntervencion++
     })
-    return { actora, demandada, denunciante, sinIntervencion }
+    return { actora, demandada, denunciante, oficio, sinIntervencion }
   }, [misActivos])
 
   const porVencerCount = useMemo(() =>
