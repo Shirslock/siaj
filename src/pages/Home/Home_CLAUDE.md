@@ -127,15 +127,15 @@ punto de 5px cuando el valor es 0.
 
 | Card | Filas | Destino del click |
 |------|-------|-------------------|
-| **Por rol** ("Distribución de causas activas.") | Actora, Demandada, Denunciante y Sin intervención — las **cuatro** salen del mismo campo `campos_mesa['mesa_tipo_intervencion']` (vacío cuenta como Sin Intervención). Orden fijo, incluye los ceros. | `?parte=Actora` / `?parte=Demandada` / `?parte=Denunciante` / `?parte=Sin%20Intervenci%C3%B3n` |
+| **Por rol** ("Distribución de causas activas.") | Actora, Demandada, Denunciante, Actuación de Oficio y Sin intervención — las **cinco** salen del mismo campo `campos_mesa['mesa_tipo_intervencion']` (vacío cuenta como Sin Intervención). Orden fijo, incluye los ceros. | `?parte=Actora` / `?parte=Demandada` / `?parte=Denunciante` / `?parte=Actuaci%C3%B3n%20de%20Oficio` / `?parte=Sin%20Intervenci%C3%B3n` |
 | **Por estado procesal** ("Distribución de actuaciones activas.") | Una fila por cada estado presente en `misActivos` — agrupa por `estadoProcesal ?? estado` y ordena por cantidad desc. El label legible ("Traba de Litis", "En Prueba"…) sale de `getEstadoProcesal(e.tipo, code)?.label` (`estadosProcesales.ts`), porque el ciclo de estados depende del tipo; si no lo encuentra, cae al código crudo. | `?estado=<code>` |
 
-**Ojo con "Denunciante":** es un valor del ciclo **Penal** (`DatosTab.tsx` ofrece
-`Denunciante | Actuación de Oficio | Sin Intervención` cuando `area === 'PENAL'`), así que solo
-se puebla para letrados con actuaciones penales — para un letrado de Civil/Laboral queda en 0 y
-está bien. **`Actuación de Oficio` quedó deliberadamente fuera** de la distribución (decisión del
-cliente): una actuación penal cargada con ese valor no se cuenta en ninguna de las 4 filas, así
-que "Por rol" puede no sumar el total de activas.
+**Ojo con "Denunciante" y "Actuación de Oficio":** son valores del ciclo **Penal** (`DatosTab.tsx`
+ofrece `Denunciante | Actuación de Oficio | Sin Intervención` cuando `area === 'PENAL'`), así que
+solo se pueblan para letrados con actuaciones penales — para un letrado de Civil/Laboral quedan en
+0 y está bien. **`Actuación de Oficio` tiene barra propia** (decisión de negocio, Noviembre 2026:
+al ser un tipo de intervención debe figurar), así que las 5 filas cubren todos los valores y
+"Por rol" suma el total de activas. Antes estaba fuera de la distribución.
 
 ---
 

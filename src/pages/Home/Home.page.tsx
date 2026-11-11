@@ -68,6 +68,10 @@ export default function HomePage() {
       onClick: () => irABandeja('parte=Denunciante'),
     },
     {
+      label: 'Actuación de Oficio', valor: intervencion.oficio, color: '#1D9E75',
+      onClick: () => irABandeja(`parte=${encodeURIComponent('Actuación de Oficio')}`),
+    },
+    {
       label: 'Sin intervención', valor: intervencion.sinIntervencion, color: '#85B7EB',
       onClick: () => irABandeja(`parte=${encodeURIComponent('Sin Intervención')}`),
     },
