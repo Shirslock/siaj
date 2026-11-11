@@ -415,6 +415,28 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
   const [editando, setEditando] = useState<CatalogoItemExtended | null>(null)
   const [form, setForm] = useState({ label: '', tipo: '', provincia: '', localidad: '', activo: true })
 
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroProvincia, setFiltroProvincia] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState<'' | 'activo' | 'inactivo'>('')
+
+  const provincias = Array.from(new Set(items.map(i => i.provincia).filter((p): p is string => !!p))).sort()
+  const hayFiltros = !!(busqueda || filtroProvincia || filtroEstado)
+
+  const q = busqueda.trim().toLowerCase()
+  const itemsFiltrados = items.filter(i => {
+    if (q && !`${i.label} ${i.localidad ?? ''}`.toLowerCase().includes(q)) return false
+    if (filtroProvincia && i.provincia !== filtroProvincia) return false
+    if (filtroEstado === 'activo' && i.activo === false) return false
+    if (filtroEstado === 'inactivo' && i.activo !== false) return false
+    return true
+  })
+
+  function limpiarFiltros() {
+    setBusqueda('')
+    setFiltroProvincia('')
+    setFiltroEstado('')
+  }
+
   function abrirNuevo() {
     setEditando(null)
     setForm({ label: '', tipo: '', provincia: '', localidad: '', activo: true })
@@ -460,6 +482,38 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="relative flex-1 min-w-[220px] max-w-sm">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            <Icon name="search" size={16} />
+          </span>
+          <input
+            type="text"
+            className="field-input w-full pl-8"
+            placeholder="Buscar por nombre o localidad"
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+          />
+        </div>
+        <select className="field-input" value={filtroProvincia} onChange={e => setFiltroProvincia(e.target.value)}>
+          <option value="">Todas las provincias</option>
+          {provincias.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <select className="field-input" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value as '' | 'activo' | 'inactivo')}>
+          <option value="">Todos los estados</option>
+          <option value="activo">Activos</option>
+          <option value="inactivo">Inactivos</option>
+        </select>
+        {hayFiltros && (
+          <button onClick={limpiarFiltros} className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">
+            Limpiar
+          </button>
+        )}
+        <span className="text-[11px] text-gray-500 ml-auto">
+          {itemsFiltrados.length} de {items.length}
+        </span>
+      </div>
+
       <div className="bg-white rounded-lg shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -470,7 +524,14 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {items.map(item => (
+            {itemsFiltrados.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-8 px-4 text-center text-sm text-gray-500">
+                  Ningún organismo coincide con los filtros.
+                </td>
+              </tr>
+            )}
+            {itemsFiltrados.map(item => (
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="py-2.5 px-4 text-gray-800 font-medium max-w-[240px]">
                   <p className="truncate">{item.label}</p>
@@ -600,7 +661,7 @@ function VistaTipoGestion({ tabla }: { tabla: TablaConfig }) {
 
 export function CatalogoPanel({ tabla }: Props) {
   if (tabla.soloLectura) return <VistaLectura tabla={tabla} />
-  if (tabla.tipo === 'extended') return <VistaExtended tabla={tabla} />
+  if (tabla.tipo === 'extended') return <VistaExtended key={tabla.id} tabla={tabla} />
   if (tabla.tipo === 'tipoGestion') return <VistaTipoGestion tabla={tabla} />
   if (tabla.tipo === 'moneda') return <VistaMoneda tabla={tabla} />
   return <VistaSimple tabla={tabla} />
