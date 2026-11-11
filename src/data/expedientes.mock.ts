@@ -562,7 +562,7 @@ export const EXPEDIENTES_MOCK: Expediente[] = [
     es_principal: false,
     es_urgente: false,
     campos_mesa: {
-      mesa_tipo_intervencion: 'Denunciante',
+      mesa_tipo_intervencion: 'Actuación de Oficio',
       mesa_num_ipp:        'IPP-2026-00845',
       mesa_caratula:       'N.N. S/ APEDREO CON LESIONES — LÍNEA SARMIENTO',
       mesa_fiscalia:       'FIS_001',

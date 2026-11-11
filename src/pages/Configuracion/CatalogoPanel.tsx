@@ -495,11 +495,11 @@ function VistaExtended({ tabla }: { tabla: TablaConfig }) {
             onChange={e => setBusqueda(e.target.value)}
           />
         </div>
-        <select className="field-input" value={filtroProvincia} onChange={e => setFiltroProvincia(e.target.value)}>
+        <select className="field-input !w-52" value={filtroProvincia} onChange={e => setFiltroProvincia(e.target.value)}>
           <option value="">Todas las provincias</option>
           {provincias.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select className="field-input" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value as '' | 'activo' | 'inactivo')}>
+        <select className="field-input !w-44" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value as '' | 'activo' | 'inactivo')}>
           <option value="">Todos los estados</option>
           <option value="activo">Activos</option>
           <option value="inactivo">Inactivos</option>
