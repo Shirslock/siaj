@@ -94,7 +94,7 @@ export function exportarMesaSacoExcel(
 ): void {
   const encabezados = [
     'N° Interno', 'N° Causa', 'Área', 'Carátula', 'Tipo de Gestión',
-    'Referencia GDE', 'Letrado', 'Línea', 'Fecha Recepción',
+    'Referencia GDE', 'Letrado', 'Línea', 'Fecha Recepción', 'Cargada en SIGEJ',
   ]
   const datos = expedientes.map(e => {
     const letrado = e.abogado_id ? getUsuarioById(e.abogado_id) : undefined
@@ -102,12 +102,13 @@ export function exportarMesaSacoExcel(
       e.id, formatNumeroCausaPjn(e), e.area, e.caratula,
       TIPO_LABEL[e.tipo] ?? e.tipo, e.numero_ee_gde ?? '',
       letrado ? getNombreCompleto(letrado) : '—', lineaLabel(e.linea), e.fecha_recepcion,
+      e.cargada_sigej ? 'Sí' : 'No',
     ]
   })
   const ws = XLSX.utils.aoa_to_sheet([encabezados, ...datos])
   ws['!cols'] = [
     { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 45 }, { wch: 24 },
-    { wch: 22 }, { wch: 25 }, { wch: 18 }, { wch: 14 },
+    { wch: 22 }, { wch: 25 }, { wch: 18 }, { wch: 14 }, { wch: 16 },
   ]
   encabezados.forEach((_, i) => {
     const cell = XLSX.utils.encode_cell({ r: 0, c: i })

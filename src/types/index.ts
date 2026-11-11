@@ -136,6 +136,10 @@ export interface Expediente {
   // Delta 3 — sub-estado DESARCHIVADO (Civil/Laboral): estado terminal al que
   // vuelve la actuación con "Volver a archivo".
   estado_previo_desarchivo?: string
+  // Delta 27 — marca "Cargada en SIGEJ": la tilda el letrado, Mesa SACO solo la ve.
+  cargada_sigej?: boolean
+  cargada_sigej_por?: string      // id del usuario que la marcó
+  cargada_sigej_fecha?: string    // YYYY-MM-DD
 }
 
 export interface VinculoExpediente {
@@ -456,6 +460,7 @@ export type TipoCampo =
   | 'date'
   | 'money'
   | 'money_multi'
+  | 'text_multi'
   | 'textarea'
   | 'boolean'
   | 'causa'

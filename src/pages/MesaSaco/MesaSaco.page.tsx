@@ -26,10 +26,10 @@ const thCls =
 
 const FILTROS_INIT = {
   interno: '', causa: '', area: '', caratula: '', tipo: '', estado: '',
-  gde: '', abogado_id: '', fechaDesde: '', fechaHasta: '',
+  gde: '', abogado_id: '', fechaDesde: '', fechaHasta: '', sigej: '',
 }
 
-type ColKey = 'id' | 'causa' | 'area' | 'caratula' | 'tipo' | 'estado' | 'gde' | 'letrado' | 'linea' | 'recepcion'
+type ColKey = 'id' | 'causa' | 'area' | 'caratula' | 'tipo' | 'estado' | 'gde' | 'letrado' | 'linea' | 'recepcion' | 'sigej'
 
 const COLUMNAS: { key: ColKey; label: string }[] = [
   { key: 'id',        label: 'N° Interno' },
@@ -42,6 +42,7 @@ const COLUMNAS: { key: ColKey; label: string }[] = [
   { key: 'letrado',   label: 'Letrado' },
   { key: 'linea',     label: 'Línea' },
   { key: 'recepcion', label: 'Recepción' },
+  { key: 'sigej',     label: 'SIGEJ' },
 ]
 
 const tipoLabel = (code: string) => TIPOS_GESTION.find(t => t.code === code)?.label ?? code
@@ -105,6 +106,9 @@ export default function MesaSacoPage() {
       if (filtros.abogado_id && e.abogado_id !== filtros.abogado_id) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
+      // Delta 27 — marca "Cargada en SIGEJ" (la tilda el letrado; Mesa SACO solo la ve).
+      if (filtros.sigej === 'cargada' && !e.cargada_sigej) return false
+      if (filtros.sigej === 'pendiente' && e.cargada_sigej) return false
       return true
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,6 +129,7 @@ export default function MesaSacoPage() {
       }
       case 'linea':     return e.linea ?? ''
       case 'recepcion': return e.fecha_recepcion
+      case 'sigej':     return e.cargada_sigej ? '1' : '0'
     }
   }
 
@@ -314,6 +319,13 @@ export default function MesaSacoPage() {
                       onChange={e => { setFiltro('fechaHasta', e.target.value); setPagina(1) }} className={filterInputCls} />
                   </div>
                 </th>
+                <th className="px-4 py-2">
+                  <select value={filtros.sigej} onChange={e => { setFiltro('sigej', e.target.value); setPagina(1) }} className={`${filterInputCls} min-w-[110px]`} aria-label="Filtrar por SIGEJ">
+                    <option value="">Todas</option>
+                    <option value="cargada">Cargadas</option>
+                    <option value="pendiente">Pendientes</option>
+                  </select>
+                </th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
@@ -375,6 +387,19 @@ export default function MesaSacoPage() {
                         {linea ? linea.label.replace('Línea ', '') : <span className="text-gray-400">—</span>}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-left">{formatFecha(e.fecha_recepcion)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-left">
+                        {e.cargada_sigej ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-green-700"
+                            title={e.cargada_sigej_fecha ? `Cargada en SIGEJ el ${formatFecha(e.cargada_sigej_fecha)}` : 'Cargada en SIGEJ'}
+                          >
+                            <Icon name="check_circle" size={16} />
+                            Cargada
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400" title="Todavía no figura como cargada en SIGEJ">Pendiente</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <button
                           className="p-1 rounded hover:bg-gray-100 text-gray-500"

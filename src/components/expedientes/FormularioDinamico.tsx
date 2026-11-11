@@ -3,7 +3,7 @@ import { FormField } from '../ui/FormField'
 import Icon from '../ui/Icon'
 import { JUZGADOS, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { FUEROS_CIVIL_LAB, FUEROS_PENAL, getJuzgadosPorFuero, getSecretarias } from '../../data/juzgadosPJN'
-import { normalizarMontos, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../utils/format'
+import { normalizarMontos, normalizarRemitentes, MAX_REMITENTES, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../utils/format'
 import { useConfiguracionStore } from '../../store/configuracion.store'
 
 interface Props {
@@ -240,6 +240,49 @@ export function FormularioDinamico({ campos, valores, onChange, area }: Props) {
                   >
                     <Icon name="add" size={14} />
                     Agregar monto
+                  </button>
+                )}
+              </div>
+            </FormField>
+          )
+        }
+
+        if (campo.type === 'text_multi') {
+          const raw = normalizarRemitentes(valores[campo.id], true)
+          const filas = raw.length > 0 ? raw : ['']
+          const commit = (nuevas: string[]) => onChange(campo.id, nuevas)
+          return (
+            <FormField key={campo.id} label={campo.label} hint={campo.hint} required={campo.required} full={campo.full}>
+              <div className="space-y-2">
+                {filas.map((txt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      className="field-input flex-1"
+                      value={txt}
+                      placeholder={i === 0 ? campo.placeholder : 'Otro remitente'}
+                      onChange={e => { const n = [...filas]; n[i] = e.target.value; commit(n) }}
+                    />
+                    {filas.length > 1 && (
+                      <button
+                        type="button"
+                        title="Quitar remitente"
+                        onClick={() => commit(filas.filter((_, idx) => idx !== i))}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-red-100 hover:text-red-700 transition-colors flex-shrink-0"
+                      >
+                        <Icon name="close" size={14} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {filas.length < MAX_REMITENTES && (
+                  <button
+                    type="button"
+                    onClick={() => commit([...filas, ''])}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-800 hover:text-blue-800 transition-colors mt-1"
+                  >
+                    <Icon name="add" size={14} />
+                    Agregar remitente
                   </button>
                 )}
               </div>

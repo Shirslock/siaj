@@ -56,7 +56,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
     label: 'Carta Documento',
     mesa: [
       { id:'numero_carta', label:'N° de Carta Documento', type:'text',   mono:true },
-      { id:'remitente',    label:'Remitente',              type:'text' },
+      { id:'remitente',    label:'Remitente',              type:'text_multi' },
       { id:'fecha_carta',  label:'Fecha de la Carta',      type:'date' },
       { id:'documental',   label:'Documental',             type:'select', options:['Completo','Incompleto'] },
     ],
@@ -450,7 +450,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
     label: 'Otras presentaciones / gestiones',
     mesa: [
       { id:'fecha_ingreso',    label:'Fecha del ingreso',        type:'date' },
-      { id:'remitente',        label:'Remitente',                 type:'text' },
+      { id:'remitente',        label:'Remitente',                 type:'text_multi' },
       { id:'tema_reclamo',     label:'Tema / Reclamo principal', type:'text',   full:true },
       { id:'descripcion_gestion', label:'Descripción de la Gestión',      type:'textarea', full:true },
       { id:'juzgado_fuero', label:'Fuero', type:'fuero_select' },

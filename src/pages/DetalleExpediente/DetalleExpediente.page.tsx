@@ -357,6 +357,31 @@ export default function DetalleExpedientePage() {
     })
   }
 
+  // Delta 27 — marca "Cargada en SIGEJ". La tilda/destilda el letrado (Mesa SACO solo la ve) y
+  // cada cambio queda como movimiento de sistema en la línea de tiempo.
+  const puedeMarcarSigej = !!usuarioActivo && usuarioActivo.rolBD !== 'adm_mesa'
+
+  function alternarCargadaSigej() {
+    if (!exp || !puedeMarcarSigej) return
+    const marcar = !exp.cargada_sigej
+    const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
+    actualizarExpediente(exp.id, marcar
+      ? { cargada_sigej: true, cargada_sigej_por: usuarioActivo?.id, cargada_sigej_fecha: HOY }
+      : { cargada_sigej: false, cargada_sigej_por: undefined, cargada_sigej_fecha: undefined })
+    agregarActividad(exp.id, {
+      id: `ACT_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      expediente_id: exp.id,
+      tipo: 'MOVIMIENTO',
+      titulo: marcar ? 'Marcada como cargada en SIGEJ' : 'Se quitó la marca de cargada en SIGEJ',
+      descripcion: `${nombre} ${marcar ? 'marcó la actuación como cargada en SIGEJ' : 'quitó la marca de cargada en SIGEJ'}.`,
+      fecha: HOY,
+      activo: true,
+      subitems: [],
+      doc_gde: null,
+      creado_por: usuarioActivo?.id,
+    })
+  }
+
   function confirmarEstado(omitirAvisoPendientes = false) {
     // ── Delta 3 — Desarchivar / Volver a archivo (Civil/Laboral) ──
     if (enDesarchivadoCL || (esTerminalCL && nuevoEstado === 'DESARCHIVADO')) {
@@ -876,6 +901,15 @@ export default function DetalleExpedientePage() {
                   Urgente
                 </span>
               )}
+              {exp.cargada_sigej && (
+                <span
+                  title={`Cargada en SIGEJ${exp.cargada_sigej_por ? ` por ${(() => { const u = USUARIOS.find(x => x.id === exp.cargada_sigej_por); return u ? getNombreCompleto(u) : exp.cargada_sigej_por })()}` : ''}${exp.cargada_sigej_fecha ? ` el ${formatFecha(exp.cargada_sigej_fecha)}` : ''}`}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700"
+                >
+                  <Icon name="check_circle" size={12} />
+                  SIGEJ
+                </span>
+              )}
               {(alerta.activa || alertaTimer.activa) && (() => {
                 const timerVencido = alertaTimer.activa && alertaTimer.diasRestantes !== undefined && alertaTimer.diasRestantes <= 0
                 const esVencido = alerta.estado === 'vencido' || timerVencido
@@ -934,6 +968,21 @@ export default function DetalleExpedientePage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {puedeMarcarSigej && (
+              <button
+                onClick={alternarCargadaSigej}
+                aria-pressed={!!exp.cargada_sigej}
+                title={exp.cargada_sigej ? 'Quitar la marca de cargada en SIGEJ' : 'Marcar como cargada en SIGEJ'}
+                className={`px-3 py-1.5 text-sm rounded-md border inline-flex items-center gap-1 transition-colors ${
+                  exp.cargada_sigej
+                    ? 'border-green-600 bg-green-50 text-green-700 hover:bg-green-100'
+                    : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Icon name="check_circle" size={14} />
+                Cargada en SIGEJ
+              </button>
+            )}
             <button
               onClick={() => actualizarExpediente(exp.id, { es_urgente: !exp.es_urgente })}
               title={exp.es_urgente ? 'Quitar la marca de urgente' : 'Marcar como urgente'}
