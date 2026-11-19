@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import { TIPOS_GESTION } from '../data/catalogos'
 import { getNombreCompleto, getUsuarioById } from '../data/usuarios'
 import type { Expediente } from '../types'
+import { labelEstado } from './estadoLabel'
 import { formatNumeroCausaPjn } from './numeroCausa'
 
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
@@ -12,19 +13,34 @@ export type ItemBandejaExport =
   | { kind: 'causa'; numeroCausa: string; expedientes: Expediente[] }
   | { kind: 'suelto'; exp: Expediente }
 
+// Tipo de Juicio y Tipo de Hecho de una actuación. Según el tipo de gestión viven en Mesa SACO
+// (`mesa_juicio`, `tipo_juicio`, `tipo_hecho`) o en el letrado (`abg_tipo_hecho`, que en Denuncia
+// puede ser multiselect → lista). Los usan la tabla/filtros de la Bandeja del Abogado y este Excel.
+function valoresCampo(...fuentes: unknown[]): string[] {
+  return fuentes
+    .flatMap(f => (Array.isArray(f) ? f : [f]))
+    .map(v => String(v ?? '').trim())
+    .filter(Boolean)
+}
+export const tiposJuicioDe = (e: Expediente): string[] =>
+  valoresCampo(e.campos_mesa?.['mesa_juicio'], e.campos_mesa?.['tipo_juicio'])
+export const tiposHechoDe = (e: Expediente): string[] =>
+  valoresCampo(e.campos_abogado?.['abg_tipo_hecho'], e.campos_mesa?.['tipo_hecho'])
+
 export interface FilaBandejaExport {
   numeroExpediente: string
   numeroCausa: string
   caratula: string
   area: string
   tipo: string
+  tipoJuicio: string
+  tipoHecho: string
   letrado: string
   estado: string
   fechaRecepcion: string
-  incluidoPor: 'Filtro' | 'Agrupador de causa'
 }
 
-function filaDesdeExpediente(exp: Expediente, incluidoPor: FilaBandejaExport['incluidoPor']): FilaBandejaExport {
+function filaDesdeExpediente(exp: Expediente): FilaBandejaExport {
   const letrado = exp.abogado_id ? getUsuarioById(exp.abogado_id) : undefined
   return {
     numeroExpediente: exp.id,
@@ -32,60 +48,28 @@ function filaDesdeExpediente(exp: Expediente, incluidoPor: FilaBandejaExport['in
     caratula: exp.caratula,
     area: exp.area,
     tipo: TIPO_LABEL[exp.tipo] ?? exp.tipo,
+    tipoJuicio: [...new Set(tiposJuicioDe(exp))].join(', '),
+    tipoHecho: [...new Set(tiposHechoDe(exp))].join(', '),
     letrado: letrado ? getNombreCompleto(letrado) : '—',
-    estado: exp.estado,
+    estado: labelEstado(exp),
     fechaRecepcion: exp.fecha_recepcion,
-    incluidoPor,
   }
 }
 
 /**
- * Arma las filas de exportación completando, para cada causa presente en
- * `expedientesFiltrados`, el resto de expedientes que comparten `numero_causa`
- * (los "antecedentes") aunque no hayan pasado todos los filtros — se traen desde
- * `poolBase` (ya acotado por rol) filtrado solo por `letrado`/`area`, ninguno de
- * los demás filtros restringe esta completación. Los "sueltos" se exportan tal
- * cual, sin intentar completar nada.
+ * Arma las filas de exportación: exactamente las actuaciones que muestra la tabla con los
+ * filtros aplicados (una por fila, en el orden de pantalla). Las causas agrupadas aportan solo
+ * sus actuaciones filtradas; no se completan otras actuaciones de la misma causa.
  */
-export function construirFilasBandejaExport(
-  items: ItemBandejaExport[],
-  expedientesFiltrados: Expediente[],
-  poolBase: Expediente[],
-  filtros: { letrado: string; area: string },
-): FilaBandejaExport[] {
-  const idsFiltrados = new Set(expedientesFiltrados.map(e => e.id))
-  const filas: FilaBandejaExport[] = []
-
-  for (const item of items) {
-    if (item.kind === 'suelto') {
-      filas.push(filaDesdeExpediente(item.exp, 'Filtro'))
-      continue
-    }
-
-    const completos = poolBase.filter(e =>
-      (e.numero_causa ?? '').trim() === item.numeroCausa &&
-      (!filtros.letrado || e.abogado_id === filtros.letrado) &&
-      (!filtros.area || e.area === filtros.area)
-    )
-
-    const vistos = new Set<string>()
-    const grupo = [...item.expedientes, ...completos].filter(e => {
-      if (vistos.has(e.id)) return false
-      vistos.add(e.id)
-      return true
-    })
-
-    for (const exp of grupo) {
-      filas.push(filaDesdeExpediente(exp, idsFiltrados.has(exp.id) ? 'Filtro' : 'Agrupador de causa'))
-    }
-  }
-
-  return filas
+export function construirFilasBandejaExport(items: ItemBandejaExport[]): FilaBandejaExport[] {
+  return items
+    .flatMap(item => (item.kind === 'suelto' ? [item.exp] : item.expedientes))
+    .map(filaDesdeExpediente)
 }
 
 /**
  * Bandeja Mesa SACO: exporta las actuaciones tal como están filtradas en pantalla
- * (lista plana, sin agrupador de causa), con las mismas columnas de la tabla.
+ * (lista plana, sin agrupador de causa), con las mismas columnas de la tabla (incluido Estado).
  */
 export function exportarMesaSacoExcel(
   expedientes: Expediente[],
@@ -93,21 +77,21 @@ export function exportarMesaSacoExcel(
   nombreArchivo: string,
 ): void {
   const encabezados = [
-    'N° Interno', 'N° Causa', 'Área', 'Carátula', 'Tipo de Gestión',
+    'N° Interno', 'N° Causa', 'Área', 'Carátula', 'Tipo de Gestión', 'Estado',
     'Referencia GDE', 'Letrado', 'Línea', 'Fecha Recepción', 'Cargada en SIGEJ',
   ]
   const datos = expedientes.map(e => {
     const letrado = e.abogado_id ? getUsuarioById(e.abogado_id) : undefined
     return [
       e.id, formatNumeroCausaPjn(e), e.area, e.caratula,
-      TIPO_LABEL[e.tipo] ?? e.tipo, e.numero_ee_gde ?? '',
+      TIPO_LABEL[e.tipo] ?? e.tipo, labelEstado(e), e.numero_ee_gde ?? '',
       letrado ? getNombreCompleto(letrado) : '—', lineaLabel(e.linea), e.fecha_recepcion,
       e.cargada_sigej ? 'Sí' : 'No',
     ]
   })
   const ws = XLSX.utils.aoa_to_sheet([encabezados, ...datos])
   ws['!cols'] = [
-    { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 45 }, { wch: 24 },
+    { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 45 }, { wch: 24 }, { wch: 22 },
     { wch: 22 }, { wch: 25 }, { wch: 18 }, { wch: 14 }, { wch: 16 },
   ]
   encabezados.forEach((_, i) => {
@@ -121,20 +105,20 @@ export function exportarMesaSacoExcel(
 
 export function exportarBandejaExcel(filas: FilaBandejaExport[], nombreArchivo: string): void {
   const encabezados = [
-    'N° Expediente', 'N° Causa', 'Carátula', 'Área', 'Tipo',
-    'Letrado', 'Estado', 'Fecha Recepción', 'Incluido por',
+    'N° Expediente', 'N° Causa', 'Carátula', 'Área', 'Tipo', 'Tipo de Juicio', 'Tipo de Hecho',
+    'Letrado', 'Estado', 'Fecha Recepción',
   ]
 
   const datos = filas.map(f => [
-    f.numeroExpediente, f.numeroCausa, f.caratula, f.area, f.tipo,
-    f.letrado, f.estado, f.fechaRecepcion, f.incluidoPor,
+    f.numeroExpediente, f.numeroCausa, f.caratula, f.area, f.tipo, f.tipoJuicio, f.tipoHecho,
+    f.letrado, f.estado, f.fechaRecepcion,
   ])
 
   const ws = XLSX.utils.aoa_to_sheet([encabezados, ...datos])
 
   ws['!cols'] = [
-    { wch: 15 }, { wch: 15 }, { wch: 45 }, { wch: 10 }, { wch: 22 },
-    { wch: 25 }, { wch: 20 }, { wch: 14 }, { wch: 18 },
+    { wch: 15 }, { wch: 15 }, { wch: 45 }, { wch: 10 }, { wch: 22 }, { wch: 26 }, { wch: 26 },
+    { wch: 25 }, { wch: 20 }, { wch: 14 },
   ]
 
   encabezados.forEach((_, i) => {

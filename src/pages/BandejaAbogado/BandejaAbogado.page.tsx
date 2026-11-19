@@ -4,7 +4,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { useUIStore } from '../../store/ui.store'
 import { usePjnStore } from '../../store/pjn.store'
 import { ConsultarNovedadPjnModal } from '../../components/pjn/ConsultarNovedadPjnModal'
-import { construirFilasBandejaExport, exportarBandejaExcel } from '../../utils/exportBandeja'
+import { construirFilasBandejaExport, exportarBandejaExcel, tiposJuicioDe, tiposHechoDe } from '../../utils/exportBandeja'
 import { TIPOS_GESTION, esTipoDocumental } from '../../data/catalogos'
 import { USUARIOS, getNombreCompleto, getUsuarioById, puedeReasignar, esAbogadoPenal } from '../../data/usuarios'
 
@@ -12,7 +12,7 @@ import { AreaBadge } from '../../components/ui/Badge'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
-import { formatFecha } from '../../utils/format'
+import { formatFecha, remitentesDeExpediente } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { RUTAS } from '../../utils/routing'
 import { getAlertaExpediente, getAlertaTimer, type EstadoAlerta } from '../../utils/alertas'
@@ -54,6 +54,9 @@ function construirItems(exps: Expediente[]): ItemBandeja[] {
 
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS_GESTION.map(t => [t.code, t.label]))
 
+// Texto de celda: valores sin repetir separados por coma, o "—" si no hay.
+const textoValores = (vals: string[]) => [...new Set(vals)].join(', ') || '—'
+
 const filterInputCls =
   'w-full text-sm py-1 px-2 rounded-md border border-gray-300 bg-white ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'
@@ -89,6 +92,8 @@ export default function BandejaAbogadoPage() {
     letrado:    searchParams.get('letrado') ?? (esAbogado ? (usuarioActivo?.id ?? '') : ''),
     fechaDesde: searchParams.get('fechaDesde') ?? '',
     fechaHasta: '',
+    tipoJuicio: '',
+    tipoHecho:  '',
     soloUrgentes: searchParams.get('urgente') === '1',
     soloAlerta:   searchParams.get('alerta') === '1',
     parte:        searchParams.get('parte') ?? '', // deep-link desde Principal: valor exacto de campos_mesa.mesa_tipo_intervencion ('Actora' | 'Demandada' | 'Denunciante' | 'Actuación de Oficio' | 'Sin Intervención')
@@ -133,12 +138,11 @@ export default function BandejaAbogadoPage() {
 
   const poolBase = useMemo(() => {
     if (esReferente) return expedientes
-    if (esCoordi) {
-      const misAreas = usuarioActivo?.areas ?? []
-      return expedientes.filter(e => misAreas.includes(e.area as Area))
-    }
-    return expedientes.filter(e => e.abogado_id === usuarioActivo?.id)
-  }, [expedientes, usuarioActivo, esCoordi, esReferente])
+    // Coordinador y Letrado ven las actuaciones de sus áreas. El Letrado abre la bandeja con el
+    // botón "Mis actuaciones" activo (filtro por su id) y puede apagarlo para ver las de sus pares.
+    const misAreas = usuarioActivo?.areas ?? []
+    return expedientes.filter(e => misAreas.includes(e.area as Area))
+  }, [expedientes, usuarioActivo, esReferente])
 
   const expedientesFiltrados = useMemo(() => {
     return poolBase.filter(e => {
@@ -154,6 +158,8 @@ export default function BandejaAbogadoPage() {
       if (filtros.estado && e.estado !== filtros.estado && (e.estadoProcesal ?? e.estado) !== filtros.estado) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
+      if (filtros.tipoJuicio && !tiposJuicioDe(e).includes(filtros.tipoJuicio)) return false
+      if (filtros.tipoHecho  && !tiposHechoDe(e).includes(filtros.tipoHecho))   return false
       if (filtros.soloUrgentes && !e.es_urgente) return false
       if (filtros.soloAlerta && !getAlertaExpediente(e.id, tareasMap, e.timeline).activa && !getAlertaTimer(e).activa) return false
       // Una actuación sin tipo de intervención cargado cuenta como 'Sin Intervención' —
@@ -174,6 +180,8 @@ export default function BandejaAbogadoPage() {
           e.numero_causa ?? '',
           e.numero_ee_gde ?? '',
           TIPO_LABEL[e.tipo] ?? e.tipo,
+          // Cambio 1 — también se busca por Remitente (Carta Documento / Otras).
+          ...remitentesDeExpediente(e),
         ]
         return campos.some(c => c?.toLowerCase().includes(q))
       }
@@ -200,6 +208,15 @@ export default function BandejaAbogadoPage() {
     [poolBase]
   )
 
+  const tiposJuicioUnicos = useMemo(() =>
+    [...new Set(poolBase.flatMap(tiposJuicioDe))].sort((a, b) => a.localeCompare(b)),
+    [poolBase]
+  )
+  const tiposHechoUnicos = useMemo(() =>
+    [...new Set(poolBase.flatMap(tiposHechoDe))].sort((a, b) => a.localeCompare(b)),
+    [poolBase]
+  )
+
   const causasExistentes = useMemo(() => {
     if (!inputCausa.trim()) return []
     const q = inputCausa.toLowerCase()
@@ -216,16 +233,14 @@ export default function BandejaAbogadoPage() {
     [poolBase]
   )
 
-  const mostrarColumnaLetrado = esCoordi || esReferente
+  const mostrarColumnaLetrado = true
 
   const abogadosDisponibles = useMemo(() =>
     USUARIOS.filter(u =>
       u.rolSistema === 'ABOGADO' &&
-      (esCoordi || esReferente
-        ? (usuarioActivo?.areas ?? []).some(a => u.areas.includes(a as Area))
-        : true)
+      (usuarioActivo?.areas ?? []).some(a => u.areas.includes(a as Area))
     ).sort((a, b) => a.apellido.localeCompare(b.apellido))
-  , [usuarioActivo, esCoordi, esReferente])
+  , [usuarioActivo])
 
   // ── Actions ───────────────────────────────────────────────────────────────────
 
@@ -247,10 +262,7 @@ export default function BandejaAbogadoPage() {
   function collapseAll() { setExpandedCausas(new Set()) }
 
   function handleExportarExcel() {
-    const filas = construirFilasBandejaExport(items, expedientesFiltrados, poolBase, {
-      letrado: filtros.letrado,
-      area: filtros.area,
-    })
+    const filas = construirFilasBandejaExport(items)
     const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     exportarBandejaExcel(filas, `Bandeja_Actuaciones_${hoy}`)
     toast.success('Excel exportado.')
@@ -456,6 +468,9 @@ export default function BandejaAbogadoPage() {
         <td className="px-4 py-3"><AreaBadge area={exp.area} /></td>
         {/* Tipo */}
         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{TIPO_LABEL[exp.tipo] ?? exp.tipo}</td>
+        {/* Tipo de Juicio / Tipo de Hecho */}
+        <td className="px-4 py-3 text-sm text-gray-900 max-w-[180px]">{textoValores(tiposJuicioDe(exp))}</td>
+        <td className="px-4 py-3 text-sm text-gray-900 max-w-[180px]">{textoValores(tiposHechoDe(exp))}</td>
         {/* Letrado (condicional) */}
         {mostrarColumnaLetrado && (
           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
@@ -482,7 +497,7 @@ export default function BandejaAbogadoPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
-  const colSpanTotal = mostrarColumnaLetrado ? 9 : 8
+  const colSpanTotal = mostrarColumnaLetrado ? 11 : 10
 
   return (
     <div className="p-6 space-y-4">
@@ -533,6 +548,17 @@ export default function BandejaAbogadoPage() {
         <button onClick={collapseAll} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors border-gray-300 text-gray-600 hover:bg-gray-50">
           <Icon name="unfold_less" size={14} />
           Colapsar todo
+        </button>
+        <button
+          onClick={() => setFiltros(p => ({ ...p, letrado: p.letrado === usuarioActivo?.id ? '' : (usuarioActivo?.id ?? '') }))}
+          className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+            filtros.letrado === usuarioActivo?.id
+              ? 'border-blue-300 bg-blue-50 text-blue-700'
+              : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Icon name="star" size={14} />
+          Mis actuaciones
         </button>
         <button
           onClick={() => setFiltros(p => ({ ...p, soloUrgentes: !p.soloUrgentes }))}
@@ -594,6 +620,8 @@ export default function BandejaAbogadoPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Carátula</th>
                   <th className="w-32 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Área</th>
                   <th className="w-36 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Tipo</th>
+                  <th className="w-40 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Tipo de Juicio</th>
+                  <th className="w-40 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Tipo de Hecho</th>
                   {mostrarColumnaLetrado && (
                     <th className="w-36 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 border-b border-gray-200 whitespace-nowrap">Letrado</th>
                   )}
@@ -609,7 +637,7 @@ export default function BandejaAbogadoPage() {
                     <input type="text" placeholder="Causa / N°…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
                   </th>
                   <th className="px-4 py-2">
-                    <input type="text" placeholder="Carátula…" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
+                    <input type="text" placeholder="Carátula / Remitente…" title="Busca en la carátula y en el Remitente" value={filtros.buscar} onChange={e => setFiltro('buscar', e.target.value)} className={filterInputCls} />
                   </th>
                   <th className="px-4 py-2">
                     <select value={filtros.area} onChange={e => setFiltro('area', e.target.value)} className={filterInputCls}>
@@ -623,6 +651,18 @@ export default function BandejaAbogadoPage() {
                     <select value={filtros.tipo} onChange={e => setFiltro('tipo', e.target.value as TipoGestion | '')} className={filterInputCls}>
                       <option value="">Todos</option>
                       {tiposUnicos.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}
+                    </select>
+                  </th>
+                  <th className="px-4 py-2">
+                    <select value={filtros.tipoJuicio} onChange={e => setFiltro('tipoJuicio', e.target.value)} className={filterInputCls}>
+                      <option value="">Todos</option>
+                      {tiposJuicioUnicos.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </th>
+                  <th className="px-4 py-2">
+                    <select value={filtros.tipoHecho} onChange={e => setFiltro('tipoHecho', e.target.value)} className={filterInputCls}>
+                      <option value="">Todos</option>
+                      {tiposHechoUnicos.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </th>
                   <th className="px-4 py-2">
@@ -707,6 +747,8 @@ export default function BandejaAbogadoPage() {
                               Causa judicial
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 max-w-[180px]">{textoValores(exps.flatMap(tiposJuicioDe))}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 max-w-[180px]">{textoValores(exps.flatMap(tiposHechoDe))}</td>
                           {mostrarColumnaLetrado && <td className="px-4 py-3" />}
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{labelEstado(principal)}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{formatFecha(principal.fecha_recepcion)}</td>

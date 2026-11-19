@@ -248,11 +248,28 @@ implementó en esta rama.
     el id string de la actividad, no el índice → "Marcar cumplido" desde Agenda probablemente no hace nada.
 - **Exportar bandejas a Excel.** La del Letrado ya existía (`exportarBandejaExcel`). **Mesa SACO no la tenía en
   ninguna rama**: se agregó `exportarMesaSacoExcel` + botón en `MesaSaco.page.tsx` (lista plana filtrada, 9 columnas).
-  Documentado como **Delta 18** (Parte A) en el docx.
+  Estaba documentado como **Delta 18** (Parte A) en el docx. **2026-11-12: se retiró del docx de Deltas** (sección, fila
+  del índice y 2 capturas); pasa al documento de cambio aparte. La numeración queda 17 → 19. El Excel del Letrado
+  suma las columnas Tipo de Juicio y Tipo de Hecho. **El Delta 20 (adjuntos múltiples + bloqueo de video) también se
+  retiró del docx el 2026-11-12** y pasó al mismo documento de cambio (`docs/Cambio_Bandejas/`); numeración 19 → 21.
 - **Documentación en el docx** (`docs/Deltas3_Etapa2/SIAJ_Deltas3_Etapa2.docx`): Delta 18 exportar bandejas (Parte A),
   **19** campana a Mesa SACO (Parte B), **20** adjuntos múltiples + video y **21** vencimiento (Parte C). Cada uno con
   placeholders "CAPTURA PENDIENTE" (21 en total en el documento). Se agregaron también al índice y a los textos de
   portada ("7 deltas nuevos, 15 a 21"). Sin Word para renderizarlo: validado por XML y mammoth.
+
+## 2026-11-17 — El documento de cambio de bandejas vuelve a los Deltas (post-producción)
+- Desarrollo estimó el doc de cambio v2 (`Desktop/SIAJ_Documento_de_Cambio_Bandejas_v2.docx`, 16/11), pero se decidió
+  **no pedir ningún cambio antes de producción**: todo pasa a este docx, para aplicar después de la puesta en producción.
+- El docx se regeneró desde la versión de HEAD (que todavía tenía los Deltas 18 y 20). Script en el scratchpad de la sesión.
+  - **18** reescrito según la v2: exporta solo las filas filtradas (sin completar causa ni "Incluido por"), con
+    Tipo de Juicio y Tipo de Hecho. Mesa SACO **suma Estado**: era una omisión, la marcó desarrollo. Referencia GDE, Línea y SIGEJ son solo de Mesa.
+  - **20** (adjuntos múltiples + video) restaurado tal cual.
+  - Nuevos: **29** filtro Carátula/Remitente · **30** Tipo de Juicio/Hecho en la bandeja del Letrado (Parte A) ·
+    **31** renombre "Elevación a Juicio" → "Requerimiento de Elevación a Juicio (Etapa Intermedia)" (Parte B; no aplica al
+    prototipo, que no tiene ese estado) · **32** actividades procesales de ese estado (Parte C, **a definir con Penal**).
+  - El renombre "Carta SAE Suceso/Denuncia" no se documenta: ya lo implementó desarrollo.
+  - El Excel modelo se copió a `docs/Deltas3_Etapa2/SIAJ_Modelo_Excel_Bandejas.xlsx`.
+- Prototipo alineado: `construirFilasBandejaExport(items)` ya no completa causas; los dos Excel usan `labelEstado` y Mesa suma Estado.
 
 ## Documentos reeditados — `docs/Deltas3_Etapa2/` (2026-11-03)
 - **`SIAJ_Deltas3_Etapa2.docx`** — reedición del documento de Deltas 3, con el mismo formato y estilo.
@@ -299,3 +316,13 @@ implementó en esta rama.
   `px-3 py-3 gap-1.5`, círculo `w-8 h-8` (ícono 16), número `text-xl`. Sin cambios en etiqueta, grilla ni tarjeta destacada (navy). Es un ajuste
   propio del prototipo: el PRD las tiene cuadradas. `src/pages/Home/homeShared.tsx` (`KpiCard`).
 - Documentado como Delta 24 (Parte A) en el docx, con 1 captura pendiente. El docx cubre los deltas 1–24.
+
+## Delta 33 — Bandeja de Actuaciones: botón "Mis actuaciones" (2026-11-19, rama `develop`, sin commit)
+- Origen: el filtro Letrado (desplegable con el catálogo) genera confusión; el prototipo tenía "★ Mis actuaciones" dentro del desplegable. Sin impacto
+  en BD (filtra por el letrado asignado). Botón (chip) junto a "Urgentes", sincronizado con `filtros.letrado` (`BandejaAbogado.page.tsx`).
+  Icono `star` (`StarIcon`) sumado a `src/components/ui/Icon.tsx`.
+- **Para todos los roles**: el Letrado abre la bandeja con el botón activo (default `filtros.letrado = su id`; "Limpiar filtros" vuelve a eso).
+  **Cambio de visibilidad en el prototipo**: el `poolBase` del Letrado pasó de "solo lo suyo" a "actuaciones de sus áreas" (como el Coordinador);
+  ve la columna y el filtro Letrado y puede apagar el botón para ver las de sus pares. **Supuesto mío (alcance = sus áreas), a confirmar con negocio.**
+- Documentado como Delta 33 (Parte A) en el docx, con captura del Letrado; índice y portada actualizados ("15 a 33", 19 deltas nuevos).
+- Limitación del mock: Casano (UR_004) tiene todas las actuaciones activas de Civil, así que al apagar el botón no aparecen las de otros letrados.

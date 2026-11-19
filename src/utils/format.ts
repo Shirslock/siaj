@@ -148,6 +148,12 @@ export function normalizarRemitentes(valor: unknown, conservarVacios = false): s
   })
 }
 
+// Remitentes cargados en una actuación (campo de Mesa SACO de Carta Documento / Otras).
+// Sirve para que los filtros de carátula de las bandejas también busquen por remitente.
+export function remitentesDeExpediente(exp: { campos_mesa?: Record<string, unknown> }): string[] {
+  return normalizarRemitentes(exp.campos_mesa?.['remitente'])
+}
+
 // Al guardar, una fila agregada y dejada sin importe no debe persistir como "$0" — se descarta.
 export function limpiarMontos(pares: ParMoneda[]): ParMoneda[] {
   return pares.filter(p => p.monto !== 0)
