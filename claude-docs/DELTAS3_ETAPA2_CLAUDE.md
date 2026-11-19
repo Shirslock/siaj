@@ -326,3 +326,23 @@ implementó en esta rama.
   ve la columna y el filtro Letrado y puede apagar el botón para ver las de sus pares. **Supuesto mío (alcance = sus áreas), a confirmar con negocio.**
 - Documentado como Delta 33 (Parte A) en el docx, con captura del Letrado; índice y portada actualizados ("15 a 33", 19 deltas nuevos).
 - Limitación del mock: Casano (UR_004) tiene todas las actuaciones activas de Civil, así que al apagar el botón no aparecen las de otros letrados.
+
+## Deltas 31/32/34 — Penal: etapa Intermedia, hitos nuevos y REF (2026-11-19, rama `develop`, sin commit)
+- Fuente: `Descargas/CUADRO SIAJ.xlsx` (hito **Excepciones**: 6 actividades Sí/No, en Instrucción y en Requerimiento de Elevación a Juicio; hito **Planteo de Nulidad**:
+  Absoluta/Relativa, en todas las etapas) + pedido del REF como etapa. Todo en `src/data/etapasPenales.ts` (+ `grupo?` en `SubActividadPenal`, `types/index.ts`; encabezado
+  "Hito: …" en el listado de Nueva Actividad de `TimelinePenal.tsx`).
+- Ciclo penal ahora: En Análisis → Aceptado → Instrucción → **INTERMEDIA** («Requerimiento de Elevación a Juicio (Etapa Intermedia)») → Juicio → **REF** → Ejecución Penal → Archivo.
+  `numero` de etapas: Instrucción 3, Intermedia 4, Juicio 5, REF 6, Ejecución 7, Archivo 8.
+- INTERMEDIA lleva: Excepciones (I.1.x), Prueba, Conciliación, Reparación Integral, Probation, Apelación/Queja/Casación, **Elevación a Juicio** (se movió desde Instrucción; ya no está en INS) y Nulidad.
+- REF: R.1 Análisis, R.2 Redacción, R.3 Presentación, R.4 Control formal, R.5 Concesión/denegación (SI_NO), R.6 Queja (si se deniega), R.7 Montos, + Nulidad. Basado en las 7 tareas del REF de Civil (`DC_REF_*`).
+  Si se deniega → Queja; la tarea "SI se deniega:" de Civil está vacía en el Excel: se dejó así para validar con el negocio.
+- Numeración provisional (I.x, R.x, 5.16/5.17, 3.3, 6.8, 7.2, 8.3). Los hitos nuevos usan el molde Sí/No (escrito, organismo, resolución, observaciones, plazo apelar).
+- Docx: Delta 31 (estado implementado), Delta 32 reescrito (definido), **Delta 34** nuevo (REF, Parte B) con 3 capturas; índice y portada ("15 a 34", 20 deltas nuevos).
+- OJO: `tsc --noEmit -p .` NO chequea nada (tsconfig raíz es de referencias). Usar `npx tsc --noEmit -p tsconfig.app.json`.
+
+## Delta 27 corregido — "Cargada en SIGEJ" la marca Mesa SACO (2026-11-19, rama `develop`, sin commit)
+- Cristian: la marca NO la pone el letrado; la marca **Mesa SACO** (da de alta la actuación en SIAJ, la carga después en SIGEJ y tilda que ya lo hizo) (`rolBD === 'adm_mesa'`). Antes estaba al revés (letrado sí, Mesa solo veía).
+- Ahora: botón en el encabezado del detalle solo para Mesa, y en la Bandeja Mesa SACO la celda de la columna SIGEJ es un botón (Cargada / Pendiente) con `stopPropagation`
+  (no abre la actuación). El resto de los roles ve la etiqueta verde "SIGEJ" sin botón. Cada cambio sigue quedando como movimiento en el timeline.
+- Lógica compartida en `src/utils/cargadaSigej.ts` (`puedeMarcarSigej`, `alternarCargadaSigej`); la usan `DetalleExpediente.page.tsx` y `MesaSaco.page.tsx`.
+- Texto del Delta 27 reescrito en el docx. **Pendiente:** rehacer la captura de la Bandeja Mesa SACO (la columna ahora son botones); el navegador no devolvía capturas.

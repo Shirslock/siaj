@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExpedientesStore } from '../../store/expedientes.store'
+import { useUIStore } from '../../store/ui.store'
+import { puedeMarcarSigej, alternarCargadaSigej } from '../../utils/cargadaSigej'
 import { AreaBadge } from '../../components/ui/Badge'
 import { TIPOS_GESTION, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
@@ -49,7 +51,9 @@ const tipoLabel = (code: string) => TIPOS_GESTION.find(t => t.code === code)?.la
 
 export default function MesaSacoPage() {
   const navigate = useNavigate()
-  const { expedientes, tareasMap } = useExpedientesStore()
+  const { expedientes, tareasMap, actualizarExpediente, agregarActividad } = useExpedientesStore()
+  const { usuarioActivo } = useUIStore()
+  const puedeSigej = puedeMarcarSigej(usuarioActivo)
   const [filtros, setFiltros] = useState(FILTROS_INIT)
   const [tab, setTab] = useState<'activos' | 'archivados'>('activos')
   const [soloUrgentes, setSoloUrgentes] = useState(false)
@@ -112,7 +116,7 @@ export default function MesaSacoPage() {
       if (filtros.abogado_id && e.abogado_id !== filtros.abogado_id) return false
       if (filtros.fechaDesde && e.fecha_recepcion < filtros.fechaDesde) return false
       if (filtros.fechaHasta && e.fecha_recepcion > filtros.fechaHasta) return false
-      // Delta 27 — marca "Cargada en SIGEJ" (la tilda el letrado; Mesa SACO solo la ve).
+      // Delta 27 — marca "Cargada en SIGEJ" (la tilda Mesa SACO; el resto solo la ve).
       if (filtros.sigej === 'cargada' && !e.cargada_sigej) return false
       if (filtros.sigej === 'pendiente' && e.cargada_sigej) return false
       return true
@@ -394,7 +398,21 @@ export default function MesaSacoPage() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-left">{formatFecha(e.fecha_recepcion)}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-left">
-                        {e.cargada_sigej ? (
+                        {puedeSigej ? (
+                          <button
+                            onClick={ev => { ev.stopPropagation(); alternarCargadaSigej(e, usuarioActivo, { actualizarExpediente, agregarActividad }) }}
+                            aria-pressed={!!e.cargada_sigej}
+                            title={e.cargada_sigej ? 'Cargada en SIGEJ: clic para quitar la marca' : 'Pendiente: clic para marcar como cargada en SIGEJ'}
+                            className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md border transition-colors ${
+                              e.cargada_sigej
+                                ? 'border-green-600 bg-green-50 text-green-700 hover:bg-green-100'
+                                : 'border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            <Icon name={e.cargada_sigej ? 'check_circle' : 'radio_button_unchecked'} size={14} />
+                            {e.cargada_sigej ? 'Cargada' : 'Pendiente'}
+                          </button>
+                        ) : e.cargada_sigej ? (
                           <span
                             className="inline-flex items-center gap-1 text-xs font-semibold text-green-700"
                             title={e.cargada_sigej_fecha ? `Cargada en SIGEJ el ${formatFecha(e.cargada_sigej_fecha)}` : 'Cargada en SIGEJ'}

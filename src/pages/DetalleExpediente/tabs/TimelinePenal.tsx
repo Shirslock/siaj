@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { Fragment, useState, useMemo, useEffect } from 'react'
 import type {
   Expediente,
   Actividad,
@@ -1285,11 +1285,14 @@ export function TimelinePenal({ exp }: Props) {
           !subActSeleccionada ? (
             <div>
               <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                {subActDisponibles.map(sa => (
+                {subActDisponibles.map((sa, idx) => (
+                  <Fragment key={sa.id}>
+                  {sa.grupo && sa.grupo !== subActDisponibles[idx - 1]?.grupo && (
+                    <p className="pt-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Hito: {sa.grupo}</p>
+                  )}
                   <button
-                    key={sa.id}
                     onClick={() => setSubActSeleccionada(sa)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 transition-colors hover:bg-gray-50"
+                    className={`w-full text-left px-4 py-3 rounded-lg border border-gray-200 transition-colors hover:bg-gray-50 ${sa.grupo ? 'border-l-4 border-l-blue-200' : ''}`}
                   >
                     <div className="flex items-start gap-2">
                       {sa.finalizaCausa && <Icon name="warning"       size={14} className="text-amber-700 mt-0.5 flex-shrink-0" />}
@@ -1301,6 +1304,7 @@ export function TimelinePenal({ exp }: Props) {
                       </div>
                     </div>
                   </button>
+                  </Fragment>
                 ))}
                 {subActDisponibles.length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-8">
