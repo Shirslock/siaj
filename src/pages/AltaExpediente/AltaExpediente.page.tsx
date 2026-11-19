@@ -40,7 +40,7 @@ const DOC_PLACEHOLDER: Record<Canal, string> = {
 const CANAL_INFO: Record<Canal, string> = {
   EE_GDE:   'Canal Externo: el EE fue creado por Mesa de Entradas General o el organismo notificante.',
   MEMO_GDE: 'Canal Interno: el Memo GDE fue generado por otra área de SOFSE (SGSySL, GCO, GAJ).',
-  OTROS:    'Canal Otros: Carta Suceso SAE, mails internos u otros documentos no GDE.',
+  OTROS:    'Canal Otros: Carta SAE Suceso/Denuncia, mails internos u otros documentos no GDE.',
 }
 
 // PRD: Canal y Área son listas desplegables ("Seleccioná…").

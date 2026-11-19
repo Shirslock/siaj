@@ -4,7 +4,7 @@ import { useExpedientesStore } from '../../store/expedientes.store'
 import { AreaBadge } from '../../components/ui/Badge'
 import { TIPOS_GESTION, LINEAS_FERROVIARIAS } from '../../data/catalogos'
 import { getUsuarioById, getNombreCompleto } from '../../data/usuarios'
-import { formatFecha } from '../../utils/format'
+import { formatFecha, remitentesDeExpediente } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
 import { labelEstado } from '../../utils/estadoLabel'
@@ -97,7 +97,13 @@ export default function MesaSacoPage() {
       if (tab === 'archivados' && !esCerrado(e)) return false
       if (soloUrgentes && !e.es_urgente) return false
       if (filtros.interno && !e.id.toLowerCase().includes(filtros.interno.toLowerCase())) return false
-      if (filtros.caratula && !e.caratula.toLowerCase().includes(filtros.caratula.toLowerCase())) return false
+      // Cambio 1 — el filtro de carátula también busca en el/los Remitente(s) de la Carta Documento.
+      if (filtros.caratula) {
+        const q = filtros.caratula.toLowerCase()
+        const coincide = e.caratula.toLowerCase().includes(q) ||
+          remitentesDeExpediente(e).some(r => r.toLowerCase().includes(q))
+        if (!coincide) return false
+      }
       if (filtros.tipo && e.tipo !== filtros.tipo) return false
       if (filtros.area && e.area !== filtros.area) return false
       if (filtros.estado && e.estado !== filtros.estado) return false
@@ -285,7 +291,7 @@ export default function MesaSacoPage() {
                   </select>
                 </th>
                 <th className="px-4 py-2">
-                  <input type="text" placeholder="Buscar..." value={filtros.caratula}
+                  <input type="text" placeholder="Carátula / Remitente…" title="Busca en la carátula y en el Remitente" value={filtros.caratula}
                     onChange={e => { setFiltro('caratula', e.target.value); setPagina(1) }} className={filterInputCls} />
                 </th>
                 <th className="px-4 py-2">

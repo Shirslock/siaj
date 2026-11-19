@@ -315,7 +315,7 @@ export const FORMULARIOS: Record<string, FormularioSubtipo> = {
   },
 
   CARTA_SUCESO: {
-    label: 'Carta Suceso (SAE)',
+    label: 'Carta SAE Suceso/Denuncia',
     mesa: [],
     abogado: [
       { id:'abg_documental',   label:'Documental',        type:'select', options:['Completo','Incompleto'] },
