@@ -136,7 +136,7 @@ export interface Expediente {
   // Delta 3 — sub-estado DESARCHIVADO (Civil/Laboral): estado terminal al que
   // vuelve la actuación con "Volver a archivo".
   estado_previo_desarchivo?: string
-  // Delta 27 — marca "Cargada en SIGEJ": la tilda el letrado, Mesa SACO solo la ve.
+  // Delta 27 — marca "Cargada en SIGEJ": la tilda Mesa SACO; el resto de los roles solo la ve.
   cargada_sigej?: boolean
   cargada_sigej_por?: string      // id del usuario que la marcó
   cargada_sigej_fecha?: string    // YYYY-MM-DD
@@ -552,6 +552,8 @@ export interface SubActividadPenal {
   tipo: 'SI_NO' | 'ACUERDO' | 'LIBRE'
   finalizaCausa?: boolean
   avanzaEtapa?: string
+  /** Hito al que pertenece la actividad (ej. "Excepciones"). Solo agrupa en el listado de Nueva Actividad. */
+  grupo?: string
   camposSI?: CampoPenal[]
   camposNO?: CampoPenal[]
   camposHayAcuerdo?: CampoPenal[]

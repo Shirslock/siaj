@@ -26,6 +26,7 @@ import { AsistenteTab }      from './tabs/AsistenteTab'
 import Icon from '../../components/ui/Icon'
 import bogaAvatar from '../../assets/boga-avatar.jpg'
 import { toast } from 'react-toastify'
+import { puedeMarcarSigej, alternarCargadaSigej } from '../../utils/cargadaSigej'
 import { formatFecha, opcionesMonedaDisponibles, proximaMonedaLibre, type Moneda, type ParMoneda } from '../../utils/format'
 import { formatNumeroCausaPjn } from '../../utils/numeroCausa'
 import { getAlertaExpediente, getAlertaTimer } from '../../utils/alertas'
@@ -357,29 +358,13 @@ export default function DetalleExpedientePage() {
     })
   }
 
-  // Delta 27 — marca "Cargada en SIGEJ". La tilda/destilda el letrado (Mesa SACO solo la ve) y
+  // Delta 27 — marca "Cargada en SIGEJ". La tilda/destilda Mesa SACO (el resto de los roles solo la ve) y
   // cada cambio queda como movimiento de sistema en la línea de tiempo.
-  const puedeMarcarSigej = !!usuarioActivo && usuarioActivo.rolBD !== 'adm_mesa'
+  const puedeSigej = puedeMarcarSigej(usuarioActivo)
 
-  function alternarCargadaSigej() {
-    if (!exp || !puedeMarcarSigej) return
-    const marcar = !exp.cargada_sigej
-    const nombre = usuarioActivo ? getNombreCompleto(usuarioActivo) : 'Usuario'
-    actualizarExpediente(exp.id, marcar
-      ? { cargada_sigej: true, cargada_sigej_por: usuarioActivo?.id, cargada_sigej_fecha: HOY }
-      : { cargada_sigej: false, cargada_sigej_por: undefined, cargada_sigej_fecha: undefined })
-    agregarActividad(exp.id, {
-      id: `ACT_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      expediente_id: exp.id,
-      tipo: 'MOVIMIENTO',
-      titulo: marcar ? 'Marcada como cargada en SIGEJ' : 'Se quitó la marca de cargada en SIGEJ',
-      descripcion: `${nombre} ${marcar ? 'marcó la actuación como cargada en SIGEJ' : 'quitó la marca de cargada en SIGEJ'}.`,
-      fecha: HOY,
-      activo: true,
-      subitems: [],
-      doc_gde: null,
-      creado_por: usuarioActivo?.id,
-    })
+  function alternarSigej() {
+    if (!exp) return
+    alternarCargadaSigej(exp, usuarioActivo, { actualizarExpediente, agregarActividad })
   }
 
   function confirmarEstado(omitirAvisoPendientes = false) {
@@ -968,9 +953,9 @@ export default function DetalleExpedientePage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {puedeMarcarSigej && (
+            {puedeSigej && (
               <button
-                onClick={alternarCargadaSigej}
+                onClick={alternarSigej}
                 aria-pressed={!!exp.cargada_sigej}
                 title={exp.cargada_sigej ? 'Quitar la marca de cargada en SIGEJ' : 'Marcar como cargada en SIGEJ'}
                 className={`px-3 py-1.5 text-sm rounded-md border inline-flex items-center gap-1 transition-colors ${
