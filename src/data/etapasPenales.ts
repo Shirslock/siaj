@@ -273,6 +273,106 @@ const SUB_8_2: SubActividadPenal = {
   ],
 }
 
+
+// ── Hitos nuevos (CUADRO SIAJ, Penal) ─────────────────
+// Cada actividad es Sí / No y abre las mismas pantallas que el resto (escrito, organismo,
+// resolución, observaciones y plazo para apelar). `grupo` solo agrupa el listado.
+
+const EXCEPCIONES = [
+  'Falta de jurisdicción',
+  'Falta de competencia',
+  'Falta de acción por falta de legitimación',
+  'Falta de acción por litispendencia',
+  'Falta de acción por cosa juzgada',
+  'Falta de acción por atipicidad manifiesta',
+]
+
+/** Hito "Excepciones": 6 actividades Sí / No. `base` = prefijo de numeración, `pref` = prefijo de id. */
+function excepciones(base: string, pref: string): SubActividadPenal[] {
+  return EXCEPCIONES.map((nom, i) => ({
+    id: `${pref}_EXC_${i + 1}`, numero: `${base}.${i + 1}`, nombre: `Excepción: ${nom}`, grupo: 'Excepciones', tipo: 'SI_NO' as const,
+    camposSI: [
+      { id: 'escrito',    label: 'Presenta excepción — Subir escrito', type: 'upload' as const },
+      ORG,
+      { id: 'resolucion', label: 'Resolución — Subir resolución',      type: 'upload' as const },
+      OBS, PLAZO_APELAR,
+    ],
+  }))
+}
+
+/** Hito "Planteo de Nulidad": Absoluta / Relativa. Se ofrece en todas las etapas con actividades. */
+function nulidad(base: string, pref: string): SubActividadPenal[] {
+  return ['Absoluta', 'Relativa'].map((tipo, i) => ({
+    id: `${pref}_NUL_${i + 1}`, numero: `${base}.${i + 1}`, nombre: `Planteo de Nulidad ${tipo}`, grupo: 'Planteo de Nulidad', tipo: 'SI_NO' as const,
+    camposSI: [
+      { id: 'escrito',    label: `Planteo de nulidad ${tipo.toLowerCase()} — Subir escrito`, type: 'upload' as const },
+      ORG,
+      { id: 'resolucion', label: 'Resolución — Subir resolución', type: 'upload' as const },
+      OBS, PLAZO_APELAR,
+    ],
+  }))
+}
+
+// ── Etapa Intermedia: Requerimiento de Elevación a Juicio ──
+
+const INTERMEDIA_SUBS: SubActividadPenal[] = [
+  ...excepciones('I.1', 'INT'),
+  { ...SUB_5_3,  id: 'INT_PRUEBA', numero: 'I.2' },
+  { ...SUB_5_4,  id: 'INT_CONC',   numero: 'I.3' },
+  { ...SUB_5_5,  id: 'INT_REPA',   numero: 'I.4' },
+  { ...SUB_5_6,  id: 'INT_PROB',   numero: 'I.5' },
+  { ...SUB_5_13, id: 'INT_APEL',   numero: 'I.6' },
+  { ...SUB_5_14, id: 'INT_QUEJA',  numero: 'I.7' },
+  { ...SUB_5_15, id: 'INT_CASAC',  numero: 'I.8' },
+  { ...SUB_5_11, id: 'INT_ELEV',   numero: 'I.9' },
+  ...nulidad('I.10', 'INT'),
+]
+
+// ── Etapa Recurso Extraordinario Federal ──
+// Parámetros tomados de las tareas del REF que informó Civil (Análisis de procedencia, Redacción,
+// Presentación + escrito, Control formal, Seguimiento de concesión/denegación, Si se deniega,
+// Registro de montos). Si se deniega, va a Recurso de Queja (a validar con el negocio).
+
+const REF_SUBS: SubActividadPenal[] = [
+  {
+    id: 'REF_R_1', numero: 'R.1', nombre: 'Análisis de procedencia', tipo: 'LIBRE',
+    camposLibres: [{ id: 'analisis', label: 'Análisis de procedencia', type: 'textarea', full: true }, ORG],
+  },
+  {
+    id: 'REF_R_2', numero: 'R.2', nombre: 'Redacción del recurso extraordinario', tipo: 'LIBRE',
+    camposLibres: [{ id: 'borrador', label: 'Subir recurso redactado', type: 'upload' }, OBS],
+  },
+  {
+    id: 'REF_R_3', numero: 'R.3', nombre: 'Presentación del recurso', tipo: 'LIBRE',
+    camposLibres: [
+      { id: 'fecha_presentacion', label: 'Fecha de presentación', type: 'date' },
+      { id: 'escrito', label: 'Presentación en sistema judicial — Subir escrito presentado', type: 'upload' },
+      ORG,
+    ],
+  },
+  {
+    id: 'REF_R_4', numero: 'R.4', nombre: 'Control formal del recurso', tipo: 'LIBRE',
+    camposLibres: [{ id: 'control', label: 'Resultado del control formal', type: 'textarea', full: true }],
+  },
+  {
+    id: 'REF_R_5', numero: 'R.5', nombre: 'Concesión o denegación del recurso', tipo: 'SI_NO',
+    camposSI: [
+      { id: 'resolucion', label: 'Se concede — Subir resolución', type: 'upload' },
+      ORG, OBS,
+    ],
+    camposNO: [
+      { id: 'resolucion_deniega', label: 'Se deniega — Subir resolución (corresponde Recurso de Queja)', type: 'upload' },
+      ORG, MOTIVOS,
+    ],
+  },
+  { ...SUB_5_14, id: 'REF_R_6', numero: 'R.6' },
+  {
+    id: 'REF_R_7', numero: 'R.7', nombre: 'Registro de montos para informes y previsiones', tipo: 'LIBRE',
+    camposLibres: [MONTO, { id: 'detalle', label: 'Discriminación de montos', type: 'textarea', full: true }],
+  },
+  ...nulidad('R.8', 'REF'),
+]
+
 // ── Etapas completas QUERELLA ─────────────────────────
 
 export const ETAPAS_QUERELLA: EtapaPenal[] = [
@@ -309,6 +409,7 @@ export const ETAPAS_QUERELLA: EtapaPenal[] = [
           { id: 'falta_poder', label: 'Falta Poder', type: 'text' },
         ],
       },
+      ...nulidad('3.3', 'ACE'),
     ],
   },
   {
@@ -326,30 +427,46 @@ export const ETAPAS_QUERELLA: EtapaPenal[] = [
   },
   {
     codigo: 'INSTRUCCION', label: 'Instrucción', numero: 3,
-    siguiente: 'JUICIO',
+    siguiente: 'INTERMEDIA',
     subActividades: [
       SUB_5_1, SUB_5_2, SUB_5_3, SUB_5_4, SUB_5_5,
       SUB_5_6, SUB_5_7, SUB_5_8, SUB_5_9, SUB_5_10,
-      SUB_5_11, SUB_5_12, SUB_5_13, SUB_5_14, SUB_5_15,
+      SUB_5_12, SUB_5_13, SUB_5_14, SUB_5_15,
+      ...excepciones('5.16', 'INS'),
+      ...nulidad('5.17', 'INS'),
     ],
   },
   {
-    codigo: 'JUICIO', label: 'Juicio', numero: 4,
-    siguiente: 'EJECUCION_PENAL',
+    // Requerimiento de Elevación a Juicio (Etapa Intermedia). El hito "Elevación a Juicio" (antes 5.11
+    // de Instrucción) pasa a esta etapa.
+    codigo: 'INTERMEDIA', label: 'Requerimiento de Elevación a Juicio (Etapa Intermedia)', numero: 4,
+    siguiente: 'JUICIO',
+    subActividades: INTERMEDIA_SUBS,
+  },
+  {
+    codigo: 'JUICIO', label: 'Juicio', numero: 5,
+    siguiente: 'REF',
     subActividades: [
       SUB_6_1, SUB_6_2, SUB_6_3, SUB_6_4,
       SUB_6_5, SUB_6_6, SUB_6_7,
       ...RECURSOS_JUICIO,
+      ...nulidad('6.8', 'JUI'),
     ],
   },
   {
-    codigo: 'EJECUCION_PENAL', label: 'Ejecución Penal', numero: 5,
-    siguiente: 'ARCHIVO',
-    subActividades: [SUB_7_1],
+    // Recurso Extraordinario Federal: etapa propia (como en Civil/Laboral), entre Juicio y Ejecución Penal.
+    codigo: 'REF', label: 'Recurso Extraordinario Federal', numero: 6,
+    siguiente: 'EJECUCION_PENAL',
+    subActividades: REF_SUBS,
   },
   {
-    codigo: 'ARCHIVO', label: 'Archivo', numero: 6,
-    subActividades: [SUB_8_1, SUB_8_2],
+    codigo: 'EJECUCION_PENAL', label: 'Ejecución Penal', numero: 7,
+    siguiente: 'ARCHIVO',
+    subActividades: [SUB_7_1, ...nulidad('7.2', 'EJE')],
+  },
+  {
+    codigo: 'ARCHIVO', label: 'Archivo', numero: 8,
+    subActividades: [SUB_8_1, SUB_8_2, ...nulidad('8.3', 'ARC')],
   },
   {
     // numero: -2 — sub-estado transitorio, fuera del camino lineal (mismo patrón que RECHAZADO).
