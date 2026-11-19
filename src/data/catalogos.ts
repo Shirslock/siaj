@@ -29,7 +29,7 @@ export const TIPOS_GESTION: TipoGestionItem[] = [
   { code:'QUERELLA',          id:'TPG_013', label:'Querellas',                        areas:['PENAL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
   { code:'DEFENSA_CIVIL',     id:'TPG_014', label:'Defensa Civil',                    areas:['CIVIL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
   { code:'DEFENSA_PENAL',     id:'TPG_015', label:'Defensa Penal',                    areas:['PENAL'],                   canal:'MEMO_GDE', canales:['MEMO_GDE'] },
-  { code:'CARTA_SUCESO',      id:'TPG_016', label:'Carta Suceso (SAE)',               areas:['PENAL'],                   canal:'OTROS',    canales:['OTROS'] },
+  { code:'CARTA_SUCESO',      id:'TPG_016', label:'Carta SAE Suceso/Denuncia',        areas:['PENAL'],                   canal:'OTROS',    canales:['OTROS'] },
   // Delta 14 — desactivado: ya no se puede dar de alta. El registro queda en el
   // catálogo (badge "Inactivo" en Configuración) por regla de no-borrado.
   { code:'PEDIDO_CAUSA_PENAL',id:'TPG_017', label:'Pedido de Causa Penal',            areas:['CIVIL','LABORAL','PENAL'], canal:'MEMO_GDE', canales:['MEMO_GDE'], activo: false },

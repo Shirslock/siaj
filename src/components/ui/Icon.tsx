@@ -16,7 +16,7 @@ import {
   HomeIcon,
   ScaleIcon, ShieldCheckIcon, Squares2X2Icon, TrashIcon, UserCircleIcon, UserIcon, UserPlusIcon,
   UsersIcon, UserGroupIcon, WrenchScrewdriverIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon,
-  SparklesIcon, PaperAirplaneIcon, KeyIcon, EyeSlashIcon,
+  SparklesIcon, PaperAirplaneIcon, KeyIcon, EyeSlashIcon, StarIcon,
 } from '@heroicons/react/24/outline'
 import PrincipalSvg from '../../assets/icons/principal.svg?react'
 import PanelControlSvg from '../../assets/icons/panel-de-control.svg?react'
@@ -104,7 +104,8 @@ const ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>
   history:               ClockIcon,
   warning:               ExclamationTriangleIcon,
   fire:                  FireIcon,
-  error:                 ExclamationCircleIcon,
+  star:                  StarIcon,
+  error:                ExclamationCircleIcon,
 
   // Personas
   person:                UserIcon,
